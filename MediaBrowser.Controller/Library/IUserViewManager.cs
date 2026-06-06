@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -22,6 +23,13 @@ namespace MediaBrowser.Controller.Library
         Folder[] GetUserViews(UserViewQuery query);
 
         /// <summary>
+        /// Gets user views asynchronously.
+        /// </summary>
+        /// <param name="query">Query to use.</param>
+        /// <returns>Set of folders.</returns>
+        Task<Folder[]> GetUserViewsAsync(UserViewQuery query);
+
+        /// <summary>
         /// Gets user sub views.
         /// </summary>
         /// <param name="parentId">Parent to use.</param>
@@ -38,5 +46,13 @@ namespace MediaBrowser.Controller.Library
         /// <param name="options">Options to use.</param>
         /// <returns>Set of items.</returns>
         List<Tuple<BaseItem, List<BaseItem>>> GetLatestItems(LatestItemsQuery request, DtoOptions options);
+
+        /// <summary>
+        /// Gets latest items asynchronously.
+        /// </summary>
+        /// <param name="request">Query to use.</param>
+        /// <param name="options">Options to use.</param>
+        /// <returns>Set of items.</returns>
+        Task<List<Tuple<BaseItem, List<BaseItem>>>> GetLatestItemsAsync(LatestItemsQuery request, DtoOptions options);
     }
 }

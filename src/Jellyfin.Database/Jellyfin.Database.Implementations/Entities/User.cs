@@ -342,6 +342,11 @@ namespace Jellyfin.Database.Implementations.Entities
         [ForeignKey("Preference_Preferences_Guid")]
         public virtual ICollection<Preference> Preferences { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the user's license/subscription.
+        /// </summary>
+        public virtual UserLicense? License { get; set; }
+
         /// <inheritdoc/>
         public void OnSavingChanges()
         {

@@ -138,7 +138,7 @@ public class LiveTvController : BaseJellyfinApiController
     [HttpGet("Channels")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = Policies.LiveTvAccess)]
-    public ActionResult<QueryResult<BaseItemDto>> GetLiveTvChannels(
+    public async Task<ActionResult<QueryResult<BaseItemDto>>> GetLiveTvChannels(
         [FromQuery] ChannelType? type,
         [FromQuery] Guid? userId,
         [FromQuery] int? startIndex,
@@ -200,7 +200,7 @@ public class LiveTvController : BaseJellyfinApiController
         dtoOptions.Fields = fieldsList.ToArray();
         dtoOptions.AddCurrentProgram = addCurrentProgram;
 
-        var returnArray = _dtoService.GetBaseItemDtos(channelResult.Items, dtoOptions, user);
+        var returnArray = await _dtoService.GetBaseItemDtosAsync(channelResult.Items, dtoOptions, user).ConfigureAwait(false);
         return new QueryResult<BaseItemDto>(
             startIndex,
             channelResult.TotalRecordCount,
@@ -779,7 +779,7 @@ public class LiveTvController : BaseJellyfinApiController
     [Authorize(Policy = Policies.LiveTvManagement)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult DeleteRecording([FromRoute, Required] Guid recordingId)
+    public async Task<ActionResult> DeleteRecording([FromRoute, Required] Guid recordingId)
     {
         var item = _libraryManager.GetItemById<BaseItem>(recordingId, User.GetUserId());
         if (item is null)
@@ -787,10 +787,10 @@ public class LiveTvController : BaseJellyfinApiController
             return NotFound();
         }
 
-        _libraryManager.DeleteItem(item, new DeleteOptions
+        await _libraryManager.DeleteItemAsync(item, new DeleteOptions
         {
             DeleteFileLocation = false
-        });
+        }).ConfigureAwait(false);
 
         return NoContent();
     }

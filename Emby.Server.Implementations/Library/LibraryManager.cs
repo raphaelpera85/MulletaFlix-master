@@ -592,6 +592,227 @@ namespace Emby.Server.Implementations.Library
             ReportItemRemoved(item, parent);
         }
 
+        public async Task DeleteItemAsync(BaseItem item, DeleteOptions options)
+        {
+            await DeleteItemAsync(item, options, false).ConfigureAwait(false);
+        }
+
+        public async Task DeleteItemAsync(BaseItem item, DeleteOptions options, bool notifyParentItem)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+
+            var parent = item.GetOwner() ?? item.GetParent();
+
+            await DeleteItemAsync(item, options, parent, notifyParentItem).ConfigureAwait(false);
+        }
+
+        public async Task DeleteItemAsync(BaseItem item, DeleteOptions options, BaseItem parent, bool notifyParentItem)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+
+            var startTime = DateTime.UtcNow;
+            _logger.LogInformation("Deleting item {ItemName} ({ItemType}) with options: {Options}", item.Name, item.GetType().Name, options);
+
+            try
+            {
+                if (item.SourceType == SourceType.Channel)
+                {
+                    if (options.DeleteFromExternalProvider)
+                    {
+                        try
+                        {
+                            await BaseItem.ChannelManager.DeleteItem(item).ConfigureAwait(false);
+                        }
+                        catch (ArgumentException)
+                        {
+                            // channel no longer installed
+                        }
+                    }
+
+                    options.DeleteFileLocation = false;
+                }
+
+                if (item is LiveTvProgram)
+                {
+                    _logger.LogDebug(
+                        "Removing item, Type: {Type}, Name: {Name}, Path: {Path}, Id: {Id}",
+                        item.GetType().Name,
+                        item.Name ?? "Unknown name",
+                        item.Path ?? string.Empty,
+                        item.Id);
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "Removing item, Type: {Type}, Name: {Name}, Path: {Path}, Id: {Id}",
+                        item.GetType().Name,
+                        item.Name ?? "Unknown name",
+                        item.Path ?? string.Empty,
+                        item.Id);
+                }
+
+                // If deleting a primary version video, clear PrimaryVersionId from alternate versions
+                // OwnerId check: items with OwnerId set are alternate versions or extras, not primaries
+                if (item is Video video && !video.PrimaryVersionId.HasValue && video.OwnerId.IsEmpty())
+                {
+                    var localAlternateIds = GetLocalAlternateVersionIds(video).ToHashSet();
+                    var allAlternateVersions = localAlternateIds
+                        .Concat(GetLinkedAlternateVersions(video).Select(v => v.Id))
+                        .Distinct()
+                        .Select(id => GetItemById(id))
+                        .OfType<Video>()
+                        .ToList();
+
+                    // Partition alternates by whether their files still exist on disk
+                    var alternateVersions = new List<Video>();
+                    var missingAlternates = new List<Video>();
+                    foreach (var alt in allAlternateVersions)
+                    {
+                        if (!string.IsNullOrEmpty(alt.Path) && !_fileSystem.FileExists(alt.Path))
+                        {
+                            missingAlternates.Add(alt);
+                        }
+                        else
+                        {
+                            alternateVersions.Add(alt);
+                        }
+                    }
+
+                    // Delete alternates whose files no longer exist to avoid ghost items.
+                    // Clear PrimaryVersionId first so DeleteItem doesn't try to update the primary being deleted.
+                    foreach (var missing in missingAlternates)
+                    {
+                        _logger.LogInformation(
+                            "Deleting missing alternate version {Name} ({Path})",
+                            missing.Name ?? "Unknown name",
+                            missing.Path ?? string.Empty);
+                        missing.SetPrimaryVersionId(null);
+                        missing.OwnerId = Guid.Empty;
+                        missing.LocalAlternateVersions = [];
+                        missing.LinkedAlternateVersions = [];
+                        await DeleteItemAsync(missing, new DeleteOptions { DeleteFileLocation = false }, false).ConfigureAwait(false);
+                    }
+
+                    if (alternateVersions.Count > 0)
+                    {
+                        _logger.LogInformation(
+                            "Clearing PrimaryVersionId from {Count} alternate versions of {Name}",
+                            alternateVersions.Count,
+                            item.Name ?? "Unknown name");
+
+                        // Promote the first alternate version to be the new primary
+                        var newPrimary = alternateVersions[0];
+                        newPrimary.SetPrimaryVersionId(null);
+                        newPrimary.OwnerId = Guid.Empty;
+
+                        // Transfer alternate version arrays from old primary to new primary
+                        // so UpdateToRepositoryAsync creates correct LinkedChildren entries
+                        newPrimary.LocalAlternateVersions = video.LocalAlternateVersions
+                            .Where(p => !string.Equals(p, newPrimary.Path, StringComparison.OrdinalIgnoreCase))
+                            .ToArray();
+                        newPrimary.LinkedAlternateVersions = video.LinkedAlternateVersions
+                            .Where(lc => !lc.ItemId.HasValue || !lc.ItemId.Value.Equals(newPrimary.Id))
+                            .ToArray();
+
+                        await newPrimary.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, CancellationToken.None).ConfigureAwait(false);
+
+                        // Re-route playlist/collection references from deleted primary to new primary
+                        await RerouteLinkedChildReferencesAsync(video.Id, newPrimary.Id).ConfigureAwait(false);
+
+                        // Update remaining alternates to point to new primary
+                        foreach (var alternate in alternateVersions.Skip(1))
+                        {
+                            alternate.SetPrimaryVersionId(newPrimary.Id);
+                            // Only set OwnerId for local alternates; linked alternates are independent items
+                            alternate.OwnerId = localAlternateIds.Contains(alternate.Id) ? newPrimary.Id : Guid.Empty;
+                            await alternate.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, CancellationToken.None).ConfigureAwait(false);
+                        }
+                    }
+                }
+                else if (item is Video alternateVideo && alternateVideo.PrimaryVersionId.HasValue)
+                {
+                    // If deleting an alternate version, re-route references to its primary
+                    await RerouteLinkedChildReferencesAsync(alternateVideo.Id, alternateVideo.PrimaryVersionId.Value).ConfigureAwait(false);
+
+                    // Remove deleted alternate from primary's LinkedAlternateVersions
+                    if (GetItemById(alternateVideo.PrimaryVersionId.Value) is Video primaryVideo)
+                    {
+                        primaryVideo.LinkedAlternateVersions = primaryVideo.LinkedAlternateVersions
+                            .Where(lc => !lc.ItemId.HasValue || !lc.ItemId.Value.Equals(alternateVideo.Id))
+                            .ToArray();
+                        await primaryVideo.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, CancellationToken.None).ConfigureAwait(false);
+                    }
+                }
+
+                var children = item.IsFolder
+                    ? ((Folder)item).GetRecursiveChildren(false)
+                    : [];
+
+                foreach (var metadataPath in GetMetadataPaths(item, children))
+                {
+                    if (!Directory.Exists(metadataPath))
+                    {
+                        continue;
+                    }
+
+                    _logger.LogDebug(
+                        "Deleting metadata path, Type: {Type}, Name: {Name}, Path: {Path}, Id: {Id}",
+                        item.GetType().Name,
+                        item.Name ?? "Unknown name",
+                        metadataPath,
+                        item.Id);
+
+                    try
+                    {
+                        Directory.Delete(metadataPath, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error deleting {MetadataPath}", metadataPath);
+                    }
+                }
+
+                if ((options.DeleteFileLocation && item.IsFileProtocol) || IsInternalItem(item))
+                {
+                    // Assume only the first is required
+                    // Add this flag to GetDeletePaths if required in the future
+                    var isRequiredForDelete = true;
+
+                    foreach (var fileSystemInfo in item.GetDeletePaths())
+                    {
+                        DeleteItemPath(item, isRequiredForDelete, fileSystemInfo);
+
+                        isRequiredForDelete = false;
+                    }
+                }
+
+                item.SetParent(null);
+
+                _persistenceService.DeleteItem([item.Id, .. children.Select(f => f.Id)]);
+                _cache.TryRemove(item.Id, out _);
+                foreach (var child in children)
+                {
+                    _cache.TryRemove(child.Id, out _);
+                }
+
+                if (parent is Folder folder)
+                {
+                    folder.Children = null;
+                    folder.UserData = null;
+                }
+
+                ReportItemRemoved(item, parent);
+
+                var elapsedMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                _logger.LogInformation("Deleted item {ItemName} ({ItemType}) in {Duration}ms", item.Name, item.GetType().Name, (long)elapsedMs);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting item {ItemName} ({ItemType})", item.Name, item.GetType().Name);
+                throw;
+            }
+        }
+
         private void DeleteItemPath(BaseItem item, bool isRequiredForDelete, FileSystemMetadata fileSystemInfo)
         {
             if (Directory.Exists(fileSystemInfo.FullName) || File.Exists(fileSystemInfo.FullName))
@@ -2829,6 +3050,15 @@ namespace Emby.Server.Implementations.Library
             return GetNamedView(user, name, Guid.Empty, viewType, sortName);
         }
 
+        public Task<UserView> GetNamedViewAsync(
+            User user,
+            string name,
+            CollectionType? viewType,
+            string sortName)
+        {
+            return GetNamedViewAsync(user, name, Guid.Empty, viewType, sortName);
+        }
+
         public UserView GetNamedView(
             string name,
             CollectionType viewType,
@@ -2867,6 +3097,50 @@ namespace Emby.Server.Implementations.Library
             if (refresh)
             {
                 item.UpdateToRepositoryAsync(ItemUpdateType.MetadataImport, CancellationToken.None).GetAwaiter().GetResult();
+                ProviderManager.QueueRefresh(item.Id, new MetadataRefreshOptions(new DirectoryService(_fileSystem)), RefreshPriority.Normal);
+            }
+
+            return item;
+        }
+
+        public async Task<UserView> GetNamedViewAsync(
+            string name,
+            CollectionType viewType,
+            string sortName)
+        {
+            var path = Path.Combine(
+                _configurationManager.ApplicationPaths.InternalMetadataPath,
+                "views",
+                _fileSystem.GetValidFilename(viewType.ToString()));
+
+            var id = GetNewItemId(path + "_namedview_" + name, typeof(UserView));
+
+            var item = GetItemById(id) as UserView;
+
+            var refresh = false;
+
+            if (item is null || !string.Equals(item.Path, path, StringComparison.OrdinalIgnoreCase))
+            {
+                var info = Directory.CreateDirectory(path);
+                item = new UserView
+                {
+                    Path = path,
+                    Id = id,
+                    DateCreated = info.CreationTimeUtc,
+                    DateModified = info.LastWriteTimeUtc,
+                    Name = name,
+                    ViewType = viewType,
+                    ForcedSortName = sortName
+                };
+
+                CreateItem(item, null);
+
+                refresh = true;
+            }
+
+            if (refresh)
+            {
+                await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataImport, CancellationToken.None).ConfigureAwait(false);
                 ProviderManager.QueueRefresh(item.Id, new MetadataRefreshOptions(new DirectoryService(_fileSystem)), RefreshPriority.Normal);
             }
 
@@ -2936,6 +3210,70 @@ namespace Emby.Server.Implementations.Library
             }
 
             return item;
+        }
+
+        public Task<UserView> GetNamedViewAsync(
+            User user,
+            string name,
+            Guid parentId,
+            CollectionType? viewType,
+            string sortName)
+        {
+            var parentIdString = parentId.IsEmpty()
+                ? null
+                : parentId.ToString("N", CultureInfo.InvariantCulture);
+            var idValues = "38_namedview_" + name + user.Id.ToString("N", CultureInfo.InvariantCulture) + (parentIdString ?? string.Empty) + (viewType?.ToString() ?? string.Empty);
+
+            var id = GetNewItemId(idValues, typeof(UserView));
+
+            var path = Path.Combine(_configurationManager.ApplicationPaths.InternalMetadataPath, "views", id.ToString("N", CultureInfo.InvariantCulture));
+
+            var item = GetItemById(id) as UserView;
+
+            var isNew = false;
+
+            if (item is null)
+            {
+                var info = Directory.CreateDirectory(path);
+                item = new UserView
+                {
+                    Path = path,
+                    Id = id,
+                    DateCreated = info.CreationTimeUtc,
+                    DateModified = info.LastWriteTimeUtc,
+                    Name = name,
+                    ViewType = viewType,
+                    ForcedSortName = sortName,
+                    UserId = user.Id,
+                    DisplayParentId = parentId
+                };
+
+                CreateItem(item, null);
+
+                isNew = true;
+            }
+
+            var lastRefreshedUtc = item.DateLastRefreshed;
+            var refresh = isNew || DateTime.UtcNow - lastRefreshedUtc >= _viewRefreshInterval;
+
+            if (!refresh && !item.DisplayParentId.IsEmpty())
+            {
+                var displayParent = GetItemById(item.DisplayParentId);
+                refresh = displayParent is not null && displayParent.DateLastSaved > lastRefreshedUtc;
+            }
+
+            if (refresh)
+            {
+                ProviderManager.QueueRefresh(
+                    item.Id,
+                    new MetadataRefreshOptions(new DirectoryService(_fileSystem))
+                    {
+                        ForceSave = true
+                    },
+                    RefreshPriority.Normal);
+            }
+
+            return Task.FromResult(item);
         }
 
         public UserView GetShadowView(
@@ -3070,6 +3408,81 @@ namespace Emby.Server.Implementations.Library
                     new MetadataRefreshOptions(new DirectoryService(_fileSystem))
                     {
                         // Need to force save to increment DateLastSaved
+                        ForceSave = true
+                    },
+                    RefreshPriority.Normal);
+            }
+
+            return item;
+        }
+
+        public async Task<UserView> GetNamedViewAsync(
+            string name,
+            Guid parentId,
+            CollectionType? viewType,
+            string sortName,
+            string uniqueId)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(name);
+
+            var parentIdString = parentId.IsEmpty()
+                ? null
+                : parentId.ToString("N", CultureInfo.InvariantCulture);
+            var idValues = "37_namedview_" + name + (parentIdString ?? string.Empty) + (viewType?.ToString() ?? string.Empty);
+            if (!string.IsNullOrEmpty(uniqueId))
+            {
+                idValues += uniqueId;
+            }
+
+            var id = GetNewItemId(idValues, typeof(UserView));
+
+            var path = Path.Combine(_configurationManager.ApplicationPaths.InternalMetadataPath, "views", id.ToString("N", CultureInfo.InvariantCulture));
+
+            var item = GetItemById(id) as UserView;
+
+            var isNew = false;
+
+            if (item is null)
+            {
+                var info = Directory.CreateDirectory(path);
+                item = new UserView
+                {
+                    Path = path,
+                    Id = id,
+                    DateCreated = info.CreationTimeUtc,
+                    DateModified = info.LastWriteTimeUtc,
+                    Name = name,
+                    ViewType = viewType,
+                    ForcedSortName = sortName,
+                    DisplayParentId = parentId
+                };
+
+                CreateItem(item, null);
+
+                isNew = true;
+            }
+
+            if (viewType != item.ViewType)
+            {
+                item.ViewType = viewType;
+                await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, CancellationToken.None).ConfigureAwait(false);
+            }
+
+            var lastRefreshedUtc = item.DateLastRefreshed;
+            var refresh = isNew || DateTime.UtcNow - lastRefreshedUtc >= _viewRefreshInterval;
+
+            if (!refresh && !item.DisplayParentId.IsEmpty())
+            {
+                var displayParent = GetItemById(item.DisplayParentId);
+                refresh = displayParent is not null && displayParent.DateLastSaved > lastRefreshedUtc;
+            }
+
+            if (refresh)
+            {
+                ProviderManager.QueueRefresh(
+                    item.Id,
+                    new MetadataRefreshOptions(new DirectoryService(_fileSystem))
+                    {
                         ForceSave = true
                     },
                     RefreshPriority.Normal);

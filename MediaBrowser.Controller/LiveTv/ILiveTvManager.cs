@@ -226,6 +226,15 @@ namespace MediaBrowser.Controller.LiveTv
         /// <param name="user">The user.</param>
         void AddChannelInfo(IReadOnlyCollection<(BaseItemDto ItemDto, LiveTvChannel Channel)> items, DtoOptions options, User user);
 
+        /// <summary>
+        /// Adds the channel information asynchronously.
+        /// </summary>
+        /// <param name="items">The items.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="user">The user.</param>
+        /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+        Task AddChannelInfoAsync(IReadOnlyCollection<(BaseItemDto ItemDto, LiveTvChannel Channel)> items, DtoOptions options, User user);
+
         void AddInfoToRecordingDto(BaseItem item, BaseItemDto dto, ActiveRecordingInfo activeRecordingInfo, User user = null);
 
         Task<BaseItem[]> GetRecordingFoldersAsync(User user);

@@ -148,12 +148,102 @@ public class LibraryController : BaseJellyfinApiController
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<ThemeMediaResult> GetThemeSongs(
+    public async Task<ActionResult<ThemeMediaResult>> GetThemeSongs(
         [FromRoute, Required] Guid itemId,
         [FromQuery] Guid? userId,
         [FromQuery] bool inheritFromParent = false,
         [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] ItemSortBy[]? sortBy = null,
         [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] SortOrder[]? sortOrder = null)
+    {
+        var result = await GetThemeSongsResultAsync(itemId, userId, inheritFromParent, sortBy, sortOrder).ConfigureAwait(false);
+        return result is null ? NotFound() : result;
+    }
+
+    /// <summary>
+    /// Get theme videos for an item.
+    /// </summary>
+    /// <param name="itemId">The item id.</param>
+    /// <param name="userId">Optional. Filter by user id, and attach user data.</param>
+    /// <param name="inheritFromParent">Optional. Determines whether or not parent items should be searched for theme media.</param>
+    /// <param name="sortBy">Optional. Specify one or more sort orders, comma delimited. Options: Album, AlbumArtist, Artist, Budget, CommunityRating, CriticRating, DateCreated, DatePlayed, PlayCount, PremiereDate, ProductionYear, SortName, Random, Revenue, Runtime.</param>
+    /// <param name="sortOrder">Optional. Sort Order - Ascending, Descending.</param>
+    /// <response code="200">Theme videos returned.</response>
+    /// <response code="404">Item not found.</response>
+    /// <returns>The item theme videos.</returns>
+    [HttpGet("Items/{itemId}/ThemeVideos")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ThemeMediaResult>> GetThemeVideos(
+        [FromRoute, Required] Guid itemId,
+        [FromQuery] Guid? userId,
+        [FromQuery] bool inheritFromParent = false,
+        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] ItemSortBy[]? sortBy = null,
+        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] SortOrder[]? sortOrder = null)
+    {
+        var result = await GetThemeVideosResultAsync(itemId, userId, inheritFromParent, sortBy, sortOrder).ConfigureAwait(false);
+        return result is null ? NotFound() : result;
+    }
+
+    /// <summary>
+    /// Get theme songs and videos for an item.
+    /// </summary>
+    /// <param name="itemId">The item id.</param>
+    /// <param name="userId">Optional. Filter by user id, and attach user data.</param>
+    /// <param name="inheritFromParent">Optional. Determines whether or not parent items should be searched for theme media.</param>
+    /// <param name="sortBy">Optional. Specify one or more sort orders, comma delimited. Options: Album, AlbumArtist, Artist, Budget, CommunityRating, CriticRating, DateCreated, DatePlayed, PlayCount, PremiereDate, ProductionYear, SortName, Random, Revenue, Runtime.</param>
+    /// <param name="sortOrder">Optional. Sort Order - Ascending, Descending.</param>
+    /// <response code="200">Theme songs and videos returned.</response>
+    /// <response code="404">Item not found.</response>
+    /// <returns>The item theme videos.</returns>
+    [HttpGet("Items/{itemId}/ThemeMedia")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<AllThemeMediaResult>> GetThemeMedia(
+        [FromRoute, Required] Guid itemId,
+        [FromQuery] Guid? userId,
+        [FromQuery] bool inheritFromParent = false,
+        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] ItemSortBy[]? sortBy = null,
+        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] SortOrder[]? sortOrder = null)
+    {
+        var themeSongsTask = GetThemeSongsResultAsync(
+            itemId,
+            userId,
+            inheritFromParent,
+            sortBy,
+            sortOrder);
+
+        var themeVideosTask = GetThemeVideosResultAsync(
+            itemId,
+            userId,
+            inheritFromParent,
+            sortBy,
+            sortOrder);
+
+        await Task.WhenAll(themeSongsTask, themeVideosTask).ConfigureAwait(false);
+
+        var themeSongs = await themeSongsTask.ConfigureAwait(false);
+        var themeVideos = await themeVideosTask.ConfigureAwait(false);
+
+        if (themeSongs is null || themeVideos is null)
+        {
+            return NotFound();
+        }
+
+        return new AllThemeMediaResult
+        {
+            ThemeSongsResult = themeSongs,
+            ThemeVideosResult = themeVideos,
+            SoundtrackSongsResult = new ThemeMediaResult()
+        };
+    }
+
+    private async Task<ThemeMediaResult?> GetThemeSongsResultAsync(
+        Guid itemId,
+        Guid? userId,
+        bool inheritFromParent,
+        ItemSortBy[]? sortBy,
+        SortOrder[]? sortOrder)
     {
         userId = RequestHelpers.GetUserId(User, userId);
         var user = userId.IsNullOrEmpty()
@@ -167,7 +257,7 @@ public class LibraryController : BaseJellyfinApiController
             : _libraryManager.GetItemById<BaseItem>(itemId, user);
         if (item is null)
         {
-            return NotFound();
+            return null;
         }
 
         sortOrder ??= [];
@@ -194,40 +284,15 @@ public class LibraryController : BaseJellyfinApiController
             item = parent;
         }
 
-        var dtoOptions = new DtoOptions();
-        var items = themeItems
-            .Select(i => _dtoService.GetBaseItemDto(i, dtoOptions, user, item))
-            .ToArray();
-
-        return new ThemeMediaResult
-        {
-            Items = items,
-            TotalRecordCount = items.Length,
-            OwnerId = item.Id
-        };
+        return await BuildThemeMediaResultAsync(themeItems, user, item).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Get theme videos for an item.
-    /// </summary>
-    /// <param name="itemId">The item id.</param>
-    /// <param name="userId">Optional. Filter by user id, and attach user data.</param>
-    /// <param name="inheritFromParent">Optional. Determines whether or not parent items should be searched for theme media.</param>
-    /// <param name="sortBy">Optional. Specify one or more sort orders, comma delimited. Options: Album, AlbumArtist, Artist, Budget, CommunityRating, CriticRating, DateCreated, DatePlayed, PlayCount, PremiereDate, ProductionYear, SortName, Random, Revenue, Runtime.</param>
-    /// <param name="sortOrder">Optional. Sort Order - Ascending, Descending.</param>
-    /// <response code="200">Theme videos returned.</response>
-    /// <response code="404">Item not found.</response>
-    /// <returns>The item theme videos.</returns>
-    [HttpGet("Items/{itemId}/ThemeVideos")]
-    [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<ThemeMediaResult> GetThemeVideos(
-        [FromRoute, Required] Guid itemId,
-        [FromQuery] Guid? userId,
-        [FromQuery] bool inheritFromParent = false,
-        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] ItemSortBy[]? sortBy = null,
-        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] SortOrder[]? sortOrder = null)
+    private async Task<ThemeMediaResult?> GetThemeVideosResultAsync(
+        Guid itemId,
+        Guid? userId,
+        bool inheritFromParent,
+        ItemSortBy[]? sortBy,
+        SortOrder[]? sortOrder)
     {
         userId = RequestHelpers.GetUserId(User, userId);
         var user = userId.IsNullOrEmpty()
@@ -240,20 +305,20 @@ public class LibraryController : BaseJellyfinApiController
             : _libraryManager.GetItemById<BaseItem>(itemId, user);
         if (item is null)
         {
-            return NotFound();
+            return null;
         }
 
         sortOrder ??= [];
         sortBy ??= [];
         var orderBy = RequestHelpers.GetOrderBy(sortBy, sortOrder);
 
-        IEnumerable<BaseItem> themeItems;
+        IReadOnlyList<BaseItem> themeItems;
 
         while (true)
         {
-            themeItems = item.GetThemeVideos(user, orderBy);
+            themeItems = item.GetThemeVideos(user, orderBy).ToArray();
 
-            if (themeItems.Any() || !inheritFromParent)
+            if (themeItems.Count > 0 || !inheritFromParent)
             {
                 break;
             }
@@ -267,65 +332,19 @@ public class LibraryController : BaseJellyfinApiController
             item = parent;
         }
 
+        return await BuildThemeMediaResultAsync(themeItems, user, item).ConfigureAwait(false);
+    }
+
+    private async Task<ThemeMediaResult> BuildThemeMediaResultAsync(IReadOnlyList<BaseItem> themeItems, User? user, BaseItem owner)
+    {
         var dtoOptions = new DtoOptions();
-        var items = themeItems
-            .Select(i => _dtoService.GetBaseItemDto(i, dtoOptions, user, item))
-            .ToArray();
+        var items = await _dtoService.GetBaseItemDtosAsync(themeItems, dtoOptions, user, owner).ConfigureAwait(false);
 
         return new ThemeMediaResult
         {
             Items = items,
-            TotalRecordCount = items.Length,
-            OwnerId = item.Id
-        };
-    }
-
-    /// <summary>
-    /// Get theme songs and videos for an item.
-    /// </summary>
-    /// <param name="itemId">The item id.</param>
-    /// <param name="userId">Optional. Filter by user id, and attach user data.</param>
-    /// <param name="inheritFromParent">Optional. Determines whether or not parent items should be searched for theme media.</param>
-    /// <param name="sortBy">Optional. Specify one or more sort orders, comma delimited. Options: Album, AlbumArtist, Artist, Budget, CommunityRating, CriticRating, DateCreated, DatePlayed, PlayCount, PremiereDate, ProductionYear, SortName, Random, Revenue, Runtime.</param>
-    /// <param name="sortOrder">Optional. Sort Order - Ascending, Descending.</param>
-    /// <response code="200">Theme songs and videos returned.</response>
-    /// <response code="404">Item not found.</response>
-    /// <returns>The item theme videos.</returns>
-    [HttpGet("Items/{itemId}/ThemeMedia")]
-    [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<AllThemeMediaResult> GetThemeMedia(
-        [FromRoute, Required] Guid itemId,
-        [FromQuery] Guid? userId,
-        [FromQuery] bool inheritFromParent = false,
-        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] ItemSortBy[]? sortBy = null,
-        [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] SortOrder[]? sortOrder = null)
-    {
-        var themeSongs = GetThemeSongs(
-            itemId,
-            userId,
-            inheritFromParent,
-            sortBy,
-            sortOrder);
-
-        var themeVideos = GetThemeVideos(
-            itemId,
-            userId,
-            inheritFromParent,
-            sortBy,
-            sortOrder);
-
-        if (themeSongs.Result is StatusCodeResult { StatusCode: StatusCodes.Status404NotFound }
-            || themeVideos.Result is StatusCodeResult { StatusCode: StatusCodes.Status404NotFound })
-        {
-            return NotFound();
-        }
-
-        return new AllThemeMediaResult
-        {
-            ThemeSongsResult = themeSongs.Value,
-            ThemeVideosResult = themeVideos.Value,
-            SoundtrackSongsResult = new ThemeMediaResult()
+            TotalRecordCount = items.Count,
+            OwnerId = owner.Id
         };
     }
 
@@ -364,7 +383,7 @@ public class LibraryController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult DeleteItem(Guid itemId)
+    public async Task<ActionResult> DeleteItem(Guid itemId)
     {
         var userId = User.GetUserId();
         var isApiKey = User.GetIsApiKey();
@@ -388,10 +407,10 @@ public class LibraryController : BaseJellyfinApiController
             return Unauthorized("Unauthorized access");
         }
 
-        _libraryManager.DeleteItem(
+        await _libraryManager.DeleteItemAsync(
             item,
             new DeleteOptions { DeleteFileLocation = true },
-            true);
+            true).ConfigureAwait(false);
 
         return NoContent();
     }
@@ -408,7 +427,7 @@ public class LibraryController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult DeleteItems([FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] Guid[] ids)
+    public async Task<ActionResult> DeleteItems([FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] Guid[] ids)
     {
         var isApiKey = User.GetIsApiKey();
         var userId = User.GetUserId();
@@ -434,10 +453,10 @@ public class LibraryController : BaseJellyfinApiController
                 return Unauthorized("Unauthorized access");
             }
 
-            _libraryManager.DeleteItem(
+            await _libraryManager.DeleteItemAsync(
                 item,
                 new DeleteOptions { DeleteFileLocation = true },
-                true);
+                true).ConfigureAwait(false);
         }
 
         return NoContent();

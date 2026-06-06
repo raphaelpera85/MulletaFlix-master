@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Jellyfin.Api.Caching;
 using Jellyfin.Api.Extensions;
 using Jellyfin.Api.Helpers;
 using Jellyfin.Api.ModelBinders;
@@ -23,6 +24,7 @@ using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Api.Controllers;
@@ -42,6 +44,7 @@ public class ItemsController : BaseJellyfinApiController
     private readonly ILogger<ItemsController> _logger;
     private readonly ISessionManager _sessionManager;
     private readonly IUserDataManager _userDataRepository;
+    private readonly IMemoryCache _memoryCache;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ItemsController"/> class.
@@ -53,6 +56,7 @@ public class ItemsController : BaseJellyfinApiController
     /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
     /// <param name="sessionManager">Instance of the <see cref="ISessionManager"/> interface.</param>
     /// <param name="userDataRepository">Instance of the <see cref="IUserDataManager"/> interface.</param>
+    /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
     public ItemsController(
         IUserManager userManager,
         ILibraryManager libraryManager,
@@ -60,7 +64,8 @@ public class ItemsController : BaseJellyfinApiController
         IDtoService dtoService,
         ILogger<ItemsController> logger,
         ISessionManager sessionManager,
-        IUserDataManager userDataRepository)
+        IUserDataManager userDataRepository,
+        IMemoryCache memoryCache)
     {
         _userManager = userManager;
         _libraryManager = libraryManager;
@@ -69,6 +74,7 @@ public class ItemsController : BaseJellyfinApiController
         _logger = logger;
         _sessionManager = sessionManager;
         _userDataRepository = userDataRepository;
+        _memoryCache = memoryCache;
     }
 
     /// <summary>
@@ -553,7 +559,26 @@ public class ItemsController : BaseJellyfinApiController
             }
 
             query.Parent = null;
+
+            var cacheKey = ItemsResponseCache.BuildCacheKey(query);
+            if (ItemsResponseCache.IsCacheable(query) && _memoryCache.TryGetValue(cacheKey, out QueryResult<BaseItemDto>? cached) && cached is not null)
+            {
+                return cached;
+            }
+
             result = folder.GetItems(query);
+
+            var dtoResult = new QueryResult<BaseItemDto>(
+                startIndex,
+                result.TotalRecordCount,
+                _dtoService.GetBaseItemDtos(result.Items, dtoOptions, user, skipVisibilityCheck: true));
+
+            if (ItemsResponseCache.IsCacheable(query))
+            {
+                _memoryCache.Set(cacheKey, dtoResult, TimeSpan.FromSeconds(30));
+            }
+
+            return dtoResult;
         }
         else
         {

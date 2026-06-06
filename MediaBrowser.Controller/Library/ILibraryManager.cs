@@ -420,6 +420,33 @@ namespace MediaBrowser.Controller.Library
         void DeleteItem(BaseItem item, DeleteOptions options, BaseItem parent, bool notifyParentItem);
 
         /// <summary>
+        /// Deletes the item asynchronously.
+        /// </summary>
+        /// <param name="item">Item to delete.</param>
+        /// <param name="options">Options to use for deletion.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task DeleteItemAsync(BaseItem item, DeleteOptions options);
+
+        /// <summary>
+        /// Deletes the item asynchronously.
+        /// </summary>
+        /// <param name="item">Item to delete.</param>
+        /// <param name="options">Options to use for deletion.</param>
+        /// <param name="notifyParentItem">Notify parent of deletion.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task DeleteItemAsync(BaseItem item, DeleteOptions options, bool notifyParentItem);
+
+        /// <summary>
+        /// Deletes the item asynchronously.
+        /// </summary>
+        /// <param name="item">Item to delete.</param>
+        /// <param name="options">Options to use for deletion.</param>
+        /// <param name="parent">Parent of item.</param>
+        /// <param name="notifyParentItem">Notify parent of deletion.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task DeleteItemAsync(BaseItem item, DeleteOptions options, BaseItem parent, bool notifyParentItem);
+
+        /// <summary>
         /// Gets the named view.
         /// </summary>
         /// <param name="user">The user.</param>
@@ -429,6 +456,22 @@ namespace MediaBrowser.Controller.Library
         /// <param name="sortName">Name of the sort.</param>
         /// <returns>The named view.</returns>
         UserView GetNamedView(
+            User user,
+            string name,
+            Guid parentId,
+            CollectionType? viewType,
+            string sortName);
+
+        /// <summary>
+        /// Gets the named view asynchronously.
+        /// </summary>
+        /// <param name="user">The user.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="parentId">The parent identifier.</param>
+        /// <param name="viewType">Type of the view.</param>
+        /// <param name="sortName">Name of the sort.</param>
+        /// <returns>The named view.</returns>
+        Task<UserView> GetNamedViewAsync(
             User user,
             string name,
             Guid parentId,
@@ -450,6 +493,20 @@ namespace MediaBrowser.Controller.Library
             string sortName);
 
         /// <summary>
+        /// Gets the named view asynchronously.
+        /// </summary>
+        /// <param name="user">The user.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="viewType">Type of the view.</param>
+        /// <param name="sortName">Name of the sort.</param>
+        /// <returns>The named view.</returns>
+        Task<UserView> GetNamedViewAsync(
+            User user,
+            string name,
+            CollectionType? viewType,
+            string sortName);
+
+        /// <summary>
         /// Gets the named view.
         /// </summary>
         /// <param name="name">The name.</param>
@@ -457,6 +514,18 @@ namespace MediaBrowser.Controller.Library
         /// <param name="sortName">Name of the sort.</param>
         /// <returns>The named view.</returns>
         UserView GetNamedView(
+            string name,
+            CollectionType viewType,
+            string sortName);
+
+        /// <summary>
+        /// Gets the named view asynchronously.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="viewType">Type of the view.</param>
+        /// <param name="sortName">Name of the sort.</param>
+        /// <returns>The named view.</returns>
+        Task<UserView> GetNamedViewAsync(
             string name,
             CollectionType viewType,
             string sortName);
@@ -471,6 +540,22 @@ namespace MediaBrowser.Controller.Library
         /// <param name="uniqueId">The unique identifier.</param>
         /// <returns>The named view.</returns>
         UserView GetNamedView(
+            string name,
+            Guid parentId,
+            CollectionType? viewType,
+            string sortName,
+            string uniqueId);
+
+        /// <summary>
+        /// Gets the named view asynchronously.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="parentId">The parent identifier.</param>
+        /// <param name="viewType">Type of the view.</param>
+        /// <param name="sortName">Name of the sort.</param>
+        /// <param name="uniqueId">The unique identifier.</param>
+        /// <returns>The named view.</returns>
+        Task<UserView> GetNamedViewAsync(
             string name,
             Guid parentId,
             CollectionType? viewType,

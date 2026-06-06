@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Extensions;
@@ -160,10 +161,21 @@ namespace Emby.Server.Implementations.Dto
             BaseItem? owner = null,
             bool skipVisibilityCheck = false)
         {
+            return GetBaseItemDtosAsync(items, options, user, owner, skipVisibilityCheck).GetAwaiter().GetResult();
+        }
+
+        /// <inheritdoc />
+        public async Task<IReadOnlyList<BaseItemDto>> GetBaseItemDtosAsync(
+            IReadOnlyList<BaseItem> items,
+            DtoOptions options,
+            User? user = null,
+            BaseItem? owner = null,
+            bool skipVisibilityCheck = false)
+        {
             var accessibleItems = skipVisibilityCheck || user is null ? items : items.Where(x => x.IsVisible(user)).ToList();
             var returnItems = new BaseItemDto[accessibleItems.Count];
-            List<(BaseItem, BaseItemDto)>? programTuples = null;
-            List<(BaseItemDto, LiveTvChannel)>? channelTuples = null;
+            List<(BaseItem, BaseItemDto)> programTuples = [];
+            List<(BaseItemDto, LiveTvChannel)> channelTuples = [];
 
             // Batch-fetch user data for all items
             Dictionary<Guid, UserItemData>? userDataBatch = null;
@@ -239,6 +251,12 @@ namespace Emby.Server.Implementations.Dto
             for (int index = 0; index < accessibleItems.Count; index++)
             {
                 var item = accessibleItems[index];
+                Dictionary<string, Dictionary<int, TrickplayInfo>>? trickplayManifestData = null;
+                if (options.ContainsField(ItemFields.Trickplay) && item is Video)
+                {
+                    trickplayManifestData = await _trickplayManager.GetTrickplayManifest(item).ConfigureAwait(false);
+                }
+
                 var dto = GetBaseItemDtoInternal(
                     item,
                     options,
@@ -250,13 +268,18 @@ namespace Emby.Server.Implementations.Dto
                     playedCountBatch,
                     artistsBatch);
 
+                if (trickplayManifestData is not null)
+                {
+                    dto.Trickplay = CreateTrickplayDto(trickplayManifestData);
+                }
+
                 if (item is LiveTvChannel tvChannel)
                 {
-                    (channelTuples ??= []).Add((dto, tvChannel));
+                    channelTuples.Add((dto, tvChannel));
                 }
                 else if (item is LiveTvProgram)
                 {
-                    (programTuples ??= []).Add((item, dto));
+                    programTuples.Add((item, dto));
                 }
 
                 if (options.ContainsField(ItemFields.ItemCounts))
@@ -267,14 +290,14 @@ namespace Emby.Server.Implementations.Dto
                 returnItems[index] = dto;
             }
 
-            if (programTuples is not null)
+            if (programTuples.Count > 0)
             {
-                LivetvManager.AddInfoToProgramDto(programTuples, options.Fields, user).GetAwaiter().GetResult();
+                await LivetvManager.AddInfoToProgramDto(programTuples, options.Fields, user).ConfigureAwait(false);
             }
 
-            if (channelTuples is not null)
+            if (channelTuples.Count > 0)
             {
-                LivetvManager.AddChannelInfo(channelTuples, options, user);
+                await LivetvManager.AddChannelInfoAsync(channelTuples, options, user).ConfigureAwait(false);
             }
 
             return returnItems;
@@ -282,14 +305,30 @@ namespace Emby.Server.Implementations.Dto
 
         public BaseItemDto GetBaseItemDto(BaseItem item, DtoOptions options, User? user = null, BaseItem? owner = null)
         {
+            return GetBaseItemDtoAsync(item, options, user, owner).GetAwaiter().GetResult();
+        }
+
+        public async Task<BaseItemDto> GetBaseItemDtoAsync(BaseItem item, DtoOptions options, User? user = null, BaseItem? owner = null)
+        {
+            Dictionary<string, Dictionary<int, TrickplayInfo>>? trickplayManifestData = null;
+            if (options.ContainsField(ItemFields.Trickplay) && item is Video)
+            {
+                trickplayManifestData = await _trickplayManager.GetTrickplayManifest(item).ConfigureAwait(false);
+            }
+
             var dto = GetBaseItemDtoInternal(item, options, user, owner, null);
+            if (trickplayManifestData is not null)
+            {
+                dto.Trickplay = CreateTrickplayDto(trickplayManifestData);
+            }
+
             if (item is LiveTvChannel tvChannel)
             {
-                LivetvManager.AddChannelInfo(new[] { (dto, tvChannel) }, options, user);
+                await LivetvManager.AddChannelInfoAsync(new[] { (dto, tvChannel) }, options, user).ConfigureAwait(false);
             }
             else if (item is LiveTvProgram)
             {
-                LivetvManager.AddInfoToProgramDto(new[] { (item, dto) }, options.Fields, user).GetAwaiter().GetResult();
+                await LivetvManager.AddInfoToProgramDto(new[] { (item, dto) }, options.Fields, user).ConfigureAwait(false);
             }
 
             if (options.ContainsField(ItemFields.ItemCounts))
@@ -462,7 +501,7 @@ namespace Emby.Server.Implementations.Dto
         /// Some callers already have the counts extracted so no reason to retrieve them again.
         public BaseItemDto GetItemByNameDto(BaseItem item, DtoOptions options, List<BaseItem>? taggedItems, User? user = null)
         {
-            var dto = GetBaseItemDtoInternal(item, options, user);
+            var dto = GetBaseItemDto(item, options, user);
 
             if (options.ContainsField(ItemFields.ItemCounts)
                 && taggedItems is not null
@@ -472,6 +511,16 @@ namespace Emby.Server.Implementations.Dto
             }
 
             return dto;
+        }
+
+        private static Dictionary<string, Dictionary<int, TrickplayInfoDto>> CreateTrickplayDto(
+            Dictionary<string, Dictionary<int, TrickplayInfo>> trickplayManifest)
+        {
+            return trickplayManifest.ToDictionary(
+                mediaStream => mediaStream.Key,
+                mediaStream => mediaStream.Value.ToDictionary(
+                    width => width.Key,
+                    width => new TrickplayInfoDto(width.Value)));
         }
 
         private void SetItemByNameInfo(BaseItemDto dto, User? user)
@@ -1262,16 +1311,6 @@ namespace Emby.Server.Implementations.Dto
                     {
                         dto.MediaSourceCount = mediaSourceCount;
                     }
-                }
-
-                if (options.ContainsField(ItemFields.Trickplay))
-                {
-                    var trickplay = _trickplayManager.GetTrickplayManifest(item).GetAwaiter().GetResult();
-                    dto.Trickplay = trickplay.ToDictionary(
-                        mediaStream => mediaStream.Key,
-                        mediaStream => mediaStream.Value.ToDictionary(
-                            width => width.Key,
-                            width => new TrickplayInfoDto(width.Value)));
                 }
 
                 dto.ExtraType = video.ExtraType;

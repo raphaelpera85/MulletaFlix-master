@@ -526,7 +526,7 @@ public class UserLibraryController : BaseJellyfinApiController
     /// <returns>An <see cref="OkResult"/> containing the latest media.</returns>
     [HttpGet("Items/Latest")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<BaseItemDto>> GetLatestMedia(
+    public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetLatestMedia(
         [FromQuery] Guid? userId,
         [FromQuery] Guid? parentId,
         [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] ItemFields[] fields,
@@ -559,7 +559,7 @@ public class UserLibraryController : BaseJellyfinApiController
 
         dtoOptions.PreferEpisodeParentPoster = true;
 
-        var list = _userViewManager.GetLatestItems(
+        var list = await _userViewManager.GetLatestItemsAsync(
             new LatestItemsQuery
             {
                 GroupItems = groupItems,
@@ -569,7 +569,7 @@ public class UserLibraryController : BaseJellyfinApiController
                 ParentId = parentId ?? Guid.Empty,
                 User = user,
             },
-            dtoOptions);
+            dtoOptions).ConfigureAwait(false);
 
         var resolvedItems = new BaseItem[list.Count];
         var childCounts = new int[list.Count];
@@ -622,7 +622,7 @@ public class UserLibraryController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Obsolete("Kept for backwards compatibility")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public ActionResult<IEnumerable<BaseItemDto>> GetLatestMediaLegacy(
+    public Task<ActionResult<IEnumerable<BaseItemDto>>> GetLatestMediaLegacy(
         [FromRoute, Required] Guid userId,
         [FromQuery] Guid? parentId,
         [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] ItemFields[] fields,

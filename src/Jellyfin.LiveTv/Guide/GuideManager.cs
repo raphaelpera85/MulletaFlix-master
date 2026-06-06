@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
@@ -385,6 +386,7 @@ public class GuideManager : IGuideManager
         var parentFolderId = parentFolder.Id;
         var isNew = false;
         var forceUpdate = false;
+        var normalizedName = NormalizeChannelDisplayName(channelInfo.Name);
 
         var id = _tvDtoService.GetInternalChannelId(serviceName, channelInfo.Id);
 
@@ -392,7 +394,7 @@ public class GuideManager : IGuideManager
         {
             item = new LiveTvChannel
             {
-                Name = channelInfo.Name,
+                Name = normalizedName,
                 Id = id,
                 DateCreated = DateTime.UtcNow
             };
@@ -441,25 +443,31 @@ public class GuideManager : IGuideManager
 
         item.Number = channelInfo.Number;
 
-        if (!string.Equals(channelInfo.Name, item.Name, StringComparison.Ordinal))
+        if (!string.Equals(normalizedName, item.Name, StringComparison.Ordinal))
         {
             forceUpdate = true;
         }
 
-        item.Name = channelInfo.Name;
+        item.Name = normalizedName;
 
-        if (!item.HasImage(ImageType.Primary))
+        if (!string.Equals(item.ForcedSortName, normalizedName, StringComparison.Ordinal))
         {
-            if (!string.IsNullOrWhiteSpace(channelInfo.ImagePath))
-            {
-                item.SetImagePath(ImageType.Primary, channelInfo.ImagePath);
-                forceUpdate = true;
-            }
-            else if (!string.IsNullOrWhiteSpace(channelInfo.ImageUrl))
-            {
-                item.SetImagePath(ImageType.Primary, channelInfo.ImageUrl);
-                forceUpdate = true;
-            }
+            item.ForcedSortName = normalizedName;
+            forceUpdate = true;
+        }
+
+        var currentImagePath = item.GetImages(ImageType.Primary).FirstOrDefault()?.Path;
+        if (!string.IsNullOrWhiteSpace(channelInfo.ImagePath)
+            && !string.Equals(currentImagePath, channelInfo.ImagePath, StringComparison.OrdinalIgnoreCase))
+        {
+            item.SetImagePath(ImageType.Primary, channelInfo.ImagePath);
+            forceUpdate = true;
+        }
+        else if (!string.IsNullOrWhiteSpace(channelInfo.ImageUrl)
+            && !string.Equals(currentImagePath, channelInfo.ImageUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            item.SetImagePath(ImageType.Primary, channelInfo.ImageUrl);
+            forceUpdate = true;
         }
 
         if (isNew)
@@ -472,6 +480,20 @@ public class GuideManager : IGuideManager
         }
 
         return item;
+    }
+
+    private static string NormalizeChannelDisplayName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+
+        var cleaned = Regex.Replace(name.Trim(), @"^\s*\d+\s*(?:[-:]\s*)?", string.Empty, RegexOptions.CultureInvariant);
+        cleaned = Regex.Replace(cleaned, @"\s{2,}", " ");
+        cleaned = cleaned.Trim();
+
+        return string.IsNullOrWhiteSpace(cleaned) ? name.Trim() : cleaned;
     }
 
     private (LiveTvProgram Item, bool IsNew, bool IsUpdated) GetProgram(

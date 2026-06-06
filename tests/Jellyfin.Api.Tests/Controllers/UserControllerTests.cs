@@ -5,7 +5,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoFixture.Xunit3;
 using Jellyfin.Api.Controllers;
+using Jellyfin.Api.Models.UserDtos;
+using Jellyfin.Api.Results;
+using Jellyfin.Data;
 using Jellyfin.Database.Implementations.Entities;
+using Jellyfin.Server.Implementations.Users;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Devices;
@@ -14,6 +18,7 @@ using MediaBrowser.Controller.Net;
 using MediaBrowser.Controller.Playlists;
 using MediaBrowser.Controller.QuickConnect;
 using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -70,6 +75,86 @@ public class UserControllerTests
             .Returns(nullUser);
 
         Assert.IsType<NotFoundResult>(await _subject.UpdateUserPolicy(userId, userPolicy));
+    }
+
+    [Fact]
+    public async Task RegisterUser_WhenSuccessful_CreatesDisabledUser()
+    {
+        const string username = "newuser@example.com";
+        const string password = "password123";
+
+        var createdUser = new User(
+            username,
+            typeof(DefaultAuthenticationProvider).FullName!,
+            typeof(DefaultPasswordResetProvider).FullName!);
+        createdUser.AddDefaultPermissions();
+        createdUser.AddDefaultPreferences();
+
+        _mockUserManager
+            .Setup(m => m.CreateUserAsync(username))
+            .ReturnsAsync(createdUser);
+
+        _mockUserManager
+            .Setup(m => m.ChangePassword(createdUser.Id, password))
+            .Returns(Task.CompletedTask);
+
+        _mockUserManager
+            .Setup(m => m.GetUserDto(createdUser, It.IsAny<string?>()))
+            .Returns(new UserDto
+            {
+                Policy = new UserPolicy
+                {
+                    AuthenticationProviderId = createdUser.AuthenticationProviderId,
+                    PasswordResetProviderId = createdUser.PasswordResetProviderId,
+                    IsHidden = true,
+                    IsDisabled = false
+                }
+            });
+
+        UserPolicy? capturedPolicy = null;
+        _mockUserManager
+            .Setup(m => m.UpdatePolicyAsync(createdUser.Id, It.IsAny<UserPolicy>()))
+            .Callback<Guid, UserPolicy>((_, policy) => capturedPolicy = policy)
+            .Returns(Task.CompletedTask);
+
+        var result = await _subject.RegisterUser(new CreateUserByName
+        {
+            Name = username,
+            Password = password
+        });
+
+        var okResult = Assert.IsType<OkResult<RegisterUserResult>>(result.Result);
+        var payload = Assert.IsType<RegisterUserResult>(okResult.Value);
+        Assert.True(payload.Success);
+
+        Assert.NotNull(capturedPolicy);
+        Assert.False(capturedPolicy!.IsHidden);
+        Assert.True(capturedPolicy.IsDisabled);
+
+        _mockUserManager.Verify(m => m.CreateUserAsync(username), Times.Once);
+        _mockUserManager.Verify(m => m.ChangePassword(createdUser.Id, password), Times.Once);
+        _mockUserManager.Verify(m => m.UpdatePolicyAsync(createdUser.Id, It.IsAny<UserPolicy>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RegisterUser_WhenUsernameTaken_ReturnsBadRequest()
+    {
+        const string username = "existing@example.com";
+
+        _mockUserManager
+            .Setup(m => m.CreateUserAsync(username))
+            .ThrowsAsync(new ArgumentException($"A user with the name '{username}' already exists."));
+
+        var result = await _subject.RegisterUser(new CreateUserByName
+        {
+            Name = username,
+            Password = "password123"
+        });
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var payload = Assert.IsType<RegisterUserResult>(badRequestResult.Value);
+        Assert.False(payload.Success);
+        Assert.Equal("MessageRegisterUsernameTaken", payload.Message);
     }
 
     [Theory]

@@ -112,6 +112,69 @@ namespace Jellyfin.LiveTv
             return dto;
         }
 
+        public async Task<TimerInfoDto> GetTimerInfoDtoAsync(TimerInfo info, ILiveTvService service, LiveTvProgram program, BaseItem channel)
+        {
+            var dto = new TimerInfoDto
+            {
+                Id = GetInternalTimerId(info.Id),
+                Overview = info.Overview,
+                EndDate = info.EndDate,
+                Name = info.Name,
+                StartDate = info.StartDate,
+                ExternalId = info.Id,
+                ChannelId = GetInternalChannelId(service.Name, info.ChannelId),
+                Status = info.Status,
+                SeriesTimerId = string.IsNullOrEmpty(info.SeriesTimerId) ? null : GetInternalSeriesTimerId(info.SeriesTimerId).ToString("N", CultureInfo.InvariantCulture),
+                PrePaddingSeconds = info.PrePaddingSeconds,
+                PostPaddingSeconds = info.PostPaddingSeconds,
+                IsPostPaddingRequired = info.IsPostPaddingRequired,
+                IsPrePaddingRequired = info.IsPrePaddingRequired,
+                KeepUntil = info.KeepUntil,
+                ExternalChannelId = info.ChannelId,
+                ExternalSeriesTimerId = info.SeriesTimerId,
+                ServiceName = service.Name,
+                ExternalProgramId = info.ProgramId,
+                Priority = info.Priority,
+                RunTimeTicks = (info.EndDate - info.StartDate).Ticks,
+                ServerId = _appHost.SystemId
+            };
+
+            if (!string.IsNullOrEmpty(info.ProgramId))
+            {
+                dto.ProgramId = GetInternalProgramId(info.ProgramId).ToString("N", CultureInfo.InvariantCulture);
+            }
+
+            if (program is not null)
+            {
+                dto.ProgramInfo = await _dtoService.GetBaseItemDtoAsync(program, new DtoOptions()).ConfigureAwait(false);
+
+                if (info.Status != RecordingStatus.Cancelled && info.Status != RecordingStatus.Error)
+                {
+                    dto.ProgramInfo.TimerId = dto.Id;
+                    dto.ProgramInfo.Status = info.Status.ToString();
+                }
+
+                dto.ProgramInfo.SeriesTimerId = dto.SeriesTimerId;
+
+                if (!string.IsNullOrEmpty(info.SeriesTimerId))
+                {
+                    FillImages(dto.ProgramInfo, info.Name, info.SeriesId);
+                }
+            }
+
+            if (channel is not null)
+            {
+                dto.ChannelName = channel.Name;
+
+                if (channel.HasImage(ImageType.Primary))
+                {
+                    dto.ChannelPrimaryImageTag = GetImageTag(channel);
+                }
+            }
+
+            return dto;
+        }
+
         public SeriesTimerInfoDto GetSeriesTimerInfoDto(SeriesTimerInfo info, ILiveTvService service, string channelName)
         {
             var dto = new SeriesTimerInfoDto

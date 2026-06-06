@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
@@ -270,7 +271,7 @@ namespace Jellyfin.LiveTv.Channels
             var dtoOptions = new DtoOptions();
 
             // TODO Fix The co-variant conversion (internalResult.Items) between Folder[] and BaseItem[], this can generate runtime issues.
-            var returnItems = _dtoService.GetBaseItemDtos(internalResult.Items, dtoOptions, user);
+            var returnItems = await _dtoService.GetBaseItemDtosAsync(internalResult.Items, dtoOptions, user).ConfigureAwait(false);
 
             var result = new QueryResult<BaseItemDto>(
                 query.StartIndex,
@@ -430,6 +431,7 @@ namespace Jellyfin.LiveTv.Channels
         private async Task<Channel> GetChannel(IChannel channelInfo, CancellationToken cancellationToken)
         {
             var parentFolderId = Guid.Empty;
+            var normalizedName = NormalizeChannelDisplayName(channelInfo.Name);
 
             var id = GetInternalChannelId(channelInfo.Name);
 
@@ -445,7 +447,7 @@ namespace Jellyfin.LiveTv.Channels
                 var info = Directory.CreateDirectory(path);
                 item = new Channel
                 {
-                    Name = channelInfo.Name,
+                    Name = normalizedName,
                     Id = id,
                     DateCreated = info.CreationTimeUtc,
                     DateModified = info.LastWriteTimeUtc
@@ -478,9 +480,16 @@ namespace Jellyfin.LiveTv.Channels
             item.OfficialRating = GetOfficialRating(channelInfo.ParentalRating);
             item.Overview = channelInfo.Description;
 
-            if (string.IsNullOrWhiteSpace(item.Name))
+            if (!string.Equals(item.Name, normalizedName, StringComparison.Ordinal))
             {
-                item.Name = channelInfo.Name;
+                item.Name = normalizedName;
+                forceUpdate = true;
+            }
+
+            if (!string.Equals(item.ForcedSortName, normalizedName, StringComparison.Ordinal))
+            {
+                item.ForcedSortName = normalizedName;
+                forceUpdate = true;
             }
 
             if (isNew)
@@ -509,6 +518,20 @@ namespace Jellyfin.LiveTv.Channels
                 ChannelParentalRating.UsPG => "PG",
                 _ => null
             };
+        }
+
+        private static string NormalizeChannelDisplayName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return string.Empty;
+            }
+
+            var cleaned = Regex.Replace(name.Trim(), @"^\s*\d+\s*(?:[-:]\s*)?", string.Empty, RegexOptions.CultureInvariant);
+            cleaned = Regex.Replace(cleaned, @"\s{2,}", " ");
+            cleaned = cleaned.Trim();
+
+            return string.IsNullOrWhiteSpace(cleaned) ? name.Trim() : cleaned;
         }
 
         /// <summary>
@@ -595,7 +618,7 @@ namespace Jellyfin.LiveTv.Channels
             var items = internalResult.Items;
             var totalRecordCount = internalResult.TotalRecordCount;
 
-            var returnItems = _dtoService.GetBaseItemDtos(items, query.DtoOptions, query.User);
+            var returnItems = await _dtoService.GetBaseItemDtosAsync(items, query.DtoOptions, query.User).ConfigureAwait(false);
 
             var result = new QueryResult<BaseItemDto>(
                 query.StartIndex,
@@ -762,7 +785,7 @@ namespace Jellyfin.LiveTv.Channels
         {
             var internalResult = await GetChannelItemsInternal(query, new Progress<double>(), cancellationToken).ConfigureAwait(false);
 
-            var returnItems = _dtoService.GetBaseItemDtos(internalResult.Items, query.DtoOptions, query.User);
+            var returnItems = await _dtoService.GetBaseItemDtosAsync(internalResult.Items, query.DtoOptions, query.User).ConfigureAwait(false);
 
             var result = new QueryResult<BaseItemDto>(
                 query.StartIndex,
@@ -1109,7 +1132,9 @@ namespace Jellyfin.LiveTv.Channels
                 item.Path = mediaSource?.Path;
             }
 
-            if (!string.IsNullOrEmpty(info.ImageUrl) && !item.HasImage(ImageType.Primary))
+            var currentImagePath = item.GetImages(ImageType.Primary).FirstOrDefault()?.Path;
+            if (!string.IsNullOrEmpty(info.ImageUrl)
+                && !string.Equals(currentImagePath, info.ImageUrl, StringComparison.OrdinalIgnoreCase))
             {
                 item.SetImagePath(ImageType.Primary, info.ImageUrl);
                 _logger.LogDebug("Forcing update due to ImageUrl {0}", item.Name);

@@ -8,6 +8,7 @@ using Jellyfin.Api.Extensions;
 using Jellyfin.Api.Helpers;
 using Jellyfin.Api.Models.UserDtos;
 using Jellyfin.Data;
+using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Extensions;
 using MediaBrowser.Common.Api;
@@ -212,15 +213,19 @@ public class UserController : BaseJellyfinApiController
     public async Task<ActionResult<AuthenticationResult>> AuthenticateUserByName([FromBody, Required] AuthenticateUserByName request)
     {
         var auth = await _authContext.GetAuthorizationInfo(Request).ConfigureAwait(false);
+        var appName = string.IsNullOrWhiteSpace(auth.Client) ? "Jellyfin Web" : auth.Client;
+        var appVersion = string.IsNullOrWhiteSpace(auth.Version) ? string.Empty : auth.Version;
+        var deviceId = string.IsNullOrWhiteSpace(auth.DeviceId) ? HttpContext.GetNormalizedRemoteIP().ToString() : auth.DeviceId;
+        var deviceName = string.IsNullOrWhiteSpace(auth.Device) ? "Browser" : auth.Device;
 
         try
         {
             var result = await _sessionManager.AuthenticateNewSession(new AuthenticationRequest
             {
-                App = auth.Client,
-                AppVersion = auth.Version,
-                DeviceId = auth.DeviceId,
-                DeviceName = auth.Device,
+                App = appName,
+                AppVersion = appVersion,
+                DeviceId = deviceId,
+                DeviceName = deviceName,
                 Password = request.Pw,
                 RemoteEndPoint = HttpContext.GetNormalizedRemoteIP().ToString(),
                 Username = request.Username
@@ -530,6 +535,89 @@ public class UserController : BaseJellyfinApiController
         var result = _userManager.GetUserDto(newUser, HttpContext.GetNormalizedRemoteIP().ToString());
 
         return result;
+    }
+
+    /// <summary>
+    /// Registers a user from the login screen.
+    /// </summary>
+    /// <param name="request">The registration request.</param>
+    /// <response code="200">Registration completed.</response>
+    /// <response code="400">Registration failed.</response>
+    /// <returns>A <see cref="RegisterUserResult"/> describing the outcome.</returns>
+    [HttpPost("Register")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Tags("Authentication")]
+    public async Task<ActionResult<RegisterUserResult>> RegisterUser([FromBody, Required] CreateUserByName request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
+        {
+            return BadRequest(new RegisterUserResult
+            {
+                Success = false,
+                Message = "MessageRegisterPasswordTooShort"
+            });
+        }
+
+        User? newUser = null;
+        var registrationSucceeded = false;
+
+        try
+        {
+            newUser = await _userManager.CreateUserAsync(request.Name).ConfigureAwait(false);
+            await _userManager.ChangePassword(newUser.Id, request.Password).ConfigureAwait(false);
+
+            var policy = _userManager.GetUserDto(newUser).Policy;
+            policy.IsHidden = false;
+            policy.IsDisabled = true;
+            await _userManager.UpdatePolicyAsync(newUser.Id, policy).ConfigureAwait(false);
+
+            registrationSucceeded = true;
+            return Ok(new RegisterUserResult
+            {
+                Success = true
+            });
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new RegisterUserResult
+            {
+                Success = false,
+                Message = "MessageRegisterUsernameTaken"
+            });
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("Usernames can contain", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new RegisterUserResult
+            {
+                Success = false,
+                Message = "MessageRegisterInvalidUsername"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unexpected error while registering a new user.");
+            return BadRequest(new RegisterUserResult
+            {
+                Success = false,
+                Message = "MessageRegisterError"
+            });
+        }
+        finally
+        {
+            if (!registrationSucceeded && newUser is not null)
+            {
+                try
+                {
+                    await _userManager.DeleteUserAsync(newUser.Id).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not clean up partially registered user {UserName}.", request.Name);
+                }
+            }
+        }
     }
 
     /// <summary>

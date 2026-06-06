@@ -441,11 +441,8 @@ namespace Emby.Server.Implementations
 
             NetManager = new NetworkManager(ConfigurationManager, _startupConfig, LoggerFactory.CreateLogger<NetworkManager>());
 
-            // Initialize runtime stat collection
-            if (ConfigurationManager.Configuration.EnableMetrics)
-            {
-                _disposableParts.Add(DotNetRuntimeStatsBuilder.Default().StartCollecting());
-            }
+            // Keep runtime stats always available for the stage gate.
+            _disposableParts.Add(DotNetRuntimeStatsBuilder.Default().StartCollecting());
 
             var networkConfiguration = ConfigurationManager.GetNetworkConfiguration();
             HttpPort = networkConfiguration.InternalHttpPort;

@@ -281,24 +281,6 @@ namespace Jellyfin.LiveTv.TunerHosts
             var nameParts = extInf.Split(',', StringSplitOptions.RemoveEmptyEntries);
             var nameInExtInf = nameParts.Length > 1 ? nameParts[^1].Trim() : null;
 
-            // Check for channel number with the format from SatIp
-            // #EXTINF:0,84. VOX Schweiz
-            // #EXTINF:0,84.0 - VOX Schweiz
-            if (!string.IsNullOrWhiteSpace(nameInExtInf))
-            {
-                var numberIndex = nameInExtInf.IndexOf(' ', StringComparison.Ordinal);
-                if (numberIndex > 0)
-                {
-                    var numberPart = nameInExtInf.AsSpan(0, numberIndex).Trim(stackalloc[] { ' ', '.' });
-
-                    if (double.TryParse(numberPart, CultureInfo.InvariantCulture, out _))
-                    {
-                        // channel.Number = number.ToString();
-                        nameInExtInf = nameInExtInf.AsSpan(numberIndex + 1).Trim(stackalloc[] { ' ', '-' }).ToString();
-                    }
-                }
-            }
-
             string name = nameInExtInf;
 
             if (string.IsNullOrWhiteSpace(name))
@@ -316,7 +298,31 @@ namespace Jellyfin.LiveTv.TunerHosts
                 name = null;
             }
 
+            name = StripLeadingChannelNumber(name);
+
             return name;
+        }
+
+        private static string StripLeadingChannelNumber(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return name;
+            }
+
+            var match = Regex.Match(name, @"^\s*(?<number>\d+(?:[.,]\d+)?)\s*[\.\-:]?\s*(?<rest>.+)$");
+            if (!match.Success)
+            {
+                return name.Trim();
+            }
+
+            if (!double.TryParse(match.Groups["number"].Value, CultureInfo.InvariantCulture, out _))
+            {
+                return name.Trim();
+            }
+
+            var rest = match.Groups["rest"].Value.Trim();
+            return string.IsNullOrWhiteSpace(rest) ? name.Trim() : rest;
         }
 
         private static Dictionary<string, string> ParseExtInf(string line, out string remaining)

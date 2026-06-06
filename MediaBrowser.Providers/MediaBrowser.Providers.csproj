@@ -30,6 +30,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <!-- Code Analyzers -->
@@ -95,5 +96,13 @@
     <EmbeddedResource Include="Plugins\Tmdb\Configuration\config.html" />
     <None Remove="Plugins\Tmdb\jellyfin-plugin-tmdb.svg" />
     <EmbeddedResource Include="Plugins\Tmdb\jellyfin-plugin-tmdb.svg" />
+  </ItemGroup>
+
+  <!-- MidiaStorageOnline -->
+  <ItemGroup>
+    <None Remove="Plugins\MidiaStorageOnline\Configuration\config.html" />
+    <EmbeddedResource Include="Plugins\MidiaStorageOnline\Configuration\config.html" />
+    <None Remove="Plugins\MidiaStorageOnline\Configuration\config.js" />
+    <EmbeddedResource Include="Plugins\MidiaStorageOnline\Configuration\config.js" />
   </ItemGroup>
 </Project>

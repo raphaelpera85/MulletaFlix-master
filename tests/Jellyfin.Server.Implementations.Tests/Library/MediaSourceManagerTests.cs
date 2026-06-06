@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using Castle.Components.DictionaryAdapter;
@@ -28,6 +29,9 @@ namespace Jellyfin.Server.Implementations.Tests.Library
         public MediaSourceManagerTests()
         {
             IFixture fixture = new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
+            fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
+                .ForEach(b => fixture.Behaviors.Remove(b));
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
             fixture.Inject<IFileSystem>(fixture.Create<ManagedFileSystem>());
 
             _mockUserDataManager = fixture.Freeze<Mock<IUserDataManager>>();
@@ -41,7 +45,10 @@ namespace Jellyfin.Server.Implementations.Tests.Library
 
             _item = new Video { Id = Guid.NewGuid(), OwnerId = Guid.Empty, ParentId = Guid.Empty };
 
-            _user = fixture.Create<User>();
+            _user = new User("test", "test", "test")
+            {
+                Id = Guid.NewGuid()
+            };
         }
 
         [Theory]

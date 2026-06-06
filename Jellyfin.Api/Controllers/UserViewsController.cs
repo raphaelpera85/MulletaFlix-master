@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using Jellyfin.Api.Extensions;
 using Jellyfin.Api.Helpers;
 using Jellyfin.Api.ModelBinders;
@@ -64,7 +65,7 @@ public class UserViewsController : BaseJellyfinApiController
     /// <returns>An <see cref="OkResult"/> containing the user views.</returns>
     [HttpGet("UserViews")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public QueryResult<BaseItemDto> GetUserViews(
+    public async Task<QueryResult<BaseItemDto>> GetUserViews(
         [FromQuery] Guid? userId,
         [FromQuery] bool? includeExternalContent,
         [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] CollectionType?[] presetViews,
@@ -85,7 +86,7 @@ public class UserViewsController : BaseJellyfinApiController
             query.PresetViews = presetViews;
         }
 
-        var folders = _userViewManager.GetUserViews(query);
+        var folders = await _userViewManager.GetUserViewsAsync(query).ConfigureAwait(false);
 
         var dtoOptions = new DtoOptions();
         dtoOptions.Fields = [.. dtoOptions.Fields, ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId];
@@ -108,7 +109,7 @@ public class UserViewsController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Obsolete("Kept for backwards compatibility")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public QueryResult<BaseItemDto> GetUserViewsLegacy(
+    public Task<QueryResult<BaseItemDto>> GetUserViewsLegacy(
         [FromRoute, Required] Guid userId,
         [FromQuery] bool? includeExternalContent,
         [FromQuery, ModelBinder(typeof(CommaDelimitedCollectionModelBinder))] CollectionType?[] presetViews,

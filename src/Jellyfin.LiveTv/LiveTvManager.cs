@@ -183,7 +183,7 @@ namespace Jellyfin.LiveTv
                 return null;
             }
 
-            var dto = _dtoService.GetBaseItemDto(program, new DtoOptions(), user);
+            var dto = await _dtoService.GetBaseItemDtoAsync(program, new DtoOptions(), user).ConfigureAwait(false);
 
             var list = new List<(BaseItemDto ItemDto, string ExternalId, string ExternalSeriesId)>
             {
@@ -261,7 +261,7 @@ namespace Jellyfin.LiveTv
 
             var queryResult = _libraryManager.QueryItems(internalQuery);
 
-            var returnArray = _dtoService.GetBaseItemDtos(queryResult.Items, options, user);
+            var returnArray = await _dtoService.GetBaseItemDtosAsync(queryResult.Items, options, user).ConfigureAwait(false);
 
             return new QueryResult<BaseItemDto>(
                 query.StartIndex,
@@ -321,21 +321,21 @@ namespace Jellyfin.LiveTv
                 programs.ToArray());
         }
 
-        public Task<QueryResult<BaseItemDto>> GetRecommendedProgramsAsync(InternalItemsQuery query, DtoOptions options, CancellationToken cancellationToken)
+        public async Task<QueryResult<BaseItemDto>> GetRecommendedProgramsAsync(InternalItemsQuery query, DtoOptions options, CancellationToken cancellationToken)
         {
             if (!(query.IsAiring ?? false))
             {
-                return GetPrograms(query, options, cancellationToken);
+                return await GetPrograms(query, options, cancellationToken).ConfigureAwait(false);
             }
 
             RemoveFields(options);
 
             var internalResult = GetRecommendedProgramsInternal(query, options, cancellationToken);
 
-            return Task.FromResult(new QueryResult<BaseItemDto>(
+            return new QueryResult<BaseItemDto>(
                 query.StartIndex,
                 internalResult.TotalRecordCount,
-                _dtoService.GetBaseItemDtos(internalResult.Items, options, query.User)));
+                await _dtoService.GetBaseItemDtosAsync(internalResult.Items, options, query.User).ConfigureAwait(false));
         }
 
         private int GetRecommendationScore(LiveTvProgram program, User user, bool factorChannelWatchCount)
@@ -650,7 +650,7 @@ namespace Jellyfin.LiveTv
 
             var internalResult = await GetEmbyRecordingsAsync(query, options, user).ConfigureAwait(false);
 
-            var returnArray = _dtoService.GetBaseItemDtos(internalResult.Items, options, user);
+            var returnArray = await _dtoService.GetBaseItemDtosAsync(internalResult.Items, options, user).ConfigureAwait(false);
 
             return new QueryResult<BaseItemDto>(
                 query.StartIndex,
@@ -800,7 +800,7 @@ namespace Jellyfin.LiveTv
 
                 var channel = string.IsNullOrEmpty(i.Item1.ChannelId) ? null : _libraryManager.GetItemById(_tvDtoService.GetInternalChannelId(i.Item2.Name, i.Item1.ChannelId));
 
-                returnList.Add(_tvDtoService.GetTimerInfoDto(i.Item1, i.Item2, program, channel));
+                returnList.Add(await _tvDtoService.GetTimerInfoDtoAsync(i.Item1, i.Item2, program, channel).ConfigureAwait(false));
             }
 
             var returnArray = returnList
@@ -958,6 +958,11 @@ namespace Jellyfin.LiveTv
 
         public void AddChannelInfo(IReadOnlyCollection<(BaseItemDto ItemDto, LiveTvChannel Channel)> items, DtoOptions options, User user)
         {
+            AddChannelInfoAsync(items, options, user).GetAwaiter().GetResult();
+        }
+
+        public async Task AddChannelInfoAsync(IReadOnlyCollection<(BaseItemDto ItemDto, LiveTvChannel Channel)> items, DtoOptions options, User user)
+        {
             var now = DateTime.UtcNow;
 
             var channelIds = items.Select(i => i.Channel.Id).Distinct().ToArray();
@@ -1002,7 +1007,7 @@ namespace Jellyfin.LiveTv
 
             if (addCurrentProgram)
             {
-                var currentProgramDtos = _dtoService.GetBaseItemDtos(currentProgramsList, options, user);
+                var currentProgramDtos = await _dtoService.GetBaseItemDtosAsync(currentProgramsList, options, user).ConfigureAwait(false);
 
                 foreach (var programDto in currentProgramDtos)
                 {

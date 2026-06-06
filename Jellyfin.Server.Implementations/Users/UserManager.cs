@@ -528,6 +528,37 @@ namespace Jellyfin.Server.Implementations.Users
                     throw new SecurityException("Forbidden.");
                 }
 
+                // Check for expired license (reactive fallback between scheduled task runs)
+                if (!user.HasPermission(PermissionKind.IsAdministrator))
+                {
+                    var dbContext = await _dbProvider.CreateDbContextAsync().ConfigureAwait(false);
+                    await using (dbContext.ConfigureAwait(false))
+                    {
+                        var license = await dbContext.UserLicenses
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(l => l.UserId.Equals(user.Id))
+                            .ConfigureAwait(false);
+
+                        if (license is not null && !license.IsUnlimited
+                            && license.ExpirationDate.HasValue
+                            && license.ExpirationDate.Value < DateTime.UtcNow)
+                        {
+                            _logger.LogInformation(
+                                "Authentication request for {UserName} denied: license expired at {ExpirationDate} (IP: {IP}).",
+                                username,
+                                license.ExpirationDate.Value,
+                                remoteEndPoint);
+
+                            // Disable the user proactively
+                            user.SetPermission(PermissionKind.IsDisabled, true);
+                            await UpdateUserInternalAsync(user).ConfigureAwait(false);
+
+                            throw new SecurityException(
+                                $"A licença de acesso de {user.Username} expirou em {license.ExpirationDate.Value:dd/MM/yyyy HH:mm}. Entre em contato com o administrador.");
+                        }
+                    }
+                }
+
                 if (!user.IsParentalScheduleAllowed())
                 {
                     _logger.LogInformation(

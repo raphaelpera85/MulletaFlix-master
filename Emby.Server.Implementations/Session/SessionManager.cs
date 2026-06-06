@@ -1587,6 +1587,11 @@ namespace Emby.Server.Implementations.Session
         {
             CheckDisposed();
 
+            request.App ??= _appHost.Name;
+            request.AppVersion ??= _appHost.ApplicationVersionString;
+            request.DeviceId ??= _appHost.SystemId;
+            request.DeviceName ??= _appHost.Name;
+
             ArgumentException.ThrowIfNullOrEmpty(request.App);
             ArgumentException.ThrowIfNullOrEmpty(request.DeviceId);
             ArgumentException.ThrowIfNullOrEmpty(request.DeviceName);

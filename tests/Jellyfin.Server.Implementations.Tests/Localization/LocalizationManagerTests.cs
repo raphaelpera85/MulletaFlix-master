@@ -286,7 +286,7 @@ namespace Jellyfin.Server.Implementations.Tests.Localization
                 UICulture = "en-US"
             });
 
-            var translated = localizationManager.GetLocalizedString(key);
+            var translated = localizationManager.GetServerLocalizedString(key);
             Assert.NotNull(translated);
             Assert.Equal(expected, translated);
         }

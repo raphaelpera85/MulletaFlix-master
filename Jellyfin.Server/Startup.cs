@@ -237,19 +237,13 @@ namespace Jellyfin.Server
                 mainApp.UseWebSocketHandler();
                 mainApp.UseServerStartupMessage();
 
-                if (_serverConfigurationManager.Configuration.EnableMetrics)
-                {
-                    // Must be registered after any middleware that could change HTTP response codes or the data will be bad
-                    mainApp.UseHttpMetrics();
-                }
+                // Metrics stay enabled in the stage so the sprint gate can validate observability.
+                mainApp.UseHttpMetrics();
 
                 mainApp.UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
-                    if (_serverConfigurationManager.Configuration.EnableMetrics)
-                    {
-                        endpoints.MapMetrics();
-                    }
+                    endpoints.MapMetrics();
 
                     endpoints.MapHealthChecks("/health");
                 });
