@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 #pragma warning disable CS1591
 
 using System;
@@ -12,10 +12,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
@@ -865,7 +865,7 @@ namespace MediaBrowser.MediaEncoding.Encoder
                 }
             }
 
-            // A new EncodingOptions instance must be used as to not disable HW acceleration for all of Jellyfin.
+            // A new EncodingOptions instance must be used as to not disable HW acceleration for all of MulletaFlix.
             // Additionally, we must set a few fields without defaults to prevent null pointer exceptions.
             if (!allowHwAccel)
             {
@@ -1402,3 +1402,4 @@ namespace MediaBrowser.MediaEncoding.Encoder
         }
     }
 }
+

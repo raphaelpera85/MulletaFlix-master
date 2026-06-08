@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -329,3 +329,4 @@ namespace MediaBrowser.Providers.Books.OpenPackagingFormat
         }
     }
 }
+

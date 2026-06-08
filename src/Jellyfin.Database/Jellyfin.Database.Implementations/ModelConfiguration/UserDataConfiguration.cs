@@ -1,8 +1,8 @@
-using Jellyfin.Database.Implementations.Entities;
+﻿using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Jellyfin.Database.Implementations.ModelConfiguration;
+namespace MulletaFlix.Database.Implementations.ModelConfiguration;
 
 /// <summary>
 /// FluentAPI configuration for the UserData entity.
@@ -23,3 +23,4 @@ public class UserDataConfiguration : IEntityTypeConfiguration<UserData>
         builder.HasOne(e => e.Item).WithMany(e => e.UserData);
     }
 }
+

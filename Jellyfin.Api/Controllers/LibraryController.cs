@@ -6,15 +6,15 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Api.Models.LibraryDtos;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Api.Models.LibraryDtos;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Collections;
@@ -39,13 +39,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Library Controller.
 /// </summary>
 [Route("")]
-public class LibraryController : BaseJellyfinApiController
+public class LibraryController : BaseMulletaFlixApiController
 {
     private readonly IProviderManager _providerManager;
     private readonly ISimilarItemsManager _similarItemsManager;
@@ -507,7 +507,7 @@ public class LibraryController : BaseJellyfinApiController
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<IEnumerable<BaseItemDto>> GetAncestors([FromRoute, Required] Guid itemId, [FromQuery] Guid? userId)
+    public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetAncestors([FromRoute, Required] Guid itemId, [FromQuery] Guid? userId)
     {
         userId = RequestHelpers.GetUserId(User, userId);
         var user = userId.IsNullOrEmpty()
@@ -535,7 +535,7 @@ public class LibraryController : BaseJellyfinApiController
                 }
             }
 
-            baseItemDtos.Add(_dtoService.GetBaseItemDto(parent, dtoOptions, user));
+            baseItemDtos.Add(await _dtoService.GetBaseItemDtoAsync(parent, dtoOptions, user).ConfigureAwait(false));
 
             parent = parent.GetParent();
         }
@@ -566,7 +566,7 @@ public class LibraryController : BaseJellyfinApiController
     [HttpGet("Library/MediaFolders")]
     [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<QueryResult<BaseItemDto>> GetMediaFolders([FromQuery] bool? isHidden)
+    public async Task<ActionResult<QueryResult<BaseItemDto>>> GetMediaFolders([FromQuery] bool? isHidden)
     {
         var items = _libraryManager.GetUserRootFolder().Children
             .Concat(_libraryManager.RootFolder.VirtualChildren)
@@ -582,7 +582,7 @@ public class LibraryController : BaseJellyfinApiController
         }
 
         var dtoOptions = new DtoOptions();
-        var resultArray = _dtoService.GetBaseItemDtos(items, dtoOptions);
+        var resultArray = await _dtoService.GetBaseItemDtosAsync(items, dtoOptions).ConfigureAwait(false);
         return new QueryResult<BaseItemDto>(resultArray);
     }
 
@@ -865,7 +865,7 @@ public class LibraryController : BaseJellyfinApiController
             libraryOptions,
             cancellationToken).ConfigureAwait(false);
 
-        var returnList = _dtoService.GetBaseItemDtos(itemsResult, dtoOptions, user);
+        var returnList = await _dtoService.GetBaseItemDtosAsync(itemsResult, dtoOptions, user).ConfigureAwait(false);
 
         return new QueryResult<BaseItemDto>(
             0,
@@ -1105,3 +1105,4 @@ public class LibraryController : BaseJellyfinApiController
         return metadataOptions is null || !metadataOptions.DisabledImageFetchers.Contains(name, StringComparison.OrdinalIgnoreCase);
     }
 }
+

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Querying;
 
 namespace MediaBrowser.Controller.Persistence;
@@ -20,3 +20,4 @@ public interface IItemTypeLookup
     /// </summary>
     IReadOnlyDictionary<BaseItemKind, string> BaseItemKindNames { get; }
 }
+

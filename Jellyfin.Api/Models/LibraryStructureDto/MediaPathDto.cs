@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using MediaBrowser.Model.Configuration;
 
-namespace Jellyfin.Api.Models.LibraryStructureDto;
+namespace MulletaFlix.Api.Models.LibraryStructureDto;
 
 /// <summary>
 /// Media Path dto.
@@ -24,3 +24,4 @@ public class MediaPathDto
     /// </summary>
     public MediaPathInfo? PathInfo { get; set; }
 }
+

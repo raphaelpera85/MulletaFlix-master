@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -8,7 +8,7 @@ using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Subtitles.Tests
+namespace MulletaFlix.MediaEncoding.Subtitles.Tests
 {
     public class SsaParserTests
     {
@@ -85,3 +85,4 @@ namespace Jellyfin.MediaEncoding.Subtitles.Tests
         }
     }
 }
+

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- ProjectGuid is only included as a requirement for SonarQube analysis -->
   <PropertyGroup>
@@ -41,8 +41,9 @@
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>Jellyfin.Api.Tests</_Parameter1>
+      <_Parameter1>MulletaFlix.Api.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
 </Project>
+

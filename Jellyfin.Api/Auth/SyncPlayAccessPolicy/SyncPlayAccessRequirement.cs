@@ -1,7 +1,7 @@
-using Jellyfin.Api.Auth.DefaultAuthorizationPolicy;
-using Jellyfin.Data.Enums;
+﻿using MulletaFlix.Api.Auth.DefaultAuthorizationPolicy;
+using MulletaFlix.Data.Enums;
 
-namespace Jellyfin.Api.Auth.SyncPlayAccessPolicy
+namespace MulletaFlix.Api.Auth.SyncPlayAccessPolicy
 {
     /// <summary>
     /// The default authorization requirement.
@@ -23,3 +23,4 @@ namespace Jellyfin.Api.Auth.SyncPlayAccessPolicy
         public SyncPlayAccessRequirementType RequiredAccess { get; }
     }
 }
+

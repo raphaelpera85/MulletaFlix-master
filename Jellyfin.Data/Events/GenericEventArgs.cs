@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Data.Events
+namespace MulletaFlix.Data.Events
 {
     /// <summary>
     /// Provides a generic EventArgs subclass that can hold any kind of object.
@@ -24,3 +24,4 @@ namespace Jellyfin.Data.Events
         public T Argument { get; }
     }
 }
+

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Api.Attributes;
+namespace MulletaFlix.Api.Attributes;
 
 /// <summary>
 /// Attribute to mark a parameter as obsolete.
@@ -9,3 +9,4 @@ namespace Jellyfin.Api.Attributes;
 public sealed class ParameterObsoleteAttribute : Attribute
 {
 }
+

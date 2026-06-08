@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -12,9 +12,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Extensions;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
@@ -29,7 +29,7 @@ using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.Net;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
+namespace MulletaFlix.LiveTv.TunerHosts.HdHomerun
 {
     public class HdHomerunHost : BaseTunerHost, ITunerHost, IConfigurableTunerHost
     {
@@ -555,3 +555,4 @@ namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
         }
     }
 }
+

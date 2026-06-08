@@ -1,16 +1,16 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers;
+namespace MulletaFlix.Server.Integration.Tests.Controllers;
 
-public class PlaystateControllerTests : IClassFixture<JellyfinApplicationFactory>
+public class PlaystateControllerTests : IClassFixture<MulletaFlixApplicationFactory>
 {
-    private readonly JellyfinApplicationFactory _factory;
+    private readonly MulletaFlixApplicationFactory _factory;
     private static string? _accessToken;
 
-    public PlaystateControllerTests(JellyfinApplicationFactory factory)
+    public PlaystateControllerTests(MulletaFlixApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -59,3 +59,4 @@ public class PlaystateControllerTests : IClassFixture<JellyfinApplicationFactory
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }
+

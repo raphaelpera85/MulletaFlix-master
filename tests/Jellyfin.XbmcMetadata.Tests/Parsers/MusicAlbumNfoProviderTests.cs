@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities.Audio;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.XbmcMetadata.Tests.Parsers
+namespace MulletaFlix.XbmcMetadata.Tests.Parsers
 {
     public class MusicAlbumNfoProviderTests
     {
@@ -84,3 +84,4 @@ namespace Jellyfin.XbmcMetadata.Tests.Parsers
         }
     }
 }
+

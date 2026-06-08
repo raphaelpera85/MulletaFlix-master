@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Localization
+namespace MulletaFlix.Server.Implementations.Tests.Localization
 {
     public class LocalizationManagerTests
     {
@@ -339,7 +339,7 @@ namespace Jellyfin.Server.Implementations.Tests.Localization
                 UICulture = "en-US"
             });
 
-            // es-419 is stored as es_419 in Jellyfin
+            // es-419 is stored as es_419 in MulletaFlix
             var translated = localizationManager.GetLocalizedString("Default", "es-419");
             Assert.NotEqual("Default", translated);
         }
@@ -407,3 +407,4 @@ namespace Jellyfin.Server.Implementations.Tests.Localization
         }
     }
 }
+

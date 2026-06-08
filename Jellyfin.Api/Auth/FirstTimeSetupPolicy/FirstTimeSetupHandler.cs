@@ -1,10 +1,10 @@
-using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
+﻿using System.Threading.Tasks;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
 using MediaBrowser.Common.Configuration;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Jellyfin.Api.Auth.FirstTimeSetupPolicy
+namespace MulletaFlix.Api.Auth.FirstTimeSetupPolicy
 {
     /// <summary>
     /// Authorization handler for requiring first time setup or default privileges.
@@ -54,3 +54,4 @@ namespace Jellyfin.Api.Auth.FirstTimeSetupPolicy
         }
     }
 }
+

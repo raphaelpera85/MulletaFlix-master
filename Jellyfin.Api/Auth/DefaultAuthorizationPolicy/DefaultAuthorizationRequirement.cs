@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 
-namespace Jellyfin.Api.Auth.DefaultAuthorizationPolicy
+namespace MulletaFlix.Api.Auth.DefaultAuthorizationPolicy
 {
     /// <summary>
     /// The default authorization requirement.
@@ -22,3 +22,4 @@ namespace Jellyfin.Api.Auth.DefaultAuthorizationPolicy
         public bool ValidateParentalSchedule { get; }
     }
 }
+

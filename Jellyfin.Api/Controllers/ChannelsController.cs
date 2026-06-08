@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -19,14 +19,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Channels Controller.
 /// </summary>
 [Authorize]
 [Tags("Channel")]
-public class ChannelsController : BaseJellyfinApiController
+public class ChannelsController : BaseMulletaFlixApiController
 {
     private readonly IChannelManager _channelManager;
     private readonly IUserManager _userManager;
@@ -189,3 +189,4 @@ public class ChannelsController : BaseJellyfinApiController
         return await _channelManager.GetLatestChannelItems(query, CancellationToken.None).ConfigureAwait(false);
     }
 }
+

@@ -1,17 +1,17 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Data;
-using Jellyfin.Data.Dtos;
-using Jellyfin.Data.Events;
-using Jellyfin.Data.Queries;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Entities.Security;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Dtos;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Data.Queries;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities.Security;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Devices;
 using MediaBrowser.Controller.Library;
@@ -21,14 +21,14 @@ using MediaBrowser.Model.Querying;
 using MediaBrowser.Model.Session;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Devices
+namespace MulletaFlix.Server.Implementations.Devices
 {
     /// <summary>
     /// Manages the creation, updating, and retrieval of devices.
     /// </summary>
     public class DeviceManager : IDeviceManager
     {
-        private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
         private readonly IUserManager _userManager;
         private readonly ConcurrentDictionary<string, ClientCapabilities> _capabilitiesMap = new();
         private readonly ConcurrentDictionary<int, Device> _devices;
@@ -39,7 +39,7 @@ namespace Jellyfin.Server.Implementations.Devices
         /// </summary>
         /// <param name="dbProvider">The database provider.</param>
         /// <param name="userManager">The user manager.</param>
-        public DeviceManager(IDbContextFactory<JellyfinDbContext> dbProvider, IUserManager userManager)
+        public DeviceManager(IDbContextFactory<MulletaFlixDbContext> dbProvider, IUserManager userManager)
         {
             _dbProvider = dbProvider;
             _userManager = userManager;
@@ -309,3 +309,4 @@ namespace Jellyfin.Server.Implementations.Devices
         }
     }
 }
+

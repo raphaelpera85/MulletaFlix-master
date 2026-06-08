@@ -1,7 +1,7 @@
-using Emby.Naming.AudioBook;
+﻿using Emby.Naming.AudioBook;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.AudioBook
+namespace MulletaFlix.Naming.Tests.AudioBook
 {
     public class AudioBookFileInfoTests
     {
@@ -28,3 +28,4 @@ namespace Jellyfin.Naming.Tests.AudioBook
         }
     }
 }
+

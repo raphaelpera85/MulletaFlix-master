@@ -1,7 +1,7 @@
-#nullable disable
+﻿#nullable disable
 using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Events;
+using MulletaFlix.Data.Events;
 
 namespace MediaBrowser.Model.Tasks
 {
@@ -75,3 +75,4 @@ namespace MediaBrowser.Model.Tasks
         void ReloadTriggerEvents();
     }
 }
+

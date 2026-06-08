@@ -1,12 +1,12 @@
-#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
+﻿#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Database.Implementations.Interfaces;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Interfaces;
 
-namespace Jellyfin.Database.Implementations.Entities
+namespace MulletaFlix.Database.Implementations.Entities
 {
     /// <summary>
     /// An entity representing whether the associated user has a specific permission.
@@ -66,3 +66,4 @@ namespace Jellyfin.Database.Implementations.Entities
         }
     }
 }
+

@@ -1,17 +1,17 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Net.Mime;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers
+namespace MulletaFlix.Server.Integration.Tests.Controllers
 {
-    public sealed class MediaInfoControllerTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class MediaInfoControllerTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
         private static string? _accessToken;
 
-        public MediaInfoControllerTests(JellyfinApplicationFactory factory)
+        public MediaInfoControllerTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -59,3 +59,4 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         }
     }
 }
+

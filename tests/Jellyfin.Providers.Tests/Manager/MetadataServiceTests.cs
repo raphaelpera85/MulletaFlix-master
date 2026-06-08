@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using MediaBrowser.Controller.Entities;
@@ -10,7 +10,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Providers.Manager;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.Manager
+namespace MulletaFlix.Providers.Tests.Manager
 {
     public class MetadataServiceTests
     {
@@ -385,3 +385,4 @@ namespace Jellyfin.Providers.Tests.Manager
         }
     }
 }
+

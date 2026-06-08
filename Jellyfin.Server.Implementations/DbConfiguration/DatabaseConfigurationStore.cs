@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.DbConfiguration;
+using MulletaFlix.Database.Implementations.DbConfiguration;
 using MediaBrowser.Common.Configuration;
 
-namespace Jellyfin.Server.Implementations.DatabaseConfiguration;
+namespace MulletaFlix.Server.Implementations.DatabaseConfiguration;
 
 /// <summary>
 /// A configuration that stores database related settings.
@@ -24,3 +24,4 @@ public class DatabaseConfigurationStore : ConfigurationStore
         Key = StoreKey;
     }
 }
+

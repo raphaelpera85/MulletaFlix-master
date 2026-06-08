@@ -1,9 +1,9 @@
-using System.IO;
+﻿using System.IO;
 using Emby.Naming.Common;
 using Emby.Naming.Video;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Video
+namespace MulletaFlix.Naming.Tests.Video
 {
     public sealed class CleanDateTimeTests
     {
@@ -64,3 +64,4 @@ namespace Jellyfin.Naming.Tests.Video
         }
     }
 }
+

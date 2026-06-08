@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Jellyfin.Database.Implementations;
+namespace MulletaFlix.Database.Implementations;
 
 /// <summary>
 /// Wrapper for progress reporting on Partition helpers.
@@ -53,3 +53,4 @@ public class ProgressablePartitionReporting<TEntity>
         OnEndPartition?.Invoke(iteration, _partitionTime.Elapsed);
     }
 }
+

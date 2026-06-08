@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.Model.Entities;
 
-namespace Jellyfin.Api.Models.PlaylistDtos;
+namespace MulletaFlix.Api.Models.PlaylistDtos;
 
 /// <summary>
 /// Update existing playlist dto. Fields set to `null` will not be updated and keep their current values.
@@ -32,3 +32,4 @@ public class UpdatePlaylistDto
     /// </summary>
     public bool? IsPublic { get; set; }
 }
+

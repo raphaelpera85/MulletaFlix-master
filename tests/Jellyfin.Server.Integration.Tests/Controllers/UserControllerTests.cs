@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -6,25 +6,25 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Api.Models.UserDtos;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Models.UserDtos;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Model.Dto;
 using Xunit;
 using Xunit.v3.Priority;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers
+namespace MulletaFlix.Server.Integration.Tests.Controllers
 {
     [TestCaseOrderer(typeof(PriorityOrderer))]
-    public sealed class UserControllerTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class UserControllerTests : IClassFixture<MulletaFlixApplicationFactory>
     {
         private const string TestUsername = "testUser01";
 
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
         private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
         private static string? _accessToken;
         private static Guid _testUserId = Guid.Empty;
 
-        public UserControllerTests(JellyfinApplicationFactory factory)
+        public UserControllerTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -101,7 +101,7 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
-        [InlineData("‼️")]
+        [InlineData("â€¼ï¸")]
         [Priority(0)]
         public async Task New_Invalid_Fail(string? username)
         {
@@ -166,3 +166,4 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         }
     }
 }
+

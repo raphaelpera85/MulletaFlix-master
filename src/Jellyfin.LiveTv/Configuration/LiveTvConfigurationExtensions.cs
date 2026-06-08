@@ -1,8 +1,8 @@
-using MediaBrowser.Common.Configuration;
+﻿using MediaBrowser.Common.Configuration;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.LiveTv;
 
-namespace Jellyfin.LiveTv.Configuration;
+namespace MulletaFlix.LiveTv.Configuration;
 
 /// <summary>
 /// <see cref="IConfigurationManager"/> extensions for Live TV.
@@ -25,3 +25,4 @@ public static class LiveTvConfigurationExtensions
     public static XbmcMetadataOptions GetNfoConfiguration(this IConfigurationManager configurationManager)
         => configurationManager.GetConfiguration<XbmcMetadataOptions>("xbmcmetadata");
 }
+

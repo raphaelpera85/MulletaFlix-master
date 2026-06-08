@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using MediaBrowser.MediaEncoding.Subtitles;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Subtitles.Tests
+namespace MulletaFlix.MediaEncoding.Subtitles.Tests
 {
     public class AssParserTests
     {
@@ -25,3 +25,4 @@ namespace Jellyfin.MediaEncoding.Subtitles.Tests
         }
     }
 }
+

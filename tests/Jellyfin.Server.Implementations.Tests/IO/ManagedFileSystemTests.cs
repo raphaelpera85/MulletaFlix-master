@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using Emby.Server.Implementations.IO;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.IO;
+namespace MulletaFlix.Server.Implementations.Tests.IO;
 
 public class ManagedFileSystemTests
 {
@@ -105,7 +105,7 @@ public class ManagedFileSystemTests
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "Unix-only test");
 
-        string testFileDir = Path.Combine(Path.GetTempPath(), "jellyfin-test-data");
+        string testFileDir = Path.Combine(Path.GetTempPath(), "MulletaFlix-test-data");
         string testFileName = Path.Combine(testFileDir, Path.GetRandomFileName() + "-danglingsym.link");
 
         Directory.CreateDirectory(testFileDir);
@@ -121,3 +121,4 @@ public class ManagedFileSystemTests
     [DefaultDllImportSearchPaths(DllImportSearchPath.UserDirectories)]
     private static extern int symlink(string target, string linkpath);
 }
+

@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums;
+﻿namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// Media types.
@@ -30,3 +30,4 @@ public enum MediaType
     /// </summary>
     Book = 4
 }
+

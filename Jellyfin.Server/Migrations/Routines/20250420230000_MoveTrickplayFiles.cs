@@ -1,23 +1,23 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Trickplay;
 using MediaBrowser.Model.IO;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to move trickplay files to the new directory.
 /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T23:00:00", nameof(MoveTrickplayFiles), RunMigrationOnSetup = true)]
+[MulletaFlixMigration("2025-04-20T23:00:00", nameof(MoveTrickplayFiles), RunMigrationOnSetup = true)]
 public class MoveTrickplayFiles : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -128,3 +128,4 @@ public class MoveTrickplayFiles : IMigrationRoutine
         return Path.Combine(path, subdirectory);
     }
 }
+

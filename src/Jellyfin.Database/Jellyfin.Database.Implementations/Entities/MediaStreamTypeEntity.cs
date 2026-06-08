@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Entities;
+﻿namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Enum MediaStreamType.
@@ -35,3 +35,4 @@ public enum MediaStreamTypeEntity
     /// </summary>
     Lyric = 5
 }
+

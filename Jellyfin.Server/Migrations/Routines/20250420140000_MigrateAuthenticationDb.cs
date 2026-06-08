@@ -1,29 +1,29 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using Emby.Server.Implementations.Data;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities.Security;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities.Security;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines
+namespace MulletaFlix.Server.Migrations.Routines
 {
     /// <summary>
     /// A migration that moves data from the authentication database into the new schema.
     /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-    [JellyfinMigration("2025-04-20T14:00:00", nameof(MigrateAuthenticationDb), "5BD72F41-E6F3-4F60-90AA-09869ABE0E22")]
+    [MulletaFlixMigration("2025-04-20T14:00:00", nameof(MigrateAuthenticationDb), "5BD72F41-E6F3-4F60-90AA-09869ABE0E22")]
     public class MigrateAuthenticationDb : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
     {
         private const string DbFilename = "authentication.db";
 
         private readonly ILogger<MigrateAuthenticationDb> _logger;
-        private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
         private readonly IServerApplicationPaths _appPaths;
         private readonly IUserManager _userManager;
 
@@ -36,7 +36,7 @@ namespace Jellyfin.Server.Migrations.Routines
         /// <param name="userManager">The user manager.</param>
         public MigrateAuthenticationDb(
             ILogger<MigrateAuthenticationDb> logger,
-            IDbContextFactory<JellyfinDbContext> dbProvider,
+            IDbContextFactory<MulletaFlixDbContext> dbProvider,
             IServerApplicationPaths appPaths,
             IUserManager userManager)
         {
@@ -160,3 +160,4 @@ namespace Jellyfin.Server.Migrations.Routines
         }
     }
 }
+

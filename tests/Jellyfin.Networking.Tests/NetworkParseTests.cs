@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using Jellyfin.Networking.Manager;
+using MulletaFlix.Networking.Manager;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Model.Net;
@@ -13,7 +13,7 @@ using Moq;
 using Xunit;
 using IConfigurationManager = MediaBrowser.Common.Configuration.IConfigurationManager;
 
-namespace Jellyfin.Networking.Tests
+namespace MulletaFlix.Networking.Tests
 {
     public class NetworkParseTests
     {
@@ -167,7 +167,7 @@ namespace Jellyfin.Networking.Tests
         }
 
         /// <summary>
-        /// Same as the IPv4 case but for IPv6 entries — makes sure the polarity pre-check works
+        /// Same as the IPv4 case but for IPv6 entries â€” makes sure the polarity pre-check works
         /// for IPv6 CIDR notation (with '::') as well.
         /// </summary>
         [Fact]
@@ -273,9 +273,9 @@ namespace Jellyfin.Networking.Tests
         // User on internal network, no binding specified - so result is the 1st internal.
         [InlineData("192.168.1.1", "", false, "eth16")]
         // User on external network, internal binding only - so result is the 1st internal.
-        [InlineData("jellyfin.org", "eth16", false, "eth16")]
+        [InlineData("MulletaFlix.org", "eth16", false, "eth16")]
         // User on external network, no binding - so result is the 1st external.
-        [InlineData("jellyfin.org", "", false, "eth11")]
+        [InlineData("MulletaFlix.org", "", false, "eth11")]
         // Dns failure - should skip the test.
         // https://en.wikipedia.org/wiki/.test
         [InlineData("invalid.domain.test", "", false, "eth11")]
@@ -324,7 +324,7 @@ namespace Jellyfin.Networking.Tests
         // This test is to replicate how subnet bound ServerPublisherUri work throughout the system.
 
         // User on internal network, we're bound internal and external - so result is internal override.
-        [InlineData("192.168.1.1", "192.168.1.0/24", "eth16,eth11", false, "192.168.1.0/24=internal.jellyfin", "internal.jellyfin")]
+        [InlineData("192.168.1.1", "192.168.1.0/24", "eth16,eth11", false, "192.168.1.0/24=internal.MulletaFlix", "internal.MulletaFlix")]
 
         // User on external network, we're bound internal and external - so result is override.
         [InlineData("8.8.8.8", "192.168.1.0/24", "eth16,eth11", false, "all=http://helloworld.com", "http://helloworld.com")]
@@ -336,10 +336,10 @@ namespace Jellyfin.Networking.Tests
         [InlineData("192.168.1.1", "192.168.1.0/24", "", false, "external=http://helloworld.com", "eth16")]
 
         // User on external network, internal binding only - so assumption is a proxy forward, return external override.
-        [InlineData("jellyfin.org", "192.168.1.0/24", "eth16", false, "external=http://helloworld.com", "http://helloworld.com")]
+        [InlineData("79.2.3.4", "192.168.1.0/24", "eth16", false, "external=http://helloworld.com", "http://helloworld.com")]
 
         // User on external network, no binding - so result is the 1st external which is overridden.
-        [InlineData("jellyfin.org", "192.168.1.0/24", "", false, "external=http://helloworld.com", "http://helloworld.com")]
+        [InlineData("79.2.3.4", "192.168.1.0/24", "", false, "external=http://helloworld.com", "http://helloworld.com")]
 
         // User assumed to be internal, no binding - so result is the 1st matching interface.
         [InlineData("", "192.168.1.0/24", "", false, "all=http://helloworld.com", "eth16")]
@@ -495,3 +495,4 @@ namespace Jellyfin.Networking.Tests
         }
     }
 }
+

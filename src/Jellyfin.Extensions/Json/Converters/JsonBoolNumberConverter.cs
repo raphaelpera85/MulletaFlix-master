@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters
+namespace MulletaFlix.Extensions.Json.Converters
 {
     /// <summary>
     /// Converts a number to a boolean.
@@ -28,3 +28,4 @@ namespace Jellyfin.Extensions.Json.Converters
         }
     }
 }
+

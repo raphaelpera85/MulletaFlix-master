@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
@@ -11,10 +11,10 @@ using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
@@ -34,13 +34,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Image controller.
 /// </summary>
 [Route("")]
-public class ImageController : BaseJellyfinApiController
+public class ImageController : BaseMulletaFlixApiController
 {
     private readonly IUserManager _userManager;
     private readonly ILibraryManager _libraryManager;
@@ -2082,3 +2082,4 @@ public class ImageController : BaseJellyfinApiController
         return false;
     }
 }
+

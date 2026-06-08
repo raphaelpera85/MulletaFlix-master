@@ -1,24 +1,24 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Provides next-up episode query operations.
 /// </summary>
 public class NextUpService : INextUpService
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IItemTypeLookup _itemTypeLookup;
     private readonly IItemQueryHelpers _queryHelpers;
 
@@ -29,7 +29,7 @@ public class NextUpService : INextUpService
     /// <param name="itemTypeLookup">The item type lookup.</param>
     /// <param name="queryHelpers">The shared query helpers.</param>
     public NextUpService(
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         IItemTypeLookup itemTypeLookup,
         IItemQueryHelpers queryHelpers)
     {
@@ -357,3 +357,4 @@ public class NextUpService : INextUpService
         return result;
     }
 }
+

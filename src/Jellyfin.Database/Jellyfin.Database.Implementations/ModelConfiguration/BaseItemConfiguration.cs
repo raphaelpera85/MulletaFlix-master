@@ -1,9 +1,9 @@
-using System;
-using Jellyfin.Database.Implementations.Entities;
+﻿using System;
+using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Jellyfin.Database.Implementations.ModelConfiguration;
+namespace MulletaFlix.Database.Implementations.ModelConfiguration;
 
 /// <summary>
 /// Configuration for BaseItem.
@@ -85,3 +85,4 @@ public class BaseItemConfiguration : IEntityTypeConfiguration<BaseItemEntity>
         });
     }
 }
+

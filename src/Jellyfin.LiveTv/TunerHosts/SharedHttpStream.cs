@@ -1,4 +1,4 @@
-#pragma warning disable CA1711
+﻿#pragma warning disable CA1711
 #pragma warning disable CS1591
 
 using System;
@@ -17,7 +17,7 @@ using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.TunerHosts
+namespace MulletaFlix.LiveTv.TunerHosts
 {
     public class SharedHttpStream : LiveStream, IDirectStreamProvider
     {
@@ -133,3 +133,4 @@ namespace Jellyfin.LiveTv.TunerHosts
         }
     }
 }
+

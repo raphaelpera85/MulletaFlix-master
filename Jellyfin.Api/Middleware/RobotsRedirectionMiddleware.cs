@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Middleware;
+namespace MulletaFlix.Api.Middleware;
 
 /// <summary>
 /// Redirect requests to robots.txt to web/robots.txt.
@@ -43,3 +43,4 @@ public class RobotsRedirectionMiddleware
         await _next(httpContext).ConfigureAwait(false);
     }
 }
+

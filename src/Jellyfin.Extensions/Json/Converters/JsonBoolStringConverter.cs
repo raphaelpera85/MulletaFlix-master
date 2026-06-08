@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.Buffers.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters;
+namespace MulletaFlix.Extensions.Json.Converters;
 
 /// <summary>
 /// Converts a string to a boolean.
@@ -31,3 +31,4 @@ public class JsonBoolStringConverter : JsonConverter<bool>
     public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
         => writer.WriteBooleanValue(value);
 }
+

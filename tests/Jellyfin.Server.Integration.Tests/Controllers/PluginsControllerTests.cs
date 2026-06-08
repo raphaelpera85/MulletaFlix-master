@@ -1,20 +1,20 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Model.Plugins;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers;
+namespace MulletaFlix.Server.Integration.Tests.Controllers;
 
-public sealed class PluginsControllerTests : IClassFixture<JellyfinApplicationFactory>
+public sealed class PluginsControllerTests : IClassFixture<MulletaFlixApplicationFactory>
 {
-    private readonly JellyfinApplicationFactory _factory;
+    private readonly MulletaFlixApplicationFactory _factory;
     private static string? _accessToken;
 
-    public PluginsControllerTests(JellyfinApplicationFactory factory)
+    public PluginsControllerTests(MulletaFlixApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -43,3 +43,4 @@ public sealed class PluginsControllerTests : IClassFixture<JellyfinApplicationFa
         _ = await response.Content.ReadFromJsonAsync<PluginInfo[]>(JsonDefaults.Options, TestContext.Current.CancellationToken);
     }
 }
+

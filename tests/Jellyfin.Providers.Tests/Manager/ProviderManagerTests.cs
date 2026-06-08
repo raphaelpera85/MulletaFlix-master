@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -27,7 +27,7 @@ using Xunit;
 // Allow Moq to see internal class
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
-namespace Jellyfin.Providers.Tests.Manager
+namespace MulletaFlix.Providers.Tests.Manager
 {
     public class ProviderManagerTests
     {
@@ -621,3 +621,4 @@ namespace Jellyfin.Providers.Tests.Manager
         }
     }
 }
+

@@ -1,9 +1,9 @@
-#pragma warning disable CS1591, SA1601
+﻿#pragma warning disable CS1591, SA1601
 
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     public partial class AddDevices : Migration
     {
@@ -11,7 +11,7 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.CreateTable(
                 name: "ApiKeys",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -28,7 +28,7 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateTable(
                 name: "DeviceOptions",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -43,7 +43,7 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Devices",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -65,7 +65,7 @@ namespace Jellyfin.Server.Implementations.Migrations
                     table.ForeignKey(
                         name: "FK_Devices_Users_UserId",
                         column: x => x.UserId,
-                        principalSchema: "jellyfin",
+                        principalSchema: "MulletaFlix",
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -73,39 +73,39 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_ApiKeys_AccessToken",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "ApiKeys",
                 column: "AccessToken",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeviceOptions_DeviceId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DeviceOptions",
                 column: "DeviceId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Devices_AccessToken_DateLastActivity",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Devices",
                 columns: new[] { "AccessToken", "DateLastActivity" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Devices_DeviceId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Devices",
                 column: "DeviceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Devices_DeviceId_DateLastActivity",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Devices",
                 columns: new[] { "DeviceId", "DateLastActivity" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Devices_UserId_DeviceId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Devices",
                 columns: new[] { "UserId", "DeviceId" });
         }
@@ -114,15 +114,16 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ApiKeys",
-                schema: "jellyfin");
+                schema: "MulletaFlix");
 
             migrationBuilder.DropTable(
                 name: "DeviceOptions",
-                schema: "jellyfin");
+                schema: "MulletaFlix");
 
             migrationBuilder.DropTable(
                 name: "Devices",
-                schema: "jellyfin");
+                schema: "MulletaFlix");
         }
     }
 }
+

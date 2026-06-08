@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.ClientLogDtos;
+﻿namespace MulletaFlix.Api.Models.ClientLogDtos;
 
 /// <summary>
 /// Client log document response dto.
@@ -19,3 +19,4 @@ public class ClientLogDocumentResponseDto
     /// </summary>
     public string FileName { get; }
 }
+

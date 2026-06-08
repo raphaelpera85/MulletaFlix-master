@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MediaBrowser.Controller.Entities
 {
@@ -53,3 +53,4 @@ namespace MediaBrowser.Controller.Entities
         public bool? IsFavorite { get; set; }
     }
 }
+

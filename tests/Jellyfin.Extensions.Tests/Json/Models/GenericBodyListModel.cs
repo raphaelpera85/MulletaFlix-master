@@ -1,11 +1,11 @@
-#pragma warning disable CA1002 // Do not expose generic lists
+﻿#pragma warning disable CA1002 // Do not expose generic lists
 #pragma warning disable CA2227 // Collection properties should be read only
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions.Json.Converters;
 
-namespace Jellyfin.Extensions.Tests.Json.Models
+namespace MulletaFlix.Extensions.Tests.Json.Models
 {
     /// <summary>
     /// The generic body <c>List</c> model.
@@ -20,3 +20,4 @@ namespace Jellyfin.Extensions.Tests.Json.Models
         public List<T> Value { get; set; } = default!;
     }
 }
+

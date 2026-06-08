@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 
-namespace Jellyfin.Database.Implementations.Entities
+namespace MulletaFlix.Database.Implementations.Entities
 {
     /// <summary>
     /// An entity representing a user's display preferences.
@@ -148,3 +148,4 @@ namespace Jellyfin.Database.Implementations.Entities
         public virtual ICollection<HomeSection> HomeSections { get; private set; }
     }
 }
+

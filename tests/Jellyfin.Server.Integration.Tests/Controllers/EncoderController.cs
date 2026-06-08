@@ -1,14 +1,14 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers
+namespace MulletaFlix.Server.Integration.Tests.Controllers
 {
     /// <summary>
     /// Controller for testing the encoded url.
     /// </summary>
-    public class EncoderController : BaseJellyfinTestController
+    public class EncoderController : BaseMulletaFlixTestController
     {
         /// <summary>
         /// Tests the url decoding.
@@ -51,3 +51,4 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         }
     }
 }
+

@@ -1,6 +1,6 @@
-using MediaBrowser.Controller.Streaming;
+﻿using MediaBrowser.Controller.Streaming;
 
-namespace Jellyfin.Api.Models.StreamingDtos;
+namespace MulletaFlix.Api.Models.StreamingDtos;
 
 /// <summary>
 /// The hls video request dto.
@@ -12,3 +12,4 @@ public class HlsVideoRequestDto : VideoRequestDto
     /// </summary>
     public bool EnableAdaptiveBitrateStreaming { get; set; }
 }
+

@@ -1,12 +1,12 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Controller.SyncPlay;
@@ -677,3 +677,4 @@ namespace Emby.Server.Implementations.SyncPlay
         }
     }
 }
+

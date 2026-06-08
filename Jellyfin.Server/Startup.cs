@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Net;
@@ -8,19 +8,20 @@ using System.Net.Mime;
 using System.Text;
 using Emby.Server.Implementations.EntryPoints;
 using Emby.Server.Implementations.Localization;
-using Jellyfin.Api.Middleware;
-using Jellyfin.Database.Implementations;
-using Jellyfin.LiveTv.Extensions;
-using Jellyfin.LiveTv.Recordings;
-using Jellyfin.MediaEncoding.Hls.Extensions;
-using Jellyfin.Networking;
-using Jellyfin.Networking.HappyEyeballs;
-using Jellyfin.Server.Extensions;
-using Jellyfin.Server.HealthChecks;
-using Jellyfin.Server.Implementations.Extensions;
+using MulletaFlix.Api.Middleware;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.LiveTv.Extensions;
+using MulletaFlix.LiveTv.Recordings;
+using MulletaFlix.MediaEncoding.Hls.Extensions;
+using MulletaFlix.Networking;
+using MulletaFlix.Networking.HappyEyeballs;
+using MulletaFlix.Server.Extensions;
+using MulletaFlix.Server.HealthChecks;
+using MulletaFlix.Server.Implementations.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Extensions;
+using MediaBrowser.Providers.Plugins.MidiaStorageOnline;
 using MediaBrowser.XbmcMetadata;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -33,7 +34,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using Prometheus;
 
-namespace Jellyfin.Server
+namespace MulletaFlix.Server
 {
     /// <summary>
     /// Startup configuration for the Kestrel webhost.
@@ -69,14 +70,14 @@ namespace Jellyfin.Server
                 options.HttpsPort = _serverApplicationHost.HttpsPort;
             });
 
-            services.AddJellyfinApi(_serverApplicationHost.GetApiPluginAssemblies(), _serverConfigurationManager.GetNetworkConfiguration());
-            services.AddJellyfinDbContext(_serverApplicationHost.ConfigurationManager, _configuration);
-            services.AddJellyfinApiSwagger();
+            services.AddMulletaFlixApi(_serverApplicationHost.GetApiPluginAssemblies(), _serverConfigurationManager.GetNetworkConfiguration());
+            services.AddMulletaFlixDbContext(_serverApplicationHost.ConfigurationManager, _configuration);
+            services.AddMulletaFlixApiSwagger();
 
             // configure custom legacy authentication
             services.AddCustomAuthentication();
 
-            services.AddJellyfinApiAuthorization();
+            services.AddMulletaFlixApiAuthorization();
 
             var productHeader = new ProductInfoHeaderValue(
                 _serverApplicationHost.Name.Replace(' ', '-'),
@@ -125,7 +126,7 @@ namespace Jellyfin.Server
                 .ConfigurePrimaryHttpMessageHandler(defaultHttpClientHandlerDelegate);
 
             services.AddHealthChecks()
-                .AddCheck<DbContextFactoryHealthCheck<JellyfinDbContext>>(nameof(JellyfinDbContext));
+                .AddCheck<DbContextFactoryHealthCheck<MulletaFlixDbContext>>(nameof(MulletaFlixDbContext));
 
             services.AddHlsPlaylistGenerator();
             services.AddLiveTvServices();
@@ -228,7 +229,7 @@ namespace Jellyfin.Server
 
                 mainApp.UseStaticFiles();
                 mainApp.UseAuthentication();
-                mainApp.UseJellyfinApiSwagger(_serverConfigurationManager);
+                mainApp.UseMulletaFlixApiSwagger(_serverConfigurationManager);
                 mainApp.UseQueryStringDecoding();
                 mainApp.UseRouting();
                 mainApp.UseAuthorization();
@@ -251,3 +252,4 @@ namespace Jellyfin.Server
         }
     }
 }
+

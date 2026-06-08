@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -22,7 +22,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.MediaInfo;
+namespace MulletaFlix.Providers.Tests.MediaInfo;
 
 public class MediaInfoResolverTests
 {
@@ -429,3 +429,4 @@ public class MediaInfoResolverTests
         return directoryService.Object;
     }
 }
+

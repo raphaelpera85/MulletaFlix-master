@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+﻿using System.Collections.Generic;
+using MulletaFlix.Database.Implementations.Entities;
 
-namespace Jellyfin.Database.Implementations.Interfaces;
+namespace MulletaFlix.Database.Implementations.Interfaces;
 
 /// <summary>
 /// An abstraction representing an entity that has permissions.
@@ -13,3 +13,4 @@ public interface IHasPermissions
     /// </summary>
     ICollection<Permission> Permissions { get; }
 }
+

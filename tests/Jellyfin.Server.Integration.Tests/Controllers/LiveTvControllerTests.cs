@@ -1,22 +1,22 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Model.LiveTv;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers;
+namespace MulletaFlix.Server.Integration.Tests.Controllers;
 
-public sealed class LiveTvControllerTests : IClassFixture<JellyfinApplicationFactory>
+public sealed class LiveTvControllerTests : IClassFixture<MulletaFlixApplicationFactory>
 {
-    private readonly JellyfinApplicationFactory _factory;
+    private readonly MulletaFlixApplicationFactory _factory;
     private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
     private static string? _accessToken;
 
-    public LiveTvControllerTests(JellyfinApplicationFactory factory)
+    public LiveTvControllerTests(MulletaFlixApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -94,3 +94,4 @@ public sealed class LiveTvControllerTests : IClassFixture<JellyfinApplicationFac
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }
+

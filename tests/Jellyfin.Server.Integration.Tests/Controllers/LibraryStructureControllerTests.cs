@@ -1,26 +1,26 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Api.Models.LibraryStructureDto;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Models.LibraryStructureDto;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 using Xunit;
 using Xunit.v3.Priority;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers;
+namespace MulletaFlix.Server.Integration.Tests.Controllers;
 
 [TestCaseOrderer(typeof(PriorityOrderer))]
-public sealed class LibraryStructureControllerTests : IClassFixture<JellyfinApplicationFactory>
+public sealed class LibraryStructureControllerTests : IClassFixture<MulletaFlixApplicationFactory>
 {
-    private readonly JellyfinApplicationFactory _factory;
+    private readonly MulletaFlixApplicationFactory _factory;
     private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
     private static string? _accessToken;
 
-    public LibraryStructureControllerTests(JellyfinApplicationFactory factory)
+    public LibraryStructureControllerTests(MulletaFlixApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -125,3 +125,4 @@ public sealed class LibraryStructureControllerTests : IClassFixture<JellyfinAppl
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 }
+

@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -1061,3 +1061,4 @@ namespace MediaBrowser.XbmcMetadata.Savers
         }
     }
 }
+

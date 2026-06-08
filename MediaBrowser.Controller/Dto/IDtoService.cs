@@ -1,8 +1,8 @@
-#pragma warning disable CA1002
+﻿#pragma warning disable CA1002
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 
@@ -83,3 +83,4 @@ namespace MediaBrowser.Controller.Dto
         BaseItemDto GetItemByNameDto(BaseItem item, DtoOptions options, List<BaseItem>? taggedItems, User? user = null);
     }
 }
+

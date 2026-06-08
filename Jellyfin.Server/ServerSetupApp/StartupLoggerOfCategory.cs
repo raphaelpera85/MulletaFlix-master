@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.ServerSetupApp;
+namespace MulletaFlix.Server.ServerSetupApp;
 
 /// <summary>
 /// Startup logger for usage with DI that utilises an underlying logger from the DI.
@@ -54,3 +54,4 @@ public class StartupLogger<TCategory> : StartupLogger, IStartupLogger<TCategory>
         return new StartupLogger<TCategory>(logger, Topic);
     }
 }
+

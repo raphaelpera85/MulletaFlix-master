@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Linq;
-using Jellyfin.Api.Attributes;
+using MulletaFlix.Api.Attributes;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters
+namespace MulletaFlix.Server.Filters
 {
     /// <inheritdoc />
     public class FileResponseFilter : IOperationFilter
@@ -56,3 +56,4 @@ namespace Jellyfin.Server.Filters
         }
     }
 }
+

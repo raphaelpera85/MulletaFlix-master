@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos
 {
     /// <summary>
     /// Day dto.
@@ -28,3 +28,4 @@ namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
         public MetadataScheduleDto? Metadata { get; set; }
     }
 }
+

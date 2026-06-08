@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 using Emby.Server.Implementations;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.PreStartupRoutines;
+namespace MulletaFlix.Server.Migrations.PreStartupRoutines;
 
 /// <inheritdoc />
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T00:00:00", nameof(CreateNetworkConfiguration), "9B354818-94D5-4B68-AC49-E35CB85F9D84", Stage = Stages.JellyfinMigrationStageTypes.PreInitialisation)]
+[MulletaFlixMigration("2025-04-20T00:00:00", nameof(CreateNetworkConfiguration), "9B354818-94D5-4B68-AC49-E35CB85F9D84", Stage = Stages.MulletaFlixMigrationStageTypes.PreInitialisation)]
 public class CreateNetworkConfiguration : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -127,3 +127,4 @@ public class CreateNetworkConfiguration : IMigrationRoutine
         public string[] KnownProxies { get; set; } = Array.Empty<string>();
     }
 }
+

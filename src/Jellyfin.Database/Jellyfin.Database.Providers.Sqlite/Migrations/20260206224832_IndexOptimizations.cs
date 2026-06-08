@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Jellyfin.Database.Providers.Sqlite.Migrations
+namespace MulletaFlix.Database.Providers.Sqlite.Migrations
 {
     /// <inheritdoc />
     public partial class IndexOptimizations : Migration
@@ -169,3 +169,4 @@ namespace Jellyfin.Database.Providers.Sqlite.Migrations
         }
     }
 }
+

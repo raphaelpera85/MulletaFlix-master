@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using MediaBrowser.Model.Dlna;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Dlna;
+namespace MulletaFlix.Model.Tests.Dlna;
 
 public class StreamInfoTests
 {
@@ -239,3 +239,4 @@ public class StreamInfoTests
         }
     }
 }
+

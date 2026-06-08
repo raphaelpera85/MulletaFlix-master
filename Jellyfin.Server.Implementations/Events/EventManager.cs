@@ -5,7 +5,7 @@ using MediaBrowser.Controller.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.Events
+namespace MulletaFlix.Server.Implementations.Events
 {
     /// <summary>
     /// Handles the firing of events.
@@ -30,7 +30,7 @@ namespace Jellyfin.Server.Implementations.Events
         public void Publish<T>(T eventArgs)
             where T : EventArgs
         {
-            PublishInternal(eventArgs).GetAwaiter().GetResult();
+            _ = Task.Run(() => PublishInternal(eventArgs));
         }
 
         /// <inheritdoc />
@@ -63,3 +63,4 @@ namespace Jellyfin.Server.Implementations.Events
         }
     }
 }
+

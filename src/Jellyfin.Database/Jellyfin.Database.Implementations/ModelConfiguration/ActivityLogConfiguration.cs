@@ -1,8 +1,8 @@
-using Jellyfin.Database.Implementations.Entities;
+﻿using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Jellyfin.Database.Implementations.ModelConfiguration;
+namespace MulletaFlix.Database.Implementations.ModelConfiguration;
 
 /// <summary>
 /// FluentAPI configuration for the ActivityLog entity.
@@ -15,3 +15,4 @@ public class ActivityLogConfiguration : IEntityTypeConfiguration<ActivityLog>
         builder.HasIndex(entity => entity.DateCreated);
     }
 }
+

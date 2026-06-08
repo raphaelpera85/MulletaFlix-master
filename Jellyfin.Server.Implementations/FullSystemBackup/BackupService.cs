@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -8,9 +8,9 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.Implementations.StorageHelpers;
-using Jellyfin.Server.Implementations.SystemBackupService;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.Implementations.StorageHelpers;
+using MulletaFlix.Server.Implementations.SystemBackupService;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.SystemBackupService;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +19,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.FullSystemBackup;
+namespace MulletaFlix.Server.Implementations.FullSystemBackup;
 
 /// <summary>
 /// Contains methods for creating and restoring backups.
@@ -28,10 +28,10 @@ public class BackupService : IBackupService
 {
     private const string ManifestEntryName = "manifest.json";
     private readonly ILogger<BackupService> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IServerApplicationHost _applicationHost;
     private readonly IServerApplicationPaths _applicationPaths;
-    private readonly IJellyfinDatabaseProvider _jellyfinDatabaseProvider;
+    private readonly IMulletaFlixDatabaseProvider _MulletaFlixDatabaseProvider;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private static readonly JsonSerializerOptions _serializerSettings = new JsonSerializerOptions(JsonSerializerDefaults.General)
     {
@@ -48,21 +48,21 @@ public class BackupService : IBackupService
     /// <param name="dbProvider">A Database Factory.</param>
     /// <param name="applicationHost">The Application host.</param>
     /// <param name="applicationPaths">The application paths.</param>
-    /// <param name="jellyfinDatabaseProvider">The Jellyfin database Provider in use.</param>
+    /// <param name="MulletaFlixDatabaseProvider">The MulletaFlix database Provider in use.</param>
     /// <param name="applicationLifetime">The SystemManager.</param>
     public BackupService(
         ILogger<BackupService> logger,
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         IServerApplicationHost applicationHost,
         IServerApplicationPaths applicationPaths,
-        IJellyfinDatabaseProvider jellyfinDatabaseProvider,
+        IMulletaFlixDatabaseProvider MulletaFlixDatabaseProvider,
         IHostApplicationLifetime applicationLifetime)
     {
         _logger = logger;
         _dbProvider = dbProvider;
         _applicationHost = applicationHost;
         _applicationPaths = applicationPaths;
-        _jellyfinDatabaseProvider = jellyfinDatabaseProvider;
+        _MulletaFlixDatabaseProvider = MulletaFlixDatabaseProvider;
         _hostApplicationLifetime = applicationLifetime;
     }
 
@@ -98,7 +98,7 @@ public class BackupService : IBackupService
 
             if (zipArchiveEntry is null)
             {
-                throw new NotSupportedException($"The loaded archive '{archivePath}' does not appear to be a Jellyfin backup as its missing the '{ManifestEntryName}'.");
+                throw new NotSupportedException($"The loaded archive '{archivePath}' does not appear to be a MulletaFlix backup as its missing the '{ManifestEntryName}'.");
             }
 
             BackupManifest? manifest;
@@ -108,14 +108,14 @@ public class BackupService : IBackupService
                 manifest = await JsonSerializer.DeserializeAsync<BackupManifest>(manifestStream, _serializerSettings).ConfigureAwait(false);
             }
 
-            if (manifest!.ServerVersion > _applicationHost.ApplicationVersion) // newer versions of Jellyfin should be able to load older versions as we have migrations.
+            if (manifest!.ServerVersion > _applicationHost.ApplicationVersion) // newer versions of MulletaFlix should be able to load older versions as we have migrations.
             {
-                throw new NotSupportedException($"The loaded archive '{archivePath}' is made for a newer version of Jellyfin ({manifest.ServerVersion}) and cannot be loaded in this version.");
+                throw new NotSupportedException($"The loaded archive '{archivePath}' is made for a newer version of MulletaFlix ({manifest.ServerVersion}) and cannot be loaded in this version.");
             }
 
             if (!TestBackupVersionCompatibility(manifest.BackupEngineVersion))
             {
-                throw new NotSupportedException($"The loaded archive '{archivePath}' is made for a newer version of Jellyfin ({manifest.ServerVersion}) and cannot be loaded in this version.");
+                throw new NotSupportedException($"The loaded archive '{archivePath}' is made for a newer version of MulletaFlix ({manifest.ServerVersion}) and cannot be loaded in this version.");
             }
 
             void CopyDirectory(string source, string target, string[]? exclude = null)
@@ -163,7 +163,7 @@ public class BackupService : IBackupService
                     var historyEntry = zipArchive.GetEntry(NormalizePathSeparator(Path.Combine("Database", $"{nameof(HistoryRow)}.json")));
                     if (historyEntry is null)
                     {
-                        _logger.LogInformation("No backup of the history table in archive. This is required for Jellyfin operation");
+                        _logger.LogInformation("No backup of the history table in archive. This is required for MulletaFlix operation");
                         throw new InvalidOperationException("Cannot restore backup that has no History data.");
                     }
 
@@ -191,14 +191,14 @@ public class BackupService : IBackupService
                     }
 
                     dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-                    var entityTypes = typeof(JellyfinDbContext).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                    var entityTypes = typeof(MulletaFlixDbContext).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
                         .Where(e => e.PropertyType.IsAssignableTo(typeof(IQueryable)))
                         .Select(e => (Type: e, Set: e.GetValue(dbContext) as IQueryable))
                         .ToArray();
 
                     var tableNames = entityTypes.Select(f => dbContext.Model.FindEntityType(f.Type.PropertyType.GetGenericArguments()[0])!.GetSchemaQualifiedTableName()!);
                     _logger.LogInformation("Begin purging database");
-                    await _jellyfinDatabaseProvider.PurgeDatabase(dbContext, tableNames).ConfigureAwait(false);
+                    await _MulletaFlixDatabaseProvider.PurgeDatabase(dbContext, tableNames).ConfigureAwait(false);
                     _logger.LogInformation("Database Purged");
 
                     foreach (var entityType in entityTypes)
@@ -246,7 +246,7 @@ public class BackupService : IBackupService
                 }
             }
 
-            _logger.LogInformation("Restored Jellyfin system from {Date}", manifest.DateCreated);
+            _logger.LogInformation("Restored MulletaFlix system from {Date}", manifest.DateCreated);
         }
     }
 
@@ -274,7 +274,7 @@ public class BackupService : IBackupService
 
         _logger.LogInformation("Running database optimization before backup");
 
-        await _jellyfinDatabaseProvider.RunScheduledOptimisation(CancellationToken.None).ConfigureAwait(false);
+        await _MulletaFlixDatabaseProvider.RunScheduledOptimisation(CancellationToken.None).ConfigureAwait(false);
 
         var backupFolder = Path.Combine(_applicationPaths.BackupPath);
 
@@ -291,7 +291,7 @@ public class BackupService : IBackupService
             throw new InvalidOperationException($"The backup directory '{backupStorageSpace.Path}' does not have at least '{StorageHelper.HumanizeStorageSize(FiveGigabyte)}' free space. Cannot create backup.");
         }
 
-        var backupPath = Path.Combine(backupFolder, $"jellyfin-backup-{manifest.DateCreated.ToLocalTime():yyyyMMddHHmmss}.zip");
+        var backupPath = Path.Combine(backupFolder, $"MulletaFlix-backup-{manifest.DateCreated.ToLocalTime():yyyyMMddHHmmss}.zip");
 
         try
         {
@@ -319,7 +319,7 @@ public class BackupService : IBackupService
 
                     ICollection<(Type Type, string SourceName, Func<IAsyncEnumerable<object>> ValueFactory)> entityTypes =
                     [
-                        .. typeof(JellyfinDbContext)
+                        .. typeof(MulletaFlixDbContext)
                             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
                             .Where(e => e.PropertyType.IsAssignableTo(typeof(IQueryable)))
                             .Select(e => (Type: e.PropertyType, dbContext.Model.FindEntityType(e.PropertyType.GetGenericArguments()[0])!.GetSchemaQualifiedTableName()!, ValueFactory: new Func<IAsyncEnumerable<object>>(() => GetValues((IQueryable)e.GetValue(dbContext)!)))),
@@ -575,3 +575,4 @@ public class BackupService : IBackupService
     private static string NormalizePathSeparator(string path)
         => path.Replace('\\', '/');
 }
+

@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Jellyfin.Database.Implementations.Entities
+namespace MulletaFlix.Database.Implementations.Entities
 {
     /// <summary>
     /// An entity representing an image.
@@ -52,3 +52,4 @@ namespace Jellyfin.Database.Implementations.Entities
         public DateTime LastModified { get; set; }
     }
 }
+

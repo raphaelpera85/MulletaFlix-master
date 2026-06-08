@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.LibraryDtos;
+﻿namespace MulletaFlix.Api.Models.LibraryDtos;
 
 /// <summary>
 /// The media update info path.
@@ -16,3 +16,4 @@ public class MediaUpdateInfoPathDto
     /// </summary>
     public string? UpdateType { get; set; }
 }
+

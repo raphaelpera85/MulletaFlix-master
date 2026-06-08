@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
+using MulletaFlix.Api.Constants;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Security;
 using MediaBrowser.Model.Querying;
@@ -8,14 +8,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Authentication controller.
 /// </summary>
 [Route("Auth")]
 [Tags("Authentication")]
-public class ApiKeyController : BaseJellyfinApiController
+public class ApiKeyController : BaseMulletaFlixApiController
 {
     private readonly IAuthenticationManager _authenticationManager;
 
@@ -75,3 +75,4 @@ public class ApiKeyController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

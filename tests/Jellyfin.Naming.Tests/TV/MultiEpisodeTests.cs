@@ -1,15 +1,15 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Naming.TV;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.TV
+namespace MulletaFlix.Naming.Tests.TV
 {
     public class MultiEpisodeTests
     {
         private readonly EpisodePathParser _episodePathParser = new EpisodePathParser(new NamingOptions());
 
         [Theory]
-        [InlineData("Season 1/4x01 – 20 Hours in America (1).mkv", null)]
+        [InlineData("Season 1/4x01 â€“ 20 Hours in America (1).mkv", null)]
         [InlineData("Season 1/01x02 blah.avi", null)]
         [InlineData("Season 1/S01x02 blah.avi", null)]
         [InlineData("Season 1/S01E02 blah.avi", null)]
@@ -77,3 +77,4 @@ namespace Jellyfin.Naming.Tests.TV
         }
     }
 }
+

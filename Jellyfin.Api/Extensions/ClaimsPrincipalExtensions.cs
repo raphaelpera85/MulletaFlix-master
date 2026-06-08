@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Security.Claims;
-using Jellyfin.Api.Constants;
+using MulletaFlix.Api.Constants;
 
-namespace Jellyfin.Api.Extensions;
+namespace MulletaFlix.Api.Extensions;
 
 /// <summary>
 /// Extensions for <see cref="ClaimsPrincipal"/>.
@@ -78,3 +78,4 @@ public static class ClaimsPrincipalExtensions
     private static string? GetClaimValue(in ClaimsPrincipal user, string name)
         => user.Claims.FirstOrDefault(claim => claim.Type.Equals(name, StringComparison.OrdinalIgnoreCase))?.Value;
 }
+

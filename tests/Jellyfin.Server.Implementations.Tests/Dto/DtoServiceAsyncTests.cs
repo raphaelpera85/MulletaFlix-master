@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.Dto;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Drawing;
@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Dto;
+namespace MulletaFlix.Server.Implementations.Tests.Dto;
 
 public class DtoServiceAsyncTests
 {
@@ -208,3 +208,4 @@ public class DtoServiceAsyncTests
         return (episode, season, series);
     }
 }
+

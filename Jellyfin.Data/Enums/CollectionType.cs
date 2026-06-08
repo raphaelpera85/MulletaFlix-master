@@ -1,7 +1,7 @@
-#pragma warning disable SA1300 // The name of a C# element does not begin with an upper-case letter. - disabled due to legacy requirement.
-using Jellyfin.Data.Attributes;
+﻿#pragma warning disable SA1300 // The name of a C# element does not begin with an upper-case letter. - disabled due to legacy requirement.
+using MulletaFlix.Data.Attributes;
 
-namespace Jellyfin.Data.Enums;
+namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// Collection type.
@@ -163,3 +163,4 @@ public enum CollectionType
     [OpenApiIgnoreEnum]
     moviegenre = 115
 }
+

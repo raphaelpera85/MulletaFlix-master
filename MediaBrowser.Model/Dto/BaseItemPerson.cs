@@ -1,9 +1,9 @@
-#nullable disable
+﻿#nullable disable
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Model.Dto
@@ -58,3 +58,4 @@ namespace MediaBrowser.Model.Dto
         public bool HasPrimaryImage => PrimaryImageTag is not null;
     }
 }
+

@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
@@ -2266,7 +2266,7 @@ namespace MediaBrowser.Model.Dlna
 
             // Never direct play audio in matroska when the device only declare support for webm.
             // The first check is not enough because mkv is assumed can be webm.
-            // See https://github.com/jellyfin/jellyfin/issues/13344
+            // See https://github.com/MulletaFlix/MulletaFlix/issues/13344
             return !ContainerHelper.ContainsContainer("mkv", item.Container)
                    || profile.SupportsContainer("mkv");
         }
@@ -2459,3 +2459,4 @@ namespace MediaBrowser.Model.Dlna
         }
     }
 }
+

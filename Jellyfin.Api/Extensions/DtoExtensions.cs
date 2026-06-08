@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Model.Entities;
 
-namespace Jellyfin.Api.Extensions;
+namespace MulletaFlix.Api.Extensions;
 
 /// <summary>
 /// Dto Extensions.
@@ -49,3 +49,4 @@ public static class DtoExtensions
         return dtoOptions;
     }
 }
+

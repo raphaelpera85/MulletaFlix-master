@@ -1,12 +1,12 @@
-using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Data;
-using Jellyfin.Extensions;
+﻿using System.Threading.Tasks;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Jellyfin.Api.Auth.UserPermissionPolicy
+namespace MulletaFlix.Api.Auth.UserPermissionPolicy
 {
     /// <summary>
     /// User permission authorization handler.
@@ -54,3 +54,4 @@ namespace Jellyfin.Api.Auth.UserPermissionPolicy
         }
     }
 }
+

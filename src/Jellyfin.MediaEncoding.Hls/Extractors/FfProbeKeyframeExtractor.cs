@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Emby.Naming.Common;
-using Jellyfin.Extensions;
-using Jellyfin.MediaEncoding.Keyframes;
+using MulletaFlix.Extensions;
+using MulletaFlix.MediaEncoding.Keyframes;
 using MediaBrowser.Controller.MediaEncoding;
 using Microsoft.Extensions.Logging;
-using Extractor = Jellyfin.MediaEncoding.Keyframes.FfProbe.FfProbeKeyframeExtractor;
+using Extractor = MulletaFlix.MediaEncoding.Keyframes.FfProbe.FfProbeKeyframeExtractor;
 
-namespace Jellyfin.MediaEncoding.Hls.Extractors;
+namespace MulletaFlix.MediaEncoding.Hls.Extractors;
 
 /// <inheritdoc />
 public class FfProbeKeyframeExtractor : IKeyframeExtractor
@@ -56,3 +56,4 @@ public class FfProbeKeyframeExtractor : IKeyframeExtractor
         return false;
     }
 }
+

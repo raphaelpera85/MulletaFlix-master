@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// An enum representing types of art.
@@ -30,3 +30,4 @@ public enum ArtKind
     /// </summary>
     Logo = 4
 }
+

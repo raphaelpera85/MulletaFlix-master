@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -6,8 +6,8 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using BitFaster.Caching.Lru;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -26,17 +26,17 @@ namespace Emby.Server.Implementations.Library
     public class UserDataManager : IUserDataManager
     {
         private readonly IServerConfigurationManager _config;
-        private readonly IDbContextFactory<JellyfinDbContext> _repository;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _repository;
         private readonly FastConcurrentLru<string, UserItemData> _cache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserDataManager"/> class.
         /// </summary>
         /// <param name="config">Instance of the <see cref="IServerConfigurationManager"/> interface.</param>
-        /// <param name="repository">Instance of the <see cref="IDbContextFactory{JellyfinDbContext}"/> interface.</param>
+        /// <param name="repository">Instance of the <see cref="IDbContextFactory{MulletaFlixDbContext}"/> interface.</param>
         public UserDataManager(
             IServerConfigurationManager config,
-            IDbContextFactory<JellyfinDbContext> repository)
+            IDbContextFactory<MulletaFlixDbContext> repository)
         {
             _config = config;
             _repository = repository;
@@ -387,3 +387,4 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
+

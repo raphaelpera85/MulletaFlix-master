@@ -1,10 +1,10 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using MediaBrowser.Controller.LiveTv;
 
-namespace Jellyfin.LiveTv.Listings
+namespace MulletaFlix.LiveTv.Listings
 {
     internal class EpgChannelData
     {
@@ -52,3 +52,4 @@ namespace Jellyfin.LiveTv.Listings
         }
     }
 }
+

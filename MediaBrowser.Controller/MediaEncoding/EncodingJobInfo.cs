@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591, SA1401
 
@@ -6,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.Drawing;
 using MediaBrowser.Model.Dto;
@@ -724,3 +724,4 @@ namespace MediaBrowser.Controller.MediaEncoding
         }
     }
 }
+

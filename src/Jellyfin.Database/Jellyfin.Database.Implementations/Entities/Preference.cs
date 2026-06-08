@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Database.Implementations.Interfaces;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Interfaces;
 
-namespace Jellyfin.Database.Implementations.Entities
+namespace MulletaFlix.Database.Implementations.Entities
 {
     /// <summary>
     /// An entity representing a preference attached to a user or group.
@@ -66,3 +66,4 @@ namespace Jellyfin.Database.Implementations.Entities
         }
     }
 }
+

@@ -4,12 +4,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoFixture.Xunit3;
-using Jellyfin.Api.Controllers;
-using Jellyfin.Api.Models.UserDtos;
-using Jellyfin.Api.Results;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Server.Implementations.Users;
+using MulletaFlix.Api.Controllers;
+using MulletaFlix.Api.Models.UserDtos;
+using MulletaFlix.Api.Results;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Server.Implementations.Users;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Devices;
@@ -26,7 +26,7 @@ using Moq;
 using Nikse.SubtitleEdit.Core.Common;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.Controllers;
+namespace MulletaFlix.Api.Tests.Controllers;
 
 public class UserControllerTests
 {
@@ -40,6 +40,7 @@ public class UserControllerTests
     private readonly Mock<ILogger<UserController>> _mockLogger;
     private readonly Mock<IQuickConnect> _mockQuickConnect;
     private readonly Mock<IPlaylistManager> _mockPlaylistManager;
+    private readonly Mock<IUserLicenseManager> _mockUserLicenseManager;
 
     public UserControllerTests()
     {
@@ -52,6 +53,7 @@ public class UserControllerTests
         _mockLogger = new Mock<ILogger<UserController>>();
         _mockQuickConnect = new Mock<IQuickConnect>();
         _mockPlaylistManager = new Mock<IPlaylistManager>();
+        _mockUserLicenseManager = new Mock<IUserLicenseManager>();
 
         _subject = new UserController(
             _mockUserManager.Object,
@@ -62,7 +64,8 @@ public class UserControllerTests
             _mockServerConfigurationManager.Object,
             _mockLogger.Object,
             _mockQuickConnect.Object,
-            _mockPlaylistManager.Object);
+            _mockPlaylistManager.Object,
+            _mockUserLicenseManager.Object);
     }
 
     [Theory]
@@ -129,7 +132,7 @@ public class UserControllerTests
 
         Assert.NotNull(capturedPolicy);
         Assert.False(capturedPolicy!.IsHidden);
-        Assert.True(capturedPolicy.IsDisabled);
+        Assert.False(capturedPolicy.IsDisabled);
 
         _mockUserManager.Verify(m => m.CreateUserAsync(username), Times.Once);
         _mockUserManager.Verify(m => m.ChangePassword(createdUser.Id, password), Times.Once);
@@ -203,3 +206,4 @@ public class UserControllerTests
         return result;
     }
 }
+

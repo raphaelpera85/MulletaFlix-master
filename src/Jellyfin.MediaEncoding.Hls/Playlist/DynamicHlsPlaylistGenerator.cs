@@ -1,17 +1,17 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Jellyfin.MediaEncoding.Hls.Extractors;
-using Jellyfin.MediaEncoding.Keyframes;
+using MulletaFlix.MediaEncoding.Hls.Extractors;
+using MulletaFlix.MediaEncoding.Keyframes;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.MediaEncoding;
 
-namespace Jellyfin.MediaEncoding.Hls.Playlist;
+namespace MulletaFlix.MediaEncoding.Hls.Playlist;
 
 /// <inheritdoc />
 public class DynamicHlsPlaylistGenerator : IDynamicHlsPlaylistGenerator
@@ -213,3 +213,4 @@ public class DynamicHlsPlaylistGenerator : IDynamicHlsPlaylistGenerator
         return segments;
     }
 }
+

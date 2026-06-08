@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+﻿using System.Collections.Generic;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 
 namespace MediaBrowser.Controller.Sorting
@@ -15,3 +15,4 @@ namespace MediaBrowser.Controller.Sorting
         ItemSortBy Type { get; }
     }
 }
+

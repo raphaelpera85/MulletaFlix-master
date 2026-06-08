@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
@@ -10,14 +10,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The trailers controller.
 /// </summary>
 [Authorize]
 [Tags("Trailer")]
-public class TrailersController : BaseJellyfinApiController
+public class TrailersController : BaseMulletaFlixApiController
 {
     private readonly ItemsController _itemsController;
 
@@ -304,3 +304,4 @@ public class TrailersController : BaseJellyfinApiController
                 enableImages).ConfigureAwait(false);
     }
 }
+

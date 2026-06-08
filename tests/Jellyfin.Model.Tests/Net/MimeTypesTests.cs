@@ -1,7 +1,7 @@
-using MediaBrowser.Model.Net;
+﻿using MediaBrowser.Model.Net;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Net
+namespace MulletaFlix.Model.Tests.Net
 {
     public class MimeTypesTests
     {
@@ -169,3 +169,4 @@ namespace Jellyfin.Model.Tests.Net
         }
     }
 }
+

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Jellyfin.MediaEncoding.Keyframes;
+using MulletaFlix.MediaEncoding.Keyframes;
 using Microsoft.Extensions.Logging;
-using Extractor = Jellyfin.MediaEncoding.Keyframes.Matroska.MatroskaKeyframeExtractor;
+using Extractor = MulletaFlix.MediaEncoding.Keyframes.Matroska.MatroskaKeyframeExtractor;
 
-namespace Jellyfin.MediaEncoding.Hls.Extractors;
+namespace MulletaFlix.MediaEncoding.Hls.Extractors;
 
 /// <inheritdoc />
 public class MatroskaKeyframeExtractor : IKeyframeExtractor
@@ -46,3 +46,4 @@ public class MatroskaKeyframeExtractor : IKeyframeExtractor
         return false;
     }
 }
+

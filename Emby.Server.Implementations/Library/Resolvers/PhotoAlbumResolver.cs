@@ -1,8 +1,8 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using Emby.Naming.Common;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -93,3 +93,4 @@ namespace Emby.Server.Implementations.Library.Resolvers
         }
     }
 }
+

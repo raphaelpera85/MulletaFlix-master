@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Performance;
+namespace MulletaFlix.Server.Implementations.Tests.Performance;
 
 [Collection("Benchmark")]
 public class QueryPerformanceBenchmark
@@ -65,3 +65,4 @@ public class QueryPerformanceBenchmark
         Assert.True(countTime <= toListTime, $".Count() ({countTime}ms) should be faster or equal to ToList().Count ({toListTime}ms)");
     }
 }
+

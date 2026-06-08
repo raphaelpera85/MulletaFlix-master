@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos
 {
     /// <summary>
     /// Descriptions program dto.
@@ -22,3 +22,4 @@ namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
         public IReadOnlyList<Description1000Dto> Description1000 { get; set; } = Array.Empty<Description1000Dto>();
     }
 }
+

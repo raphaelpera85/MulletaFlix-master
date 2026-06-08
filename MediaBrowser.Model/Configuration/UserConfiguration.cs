@@ -1,7 +1,7 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 
 namespace MediaBrowser.Model.Configuration
 {
@@ -76,3 +76,4 @@ namespace MediaBrowser.Model.Configuration
         public string? CastReceiverId { get; set; }
     }
 }
+

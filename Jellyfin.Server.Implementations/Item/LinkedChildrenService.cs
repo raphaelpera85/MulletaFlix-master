@@ -1,26 +1,26 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
-using DbLinkedChildType = Jellyfin.Database.Implementations.Entities.LinkedChildType;
+using DbLinkedChildType = MulletaFlix.Database.Implementations.Entities.LinkedChildType;
 using LinkedChildType = MediaBrowser.Controller.Entities.LinkedChildType;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Provides linked children query and manipulation operations.
 /// </summary>
 public class LinkedChildrenService : ILinkedChildrenService
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IItemTypeLookup _itemTypeLookup;
     private readonly IItemQueryHelpers _queryHelpers;
 
@@ -31,7 +31,7 @@ public class LinkedChildrenService : ILinkedChildrenService
     /// <param name="itemTypeLookup">The item type lookup.</param>
     /// <param name="queryHelpers">The shared query helpers.</param>
     public LinkedChildrenService(
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         IItemTypeLookup itemTypeLookup,
         IItemQueryHelpers queryHelpers)
     {
@@ -159,7 +159,7 @@ public class LinkedChildrenService : ILinkedChildrenService
 
         if (existingLink is null)
         {
-            context.LinkedChildren.Add(new Jellyfin.Database.Implementations.Entities.LinkedChildEntity
+            context.LinkedChildren.Add(new MulletaFlix.Database.Implementations.Entities.LinkedChildEntity
             {
                 ParentId = parentId,
                 ChildId = childId,
@@ -175,3 +175,4 @@ public class LinkedChildrenService : ILinkedChildrenService
         context.SaveChanges();
     }
 }
+

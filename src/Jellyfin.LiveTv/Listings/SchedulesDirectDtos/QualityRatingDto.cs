@@ -1,6 +1,6 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos
 {
     /// <summary>
     /// Quality rating dto.
@@ -38,3 +38,4 @@ namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
         public string? Increment { get; set; }
     }
 }
+

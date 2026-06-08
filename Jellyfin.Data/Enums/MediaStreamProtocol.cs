@@ -1,7 +1,7 @@
-#pragma warning disable SA1300 // Lowercase required for backwards compat.
+﻿#pragma warning disable SA1300 // Lowercase required for backwards compat.
 using System.ComponentModel;
 
-namespace Jellyfin.Data.Enums;
+namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// Media streaming protocol.
@@ -20,3 +20,4 @@ public enum MediaStreamProtocol
     /// </summary>
     hls = 1
 }
+

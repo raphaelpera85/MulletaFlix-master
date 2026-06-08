@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 
 namespace Emby.Naming.Video
 {
@@ -54,3 +54,4 @@ namespace Emby.Naming.Video
         }
     }
 }
+

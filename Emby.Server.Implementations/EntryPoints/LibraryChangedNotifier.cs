@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -400,3 +400,4 @@ public sealed class LibraryChangedNotifier : IHostedService, IDisposable
         _libraryUpdateTimer = null;
     }
 }
+

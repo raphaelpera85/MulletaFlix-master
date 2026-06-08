@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters;
+namespace MulletaFlix.Extensions.Json.Converters;
 
 /// <summary>
 /// Enum flag to json array converter.
@@ -34,3 +34,4 @@ public class JsonFlagEnumConverter<T> : JsonConverter<T>
         writer.WriteEndArray();
     }
 }
+

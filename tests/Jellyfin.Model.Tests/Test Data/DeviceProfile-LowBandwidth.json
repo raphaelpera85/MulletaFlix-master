@@ -1,5 +1,5 @@
 {
-    "Name": "Jellyfin Media Player",
+    "Name": "MulletaFlix Media Player",
     "SupportedMediaTypes": "Audio,Photo,Video",
     "MaxStreamingBitrate": 120000,
     "MaxStaticBitrate": 100000,
@@ -132,3 +132,4 @@
     ],
     "$type": "DeviceProfile"
 }
+

@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 
-namespace Jellyfin.Api.Middleware.Tests
+namespace MulletaFlix.Api.Middleware.Tests
 {
     public static class UrlDecodeQueryFeatureTests
     {
@@ -25,3 +25,4 @@ namespace Jellyfin.Api.Middleware.Tests
         }
     }
 }
+

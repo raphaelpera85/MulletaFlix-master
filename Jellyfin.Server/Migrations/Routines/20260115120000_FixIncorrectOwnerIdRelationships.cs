@@ -1,16 +1,16 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Fixes incorrect OwnerId relationships where video/movie items are children of other video/movie items.
@@ -18,12 +18,12 @@ namespace Jellyfin.Server.Migrations.Routines;
 /// by the auto-merge logic. Only legitimate extras (trailers, behind-the-scenes) should have OwnerId set.
 /// Also removes duplicate database entries for the same file path.
 /// </summary>
-[JellyfinMigration("2026-01-15T12:00:00", nameof(FixIncorrectOwnerIdRelationships))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2026-01-15T12:00:00", nameof(FixIncorrectOwnerIdRelationships))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 public class FixIncorrectOwnerIdRelationships : IAsyncMigrationRoutine
 {
     private readonly IStartupLogger<FixIncorrectOwnerIdRelationships> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
     private readonly ILibraryManager _libraryManager;
     private readonly IItemPersistenceService _persistenceService;
 
@@ -36,7 +36,7 @@ public class FixIncorrectOwnerIdRelationships : IAsyncMigrationRoutine
     /// <param name="persistenceService">The item persistence service.</param>
     public FixIncorrectOwnerIdRelationships(
         IStartupLogger<FixIncorrectOwnerIdRelationships> logger,
-        IDbContextFactory<JellyfinDbContext> dbContextFactory,
+        IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
         ILibraryManager libraryManager,
         IItemPersistenceService persistenceService)
     {
@@ -66,7 +66,7 @@ public class FixIncorrectOwnerIdRelationships : IAsyncMigrationRoutine
         }
     }
 
-    private async Task RemoveDuplicateItemsAsync(JellyfinDbContext context, CancellationToken cancellationToken)
+    private async Task RemoveDuplicateItemsAsync(MulletaFlixDbContext context, CancellationToken cancellationToken)
     {
         // Find all paths that have duplicate entries
         var duplicatePaths = await context.BaseItems
@@ -155,7 +155,7 @@ public class FixIncorrectOwnerIdRelationships : IAsyncMigrationRoutine
         _logger.LogInformation("Successfully removed {Count} duplicate database entries", allIdsToDelete.Count);
     }
 
-    private async Task ClearIncorrectOwnerIdsAsync(JellyfinDbContext context, CancellationToken cancellationToken)
+    private async Task ClearIncorrectOwnerIdsAsync(MulletaFlixDbContext context, CancellationToken cancellationToken)
     {
         // Find video/movie items with incorrect OwnerId (ExtraType is NULL or 0, pointing to another video/movie)
         var incorrectChildrenWithParent = await context.BaseItems
@@ -201,7 +201,7 @@ public class FixIncorrectOwnerIdRelationships : IAsyncMigrationRoutine
         _logger.LogInformation("Successfully cleared OwnerId for {Count} items", totalIncorrect);
     }
 
-    private async Task ReassignOrphanedExtrasAsync(JellyfinDbContext context, CancellationToken cancellationToken)
+    private async Task ReassignOrphanedExtrasAsync(MulletaFlixDbContext context, CancellationToken cancellationToken)
     {
         // Find extras whose parent was deleted during duplicate removal
         var orphanedExtras = await context.BaseItems
@@ -285,13 +285,13 @@ public class FixIncorrectOwnerIdRelationships : IAsyncMigrationRoutine
         _logger.LogInformation("Successfully reassigned {Count} orphaned extras", reassignedCount);
     }
 
-    private async Task PopulatePrimaryVersionIdAsync(JellyfinDbContext context, CancellationToken cancellationToken)
+    private async Task PopulatePrimaryVersionIdAsync(MulletaFlixDbContext context, CancellationToken cancellationToken)
     {
         // Find all alternate version relationships where child's PrimaryVersionId is not set
         // ChildType 2 = LocalAlternateVersion, ChildType 3 = LinkedAlternateVersion
         var alternateVersionLinks = await context.LinkedChildren
-            .Where(lc => (lc.ChildType == Jellyfin.Database.Implementations.Entities.LinkedChildType.LocalAlternateVersion
-                       || lc.ChildType == Jellyfin.Database.Implementations.Entities.LinkedChildType.LinkedAlternateVersion))
+            .Where(lc => (lc.ChildType == MulletaFlix.Database.Implementations.Entities.LinkedChildType.LocalAlternateVersion
+                       || lc.ChildType == MulletaFlix.Database.Implementations.Entities.LinkedChildType.LinkedAlternateVersion))
             .Join(
                 context.BaseItems,
                 lc => lc.ChildId,
@@ -339,3 +339,4 @@ public class FixIncorrectOwnerIdRelationships : IAsyncMigrationRoutine
         _logger.LogInformation("Successfully populated PrimaryVersionId for {Count} alternate version items", updatedCount);
     }
 }
+

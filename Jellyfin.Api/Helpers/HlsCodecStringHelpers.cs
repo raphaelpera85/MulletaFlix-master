@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Text;
 
-namespace Jellyfin.Api.Helpers;
+namespace MulletaFlix.Api.Helpers;
 
 /// <summary>
 /// Helpers to generate HLS codec strings according to
@@ -368,3 +368,4 @@ public static class HlsCodecStringHelpers
         return result.ToString();
     }
 }
+

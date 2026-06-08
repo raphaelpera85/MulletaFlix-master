@@ -6,9 +6,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Jellyfin.Server/bin/Debug/net10.0/jellyfin.dll",
+            "program": "${workspaceFolder}/MulletaFlix.Server/bin/Debug/net10.0/MulletaFlix.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Jellyfin.Server",
+            "cwd": "${workspaceFolder}/MulletaFlix.Server",
             "console": "internalConsole",
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart",
@@ -22,9 +22,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Jellyfin.Server/bin/Debug/net10.0/jellyfin.dll",
+            "program": "${workspaceFolder}/MulletaFlix.Server/bin/Debug/net10.0/MulletaFlix.dll",
             "args": ["--nowebclient"],
-            "cwd": "${workspaceFolder}/Jellyfin.Server",
+            "cwd": "${workspaceFolder}/MulletaFlix.Server",
             "console": "internalConsole",
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart"
@@ -34,9 +34,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Jellyfin.Server/bin/Debug/net10.0/jellyfin.dll",
-            "args": ["--nowebclient", "--ffmpeg", "/usr/lib/jellyfin-ffmpeg/ffmpeg"],
-            "cwd": "${workspaceFolder}/Jellyfin.Server",
+            "program": "${workspaceFolder}/MulletaFlix.Server/bin/Debug/net10.0/MulletaFlix.dll",
+            "args": ["--nowebclient", "--ffmpeg", "/usr/lib/MulletaFlix-ffmpeg/ffmpeg"],
+            "cwd": "${workspaceFolder}/MulletaFlix.Server",
             "console": "internalConsole",
             "stopAtEntry": false,
             "internalConsoleOptions": "openOnSessionStart"
@@ -52,3 +52,4 @@
         "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
     }
 }
+

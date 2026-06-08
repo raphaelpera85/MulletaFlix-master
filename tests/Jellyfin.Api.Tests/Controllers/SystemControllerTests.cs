@@ -1,5 +1,5 @@
-using Jellyfin.Api.Controllers;
-using Jellyfin.Server.Implementations.SystemBackupService;
+﻿using MulletaFlix.Api.Controllers;
+using MulletaFlix.Server.Implementations.SystemBackupService;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
 using MediaBrowser.Model.IO;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.Controllers
+namespace MulletaFlix.Api.Tests.Controllers
 {
     public class SystemControllerTests
     {
@@ -34,3 +34,4 @@ namespace Jellyfin.Api.Tests.Controllers
         }
     }
 }
+

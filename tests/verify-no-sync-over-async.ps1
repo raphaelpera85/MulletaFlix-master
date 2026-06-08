@@ -43,11 +43,7 @@ $allowedMatches = @{
         'UpdatePeopleAsync\(item, people, CancellationToken\.None\)\.GetAwaiter\(\)\.GetResult\(\);'
     )
     "Emby.Server.Implementations/Library/UserViewManager.cs" = @(
-        '\}\)\.GetAwaiter\(\)\.GetResult\(\);',
-        'CancellationToken\.None\)\.GetAwaiter\(\)\.GetResult\(\)\.Items;'
-    )
-    "src/Jellyfin.LiveTv/LiveTvManager.cs" = @(
-        'AddChannelInfoAsync\(items, options, user\)\.GetAwaiter\(\)\.GetResult\(\);'
+        '\}\)\.GetAwaiter\(\)\.GetResult\(\);'
     )
 }
 
@@ -56,7 +52,7 @@ $violations = @()
 foreach ($relativePath in $Paths) {
     $path = Join-Path $root $relativePath
     if (-not (Test-Path $path)) {
-        Write-Error "Arquivo não encontrado: $path"
+        Write-Error "Arquivo nÃ£o encontrado: $path"
         exit 1
     }
 
@@ -94,4 +90,5 @@ if ($violations.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Nenhuma ocorrência de sync-over-async encontrada nos endpoints verificados." -ForegroundColor Green
+Write-Host "Nenhuma ocorrÃªncia de sync-over-async encontrada nos endpoints verificados." -ForegroundColor Green
+

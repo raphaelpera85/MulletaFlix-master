@@ -1,10 +1,10 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.LiveTv.Timers;
+using MulletaFlix.LiveTv.Timers;
 using MediaBrowser.Controller.LiveTv;
 using Microsoft.Extensions.Hosting;
 
-namespace Jellyfin.LiveTv.Recordings;
+namespace MulletaFlix.LiveTv.Recordings;
 
 /// <summary>
 /// <see cref="IHostedService"/> responsible for Live TV recordings.
@@ -35,3 +35,4 @@ public sealed class RecordingsHost : IHostedService
     /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
+

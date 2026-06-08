@@ -1,6 +1,6 @@
-using MediaBrowser.Model.System;
+﻿using MediaBrowser.Model.System;
 
-namespace Jellyfin.Api.Models.SystemInfoDtos;
+namespace MulletaFlix.Api.Models.SystemInfoDtos;
 
 /// <summary>
 /// Contains information about a specific folder.
@@ -44,3 +44,4 @@ public record FolderStorageDto
         };
     }
 }
+

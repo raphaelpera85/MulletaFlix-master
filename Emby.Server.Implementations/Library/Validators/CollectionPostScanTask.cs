@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
@@ -151,3 +151,4 @@ public class CollectionPostScanTask : ILibraryPostScanTask
         progress.Report(100);
     }
 }
+

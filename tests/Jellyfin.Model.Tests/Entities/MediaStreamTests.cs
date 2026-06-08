@@ -1,7 +1,7 @@
-using MediaBrowser.Model.Entities;
+﻿using MediaBrowser.Model.Entities;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Entities
+namespace MulletaFlix.Model.Tests.Entities
 {
     public class MediaStreamTests
     {
@@ -248,3 +248,4 @@ namespace Jellyfin.Model.Tests.Entities
         }
     }
 }
+

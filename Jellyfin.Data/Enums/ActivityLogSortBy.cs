@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums;
+﻿namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// Activity log sorting options.
@@ -47,3 +47,4 @@ public enum ActivityLogSortBy
     /// </summary>
     LogSeverity = 7
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.IO;
 using System.Text.Json;
@@ -6,7 +6,7 @@ using Emby.Server.Implementations.HttpServer;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.HttpServer
+namespace MulletaFlix.Server.Implementations.Tests.HttpServer
 {
     public class WebSocketConnectionTests
     {
@@ -67,3 +67,4 @@ namespace Jellyfin.Server.Implementations.Tests.HttpServer
         }
     }
 }
+

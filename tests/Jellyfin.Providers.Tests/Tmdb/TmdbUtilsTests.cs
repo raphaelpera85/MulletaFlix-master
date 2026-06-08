@@ -1,7 +1,7 @@
-using MediaBrowser.Providers.Plugins.Tmdb;
+﻿using MediaBrowser.Providers.Plugins.Tmdb;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.Tmdb
+namespace MulletaFlix.Providers.Tests.Tmdb
 {
     public static class TmdbUtilsTests
     {
@@ -36,3 +36,4 @@ namespace Jellyfin.Providers.Tests.Tmdb
         }
     }
 }
+

@@ -1,25 +1,25 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Users;
+namespace MulletaFlix.Server.Implementations.Users;
 
 /// <summary>
 /// Manages the storage and retrieval of display preferences through Entity Framework.
 /// </summary>
 public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DisplayPreferencesManager"/> class.
     /// </summary>
     /// <param name="dbContextFactory">The database context factory.</param>
-    public DisplayPreferencesManager(IDbContextFactory<JellyfinDbContext> dbContextFactory)
+    public DisplayPreferencesManager(IDbContextFactory<MulletaFlixDbContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;
     }
@@ -114,3 +114,4 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
         dbContext.SaveChanges();
     }
 }
+

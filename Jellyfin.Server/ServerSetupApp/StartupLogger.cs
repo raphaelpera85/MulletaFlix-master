@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Jellyfin.Server.ServerSetupApp;
+namespace MulletaFlix.Server.ServerSetupApp;
 
 /// <inheritdoc/>
 public class StartupLogger : IStartupLogger
@@ -122,3 +122,4 @@ public class StartupLogger : IStartupLogger
         }
     }
 }
+

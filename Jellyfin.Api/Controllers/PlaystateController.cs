@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.MediaEncoding;
@@ -17,7 +17,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Playstate controller.
@@ -25,7 +25,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("")]
 [Authorize]
 [Tags("Session")]
-public class PlaystateController : BaseJellyfinApiController
+public class PlaystateController : BaseMulletaFlixApiController
 {
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataRepository;
@@ -538,3 +538,4 @@ public class PlaystateController : BaseJellyfinApiController
         return method;
     }
 }
+

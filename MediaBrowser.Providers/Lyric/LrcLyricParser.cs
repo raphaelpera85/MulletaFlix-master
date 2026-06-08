@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using LrcParser.Model;
 using LrcParser.Parser;
 using MediaBrowser.Controller.Lyrics;
@@ -120,3 +120,4 @@ public partial class LrcLyricParser : ILyricParser
         return new LyricDto { Lyrics = lyricList };
     }
 }
+

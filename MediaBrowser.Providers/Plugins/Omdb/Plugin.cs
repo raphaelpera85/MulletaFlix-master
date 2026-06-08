@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 #pragma warning disable CS1591
 
 using System;
@@ -28,9 +28,9 @@ namespace MediaBrowser.Providers.Plugins.Omdb
         public override string Description => "Get metadata for movies and other video content from OMDb.";
 
         // TODO remove when plugin removed from server.
-        public override string ConfigurationFileName => "Jellyfin.Plugin.Omdb.xml";
+        public override string ConfigurationFileName => "MulletaFlix.Plugin.Omdb.xml";
 
-        public string ImageResourceName => GetType().Namespace + ".jellyfin-plugin-omdb.png";
+        public string ImageResourceName => GetType().Namespace + ".MulletaFlix-plugin-omdb.png";
 
         public IEnumerable<PluginPageInfo> GetPages()
         {
@@ -42,3 +42,4 @@ namespace MediaBrowser.Providers.Plugins.Omdb
         }
     }
 }
+

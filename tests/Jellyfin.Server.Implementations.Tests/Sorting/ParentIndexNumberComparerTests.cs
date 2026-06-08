@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using Emby.Server.Implementations.Sorting;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Sorting;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Sorting;
+namespace MulletaFlix.Server.Implementations.Tests.Sorting;
 
 public class ParentIndexNumberComparerTests
 {
@@ -47,3 +47,4 @@ public class ParentIndexNumberComparerTests
         Assert.Equal(-expected, _cmp.Compare(y, x));
     }
 }
+

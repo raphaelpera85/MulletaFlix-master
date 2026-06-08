@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.ModelBinders;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.ModelBinders;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Dto;
@@ -12,14 +12,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The collection controller.
 /// </summary>
 [Route("Collections")]
 [Authorize(Policy = Policies.CollectionManagement)]
-public class CollectionController : BaseJellyfinApiController
+public class CollectionController : BaseMulletaFlixApiController
 {
     private readonly ICollectionManager _collectionManager;
     private readonly IDtoService _dtoService;
@@ -109,3 +109,4 @@ public class CollectionController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

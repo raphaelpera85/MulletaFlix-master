@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- ProjectGuid is only included as a requirement for SonarQube analysis -->
   <PropertyGroup>
@@ -74,3 +74,4 @@
     <EmbeddedResource Include="Localization\Ratings\*.json" />
   </ItemGroup>
 </Project>
+

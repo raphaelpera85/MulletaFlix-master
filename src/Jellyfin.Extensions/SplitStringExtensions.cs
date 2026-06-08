@@ -1,7 +1,7 @@
-/*
+﻿/*
 MIT License
 
-Copyright (c) 2019 Gérald Barré
+Copyright (c) 2019 GÃ©rald BarrÃ©
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
     /// <summary>
     /// Extension class for splitting lines without unnecessary allocations.
@@ -113,3 +113,4 @@ namespace Jellyfin.Extensions
         }
     }
 }
+

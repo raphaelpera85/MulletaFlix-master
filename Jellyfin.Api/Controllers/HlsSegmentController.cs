@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Helpers;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Helpers;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.MediaEncoding;
@@ -14,14 +14,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The hls segment controller.
 /// </summary>
 [Route("")]
 [ApiExplorerSettings(IgnoreApi = true)]
-public class HlsSegmentController : BaseJellyfinApiController
+public class HlsSegmentController : BaseMulletaFlixApiController
 {
     private readonly IFileSystem _fileSystem;
     private readonly IServerConfigurationManager _serverConfigurationManager;
@@ -190,3 +190,4 @@ public class HlsSegmentController : BaseJellyfinApiController
         return FileStreamResponseHelpers.GetStaticFileResult(path, MimeTypes.GetMimeType(path));
     }
 }
+

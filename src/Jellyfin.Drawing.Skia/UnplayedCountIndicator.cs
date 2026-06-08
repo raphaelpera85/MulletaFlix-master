@@ -1,8 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using MediaBrowser.Model.Drawing;
 using SkiaSharp;
 
-namespace Jellyfin.Drawing.Skia;
+namespace MulletaFlix.Drawing.Skia;
 
 /// <summary>
 /// Static helper class for drawing unplayed count indicators.
@@ -63,3 +63,4 @@ public static class UnplayedCountIndicator
         canvas.DrawText(text, x, y, font, paint);
     }
 }
+

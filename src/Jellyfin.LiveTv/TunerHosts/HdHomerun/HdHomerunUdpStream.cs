@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1711
 #pragma warning disable CS1591
@@ -20,7 +20,7 @@ using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
+namespace MulletaFlix.LiveTv.TunerHosts.HdHomerun
 {
     public class HdHomerunUdpStream : LiveStream, IDirectStreamProvider
     {
@@ -217,3 +217,4 @@ namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
         }
     }
 }
+

@@ -1,10 +1,10 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 
-namespace Jellyfin.Api.Auth.AnonymousLanAccessPolicy
+namespace MulletaFlix.Api.Auth.AnonymousLanAccessPolicy
 {
     /// <summary>
     /// LAN access handler. Allows anonymous users.
@@ -46,3 +46,4 @@ namespace Jellyfin.Api.Auth.AnonymousLanAccessPolicy
         }
     }
 }
+

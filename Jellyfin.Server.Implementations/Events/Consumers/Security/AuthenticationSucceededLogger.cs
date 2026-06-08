@@ -1,12 +1,12 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Events.Authentication;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Security
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Security
 {
     /// <summary>
     /// Creates an entry in the activity log when there is a successful login attempt.
@@ -46,3 +46,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.Security
         }
     }
 }
+

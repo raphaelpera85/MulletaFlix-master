@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.IO;
@@ -10,7 +10,7 @@ using Moq;
 using Xunit;
 using IConfigurationManager = MediaBrowser.Common.Configuration.IConfigurationManager;
 
-namespace Jellyfin.Controller.Tests.MediaEncoding
+namespace MulletaFlix.Controller.Tests.MediaEncoding
 {
     public class EncodingHelperAudioBitStreamTests
     {
@@ -97,3 +97,4 @@ namespace Jellyfin.Controller.Tests.MediaEncoding
         }
     }
 }
+

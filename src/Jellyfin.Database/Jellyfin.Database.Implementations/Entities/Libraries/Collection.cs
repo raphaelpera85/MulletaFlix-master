@@ -1,11 +1,11 @@
-#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
+﻿#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Interfaces;
+using MulletaFlix.Database.Implementations.Interfaces;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity representing a collection.
@@ -55,3 +55,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         }
     }
 }
+

@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities.Libraries;
+﻿using System.Collections.Generic;
+using MulletaFlix.Database.Implementations.Entities.Libraries;
 
-namespace Jellyfin.Database.Implementations.Interfaces
+namespace MulletaFlix.Database.Implementations.Interfaces
 {
     /// <summary>
     /// An abstraction representing an entity that has companies.
@@ -14,3 +14,4 @@ namespace Jellyfin.Database.Implementations.Interfaces
         ICollection<Company> Companies { get; }
     }
 }
+

@@ -1,8 +1,8 @@
 using System;
-using Jellyfin.Server.Implementations.Users;
+using MulletaFlix.Server.Implementations.Users;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Users
+namespace MulletaFlix.Server.Implementations.Tests.Users
 {
     public class UserManagerTests
     {
@@ -33,3 +33,4 @@ namespace Jellyfin.Server.Implementations.Tests.Users
         }
     }
 }
+

@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using Jellyfin.Api.Models.EnvironmentDtos;
+using MulletaFlix.Api.Models.EnvironmentDtos;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Model.IO;
@@ -12,13 +12,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Environment Controller.
 /// </summary>
 [Authorize(Policy = Policies.FirstTimeSetupOrElevated)]
-public class EnvironmentController : BaseJellyfinApiController
+public class EnvironmentController : BaseMulletaFlixApiController
 {
     private const char UncSeparator = '\\';
     private const string UncStartPrefix = @"\\";
@@ -180,3 +180,4 @@ public class EnvironmentController : BaseJellyfinApiController
         return new DefaultDirectoryBrowserInfoDto();
     }
 }
+

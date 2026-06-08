@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests
+namespace MulletaFlix.Extensions.Tests
 {
     public class StringExtensionsTests
     {
@@ -9,15 +9,15 @@ namespace Jellyfin.Extensions.Tests
         [InlineData("", "")] // Identity edge-case (no diacritics)
         [InlineData("Indiana Jones", "Indiana Jones")] // Identity (no diacritics)
         [InlineData("a\ud800b", "ab")] // Invalid UTF-16 char stripping
-        [InlineData("åäö", "aao")] // Issue #7484
-        [InlineData("Jön", "Jon")] // Issue #7484
-        [InlineData("Jönssonligan", "Jonssonligan")] // Issue #7484
-        [InlineData("Kieślowski", "Kieslowski")] // Issue #7450
-        [InlineData("Cidadão Kane", "Cidadao Kane")] // Issue #7560
-        [InlineData("운명처럼 널 사랑해", "운명처럼 널 사랑해")] // Issue #6393 (Korean language support)
-        [InlineData("애타는 로맨스", "애타는 로맨스")] // Issue #6393
-        [InlineData("Le cœur a ses raisons", "Le coeur a ses raisons")] // Issue #8893
-        [InlineData("Béla Tarr", "Bela Tarr")] // Issue #8893
+        [InlineData("\u00E5\u00E4\u00F6", "aao")] // Issue #7484
+        [InlineData("J\u00F6n", "Jon")] // Issue #7484
+        [InlineData("J\u00F6nssonligan", "Jonssonligan")] // Issue #7484
+        [InlineData("Kie\u015Blowski", "Kieslowski")] // Issue #7450
+        [InlineData("Cidad\u00E3o Kane", "Cidadao Kane")] // Issue #7560
+        [InlineData("\uC6B4\uBA85\uCC98\uB7FC \uB110 \uC0AC\uB791\uD574", "\uC6B4\uBA85\uCC98\uB7FC \uB110 \uC0AC\uB791\uD574")] // Issue #6393 (Korean language support)
+        [InlineData("\uC560\uD0C0\uB294 \uB85C\uB9E8\uC2A4", "\uC560\uD0C0\uB294 \uB85C\uB9E8\uC2A4")] // Issue #6393
+        [InlineData("Le c\u0153ur a ses raisons", "Le coeur a ses raisons")] // Issue #8893
+        [InlineData("B\u00E9la Tarr", "Bela Tarr")] // Issue #8893
         public void RemoveDiacritics_ValidInput_Corrects(string input, string expectedResult)
         {
             string result = input.RemoveDiacritics();
@@ -28,15 +28,15 @@ namespace Jellyfin.Extensions.Tests
         [InlineData("", false)] // Identity edge-case (no diacritics)
         [InlineData("Indiana Jones", false)] // Identity (no diacritics)
         [InlineData("a\ud800b", true)] // Invalid UTF-16 char stripping
-        [InlineData("åäö", true)] // Issue #7484
-        [InlineData("Jön", true)] // Issue #7484
-        [InlineData("Jönssonligan", true)] // Issue #7484
-        [InlineData("Kieślowski", true)] // Issue #7450
-        [InlineData("Cidadão Kane", true)] // Issue #7560
-        [InlineData("운명처럼 널 사랑해", false)] // Issue #6393 (Korean language support)
-        [InlineData("애타는 로맨스", false)] // Issue #6393
-        [InlineData("Le cœur a ses raisons", true)] // Issue #8893
-        [InlineData("Béla Tarr", true)] // Issue #8893
+        [InlineData("\u00E5\u00E4\u00F6", true)] // Issue #7484
+        [InlineData("J\u00F6n", true)] // Issue #7484
+        [InlineData("J\u00F6nssonligan", true)] // Issue #7484
+        [InlineData("Kie\u015Blowski", true)] // Issue #7450
+        [InlineData("Cidad\u00E3o Kane", true)] // Issue #7560
+        [InlineData("\uC6B4\uBA85\uCC98\uB7FC \uB110 \uC0AC\uB791\uD574", false)] // Issue #6393 (Korean language support)
+        [InlineData("\uC560\uD0C0\uB294 \uB85C\uB9E8\uC2A4", false)] // Issue #6393
+        [InlineData("Le c\u0153ur a ses raisons", true)] // Issue #8893
+        [InlineData("B\u00E9la Tarr", true)] // Issue #8893
         public void HasDiacritics_ValidInput_Corrects(string input, bool expectedResult)
         {
             bool result = input.HasDiacritics();
@@ -77,3 +77,4 @@ namespace Jellyfin.Extensions.Tests
         }
     }
 }
+

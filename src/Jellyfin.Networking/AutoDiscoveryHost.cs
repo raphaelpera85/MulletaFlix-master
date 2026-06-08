@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -12,7 +12,7 @@ using MediaBrowser.Model.ApiClient;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Networking;
+namespace MulletaFlix.Networking;
 
 /// <summary>
 /// <see cref="BackgroundService"/> responsible for responding to auto-discovery messages.
@@ -73,7 +73,7 @@ public sealed class AutoDiscoveryHost : BackgroundService
                 {
                     var result = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
                     var text = Encoding.UTF8.GetString(result.Buffer);
-                    if (text.Contains("who is JellyfinServer?", StringComparison.OrdinalIgnoreCase))
+                    if (text.Contains("who is MulletaFlixServer?", StringComparison.OrdinalIgnoreCase))
                     {
                         await RespondToV2Message(result.RemoteEndPoint, udpClient, cancellationToken).ConfigureAwait(false);
                     }
@@ -118,3 +118,4 @@ public sealed class AutoDiscoveryHost : BackgroundService
         }
     }
 }
+

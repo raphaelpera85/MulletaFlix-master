@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 
@@ -84,3 +84,4 @@ public interface IItemCountService
     /// <returns>Dictionary mapping parent ID to child count.</returns>
     Dictionary<Guid, int> GetChildCountBatch(IReadOnlyList<Guid> parentIds, Guid? userId);
 }
+

@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Interfaces;
+using MulletaFlix.Database.Implementations.Interfaces;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// This is the entity to store review ratings, not age ratings.
@@ -71,3 +71,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         }
     }
 }
+

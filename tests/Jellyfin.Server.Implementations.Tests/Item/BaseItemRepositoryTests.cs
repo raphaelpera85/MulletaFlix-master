@@ -1,13 +1,13 @@
-using System;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Server.Implementations.Item;
+﻿using System;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Server.Implementations.Item;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Item;
+namespace MulletaFlix.Server.Implementations.Tests.Item;
 
 public class BaseItemRepositoryTests
 {
@@ -70,3 +70,4 @@ public class BaseItemRepositoryTests
         Assert.NotNull(result);
     }
 }
+

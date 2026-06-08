@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Api.ModelBinders;
+using MulletaFlix.Api.ModelBinders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Primitives;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.ModelBinders
+namespace MulletaFlix.Api.Tests.ModelBinders
 {
     public sealed class PipeDelimitedCollectionModelBinderTests
     {
@@ -176,7 +176,7 @@ namespace Jellyfin.Api.Tests.ModelBinders
         public async Task BindModelAsync_EnumArrayQuery_BindValidOnly()
         {
             var queryParamName = "test";
-            var queryParamString = "🔥|😢";
+            var queryParamString = "ðŸ”¥|ðŸ˜¢";
             var queryParamType = typeof(IReadOnlyList<TestType>);
 
             var modelBinder = new PipeDelimitedCollectionModelBinder(new NullLogger<PipeDelimitedCollectionModelBinder>());
@@ -202,7 +202,7 @@ namespace Jellyfin.Api.Tests.ModelBinders
         {
             var queryParamName = "test";
             var queryParamString1 = "How";
-            var queryParamString2 = "😱";
+            var queryParamString2 = "ðŸ˜±";
             var queryParamType = typeof(IReadOnlyList<TestType>);
 
             var modelBinder = new PipeDelimitedCollectionModelBinder(new NullLogger<PipeDelimitedCollectionModelBinder>());
@@ -228,3 +228,4 @@ namespace Jellyfin.Api.Tests.ModelBinders
         }
     }
 }
+

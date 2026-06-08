@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.MediaEncoding.Keyframes;
+using MulletaFlix.MediaEncoding.Keyframes;
 using MediaBrowser.Controller.IO;
 using MediaBrowser.Controller.Persistence;
 
@@ -42,3 +42,4 @@ public class KeyframeManager : IKeyframeManager
         await _repository.DeleteKeyframeDataAsync(itemId, cancellationToken).ConfigureAwait(false);
     }
 }
+

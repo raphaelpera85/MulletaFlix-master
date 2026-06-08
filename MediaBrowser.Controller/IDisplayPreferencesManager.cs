@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MediaBrowser.Controller
 {
@@ -72,3 +72,4 @@ namespace MediaBrowser.Controller
         void UpdateItemDisplayPreferences(ItemDisplayPreferences itemDisplayPreferences);
     }
 }
+

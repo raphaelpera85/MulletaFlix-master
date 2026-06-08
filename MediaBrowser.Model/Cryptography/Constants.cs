@@ -1,7 +1,7 @@
-namespace MediaBrowser.Model.Cryptography
+﻿namespace MediaBrowser.Model.Cryptography
 {
     /// <summary>
-    /// Class containing global constants for Jellyfin Cryptography.
+    /// Class containing global constants for MulletaFlix Cryptography.
     /// </summary>
     public static class Constants
     {
@@ -21,3 +21,4 @@ namespace MediaBrowser.Model.Cryptography
         public const int DefaultIterations = 210000;
     }
 }
+

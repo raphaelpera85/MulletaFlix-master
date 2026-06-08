@@ -1,27 +1,27 @@
-using System.Linq;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+﻿using System.Linq;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Model.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migrate rating levels.
 /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2026-03-02T09:00:00", nameof(MigrateRatingLevels))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2026-03-02T09:00:00", nameof(MigrateRatingLevels))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 #pragma warning restore CS0618 // Type or member is obsolete
 internal class MigrateRatingLevels : IDatabaseMigrationRoutine
 {
     private readonly IStartupLogger _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _provider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
     private readonly ILocalizationManager _localizationManager;
 
     public MigrateRatingLevels(
-        IDbContextFactory<JellyfinDbContext> provider,
+        IDbContextFactory<MulletaFlixDbContext> provider,
         IStartupLogger<MigrateRatingLevels> logger,
         ILocalizationManager localizationManager)
     {
@@ -66,3 +66,4 @@ internal class MigrateRatingLevels : IDatabaseMigrationRoutine
         transaction.Commit();
     }
 }
+

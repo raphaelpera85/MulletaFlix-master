@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 #pragma warning disable SA1601
 
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     public partial class FixDisplayPreferencesIndex : Migration
     {
@@ -11,18 +11,18 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_DisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DisplayPreferences_UserId_Client",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences",
                 columns: new[] { "UserId", "Client" },
                 unique: true);
@@ -32,20 +32,21 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_DisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences");
 
             migrationBuilder.DropIndex(
                 name: "IX_DisplayPreferences_UserId_Client",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences",
                 column: "UserId",
                 unique: true);
         }
     }
 }
+

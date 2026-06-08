@@ -1,10 +1,10 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.Loader;
 
 namespace Emby.Server.Implementations.Plugins;
 
 /// <summary>
-/// A custom <see cref="AssemblyLoadContext"/> for loading Jellyfin plugins.
+/// A custom <see cref="AssemblyLoadContext"/> for loading MulletaFlix plugins.
 /// </summary>
 public class PluginLoadContext : AssemblyLoadContext
 {
@@ -31,3 +31,4 @@ public class PluginLoadContext : AssemblyLoadContext
         return null;
     }
 }
+

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Session;
 
 namespace MediaBrowser.Model.Dto;
@@ -178,3 +178,4 @@ public class SessionInfoDto
     /// <value>The supported commands.</value>
     public IReadOnlyList<GeneralCommandType> SupportedCommands { get; set; } = [];
 }
+

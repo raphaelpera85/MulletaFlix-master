@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// The types of user preferences.
@@ -70,3 +70,4 @@ public enum PreferenceKind
     /// </summary>
     AllowedTags = 12
 }
+

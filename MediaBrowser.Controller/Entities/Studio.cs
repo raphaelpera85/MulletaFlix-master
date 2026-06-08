@@ -1,11 +1,11 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace MediaBrowser.Controller.Entities
@@ -123,3 +123,4 @@ namespace MediaBrowser.Controller.Entities
         }
     }
 }
+

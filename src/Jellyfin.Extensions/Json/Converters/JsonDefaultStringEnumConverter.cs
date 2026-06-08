@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters;
+namespace MulletaFlix.Extensions.Json.Converters;
 
 /// <summary>
 /// Json unknown enum converter.
@@ -47,3 +47,4 @@ public class JsonDefaultStringEnumConverter<T> : JsonConverter<T>
         _baseConverter.Write(writer, value, options);
     }
 }
+

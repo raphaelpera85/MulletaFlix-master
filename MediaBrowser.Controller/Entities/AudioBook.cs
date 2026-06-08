@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1724, CS1591
 
 using System;
 using System.Text.Json.Serialization;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Providers;
 
 namespace MediaBrowser.Controller.Entities
@@ -63,3 +63,4 @@ namespace MediaBrowser.Controller.Entities
         }
     }
 }
+

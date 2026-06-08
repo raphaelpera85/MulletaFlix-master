@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -8,14 +8,14 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Data.Events;
-using Jellyfin.Data.Events.Users;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Data.Events.Users;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
@@ -31,14 +31,14 @@ using MediaBrowser.Model.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.Users
+namespace MulletaFlix.Server.Implementations.Users
 {
     /// <summary>
     /// Manages the creation and retrieval of <see cref="User"/> instances.
     /// </summary>
     public partial class UserManager : IUserManager, IDisposable
     {
-        private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
         private readonly IEventManager _eventManager;
         private readonly INetworkManager _networkManager;
         private readonly IApplicationHost _appHost;
@@ -66,7 +66,7 @@ namespace Jellyfin.Server.Implementations.Users
         /// <param name="passwordResetProviders">The password reset providers.</param>
         /// <param name="authenticationProviders">The authentication providers.</param>
         public UserManager(
-            IDbContextFactory<JellyfinDbContext> dbProvider,
+            IDbContextFactory<MulletaFlixDbContext> dbProvider,
             IEventManager eventManager,
             INetworkManager networkManager,
             IApplicationHost appHost,
@@ -116,7 +116,7 @@ namespace Jellyfin.Server.Implementations.Users
         // This is some regex that matches only on unicode "word" characters, as well as -, _ and @
         // In theory this will cut out most if not all 'control' characters which should help minimize any weirdness
         // Usernames can contain letters (a-z + whatever else unicode is cool with), numbers (0-9), at-signs (@), dashes (-), underscores (_), apostrophes ('), periods (.) and spaces ( )
-        [GeneratedRegex(@"^(?!\s)[\w\ \-'._@+]+(?<!\s)$")]
+        [GeneratedRegex(@"^(?!\s)[\p{L}\p{N}\ \-'._@+]+(?<!\s)$")]
         private static partial Regex ValidUsernameRegex();
 
         /// <inheritdoc/>
@@ -132,7 +132,7 @@ namespace Jellyfin.Server.Implementations.Users
                 .FirstOrDefault(user => user.Id == id);
         }
 
-        private static IQueryable<User> UserQuery(JellyfinDbContext dbContext)
+        private static IQueryable<User> UserQuery(MulletaFlixDbContext dbContext)
         {
             return dbContext.Users
                             .AsSingleQuery()
@@ -218,7 +218,7 @@ namespace Jellyfin.Server.Implementations.Users
             }
         }
 
-        internal async Task<User> CreateUserInternalAsync(string name, JellyfinDbContext dbContext)
+        internal async Task<User> CreateUserInternalAsync(string name, MulletaFlixDbContext dbContext)
         {
             // TODO: Remove after user item data is migrated.
             var max = await dbContext.Users.AsQueryable().AnyAsync().ConfigureAwait(false)
@@ -235,6 +235,7 @@ namespace Jellyfin.Server.Implementations.Users
 
             user.AddDefaultPermissions();
             user.AddDefaultPreferences();
+            user.SetPermission(PermissionKind.IsHidden, true);
 
             return user;
         }
@@ -508,6 +509,32 @@ namespace Jellyfin.Server.Implementations.Users
                     throw new AuthenticationException("Invalid username or password entered.");
                 }
 
+                // Check for expired license only during login.
+                if (!user.HasPermission(PermissionKind.IsAdministrator))
+                {
+                    var dbContext = await _dbProvider.CreateDbContextAsync().ConfigureAwait(false);
+                    await using (dbContext.ConfigureAwait(false))
+                    {
+                        var license = await dbContext.UserLicenses
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(l => l.UserId.Equals(user.Id))
+                            .ConfigureAwait(false);
+
+                        if (license is not null && !license.IsUnlimited
+                            && license.ExpirationDate.HasValue
+                            && license.ExpirationDate.Value < DateTime.UtcNow)
+                        {
+                            _logger.LogInformation(
+                                "Authentication request for {UserName} denied: license expired at {ExpirationDate} (IP: {IP}).",
+                                username,
+                                license.ExpirationDate.Value,
+                                remoteEndPoint);
+                            throw new SecurityException(
+                                $"A licença de acesso de {user.Username} expirou em {license.ExpirationDate.Value:dd/MM/yyyy HH:mm}. Entre em contato com o administrador.");
+                        }
+                    }
+                }
+
                 if (user.HasPermission(PermissionKind.IsDisabled))
                 {
                     _logger.LogInformation(
@@ -528,36 +555,6 @@ namespace Jellyfin.Server.Implementations.Users
                     throw new SecurityException("Forbidden.");
                 }
 
-                // Check for expired license (reactive fallback between scheduled task runs)
-                if (!user.HasPermission(PermissionKind.IsAdministrator))
-                {
-                    var dbContext = await _dbProvider.CreateDbContextAsync().ConfigureAwait(false);
-                    await using (dbContext.ConfigureAwait(false))
-                    {
-                        var license = await dbContext.UserLicenses
-                            .AsNoTracking()
-                            .FirstOrDefaultAsync(l => l.UserId.Equals(user.Id))
-                            .ConfigureAwait(false);
-
-                        if (license is not null && !license.IsUnlimited
-                            && license.ExpirationDate.HasValue
-                            && license.ExpirationDate.Value < DateTime.UtcNow)
-                        {
-                            _logger.LogInformation(
-                                "Authentication request for {UserName} denied: license expired at {ExpirationDate} (IP: {IP}).",
-                                username,
-                                license.ExpirationDate.Value,
-                                remoteEndPoint);
-
-                            // Disable the user proactively
-                            user.SetPermission(PermissionKind.IsDisabled, true);
-                            await UpdateUserInternalAsync(user).ConfigureAwait(false);
-
-                            throw new SecurityException(
-                                $"A licença de acesso de {user.Username} expirou em {license.ExpirationDate.Value:dd/MM/yyyy HH:mm}. Entre em contato com o administrador.");
-                        }
-                    }
-                }
 
                 if (!user.IsParentalScheduleAllowed())
                 {
@@ -642,7 +639,7 @@ namespace Jellyfin.Server.Implementations.Users
                 var defaultName = Environment.UserName;
                 if (string.IsNullOrWhiteSpace(defaultName) || !ValidUsernameRegex().IsMatch(defaultName))
                 {
-                    defaultName = "MyJellyfinUser";
+                    defaultName = "MyMulletaFlixUser";
                 }
 
                 _logger.LogWarning("No users, creating one with username {UserName}", defaultName);
@@ -830,12 +827,43 @@ namespace Jellyfin.Server.Implementations.Users
 
         internal static void ThrowIfInvalidUsername(string name)
         {
-            if (!string.IsNullOrWhiteSpace(name) && ValidUsernameRegex().IsMatch(name))
+            if (!string.IsNullOrWhiteSpace(name) && IsValidUsername(name))
             {
                 return;
             }
 
             throw new ArgumentException("Usernames can contain unicode symbols, numbers (0-9), dashes (-), underscores (_), apostrophes ('), and periods (.)", nameof(name));
+        }
+
+        private static bool IsValidUsername(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
+
+            if (char.IsWhiteSpace(name[0]) || char.IsWhiteSpace(name[^1]))
+            {
+                return false;
+            }
+
+            foreach (var ch in name)
+            {
+                if (char.IsLetterOrDigit(ch) || ch == ' ' || ch == '-' || ch == '\'' || ch == '.' || ch == '_' || ch == '@' || ch == '+')
+                {
+                    continue;
+                }
+
+                var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (cat == UnicodeCategory.NonSpacingMark)
+                {
+                    continue;
+                }
+
+                return false;
+            }
+
+            return true;
         }
 
         private IAuthenticationProvider GetAuthenticationProvider(User user)
@@ -983,7 +1011,7 @@ namespace Jellyfin.Server.Implementations.Users
             }
         }
 
-        private async Task UpdateUserInternalAsync(JellyfinDbContext dbContext, User user)
+        private async Task UpdateUserInternalAsync(MulletaFlixDbContext dbContext, User user)
         {
             dbContext.Users.Attach(user);
             dbContext.Entry(user).State = EntityState.Modified;
@@ -1010,3 +1038,4 @@ namespace Jellyfin.Server.Implementations.Users
         }
     }
 }
+

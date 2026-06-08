@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 #pragma warning disable CA5394
 
 using System;
@@ -19,11 +19,11 @@ using Emby.Server.Implementations.Library.Validators;
 using Emby.Server.Implementations.Playlists;
 using Emby.Server.Implementations.ScheduledTasks.Tasks;
 using Emby.Server.Implementations.Sorting;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
@@ -89,6 +89,7 @@ namespace Emby.Server.Implementations.Library
         private readonly FastConcurrentLru<Guid, BaseItem> _cache;
         private readonly DotIgnoreIgnoreRule _dotIgnoreIgnoreRule;
         private readonly IMediaStreamRepository _mediaStreamRepository;
+        private static readonly Lazy<IReadOnlyDictionary<string, string>> _countryToLanguageMap = new(BuildCountryLanguageMap);
 
         /// <summary>
         /// The _root folder sync lock.
@@ -3649,10 +3650,11 @@ namespace Emby.Server.Implementations.Library
         {
             var namingOptions = _namingOptions;
             var result = VideoResolver.CleanDateTime(name, namingOptions);
+            var normalizedName = TitleNormalization.RemoveTrailingReleaseTags(result.Name);
 
             return new ItemLookupInfo
             {
-                Name = VideoResolver.TryCleanString(result.Name, namingOptions, out var newName) ? newName : result.Name,
+                Name = VideoResolver.TryCleanString(normalizedName, namingOptions, out var newName) ? newName : normalizedName,
                 Year = result.Year
             };
         }
@@ -3878,6 +3880,7 @@ namespace Emby.Server.Implementations.Library
                 throw new ArgumentNullException(nameof(name));
             }
 
+            NormalizeLibraryOptions(options);
             name = _fileSystem.GetValidFilename(name.Trim());
 
             var rootFolderPath = _configurationManager.ApplicationPaths.DefaultUserViewsPath;
@@ -3942,6 +3945,74 @@ namespace Emby.Server.Implementations.Library
             }
         }
 
+        private void NormalizeLibraryOptions(LibraryOptions options)
+        {
+            options.EnableRealtimeMonitor = true;
+
+            if (string.IsNullOrWhiteSpace(options.MetadataCountryCode))
+            {
+                options.MetadataCountryCode = _configurationManager.Configuration.MetadataCountryCode;
+            }
+
+            if (string.IsNullOrWhiteSpace(options.PreferredMetadataLanguage))
+            {
+                options.PreferredMetadataLanguage = GetDefaultMetadataLanguage(options.MetadataCountryCode);
+            }
+        }
+
+        private string GetDefaultMetadataLanguage(string? countryCode)
+        {
+            if (!string.IsNullOrWhiteSpace(countryCode)
+                && _countryToLanguageMap.Value.TryGetValue(countryCode, out var mappedLanguage)
+                && !string.IsNullOrWhiteSpace(mappedLanguage))
+            {
+                return mappedLanguage;
+            }
+
+            var configuredLanguage = _configurationManager.Configuration.PreferredMetadataLanguage;
+            if (!string.IsNullOrWhiteSpace(configuredLanguage))
+            {
+                return configuredLanguage;
+            }
+
+            var uiCulture = _configurationManager.Configuration.UICulture;
+            if (!string.IsNullOrWhiteSpace(uiCulture))
+            {
+                try
+                {
+                    return CultureInfo.GetCultureInfo(uiCulture).TwoLetterISOLanguageName;
+                }
+                catch (CultureNotFoundException)
+                {
+                    // Ignore invalid configured UI culture values.
+                }
+            }
+
+            return "en";
+        }
+
+        private static IReadOnlyDictionary<string, string> BuildCountryLanguageMap()
+        {
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures).OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var regionInfo = new RegionInfo(culture.Name);
+                    if (!map.ContainsKey(regionInfo.TwoLetterISORegionName))
+                    {
+                        map[regionInfo.TwoLetterISORegionName] = culture.TwoLetterISOLanguageName;
+                    }
+                }
+                catch (ArgumentException)
+                {
+                    // Ignore cultures that cannot be converted into a region.
+                }
+            }
+
+            return map;
+        }
         private async Task SavePeopleMetadataAsync(IEnumerable<PersonInfo> people, CancellationToken cancellationToken)
         {
             foreach (var person in people)
@@ -4277,3 +4348,4 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
+

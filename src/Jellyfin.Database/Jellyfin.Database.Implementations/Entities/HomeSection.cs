@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Enums;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using MulletaFlix.Database.Implementations.Enums;
 
-namespace Jellyfin.Database.Implementations.Entities
+namespace MulletaFlix.Database.Implementations.Entities
 {
     /// <summary>
     /// An entity representing a section on the user's home page.
@@ -42,3 +42,4 @@ namespace Jellyfin.Database.Implementations.Entities
         public HomeSectionType Type { get; set; }
     }
 }
+

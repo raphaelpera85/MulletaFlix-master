@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Buffers.Binary;
-using Jellyfin.MediaEncoding.Keyframes.Matroska.Models;
+using MulletaFlix.MediaEncoding.Keyframes.Matroska.Models;
 using NEbml.Core;
 
-namespace Jellyfin.MediaEncoding.Keyframes.Matroska.Extensions;
+namespace MulletaFlix.MediaEncoding.Keyframes.Matroska.Extensions;
 
 /// <summary>
 /// Extension methods for the <see cref="EbmlReader"/> class.
@@ -175,3 +175,4 @@ internal static class EbmlReaderExtensions
         throw new InvalidOperationException($"No stream with type {type} found");
     }
 }
+

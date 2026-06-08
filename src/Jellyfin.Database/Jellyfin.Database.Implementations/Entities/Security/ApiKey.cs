@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
 
-namespace Jellyfin.Database.Implementations.Entities.Security
+namespace MulletaFlix.Database.Implementations.Entities.Security
 {
     /// <summary>
     /// An entity representing an API key.
@@ -54,3 +54,4 @@ namespace Jellyfin.Database.Implementations.Entities.Security
         public string AccessToken { get; set; }
     }
 }
+

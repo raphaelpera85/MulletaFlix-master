@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters
+namespace MulletaFlix.Extensions.Json.Converters
 {
     /// <summary>
     /// Legacy DateTime converter.
@@ -32,3 +32,4 @@ namespace Jellyfin.Extensions.Json.Converters
         }
     }
 }
+

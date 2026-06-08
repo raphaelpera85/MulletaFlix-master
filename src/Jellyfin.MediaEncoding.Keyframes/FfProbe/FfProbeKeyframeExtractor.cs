@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 
-namespace Jellyfin.MediaEncoding.Keyframes.FfProbe;
+namespace MulletaFlix.MediaEncoding.Keyframes.FfProbe;
 
 /// <summary>
 /// FfProbe based keyframe extractor.
@@ -129,3 +129,4 @@ public static class FfProbeKeyframeExtractor
         }
     }
 }
+

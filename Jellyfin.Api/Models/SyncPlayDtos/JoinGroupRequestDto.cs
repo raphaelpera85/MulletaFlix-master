@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class JoinGroupRequestDto.
@@ -13,3 +13,4 @@ public class JoinGroupRequestDto
     /// <value>The identifier of the group to join.</value>
     public Guid GroupId { get; set; }
 }
+

@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Database.Implementations.Locking;
+namespace MulletaFlix.Database.Implementations.Locking;
 
 /// <summary>
 /// Default lock behavior. Defines no explicit application locking behavior.
@@ -22,7 +22,7 @@ public class NoLockBehavior : IEntityFrameworkCoreLockingBehavior
     }
 
     /// <inheritdoc/>
-    public void OnSaveChanges(JellyfinDbContext context, Action saveChanges)
+    public void OnSaveChanges(MulletaFlixDbContext context, Action saveChanges)
     {
         saveChanges();
     }
@@ -34,8 +34,9 @@ public class NoLockBehavior : IEntityFrameworkCoreLockingBehavior
     }
 
     /// <inheritdoc/>
-    public async Task OnSaveChangesAsync(JellyfinDbContext context, Func<Task> saveChanges)
+    public async Task OnSaveChangesAsync(MulletaFlixDbContext context, Func<Task> saveChanges)
     {
         await saveChanges().ConfigureAwait(false);
     }
 }
+

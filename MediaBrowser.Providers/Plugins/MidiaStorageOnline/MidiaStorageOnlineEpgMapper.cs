@@ -311,6 +311,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 
         private static string GetEffectiveTvgId(IMidiaStorageOnlineM3uEntry entry)
         {
+            var approvedTvgId = MidiaStorageOnlineApprovedChannelMappings.TryGetEpgId(entry.TvgName, entry.Name, entry.TvgId);
+            if (!string.IsNullOrWhiteSpace(approvedTvgId))
+            {
+                return approvedTvgId;
+            }
+
             var mappedTvgId = MidiaStorageOnlineChannelMappings.ResolveTvgId(
                 entry.TvgId,
                 entry.TvgName,

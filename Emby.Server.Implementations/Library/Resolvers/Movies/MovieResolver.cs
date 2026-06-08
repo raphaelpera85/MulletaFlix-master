@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.Collections.Generic;
@@ -7,8 +7,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Emby.Naming.Common;
 using Emby.Naming.Video;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
@@ -591,3 +591,4 @@ namespace Emby.Server.Implementations.Library.Resolvers.Movies
         }
     }
 }
+

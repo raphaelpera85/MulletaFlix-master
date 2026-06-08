@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums
+﻿namespace MulletaFlix.Data.Enums
 {
     /// <summary>
     /// Enum SyncPlayAccessRequirementType.
@@ -26,3 +26,4 @@ namespace Jellyfin.Data.Enums
         IsInGroup = 3
     }
 }
+

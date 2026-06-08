@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Model.Cryptography;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Cryptography
+namespace MulletaFlix.Model.Tests.Cryptography
 {
     public static class PasswordHashTests
     {
@@ -167,3 +167,4 @@ namespace Jellyfin.Model.Tests.Cryptography
         }
     }
 }
+

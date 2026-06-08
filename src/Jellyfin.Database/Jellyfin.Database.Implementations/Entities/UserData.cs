@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Provides <see cref="BaseItemEntity"/> and <see cref="User"/> related data.
@@ -94,3 +94,4 @@ public class UserData
     /// </summary>
     public required User? User { get; set; }
 }
+

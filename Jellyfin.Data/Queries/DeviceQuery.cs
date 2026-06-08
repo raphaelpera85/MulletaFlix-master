@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Data.Queries
+namespace MulletaFlix.Data.Queries
 {
     /// <summary>
     /// A query to retrieve devices.
@@ -23,3 +23,4 @@ namespace Jellyfin.Data.Queries
         public string? AccessToken { get; set; }
     }
 }
+

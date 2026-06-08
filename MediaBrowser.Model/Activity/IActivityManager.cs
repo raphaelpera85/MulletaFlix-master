@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events;
-using Jellyfin.Data.Queries;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Data.Queries;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.Querying;
 
 namespace MediaBrowser.Model.Activity;
@@ -38,3 +38,4 @@ public interface IActivityManager
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task CleanAsync(DateTime startDate);
 }
+

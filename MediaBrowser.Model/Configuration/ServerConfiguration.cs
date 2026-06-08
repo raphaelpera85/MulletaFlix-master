@@ -192,7 +192,7 @@ public class ServerConfiguration : BaseApplicationConfiguration
 
     public bool SkipDeserializationForBasicTypes { get; set; } = true;
 
-    public string ServerName { get; set; } = string.Empty;
+    public string ServerName { get; set; } = "Mulletaflix";
 
     public string UICulture { get; set; } = "en-US";
 

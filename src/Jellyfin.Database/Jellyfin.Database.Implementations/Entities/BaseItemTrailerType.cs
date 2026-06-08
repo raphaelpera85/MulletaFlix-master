@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Enum TrailerTypes.
@@ -22,3 +22,4 @@ public class BaseItemTrailerType
     /// </summary>
     public required BaseItemEntity Item { get; set; }
 }
+

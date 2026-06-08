@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Globalization;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Sorting;
 
@@ -32,3 +32,4 @@ namespace Emby.Server.Implementations.Sorting
         }
     }
 }
+

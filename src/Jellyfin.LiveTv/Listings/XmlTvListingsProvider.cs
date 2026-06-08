@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using Jellyfin.XmlTv;
 using Jellyfin.XmlTv.Entities;
 using MediaBrowser.Common.Extensions;
@@ -21,7 +21,7 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.LiveTv;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Listings
+namespace MulletaFlix.LiveTv.Listings
 {
     public class XmlTvListingsProvider : IListingsProvider
     {
@@ -294,3 +294,4 @@ namespace Jellyfin.LiveTv.Listings
         }
     }
 }
+

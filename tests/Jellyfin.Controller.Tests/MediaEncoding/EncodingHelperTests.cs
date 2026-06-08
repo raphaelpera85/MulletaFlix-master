@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.IO;
 using MediaBrowser.Controller.Library;
@@ -16,7 +16,7 @@ using Xunit;
 
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
-namespace Jellyfin.Controller.Tests.MediaEncoding;
+namespace MulletaFlix.Controller.Tests.MediaEncoding;
 
 public class EncodingHelperTests
 {
@@ -73,8 +73,8 @@ public class EncodingHelperTests
     [Fact]
     public void GetMapArgs_SecondExternalSrt_StillMaps1Colon0()
     {
-        // Two separate .srt files — selecting the second one still maps 1:0
-        // because Jellyfin feeds only the selected file as ffmpeg input 1.
+        // Two separate .srt files â€” selecting the second one still maps 1:0
+        // because MulletaFlix feeds only the selected file as ffmpeg input 1.
         var ext1 = new MediaStream
         {
             Index = 2,
@@ -172,7 +172,7 @@ public class EncodingHelperTests
         bool createIdxFile,
         string expectedFilename)
     {
-        var tempDir = Directory.CreateTempSubdirectory("jellyfin-test-");
+        var tempDir = Directory.CreateTempSubdirectory("MulletaFlix-test-");
         try
         {
             var subFile = Path.Combine(tempDir.FullName, "movie.sub");
@@ -256,3 +256,4 @@ public class EncodingHelperTests
             pathManager.Object);
     }
 }
+

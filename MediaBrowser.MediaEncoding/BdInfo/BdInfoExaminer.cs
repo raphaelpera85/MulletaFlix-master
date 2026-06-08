@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using BDInfo;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.MediaInfo;
@@ -181,3 +181,4 @@ public class BdInfoExaminer : IBlurayExaminer
             _ => stream.CodecShortName
         };
 }
+

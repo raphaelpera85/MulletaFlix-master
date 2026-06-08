@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
-namespace Jellyfin.Database.Providers.Sqlite;
+namespace MulletaFlix.Database.Providers.Sqlite;
 
 internal class DoNotUseReturningClauseConvention : IModelFinalizingConvention
 {
@@ -18,3 +18,4 @@ internal class DoNotUseReturningClauseConvention : IModelFinalizingConvention
         }
     }
 }
+

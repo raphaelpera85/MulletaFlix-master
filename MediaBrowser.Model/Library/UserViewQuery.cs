@@ -1,8 +1,8 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MediaBrowser.Model.Library
 {
@@ -35,3 +35,4 @@ namespace MediaBrowser.Model.Library
         public CollectionType?[] PresetViews { get; set; }
     }
 }
+

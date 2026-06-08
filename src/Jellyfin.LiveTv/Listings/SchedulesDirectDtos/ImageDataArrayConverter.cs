@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos;
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos;
 
 /// <summary>
 /// Converter for the <c>data</c> field in SD image responses.
@@ -31,7 +31,7 @@ public sealed class ImageDataArrayConverter : JsonConverter<IReadOnlyList<ImageD
             return result;
         }
 
-        // Not an array (string error, null, object, etc.) — skip and return empty.
+        // Not an array (string error, null, object, etc.) â€” skip and return empty.
         reader.TrySkip();
         return [];
     }
@@ -40,3 +40,4 @@ public sealed class ImageDataArrayConverter : JsonConverter<IReadOnlyList<ImageD
     public override void Write(Utf8JsonWriter writer, IReadOnlyList<ImageDataDto> value, JsonSerializerOptions options)
         => JsonSerializer.Serialize(writer, value, options);
 }
+

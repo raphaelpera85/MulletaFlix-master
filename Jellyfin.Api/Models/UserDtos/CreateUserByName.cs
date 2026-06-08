@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Api.Models.UserDtos;
+namespace MulletaFlix.Api.Models.UserDtos;
 
 /// <summary>
 /// The create user by name request body.
@@ -18,3 +18,4 @@ public class CreateUserByName
     /// </summary>
     public string? Password { get; set; }
 }
+

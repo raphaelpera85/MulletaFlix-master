@@ -1,28 +1,28 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using Emby.Server.Implementations.Data;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines
+namespace MulletaFlix.Server.Migrations.Routines
 {
     /// <summary>
     /// The migration routine for migrating the activity log database to EF Core.
     /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-    [JellyfinMigration("2025-04-20T07:00:00", nameof(MigrateActivityLogDb), "3793eb59-bc8c-456c-8b9f-bd5a62a42978")]
+    [MulletaFlixMigration("2025-04-20T07:00:00", nameof(MigrateActivityLogDb), "3793eb59-bc8c-456c-8b9f-bd5a62a42978")]
     public class MigrateActivityLogDb : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
     {
         private const string DbFilename = "activitylog.db";
 
         private readonly ILogger<MigrateActivityLogDb> _logger;
-        private readonly IDbContextFactory<JellyfinDbContext> _provider;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
         private readonly IServerApplicationPaths _paths;
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Jellyfin.Server.Migrations.Routines
         /// <param name="logger">The logger.</param>
         /// <param name="paths">The server application paths.</param>
         /// <param name="provider">The database provider.</param>
-        public MigrateActivityLogDb(ILogger<MigrateActivityLogDb> logger, IServerApplicationPaths paths, IDbContextFactory<JellyfinDbContext> provider)
+        public MigrateActivityLogDb(ILogger<MigrateActivityLogDb> logger, IServerApplicationPaths paths, IDbContextFactory<MulletaFlixDbContext> provider)
         {
             _logger = logger;
             _provider = provider;
@@ -77,7 +77,7 @@ namespace Jellyfin.Server.Migrations.Routines
 
                 using var userDbConnection = new SqliteConnection($"Filename={Path.Combine(dataPath, "users.db")}");
                 userDbConnection.Open();
-                _logger.LogWarning("Migrating the activity database may take a while, do not stop Jellyfin.");
+                _logger.LogWarning("Migrating the activity database may take a while, do not stop MulletaFlix.");
                 using var dbContext = _provider.CreateDbContext();
 
                 // Make sure that the database is empty in case of failed migration due to power outages, etc.
@@ -161,3 +161,4 @@ namespace Jellyfin.Server.Migrations.Routines
         }
     }
 }
+

@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity representing a series.
@@ -44,3 +44,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         public virtual ICollection<Season> Seasons { get; private set; }
     }
 }
+

@@ -6,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
@@ -218,13 +218,7 @@ namespace MediaBrowser.Controller.LiveTv
         /// <returns>Task.</returns>
         Task AddInfoToProgramDto(IReadOnlyCollection<(BaseItem Item, BaseItemDto ItemDto)> programs, IReadOnlyList<ItemFields> fields, User user = null);
 
-        /// <summary>
-        /// Adds the channel information.
-        /// </summary>
-        /// <param name="items">The items.</param>
-        /// <param name="options">The options.</param>
-        /// <param name="user">The user.</param>
-        void AddChannelInfo(IReadOnlyCollection<(BaseItemDto ItemDto, LiveTvChannel Channel)> items, DtoOptions options, User user);
+
 
         /// <summary>
         /// Adds the channel information asynchronously.
@@ -240,3 +234,4 @@ namespace MediaBrowser.Controller.LiveTv
         Task<BaseItem[]> GetRecordingFoldersAsync(User user);
     }
 }
+

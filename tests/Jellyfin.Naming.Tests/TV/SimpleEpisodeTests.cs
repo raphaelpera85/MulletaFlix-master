@@ -1,9 +1,9 @@
-using System.IO;
+﻿using System.IO;
 using Emby.Naming.Common;
 using Emby.Naming.TV;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.TV
+namespace MulletaFlix.Naming.Tests.TV
 {
     public class SimpleEpisodeTests
     {
@@ -47,3 +47,4 @@ namespace Jellyfin.Naming.Tests.TV
         }
     }
 }
+

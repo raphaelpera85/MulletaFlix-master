@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Locking;
-using Jellyfin.Database.Providers.Sqlite;
-using Jellyfin.Server.Implementations.Users;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Locking;
+using MulletaFlix.Database.Providers.Sqlite;
+using MulletaFlix.Server.Implementations.Users;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
@@ -21,12 +21,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Users
+namespace MulletaFlix.Server.Implementations.Tests.Users
 {
     public sealed class UserManagerNormalizedUsernameTests : IDisposable
     {
         private readonly SqliteConnection _connection;
-        private readonly DbContextOptions<JellyfinDbContext> _dbOptions;
+        private readonly DbContextOptions<MulletaFlixDbContext> _dbOptions;
         private readonly UserManager _userManager;
 
         public UserManagerNormalizedUsernameTests()
@@ -34,7 +34,7 @@ namespace Jellyfin.Server.Implementations.Tests.Users
             _connection = new SqliteConnection("Data Source=:memory:");
             _connection.Open();
 
-            _dbOptions = new DbContextOptionsBuilder<JellyfinDbContext>()
+            _dbOptions = new DbContextOptionsBuilder<MulletaFlixDbContext>()
                 .UseSqlite(_connection)
                 .Options;
 
@@ -42,7 +42,7 @@ namespace Jellyfin.Server.Implementations.Tests.Users
             using var ctx = CreateDbContext();
             ctx.Database.EnsureCreated();
 
-            var factory = new Mock<IDbContextFactory<JellyfinDbContext>>();
+            var factory = new Mock<IDbContextFactory<MulletaFlixDbContext>>();
             factory.Setup(f => f.CreateDbContext()).Returns(CreateDbContext);
             factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateDbContext);
@@ -81,11 +81,11 @@ namespace Jellyfin.Server.Implementations.Tests.Users
             _connection.Dispose();
         }
 
-        private JellyfinDbContext CreateDbContext()
+        private MulletaFlixDbContext CreateDbContext()
         {
-            return new JellyfinDbContext(
+            return new MulletaFlixDbContext(
                 _dbOptions,
-                NullLogger<JellyfinDbContext>.Instance,
+                NullLogger<MulletaFlixDbContext>.Instance,
                 new SqliteDatabaseProvider(null!, NullLogger<SqliteDatabaseProvider>.Instance),
                 new NoLockBehavior(NullLogger<NoLockBehavior>.Instance));
         }
@@ -94,13 +94,13 @@ namespace Jellyfin.Server.Implementations.Tests.Users
 
         [Theory]
         // German umlauts
-        [InlineData("münchen", "MÜNCHEN")]
+        [InlineData("m\u00FCnchen", "M\u00DCNCHEN")]
         // Spanish tilde-n
-        [InlineData("Ñoño", "ÑOÑO")]
+        [InlineData("\u00D1o\u00F1o", "\u00D1O\u00D1O")]
         // ASCII, invariant uppercase lookup
-        [InlineData("jellyfin", "JELLYFIN")]
-        // Turkish cedilla: invariant 'i' uppercases to 'I' (U+0049), not Turkish 'İ' (U+0130)
-        [InlineData("Çelebi", "ÇELEBI")]
+        [InlineData("MulletaFlix", "MulletaFlix")]
+        // Turkish cedilla: invariant 'i' uppercases to 'I' (U+0049), not Turkish '\u0130' (U+0130)
+        [InlineData("\u00C7elebi", "\u00C7ELEBI")]
         public async Task GetUserByName_WithNonAsciiUsername_FindsUserByNormalizedName(
             string username, string normalizedLookup)
         {
@@ -114,13 +114,13 @@ namespace Jellyfin.Server.Implementations.Tests.Users
 
         [Theory]
         // German umlaut, look up by both upper and lower case
-        [InlineData("münchen")]
+        [InlineData("m\u00FCnchen")]
         // Spanish tilde-n
-        [InlineData("Ñoño")]
-        // lowercase 'i' — invariant ToUpperInvariant gives 'I', not Turkish 'İ'
+        [InlineData("\u00D1o\u00F1o")]
+        // lowercase 'i' \u2014 invariant ToUpperInvariant gives 'I', not Turkish '\u0130'
         [InlineData("ali")]
         // mixed ASCII + umlaut
-        [InlineData("testüser")]
+        [InlineData("test\u00FCser")]
         public async Task GetUserByName_WithVariousCase_FindsUserCaseInsensitively(string username)
         {
             await _userManager.CreateUserAsync(username);
@@ -136,8 +136,8 @@ namespace Jellyfin.Server.Implementations.Tests.Users
 
         [Theory]
         [InlineData("nonexistent")]
-        // No user with NormalizedUsername = "MÜNCHEN" has been created
-        [InlineData("MÜNCHEN")]
+        // No user with NormalizedUsername = "M\u00DCNCHEN" has been created
+        [InlineData("M\u00DCNCHEN")]
         public void GetUserByName_WhenUserDoesNotExist_ReturnsNull(string lookupName)
         {
             var result = _userManager.GetUserByName(lookupName);
@@ -149,13 +149,13 @@ namespace Jellyfin.Server.Implementations.Tests.Users
 
         [Theory]
         // German umlaut, case-swapped duplicate
-        [InlineData("münchen", "MÜNCHEN")]
+        [InlineData("m\u00FCnchen", "M\u00DCNCHEN")]
         // Spanish tilde-n, lowercase duplicate
-        [InlineData("Ñoño", "ñoño")]
+        [InlineData("\u00D1o\u00F1o", "\u00F1o\u00F1o")]
         // ASCII, uppercase duplicate
         [InlineData("alice", "ALICE")]
-        // Turkish cedilla: "çelebi".ToUpperInvariant() == "ÇELEBI" == "ÇELEBI".ToUpperInvariant()
-        [InlineData("çelebi", "ÇELEBI")]
+        // Turkish cedilla: "\u00E7elebi".ToUpperInvariant() == "\u00C7ELEBI" == "\u00C7ELEBI".ToUpperInvariant()
+        [InlineData("\u00E7elebi", "\u00C7ELEBI")]
         public async Task CreateUserAsync_WhenNormalizedNameAlreadyExists_ThrowsArgumentException(
             string existingUsername, string duplicateUsername)
         {
@@ -167,10 +167,10 @@ namespace Jellyfin.Server.Implementations.Tests.Users
 
         [Theory]
         // Different non-ASCII names that do not collide after normalization
-        [InlineData("münchen", "münchen2")]
+        [InlineData("m\u00FCnchen", "m\u00FCnchen2")]
         [InlineData("ali", "ali2")]
-        // Visually similar but different Unicode code points: ñ (U+00F1) vs n (U+006E)
-        [InlineData("noño", "nono")]
+        // Visually similar but different Unicode code points: \u00F1 (U+00F1) vs n (U+006E)
+        [InlineData("no\u00F1o", "nono")]
         public async Task CreateUserAsync_WithDistinctNonAsciiUsernames_CreatesBothUsers(
             string firstUsername, string secondUsername)
         {
@@ -186,13 +186,13 @@ namespace Jellyfin.Server.Implementations.Tests.Users
 
         [Theory]
         // Rename to non-ASCII name
-        [InlineData("alice", "münchen")]
+        [InlineData("alice", "m\u00FCnchen")]
         // Rename between similar non-ASCII and ASCII
-        [InlineData("müller", "mueller")]
-        // Contains 'i': invariant uppercase is always 'I', never Turkish 'İ'
+        [InlineData("m\u00FCller", "mueller")]
+        // Contains 'i': invariant uppercase is always 'I', never Turkish '\u0130'
         [InlineData("ali", "ALI2")]
         // Rename to Spanish tilde-n name
-        [InlineData("testuser", "Ñoño")]
+        [InlineData("testuser", "\u00D1o\u00F1o")]
         public async Task RenameUser_SetsNormalizedUsernameToUpperInvariant(
             string originalName, string newName)
         {
@@ -208,13 +208,13 @@ namespace Jellyfin.Server.Implementations.Tests.Users
 
         [Theory]
         // Same name different case: NormalizedUsername already taken
-        [InlineData("münchen", "MÜNCHEN")]
+        [InlineData("m\u00FCnchen", "M\u00DCNCHEN")]
         // Spanish, lowercase conflicts with existing uppercase-normalised entry
-        [InlineData("Ñoño", "ñoño")]
+        [InlineData("\u00D1o\u00F1o", "\u00F1o\u00F1o")]
         // ASCII, capitalised conflict
         [InlineData("alice", "Alice")]
         // Mixed ASCII + umlaut
-        [InlineData("testüser", "TESTÜSER")]
+        [InlineData("test\u00FCser", "TEST\u00DCSER")]
         public async Task RenameUser_WhenNormalizedNameConflictsWithExistingUser_ThrowsArgumentException(
             string existingUsername, string conflictingNewName)
         {
@@ -238,3 +238,4 @@ namespace Jellyfin.Server.Implementations.Tests.Users
         }
     }
 }
+

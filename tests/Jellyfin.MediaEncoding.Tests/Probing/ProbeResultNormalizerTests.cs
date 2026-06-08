@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.MediaEncoding.Probing;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Tests.Probing
+namespace MulletaFlix.MediaEncoding.Tests.Probing
 {
     public class ProbeResultNormalizerTests
     {
@@ -142,7 +142,7 @@ namespace Jellyfin.MediaEncoding.Tests.Probing
             Assert.Equal(358, res.VideoStream.Height);
             Assert.Equal(720, res.VideoStream.Width);
             Assert.Equal("2.40:1", res.VideoStream.AspectRatio);
-            Assert.True(res.VideoStream.IsAnamorphic); // SAR 32:27 — genuinely anamorphic NTSC DVD 16:9
+            Assert.True(res.VideoStream.IsAnamorphic); // SAR 32:27 â€” genuinely anamorphic NTSC DVD 16:9
             Assert.Equal("yuv420p", res.VideoStream.PixelFormat);
             Assert.Equal(31d, res.VideoStream.Level);
             Assert.Equal(1, res.VideoStream.RefFrames);
@@ -426,3 +426,4 @@ namespace Jellyfin.MediaEncoding.Tests.Probing
         }
     }
 }
+

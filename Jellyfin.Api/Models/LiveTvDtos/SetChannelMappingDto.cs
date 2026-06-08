@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Api.Models.LiveTvDtos;
+namespace MulletaFlix.Api.Models.LiveTvDtos;
 
 /// <summary>
 /// Set channel mapping dto.
@@ -25,3 +25,4 @@ public class SetChannelMappingDto
     [Required]
     public string ProviderChannelId { get; set; } = string.Empty;
 }
+

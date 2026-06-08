@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
@@ -8,13 +8,13 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.Models.StreamingDtos;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
-using Jellyfin.MediaEncoding.Hls.Playlist;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.Models.StreamingDtos;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
+using MulletaFlix.MediaEncoding.Hls.Playlist;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Library;
@@ -31,7 +31,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Dynamic hls controller.
@@ -39,7 +39,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("")]
 [Authorize]
 [ApiExplorerSettings(IgnoreApi = true)]
-public class DynamicHlsController : BaseJellyfinApiController
+public class DynamicHlsController : BaseMulletaFlixApiController
 {
     private const EncoderPreset DefaultVodEncoderPreset = EncoderPreset.veryfast;
     private const EncoderPreset DefaultEventEncoderPreset = EncoderPreset.superfast;
@@ -2080,3 +2080,4 @@ public class DynamicHlsController : BaseJellyfinApiController
         }
     }
 }
+

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 
 namespace MediaBrowser.Model.Extensions;
 
@@ -148,3 +148,4 @@ public static class ContainerHelper
         return input?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
     }
 }
+

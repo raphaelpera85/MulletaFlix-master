@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Model.SyncPlay;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class QueueRequestDto.
@@ -29,3 +29,4 @@ public class QueueRequestDto
     /// <value>The enqueue mode.</value>
     public GroupQueueMode Mode { get; set; }
 }
+

@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json;
 using MediaBrowser.Providers.Plugins.MidiaStorageOnline;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.Plugins.MidiaStorageOnline
+namespace MulletaFlix.Providers.Tests.Plugins.MidiaStorageOnline
 {
     public class MidiaStorageOnlineEpgMapperTests
     {
@@ -34,6 +34,41 @@ namespace Jellyfin.Providers.Tests.Plugins.MidiaStorageOnline
             Assert.Equal(1, result.SyntheticCount);
         }
 
+        [Fact]
+        public void BuildCatalog_UsesApprovedWorkbookMapping_WhenChannelIsListedInApprovedSpreadsheet()
+        {
+            var entries = new List<IMidiaStorageOnlineM3uEntry>
+            {
+                new FakeM3uEntry
+                {
+                    Type = "Canal",
+                    Name = "HBO MUNDI FHD",
+                    TvgName = "HBO MUNDI FHD"
+                }
+            };
+
+            using var guideDocument = JsonDocument.Parse("[]");
+
+            var result = MidiaStorageOnlineEpgMapper.BuildCatalog(entries, guideDocument);
+
+            Assert.Single(result.Channels);
+            Assert.Equal("MAX.BR", result.Channels[0].XmltvId);
+            Assert.Equal("synthetic", result.Channels[0].Source);
+            Assert.Equal(0, result.GuideMatchCount);
+            Assert.Equal(1, result.SyntheticCount);
+        }
+
+        [Fact]
+        public void ApprovedMappings_ExposeMatchedChannel_FromWorkbook()
+        {
+            var matchedChannel = MidiaStorageOnlineApprovedChannelMappings.TryGetMatchedChannel(
+                "DISCOVERY CHANNEL FHD",
+                "DISCOVERY CHANNEL FHD",
+                "DSC.BR");
+
+            Assert.Equal("DiscoveryChannel.au", matchedChannel);
+        }
+
         private sealed class FakeM3uEntry : IMidiaStorageOnlineM3uEntry
         {
             public string Type { get; init; } = "Canal";
@@ -50,3 +85,4 @@ namespace Jellyfin.Providers.Tests.Plugins.MidiaStorageOnline
         }
     }
 }
+

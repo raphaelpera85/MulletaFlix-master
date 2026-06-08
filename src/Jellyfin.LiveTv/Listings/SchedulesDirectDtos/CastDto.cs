@@ -1,6 +1,6 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos
 {
     /// <summary>
     /// Cast dto.
@@ -44,3 +44,4 @@ namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
         public string? CharacterName { get; set; }
     }
 }
+

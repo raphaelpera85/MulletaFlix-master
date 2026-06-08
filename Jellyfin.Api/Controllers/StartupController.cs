@@ -1,35 +1,40 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Jellyfin.Api.Models.StartupDtos;
+using MulletaFlix.Api.Models.StartupDtos;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The startup wizard controller.
 /// </summary>
 [Authorize(Policy = Policies.FirstTimeSetupOrElevated)]
-public class StartupController : BaseJellyfinApiController
+public class StartupController : BaseMulletaFlixApiController
 {
+    private const string DefaultServerName = "Mulletaflix";
     private readonly IServerConfigurationManager _config;
     private readonly IUserManager _userManager;
+    private readonly ILocalizationManager _localizationManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StartupController" /> class.
     /// </summary>
     /// <param name="config">The server configuration manager.</param>
     /// <param name="userManager">The user manager.</param>
-    public StartupController(IServerConfigurationManager config, IUserManager userManager)
+    /// <param name="localizationManager">The localization manager.</param>
+    public StartupController(IServerConfigurationManager config, IUserManager userManager, ILocalizationManager localizationManager)
     {
         _config = config;
         _userManager = userManager;
+        _localizationManager = localizationManager;
     }
 
     /// <summary>
@@ -56,12 +61,19 @@ public class StartupController : BaseJellyfinApiController
     [Obsolete("Use configuration endpoints")]
     public ActionResult<StartupConfigurationDto> GetStartupConfiguration()
     {
+        var metadataCountryCode = _config.Configuration.MetadataCountryCode ?? string.Empty;
+        var preferredMetadataLanguage = _config.Configuration.PreferredMetadataLanguage;
+        if (string.IsNullOrWhiteSpace(preferredMetadataLanguage))
+        {
+            preferredMetadataLanguage = _localizationManager.GetDefaultMetadataLanguage(metadataCountryCode);
+        }
+
         return new StartupConfigurationDto
         {
-            ServerName = _config.Configuration.ServerName,
+            ServerName = string.IsNullOrWhiteSpace(_config.Configuration.ServerName) ? DefaultServerName : _config.Configuration.ServerName,
             UICulture = _config.Configuration.UICulture,
-            MetadataCountryCode = _config.Configuration.MetadataCountryCode,
-            PreferredMetadataLanguage = _config.Configuration.PreferredMetadataLanguage
+            MetadataCountryCode = metadataCountryCode,
+            PreferredMetadataLanguage = preferredMetadataLanguage
         };
     }
 
@@ -76,10 +88,13 @@ public class StartupController : BaseJellyfinApiController
     [Obsolete("Use configuration endpoints")]
     public ActionResult UpdateInitialConfiguration([FromBody, Required] StartupConfigurationDto startupConfiguration)
     {
-        _config.Configuration.ServerName = startupConfiguration.ServerName ?? string.Empty;
+        _config.Configuration.ServerName = string.IsNullOrWhiteSpace(startupConfiguration.ServerName) ? DefaultServerName : startupConfiguration.ServerName;
         _config.Configuration.UICulture = startupConfiguration.UICulture ?? string.Empty;
-        _config.Configuration.MetadataCountryCode = startupConfiguration.MetadataCountryCode ?? string.Empty;
-        _config.Configuration.PreferredMetadataLanguage = startupConfiguration.PreferredMetadataLanguage ?? string.Empty;
+        var metadataCountryCode = startupConfiguration.MetadataCountryCode ?? string.Empty;
+        _config.Configuration.MetadataCountryCode = metadataCountryCode;
+        _config.Configuration.PreferredMetadataLanguage = string.IsNullOrWhiteSpace(startupConfiguration.PreferredMetadataLanguage)
+            ? _localizationManager.GetDefaultMetadataLanguage(metadataCountryCode)
+            : startupConfiguration.PreferredMetadataLanguage;
         _config.SaveConfiguration();
         return NoContent();
     }
@@ -162,3 +177,4 @@ public class StartupController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

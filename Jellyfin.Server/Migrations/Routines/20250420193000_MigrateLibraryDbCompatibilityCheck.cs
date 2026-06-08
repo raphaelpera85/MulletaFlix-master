@@ -1,20 +1,20 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
-/// The migration routine for checking if the current instance of Jellyfin is compatiable to be upgraded.
+/// The migration routine for checking if the current instance of MulletaFlix is compatiable to be upgraded.
 /// </summary>
-[JellyfinMigration("2025-04-20T19:30:00", nameof(MigrateLibraryDbCompatibilityCheck))]
+[MulletaFlixMigration("2025-04-20T19:30:00", nameof(MigrateLibraryDbCompatibilityCheck))]
 public class MigrateLibraryDbCompatibilityCheck : IAsyncMigrationRoutine
 {
     private const string DbFilename = "library.db";
@@ -71,3 +71,4 @@ public class MigrateLibraryDbCompatibilityCheck : IAsyncMigrationRoutine
         }
     }
 }
+

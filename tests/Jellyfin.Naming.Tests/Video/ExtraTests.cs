@@ -1,11 +1,11 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Naming.Video;
 using MediaBrowser.Model.Entities;
 using Xunit;
 
 using MediaType = Emby.Naming.Common.MediaType;
 
-namespace Jellyfin.Naming.Tests.Video
+namespace MulletaFlix.Naming.Tests.Video
 {
     public class ExtraTests
     {
@@ -166,3 +166,4 @@ namespace Jellyfin.Naming.Tests.Video
         }
     }
 }
+

@@ -1,6 +1,6 @@
-#pragma warning disable CA1008 // Enums should have zero value
+﻿#pragma warning disable CA1008 // Enums should have zero value
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos;
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos;
 
 /// <summary>
 /// Schedules Direct API error codes. See https://github.com/SchedulesDirect/JSON-Service/wiki/API-20141201#error-response for details.
@@ -92,3 +92,4 @@ public enum SdErrorCode
     /// </summary>
     MaxInvalidImages = 5004
 }
+

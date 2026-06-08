@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Xml.Serialization;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 
 namespace MediaBrowser.Model.Dlna;
 
@@ -157,3 +157,4 @@ public class TranscodingProfile
     [XmlAttribute("enableAudioVbrEncoding")]
     public bool EnableAudioVbrEncoding { get; set; } = true;
 }
+

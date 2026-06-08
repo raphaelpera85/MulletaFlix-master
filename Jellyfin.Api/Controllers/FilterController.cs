@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -15,14 +15,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Filters controller.
 /// </summary>
 [Route("")]
 [Authorize]
-public class FilterController : BaseJellyfinApiController
+public class FilterController : BaseMulletaFlixApiController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IUserManager _userManager;
@@ -221,3 +221,4 @@ public class FilterController : BaseJellyfinApiController
         return filters;
     }
 }
+

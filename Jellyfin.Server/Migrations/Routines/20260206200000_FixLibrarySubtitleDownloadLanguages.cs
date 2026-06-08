@@ -1,20 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Globalization;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to fix broken library subtitle download languages.
 /// </summary>
-[JellyfinMigration("2026-02-06T20:00:00", nameof(FixLibrarySubtitleDownloadLanguages))]
+[MulletaFlixMigration("2026-02-06T20:00:00", nameof(FixLibrarySubtitleDownloadLanguages))]
 internal class FixLibrarySubtitleDownloadLanguages : IAsyncMigrationRoutine
 {
     private readonly ILocalizationManager _localizationManager;
@@ -103,3 +103,4 @@ internal class FixLibrarySubtitleDownloadLanguages : IAsyncMigrationRoutine
         return Task.CompletedTask;
     }
 }
+

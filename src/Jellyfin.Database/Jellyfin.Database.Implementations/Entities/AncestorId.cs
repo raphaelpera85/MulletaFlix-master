@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Represents the relational information for an <see cref="BaseItemEntity"/>.
@@ -27,3 +27,4 @@ public class AncestorId
     /// </summary>
     public required BaseItemEntity Item { get; set; }
 }
+

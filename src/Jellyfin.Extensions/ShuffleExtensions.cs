@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
     /// <summary>
     /// Provides <c>Shuffle</c> extensions methods for <see cref="IList{T}" />.
@@ -37,3 +37,4 @@ namespace Jellyfin.Extensions
         }
     }
 }
+

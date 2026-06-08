@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.ComponentModel;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 
 namespace MediaBrowser.Model.MediaSegments;
 
@@ -35,3 +35,4 @@ public class MediaSegmentDto
     /// </summary>
     public long EndTicks { get; set; }
 }
+

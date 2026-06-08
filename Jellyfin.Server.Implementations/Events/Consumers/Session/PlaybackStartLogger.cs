@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Activity;
@@ -12,7 +12,7 @@ using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Notifications;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Session
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Session
 {
     /// <summary>
     /// Creates an entry in the activity log whenever a user starts playback.
@@ -106,3 +106,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.Session
         }
     }
 }
+

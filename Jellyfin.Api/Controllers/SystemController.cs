@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Models.SystemInfoDtos;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Models.SystemInfoDtos;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
@@ -19,12 +19,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The system controller.
 /// </summary>
-public class SystemController : BaseJellyfinApiController
+public class SystemController : BaseMulletaFlixApiController
 {
     private readonly ILogger<SystemController> _logger;
     private readonly IServerApplicationHost _appHost;
@@ -226,3 +226,4 @@ public class SystemController : BaseJellyfinApiController
         return File(stream, "text/plain; charset=utf-8");
     }
 }
+

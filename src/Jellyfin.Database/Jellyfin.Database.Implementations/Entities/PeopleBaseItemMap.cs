@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Mapping table for People to BaseItems.
@@ -42,3 +42,4 @@ public class PeopleBaseItemMap
     /// </summary>
     public required People People { get; set; }
 }
+

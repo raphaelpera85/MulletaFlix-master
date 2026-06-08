@@ -1,5 +1,5 @@
-using System;
-using Jellyfin.Database.Implementations.Entities;
+﻿using System;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MediaBrowser.Model.Dto;
 
@@ -60,3 +60,4 @@ public record TrickplayInfoDto
     /// </summary>
     public int Bandwidth { get; init; }
 }
+

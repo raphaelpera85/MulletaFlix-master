@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Linq;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Database.Implementations.Interfaces;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Interfaces;
 
-namespace Jellyfin.Data;
+namespace MulletaFlix.Data;
 
 /// <summary>
 /// Contains extension methods for manipulation of <see cref="User"/> entities.
@@ -218,3 +218,4 @@ public static class UserEntityExtensions
                && hour <= schedule.EndHour;
     }
 }
+

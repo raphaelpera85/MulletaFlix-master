@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
@@ -6,11 +6,11 @@ using Emby.Server.Implementations;
 using MediaBrowser.Providers.Plugins.MusicBrainz.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.PreStartupRoutines;
+namespace MulletaFlix.Server.Migrations.PreStartupRoutines;
 
 /// <inheritdoc />
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T02:00:00", nameof(MigrateMusicBrainzTimeout), "A6DCACF4-C057-4Ef9-80D3-61CEF9DDB4F0", Stage = Stages.JellyfinMigrationStageTypes.PreInitialisation)]
+[MulletaFlixMigration("2025-04-20T02:00:00", nameof(MigrateMusicBrainzTimeout), "A6DCACF4-C057-4Ef9-80D3-61CEF9DDB4F0", Stage = Stages.MulletaFlixMigrationStageTypes.PreInitialisation)]
 public class MigrateMusicBrainzTimeout : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -31,7 +31,7 @@ public class MigrateMusicBrainzTimeout : IMigrationRoutine
     /// <inheritdoc />
     public void Perform()
     {
-        string path = Path.Combine(_applicationPaths.PluginConfigurationsPath, "Jellyfin.Plugin.MusicBrainz.xml");
+        string path = Path.Combine(_applicationPaths.PluginConfigurationsPath, "MulletaFlix.Plugin.MusicBrainz.xml");
         if (!File.Exists(path))
         {
             _logger.LogDebug("No MusicBrainz plugin configuration file found, skipping");
@@ -90,3 +90,4 @@ public class MigrateMusicBrainzTimeout : IMigrationRoutine
         public bool ReplaceArtistName { get; set; }
     }
 }
+

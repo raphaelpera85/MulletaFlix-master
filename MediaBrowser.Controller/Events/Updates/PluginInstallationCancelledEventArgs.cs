@@ -1,4 +1,4 @@
-using Jellyfin.Data.Events;
+﻿using MulletaFlix.Data.Events;
 using MediaBrowser.Model.Updates;
 
 namespace MediaBrowser.Controller.Events.Updates
@@ -17,3 +17,4 @@ namespace MediaBrowser.Controller.Events.Updates
         }
     }
 }
+

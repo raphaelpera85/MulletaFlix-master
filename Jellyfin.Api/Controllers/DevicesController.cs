@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Data.Dtos;
-using Jellyfin.Data.Queries;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Data.Dtos;
+using MulletaFlix.Data.Queries;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Devices;
 using MediaBrowser.Controller.Session;
@@ -17,14 +17,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Devices Controller.
 /// </summary>
 [Authorize(Policy = Policies.RequiresElevation)]
 [Tags("Device")]
-public class DevicesController : BaseJellyfinApiController
+public class DevicesController : BaseMulletaFlixApiController
 {
     private readonly IDeviceManager _deviceManager;
     private readonly ISessionManager _sessionManager;
@@ -146,3 +146,4 @@ public class DevicesController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

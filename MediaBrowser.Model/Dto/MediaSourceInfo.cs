@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 #pragma warning disable CS1591
 
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.Session;
@@ -261,3 +261,4 @@ namespace MediaBrowser.Model.Dto
         }
     }
 }
+

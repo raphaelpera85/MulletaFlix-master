@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Xml;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 
 namespace MediaBrowser.Controller.Extensions;
@@ -191,3 +191,4 @@ public static class XmlReaderExtensions
         => reader.GetStringArray()
             .Select(part => new PersonInfo { Name = part, Type = personKind });
 }
+

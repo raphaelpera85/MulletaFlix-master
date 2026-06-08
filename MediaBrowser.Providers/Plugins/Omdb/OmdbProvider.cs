@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS159, SA1300
 
@@ -13,8 +13,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -569,3 +569,4 @@ namespace MediaBrowser.Providers.Plugins.Omdb
         }
     }
 }
+

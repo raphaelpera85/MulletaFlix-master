@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Linq;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.TypedBaseItem
+namespace MulletaFlix.Server.Implementations.Tests.TypedBaseItem
 {
     public class BaseItemKindTests
     {
@@ -56,9 +56,10 @@ namespace Jellyfin.Server.Implementations.Tests.TypedBaseItem
                 return false;
             }
 
-            return name.StartsWith("Jellyfin", StringComparison.OrdinalIgnoreCase)
+            return name.StartsWith("MulletaFlix", StringComparison.OrdinalIgnoreCase)
                    || name.StartsWith("Emby", StringComparison.OrdinalIgnoreCase)
                    || name.StartsWith("MediaBrowser", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
+

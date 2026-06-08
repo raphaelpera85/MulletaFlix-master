@@ -22,6 +22,13 @@ public interface ILocalizationManager
     IReadOnlyList<CountryInfo> GetCountries();
 
     /// <summary>
+    /// Gets the default metadata language for a country.
+    /// </summary>
+    /// <param name="countryCode">The optional two letter ISO country code.</param>
+    /// <returns>The preferred metadata language for the country, or the server default if no mapping is available.</returns>
+    string GetDefaultMetadataLanguage(string? countryCode = null);
+
+    /// <summary>
     /// Gets the parental ratings.
     /// </summary>
     /// <returns><see cref="IReadOnlyList{ParentalRating}" />.</returns>

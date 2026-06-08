@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
 using Emby.Server.Implementations;
-using Jellyfin.Server.Extensions;
-using Jellyfin.Server.Helpers;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Server.Extensions;
+using MulletaFlix.Server.Helpers;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Configuration;
 using Microsoft.AspNetCore.Hosting;
@@ -20,20 +20,20 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Extensions.Logging;
 
-namespace Jellyfin.Server.Integration.Tests
+namespace MulletaFlix.Server.Integration.Tests
 {
     /// <summary>
-    /// Factory for bootstrapping the Jellyfin application in memory for functional end to end tests.
+    /// Factory for bootstrapping the MulletaFlix application in memory for functional end to end tests.
     /// </summary>
-    public class JellyfinApplicationFactory : WebApplicationFactory<Startup>
+    public class MulletaFlixApplicationFactory : WebApplicationFactory<Startup>
     {
-        private static readonly string _testPathRoot = Path.Combine(Path.GetTempPath(), "jellyfin-test-data");
+        private static readonly string _testPathRoot = Path.Combine(Path.GetTempPath(), "MulletaFlix-test-data");
         private readonly ConcurrentBag<IDisposable> _disposableComponents = new ConcurrentBag<IDisposable>();
 
         /// <summary>
-        /// Initializes static members of the <see cref="JellyfinApplicationFactory"/> class.
+        /// Initializes static members of the <see cref="MulletaFlixApplicationFactory"/> class.
         /// </summary>
-        static JellyfinApplicationFactory()
+        static MulletaFlixApplicationFactory()
         {
             // Perform static initialization that only needs to happen once per test-run
             Log.Logger = new LoggerConfiguration()
@@ -52,7 +52,7 @@ namespace Jellyfin.Server.Integration.Tests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             // Skip ffmpeg check for testing
-            Environment.SetEnvironmentVariable("JELLYFIN_FFMPEG__NOVALIDATION", "true");
+            Environment.SetEnvironmentVariable("MulletaFlix_FFMPEG__NOVALIDATION", "true");
             // Specify the startup command line options
             var commandLineOpts = new StartupOptions();
 
@@ -61,13 +61,13 @@ namespace Jellyfin.Server.Integration.Tests
             Directory.CreateDirectory(Path.Combine(webHostPathRoot, "logs"));
             Directory.CreateDirectory(Path.Combine(webHostPathRoot, "config"));
             Directory.CreateDirectory(Path.Combine(webHostPathRoot, "cache"));
-            Directory.CreateDirectory(Path.Combine(webHostPathRoot, "jellyfin-web"));
+            Directory.CreateDirectory(Path.Combine(webHostPathRoot, "MulletaFlix-web"));
             var appPaths = new ServerApplicationPaths(
                 webHostPathRoot,
                 Path.Combine(webHostPathRoot, "logs"),
                 Path.Combine(webHostPathRoot, "config"),
                 Path.Combine(webHostPathRoot, "cache"),
-                Path.Combine(webHostPathRoot, "jellyfin-web"));
+                Path.Combine(webHostPathRoot, "MulletaFlix-web"));
 
             // Create the logging config file
             // TODO: We shouldn't need to do this since we are only logging to console
@@ -95,7 +95,7 @@ namespace Jellyfin.Server.Integration.Tests
                     builder
                         .SetBasePath(appPaths.ConfigurationDirectoryPath)
                         .AddInMemoryCollection(ConfigurationOptions.DefaultConfiguration)
-                        .AddEnvironmentVariables("JELLYFIN_")
+                        .AddEnvironmentVariables("MulletaFlix_")
                         .AddInMemoryCollection(commandLineOpts.ConvertToConfig());
                 })
                 .ConfigureServices(e => e
@@ -112,9 +112,9 @@ namespace Jellyfin.Server.Integration.Tests
             appHost.ServiceProvider = host.Services;
             var applicationPaths = appHost.ServiceProvider.GetRequiredService<IApplicationPaths>();
             Program.ApplyStartupMigrationAsync((ServerApplicationPaths)applicationPaths, appHost.ServiceProvider.GetRequiredService<IConfiguration>(), new()).GetAwaiter().GetResult();
-            Program.ApplyCoreMigrationsAsync(appHost.ServiceProvider, Migrations.Stages.JellyfinMigrationStageTypes.CoreInitialisation).GetAwaiter().GetResult();
+            Program.ApplyCoreMigrationsAsync(appHost.ServiceProvider, Migrations.Stages.MulletaFlixMigrationStageTypes.CoreInitialisation).GetAwaiter().GetResult();
             appHost.InitializeServices(Mock.Of<IConfiguration>()).GetAwaiter().GetResult();
-            Program.ApplyCoreMigrationsAsync(appHost.ServiceProvider, Migrations.Stages.JellyfinMigrationStageTypes.AppInitialisation).GetAwaiter().GetResult();
+            Program.ApplyCoreMigrationsAsync(appHost.ServiceProvider, Migrations.Stages.MulletaFlixMigrationStageTypes.AppInitialisation).GetAwaiter().GetResult();
             host.Start();
 
             appHost.RunStartupTasksAsync().GetAwaiter().GetResult();
@@ -192,3 +192,4 @@ namespace Jellyfin.Server.Integration.Tests
         }
     }
 }
+

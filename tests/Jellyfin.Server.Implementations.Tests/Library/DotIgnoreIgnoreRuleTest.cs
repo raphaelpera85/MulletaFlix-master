@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,7 +6,7 @@ using Emby.Server.Implementations.Library;
 using MediaBrowser.Model.IO;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library;
+namespace MulletaFlix.Server.Implementations.Tests.Library;
 
 public class DotIgnoreIgnoreRuleTest
 {
@@ -471,3 +471,4 @@ public class DotIgnoreIgnoreRuleTest
         }
     }
 }
+

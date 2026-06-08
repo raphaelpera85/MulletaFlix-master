@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin.Server.Migrations;
+namespace MulletaFlix.Server.Migrations;
 
 /// <summary>
 /// Interface that describes a migration routine.
@@ -29,3 +29,4 @@ internal interface IMigrationRoutine
     [Obsolete("Use IAsyncMigrationRoutine.PerformAsync instead")]
     public void Perform();
 }
+

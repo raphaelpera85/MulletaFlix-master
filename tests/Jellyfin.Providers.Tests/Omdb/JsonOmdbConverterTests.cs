@@ -1,9 +1,9 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediaBrowser.Providers.Plugins.Omdb;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.Omdb
+namespace MulletaFlix.Providers.Tests.Omdb
 {
     public class JsonOmdbConverterTests
     {
@@ -56,7 +56,7 @@ namespace Jellyfin.Providers.Tests.Omdb
         }
 
         [Theory]
-        [InlineData("\"Jellyfin\"", "Jellyfin")]
+        [InlineData("\"MulletaFlix\"", "MulletaFlix")]
         public void Deserialize_Normal_String_Success(string input, string expected)
         {
             var result = JsonSerializer.Deserialize<string?>(input, _options);
@@ -84,3 +84,4 @@ namespace Jellyfin.Providers.Tests.Omdb
         }
     }
 }
+

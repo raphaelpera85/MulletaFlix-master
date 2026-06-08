@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+﻿namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class PingRequestDto.
@@ -11,3 +11,4 @@ public class PingRequestDto
     /// <value>The ping time.</value>
     public long Ping { get; set; }
 }
+

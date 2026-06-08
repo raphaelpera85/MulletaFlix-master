@@ -1,7 +1,7 @@
-using MediaBrowser.Common.Net;
+﻿using MediaBrowser.Common.Net;
 using Xunit;
 
-namespace Jellyfin.Networking.Tests.Configuration;
+namespace MulletaFlix.Networking.Tests.Configuration;
 
 public static class NetworkConfigurationTests
 {
@@ -25,3 +25,4 @@ public static class NetworkConfigurationTests
         Assert.Equal(expected, config.BaseUrl);
     }
 }
+

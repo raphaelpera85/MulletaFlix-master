@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using MediaBrowser.Controller.Configuration;
@@ -8,7 +8,7 @@ using MediaBrowser.Providers.MediaInfo;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.MediaInfo;
+namespace MulletaFlix.Providers.Tests.MediaInfo;
 
 public class FFProbeVideoInfoTests
 {
@@ -76,3 +76,4 @@ public class FFProbeVideoInfoTests
         Assert.All(chapters, chapter => Assert.True(chapter.StartPositionTicks < runtime));
     }
 }
+

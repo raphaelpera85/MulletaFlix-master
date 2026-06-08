@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Queries
+﻿namespace MulletaFlix.Data.Queries
 {
     /// <summary>
     /// An abstract class for paginated queries.
@@ -16,3 +16,4 @@ namespace Jellyfin.Data.Queries
         public int? Limit { get; set; }
     }
 }
+

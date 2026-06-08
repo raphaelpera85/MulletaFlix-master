@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.MediaSegments;
@@ -14,14 +14,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Media Segments api.
 /// </summary>
 [Authorize]
 [Tags("MediaSegment")]
-public class MediaSegmentsController : BaseJellyfinApiController
+public class MediaSegmentsController : BaseMulletaFlixApiController
 {
     private readonly IMediaSegmentManager _mediaSegmentManager;
     private readonly ILibraryManager _libraryManager;
@@ -61,3 +61,4 @@ public class MediaSegmentsController : BaseJellyfinApiController
         return Ok(new QueryResult<MediaSegmentDto>(items.ToArray()));
     }
 }
+

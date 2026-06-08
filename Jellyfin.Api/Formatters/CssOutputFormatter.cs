@@ -1,7 +1,7 @@
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc.Formatters;
 
-namespace Jellyfin.Api.Formatters;
+namespace MulletaFlix.Api.Formatters;
 
 /// <summary>
 /// Css output formatter.
@@ -17,3 +17,4 @@ public sealed class CssOutputFormatter : StringOutputFormatter
         SupportedMediaTypes.Add(MediaTypeNames.Text.Css);
     }
 }
+

@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+﻿using System.Collections.Generic;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Providers;
@@ -53,3 +53,4 @@ public class MetadataEditorInfo
     /// </summary>
     public IReadOnlyList<NameValuePair> ContentTypeOptions { get; set; }
 }
+

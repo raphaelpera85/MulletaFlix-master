@@ -1,5 +1,5 @@
-#pragma warning disable CA1027 // Mark enums with FlagsAttribute
-namespace Jellyfin.Database.Implementations.Entities;
+﻿#pragma warning disable CA1027 // Mark enums with FlagsAttribute
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Provides the Value types for an <see cref="ItemValue"/>.
@@ -36,3 +36,4 @@ public enum ItemValueType
     /// </summary>
     InheritedTags = 6,
 }
+

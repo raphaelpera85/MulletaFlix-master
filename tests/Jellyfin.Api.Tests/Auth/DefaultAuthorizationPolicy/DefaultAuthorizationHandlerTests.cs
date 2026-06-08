@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Jellyfin.Api.Auth.DefaultAuthorizationPolicy;
-using Jellyfin.Api.Constants;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Server.Implementations.Security;
+using MulletaFlix.Api.Auth.DefaultAuthorizationPolicy;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Server.Implementations.Security;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.Auth.DefaultAuthorizationPolicy
+namespace MulletaFlix.Api.Tests.Auth.DefaultAuthorizationPolicy
 {
     public class DefaultAuthorizationHandlerTests
     {
@@ -121,20 +121,21 @@ namespace Jellyfin.Api.Tests.Auth.DefaultAuthorizationPolicy
                 });
 
             data.Add(
-                "param=Hörbücher",
+                "param=HÃ¶rbÃ¼cher",
                 new Dictionary<string, string>
                 {
-                    { "param", "Hörbücher" }
+                    { "param", "HÃ¶rbÃ¼cher" }
                 });
 
             data.Add(
-                "param=%22%Hörbücher",
+                "param=%22%HÃ¶rbÃ¼cher",
                 new Dictionary<string, string>
                 {
-                    { "param", "\"%Hörbücher" }
+                    { "param", "\"%HÃ¶rbÃ¼cher" }
                 });
 
             return data;
         }
     }
 }
+

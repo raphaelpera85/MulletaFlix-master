@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA2227, CS1591
 
 using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Controller.Entities
@@ -67,3 +67,4 @@ namespace MediaBrowser.Controller.Entities
         public bool IsType(PersonKind type) => Type == type || string.Equals(type.ToString(), Role, StringComparison.OrdinalIgnoreCase);
     }
 }
+

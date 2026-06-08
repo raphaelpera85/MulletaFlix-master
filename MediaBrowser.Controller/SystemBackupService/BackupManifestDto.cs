@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace MediaBrowser.Controller.SystemBackupService;
 
@@ -8,7 +8,7 @@ namespace MediaBrowser.Controller.SystemBackupService;
 public class BackupManifestDto
 {
     /// <summary>
-    /// Gets or sets the jellyfin version this backup was created with.
+    /// Gets or sets the MulletaFlix version this backup was created with.
     /// </summary>
     public required Version ServerVersion { get; set; }
 
@@ -32,3 +32,4 @@ public class BackupManifestDto
     /// </summary>
     public required BackupOptionsDto Options { get; set; }
 }
+

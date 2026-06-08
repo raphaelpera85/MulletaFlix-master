@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters;
+namespace MulletaFlix.Server.Filters;
 
 internal class RetryOnTemporarilyUnavailableFilter : IOperationFilter
 {
@@ -49,3 +49,4 @@ internal class RetryOnTemporarilyUnavailableFilter : IOperationFilter
             });
     }
 }
+

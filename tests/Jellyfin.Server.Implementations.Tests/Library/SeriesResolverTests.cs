@@ -1,6 +1,6 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Server.Implementations.Library.Resolvers.TV;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library
+namespace MulletaFlix.Server.Implementations.Tests.Library
 {
     public class SeriesResolverTests
     {
@@ -122,3 +122,4 @@ namespace Jellyfin.Server.Implementations.Tests.Library
         }
     }
 }
+

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using Emby.Server.Implementations.Sorting;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Sorting
+namespace MulletaFlix.Server.Implementations.Tests.Sorting
 {
     public class PremiereDateComparerTests
     {
@@ -74,3 +74,4 @@ namespace Jellyfin.Server.Implementations.Tests.Sorting
         }
     }
 }
+

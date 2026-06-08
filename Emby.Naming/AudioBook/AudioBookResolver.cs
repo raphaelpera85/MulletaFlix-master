@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.IO;
 using Emby.Naming.Common;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 
 namespace Emby.Naming.AudioBook
 {
@@ -54,3 +54,4 @@ namespace Emby.Naming.AudioBook
         }
     }
 }
+

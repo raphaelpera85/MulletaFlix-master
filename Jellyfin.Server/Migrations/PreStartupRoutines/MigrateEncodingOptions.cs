@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
@@ -7,11 +7,11 @@ using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.PreStartupRoutines;
+namespace MulletaFlix.Server.Migrations.PreStartupRoutines;
 
 /// <inheritdoc />
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T03:00:00", nameof(MigrateEncodingOptions), "A8E61960-7726-4450-8F3D-82C12DAABBCB", Stage = Stages.JellyfinMigrationStageTypes.PreInitialisation)]
+[MulletaFlixMigration("2025-04-20T03:00:00", nameof(MigrateEncodingOptions), "A8E61960-7726-4450-8F3D-82C12DAABBCB", Stage = Stages.MulletaFlixMigrationStageTypes.PreInitialisation)]
 public class MigrateEncodingOptions : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -237,3 +237,4 @@ public class MigrateEncodingOptions : IMigrationRoutine
         public string[] AllowOnDemandMetadataBasedKeyframeExtractionForExtensions { get; set; }
     }
 }
+

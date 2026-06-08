@@ -1,17 +1,17 @@
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests
+namespace MulletaFlix.Server.Integration.Tests
 {
     /// <summary>
     /// Defines the test for encoded querystrings in the url.
     /// </summary>
-    public class EncodedQueryStringTest : IClassFixture<JellyfinApplicationFactory>
+    public class EncodedQueryStringTest : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
 
-        public EncodedQueryStringTest(JellyfinApplicationFactory factory)
+        public EncodedQueryStringTest(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -47,3 +47,4 @@ namespace Jellyfin.Server.Integration.Tests
         }
     }
 }
+

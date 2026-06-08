@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
@@ -8,7 +8,7 @@ using MediaBrowser.Providers.Movies;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.ExternalId
+namespace MulletaFlix.Providers.Tests.ExternalId
 {
     // put tests that mock the static LibraryManager in the same collection to avoid test interference
     [Collection("LibraryManagerTests")]
@@ -123,3 +123,4 @@ namespace Jellyfin.Providers.Tests.ExternalId
         }
     }
 }
+

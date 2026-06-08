@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Xml;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Extensions;
 using MediaBrowser.Controller.Playlists;
@@ -111,3 +111,4 @@ namespace MediaBrowser.LocalMetadata.Parsers
         }
     }
 }
+

@@ -1,4 +1,4 @@
-#pragma warning disable MT1013 // Releasing lock without guarantee of execution
+﻿#pragma warning disable MT1013 // Releasing lock without guarantee of execution
 #pragma warning disable MT1012 // Acquiring lock without guarantee of releasing
 #pragma warning disable CA1873
 
@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Database.Implementations.Locking;
+namespace MulletaFlix.Database.Implementations.Locking;
 
 /// <summary>
 /// A locking behavior that will always block any operation while a write is requested. Mimicks the old SqliteRepository behavior.
@@ -36,7 +36,7 @@ public class PessimisticLockBehavior : IEntityFrameworkCoreLockingBehavior
     private static ReaderWriterLockSlim DatabaseLock { get; } = new(LockRecursionPolicy.SupportsRecursion);
 
     /// <inheritdoc/>
-    public void OnSaveChanges(JellyfinDbContext context, Action saveChanges)
+    public void OnSaveChanges(MulletaFlixDbContext context, Action saveChanges)
     {
         using (DbLock.EnterWrite(_logger))
         {
@@ -53,7 +53,7 @@ public class PessimisticLockBehavior : IEntityFrameworkCoreLockingBehavior
     }
 
     /// <inheritdoc/>
-    public async Task OnSaveChangesAsync(JellyfinDbContext context, Func<Task> saveChanges)
+    public async Task OnSaveChangesAsync(MulletaFlixDbContext context, Func<Task> saveChanges)
     {
         using (DbLock.EnterWrite(_logger))
         {
@@ -295,3 +295,4 @@ public class PessimisticLockBehavior : IEntityFrameworkCoreLockingBehavior
         }
     }
 }
+

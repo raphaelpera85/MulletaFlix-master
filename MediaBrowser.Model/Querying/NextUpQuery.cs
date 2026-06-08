@@ -1,7 +1,7 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Model.Querying;
@@ -70,3 +70,4 @@ public class NextUpQuery
     /// </summary>
     public bool EnableRewatching { get; set; }
 }
+

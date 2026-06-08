@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Library;
@@ -20,14 +20,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Lyrics controller.
 /// </summary>
 [Route("")]
 [Tags("Lyric")]
-public class LyricsController : BaseJellyfinApiController
+public class LyricsController : BaseMulletaFlixApiController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly ILyricManager _lyricManager;
@@ -243,3 +243,4 @@ public class LyricsController : BaseJellyfinApiController
         return Ok(result);
     }
 }
+

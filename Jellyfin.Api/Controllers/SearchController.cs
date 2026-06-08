@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -20,14 +20,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Search controller.
 /// </summary>
 [Route("Search/Hints")]
 [Authorize]
-public class SearchController : BaseJellyfinApiController
+public class SearchController : BaseMulletaFlixApiController
 {
     private readonly ISearchEngine _searchEngine;
     private readonly ILibraryManager _libraryManager;
@@ -264,3 +264,4 @@ public class SearchController : BaseJellyfinApiController
         return item.GetParents().OfType<T>().FirstOrDefault(i => i.HasImage(type));
     }
 }
+

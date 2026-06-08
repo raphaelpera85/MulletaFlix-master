@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Frozen;
@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 
 namespace MediaBrowser.Model.Net
 {
@@ -201,3 +201,4 @@ namespace MediaBrowser.Model.Net
             => mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
     }
 }
+

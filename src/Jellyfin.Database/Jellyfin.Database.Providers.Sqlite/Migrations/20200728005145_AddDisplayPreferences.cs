@@ -1,10 +1,10 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 #pragma warning disable SA1601
 
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     public partial class AddDisplayPreferences : Migration
     {
@@ -12,7 +12,7 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.CreateTable(
                 name: "DisplayPreferences",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -36,7 +36,7 @@ namespace Jellyfin.Server.Implementations.Migrations
                     table.ForeignKey(
                         name: "FK_DisplayPreferences_Users_UserId",
                         column: x => x.UserId,
-                        principalSchema: "jellyfin",
+                        principalSchema: "MulletaFlix",
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -44,7 +44,7 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateTable(
                 name: "ItemDisplayPreferences",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -65,7 +65,7 @@ namespace Jellyfin.Server.Implementations.Migrations
                     table.ForeignKey(
                         name: "FK_ItemDisplayPreferences_Users_UserId",
                         column: x => x.UserId,
-                        principalSchema: "jellyfin",
+                        principalSchema: "MulletaFlix",
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -73,7 +73,7 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateTable(
                 name: "HomeSection",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -88,7 +88,7 @@ namespace Jellyfin.Server.Implementations.Migrations
                     table.ForeignKey(
                         name: "FK_HomeSection_DisplayPreferences_DisplayPreferencesId",
                         column: x => x.DisplayPreferencesId,
-                        principalSchema: "jellyfin",
+                        principalSchema: "MulletaFlix",
                         principalTable: "DisplayPreferences",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -96,20 +96,20 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_DisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences",
                 column: "UserId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_HomeSection_DisplayPreferencesId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "HomeSection",
                 column: "DisplayPreferencesId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ItemDisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "ItemDisplayPreferences",
                 column: "UserId");
         }
@@ -118,15 +118,16 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropTable(
                 name: "HomeSection",
-                schema: "jellyfin");
+                schema: "MulletaFlix");
 
             migrationBuilder.DropTable(
                 name: "ItemDisplayPreferences",
-                schema: "jellyfin");
+                schema: "MulletaFlix");
 
             migrationBuilder.DropTable(
                 name: "DisplayPreferences",
-                schema: "jellyfin");
+                schema: "MulletaFlix");
         }
     }
 }
+

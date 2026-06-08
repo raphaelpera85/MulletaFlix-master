@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1002, CA1724, CA1826, CS1591
 
@@ -8,7 +8,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json.Serialization;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 
@@ -151,3 +151,4 @@ namespace MediaBrowser.Controller.Entities.Audio
             => new[] { ((BaseItem)this, MediaSourceType.Default) };
     }
 }
+

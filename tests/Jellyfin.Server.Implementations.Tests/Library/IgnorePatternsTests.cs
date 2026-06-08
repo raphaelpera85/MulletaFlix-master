@@ -1,7 +1,7 @@
-using Emby.Server.Implementations.Library;
+﻿using Emby.Server.Implementations.Library;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library
+namespace MulletaFlix.Server.Implementations.Tests.Library
 {
     public class IgnorePatternsTests
     {
@@ -38,3 +38,4 @@ namespace Jellyfin.Server.Implementations.Tests.Library
         }
     }
 }
+

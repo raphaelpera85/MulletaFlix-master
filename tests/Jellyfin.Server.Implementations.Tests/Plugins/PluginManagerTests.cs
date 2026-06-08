@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 using AutoFixture;
 using Emby.Server.Implementations.Library;
 using Emby.Server.Implementations.Plugins;
-using Jellyfin.Extensions;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Plugins
+namespace MulletaFlix.Server.Implementations.Tests.Plugins
 {
     public class PluginManagerTests
     {
-        private static readonly string _testPathRoot = Path.Combine(Path.GetTempPath(), "jellyfin-test-data");
+        private static readonly string _testPathRoot = Path.Combine(Path.GetTempPath(), "MulletaFlix-test-data");
 
         private string _tempPath = string.Empty;
 
@@ -122,7 +122,7 @@ namespace Jellyfin.Server.Implementations.Tests.Plugins
         [InlineData(".././.././../some.dll")] // Traversal with current and parent
         [InlineData(@"..\.\..\.\..\some.dll")] // Windows traversal with current and parent
         [InlineData(@"\\network\resource.dll")] // UNC Path
-        [InlineData("https://jellyfin.org/some.dll")] // URL
+        [InlineData("https://MulletaFlix.org/some.dll")] // URL
         [InlineData("~/some.dll")] // Tilde poses a shell expansion risk, but is a valid path character.
         public void Constructor_DiscoversUnsafePluginAssembly_Status_Malfunctioned(string unsafePath)
         {
@@ -170,7 +170,7 @@ namespace Jellyfin.Server.Implementations.Tests.Plugins
                 AutoUpdate = false, // Turn off AutoUpdate
                 Status = PluginStatus.Restart,
                 Version = new Version(1, 0, 0).ToString(),
-                Assemblies = new[] { "Jellyfin.Test.dll" }
+                Assemblies = new[] { "MulletaFlix.Test.dll" }
             };
 
             var expectedManifest = new PluginManifest
@@ -337,3 +337,4 @@ namespace Jellyfin.Server.Implementations.Tests.Plugins
         }
     }
 }
+

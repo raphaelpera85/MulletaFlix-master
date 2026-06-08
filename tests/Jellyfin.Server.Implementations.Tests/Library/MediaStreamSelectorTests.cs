@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using Emby.Server.Implementations.Library;
 using MediaBrowser.Model.Entities;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library;
+namespace MulletaFlix.Server.Implementations.Tests.Library;
 
 public class MediaStreamSelectorTests
 {
@@ -116,3 +116,4 @@ public class MediaStreamSelectorTests
         Assert.Equal(expectedScore, MediaStreamSelector.GetStreamScore(stream, languagePref));
     }
 }
+

@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -18,10 +18,10 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
-using Jellyfin.Extensions;
-using Jellyfin.Extensions.Json;
-using Jellyfin.LiveTv.Guide;
-using Jellyfin.LiveTv.Listings.SchedulesDirectDtos;
+using MulletaFlix.Extensions;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.LiveTv.Guide;
+using MulletaFlix.LiveTv.Listings.SchedulesDirectDtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Authentication;
@@ -31,7 +31,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.LiveTv;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Listings
+namespace MulletaFlix.LiveTv.Listings
 {
     public class SchedulesDirect : IListingsProvider, ISchedulesDirectService, IDisposable
     {
@@ -587,7 +587,7 @@ namespace Jellyfin.LiveTv.Listings
                 return null;
             }
 
-            // Permanent account error — SD is disabled for this server lifetime.
+            // Permanent account error â€” SD is disabled for this server lifetime.
             if (_accountError)
             {
                 return null;
@@ -686,14 +686,14 @@ namespace Jellyfin.LiveTv.Listings
 
             if (sdCode is SdErrorCode.AccountExpired or SdErrorCode.InvalidHash or SdErrorCode.InvalidUser or SdErrorCode.AccountLocked or SdErrorCode.AppLocked or SdErrorCode.AccountInactive)
             {
-                // Permanent account errors — disable SD for this server lifetime.
+                // Permanent account errors â€” disable SD for this server lifetime.
                 _logger.LogError("Schedules Direct account error (code {SdCode}). Disabling SD until server restart.", sdCode);
                 _tokens.Clear();
                 _accountError = true;
             }
             else if (sdCode is SdErrorCode.ServiceOffline or SdErrorCode.ServiceBusy or SdErrorCode.AccountTempLock)
             {
-                // Transient login errors — back off for 30 minutes, then allow retry.
+                // Transient login errors â€” back off for 30 minutes, then allow retry.
                 _logger.LogError("Schedules Direct transient error (code {SdCode}). Backing off for 30 minutes.", sdCode);
                 _tokens.Clear();
                 Interlocked.Exchange(ref _lastErrorResponseTicks, DateTime.UtcNow.Ticks);
@@ -707,13 +707,13 @@ namespace Jellyfin.LiveTv.Listings
             }
             else if (sdCode is SdErrorCode.MaxImageDownloads or SdErrorCode.MaxImageDownloadsTrial)
             {
-                // Max image downloads — stop image requests until SD resets at 00:00 UTC.
+                // Max image downloads â€” stop image requests until SD resets at 00:00 UTC.
                 _logger.LogError("Schedules Direct image download limit hit (code {SdCode}). Disabling image acquisition until SD reset.", sdCode);
                 SetImageLimitHit();
             }
             else if (sdCode is SdErrorCode.MaxScheduleRequests)
             {
-                // Max schedule/metadata requests — stop metadata requests until SD resets at 00:00 UTC.
+                // Max schedule/metadata requests â€” stop metadata requests until SD resets at 00:00 UTC.
                 _logger.LogError("Schedules Direct metadata download limit hit (code {SdCode}). Disabling metadata acquisition until SD reset.", sdCode);
                 SetMetadataLimitHit();
             }
@@ -721,7 +721,7 @@ namespace Jellyfin.LiveTv.Listings
                 && (int)response.StatusCode < 500
                 && (sdCode == SdErrorCode.TokenExpired || (response.StatusCode == HttpStatusCode.Forbidden && sdCode is null)))
             {
-                // Token expired — clear tokens and retry with a fresh token.
+                // Token expired â€” clear tokens and retry with a fresh token.
                 // Also retry on 403 with no parseable SD code (legacy/unexpected auth failure).
                 _tokens.Clear();
                 using var retryMessage = new HttpRequestMessage(message.Method, message.RequestUri);
@@ -837,7 +837,7 @@ namespace Jellyfin.LiveTv.Listings
                 }
                 catch (IOException)
                 {
-                    // Corrupt or unreadable — delete and re-fetch.
+                    // Corrupt or unreadable â€” delete and re-fetch.
                     TryDeleteFile(cachePath);
                 }
             }
@@ -869,7 +869,7 @@ namespace Jellyfin.LiveTv.Listings
                     var dateOnly = DateOnly.FromDateTime(date);
                     if (dateOnly < DateOnly.FromDateTime(DateTime.UtcNow))
                     {
-                        // Expired — clean up.
+                        // Expired â€” clean up.
                         File.Delete(path);
                         return null;
                     }
@@ -879,7 +879,7 @@ namespace Jellyfin.LiveTv.Listings
             }
             catch (IOException)
             {
-                // Corrupt or unreadable — delete and reset.
+                // Corrupt or unreadable â€” delete and reset.
                 TryDeleteFile(path);
             }
 
@@ -1086,3 +1086,4 @@ namespace Jellyfin.LiveTv.Listings
         }
     }
 }
+

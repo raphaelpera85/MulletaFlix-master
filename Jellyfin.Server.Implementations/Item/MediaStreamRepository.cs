@@ -1,24 +1,24 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Repository for obtaining MediaStreams.
 /// </summary>
 public class MediaStreamRepository : IMediaStreamRepository
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IServerApplicationHost _serverApplicationHost;
     private readonly ILocalizationManager _localization;
 
@@ -28,7 +28,7 @@ public class MediaStreamRepository : IMediaStreamRepository
     /// <param name="dbProvider">The EFCore db factory.</param>
     /// <param name="serverApplicationHost">The Application host.</param>
     /// <param name="localization">The Localisation Provider.</param>
-    public MediaStreamRepository(IDbContextFactory<JellyfinDbContext> dbProvider, IServerApplicationHost serverApplicationHost, ILocalizationManager localization)
+    public MediaStreamRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider, IServerApplicationHost serverApplicationHost, ILocalizationManager localization)
     {
         _dbProvider = dbProvider;
         _serverApplicationHost = serverApplicationHost;
@@ -249,3 +249,4 @@ public class MediaStreamRepository : IMediaStreamRepository
         return entity;
     }
 }
+

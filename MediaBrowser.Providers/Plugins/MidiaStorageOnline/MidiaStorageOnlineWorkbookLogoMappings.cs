@@ -153,6 +153,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 
         public static string? TryGetLogoUrl(string? tvgName, string? name, string? tvgId)
         {
+            var approvedLogo = MidiaStorageOnlineApprovedChannelMappings.TryGetLogoUrl(tvgName, name, tvgId);
+            if (!string.IsNullOrWhiteSpace(approvedLogo))
+            {
+                return approvedLogo;
+            }
+
             foreach (var candidate in new[] { tvgName, name, tvgId })
             {
                 var key = NormalizeChannelName(candidate);

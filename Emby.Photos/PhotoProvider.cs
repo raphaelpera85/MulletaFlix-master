@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -173,3 +173,4 @@ public class PhotoProvider : ICustomMetadataProvider<Photo>, IForcedProvider, IH
         return Task.FromResult(Result);
     }
 }
+

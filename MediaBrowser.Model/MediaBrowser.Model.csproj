@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- ProjectGuid is only included as a requirement for SonarQube analysis -->
   <PropertyGroup>
@@ -6,10 +6,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Authors>Jellyfin Contributors</Authors>
-    <PackageId>Jellyfin.Model</PackageId>
+    <Authors>MulletaFlix Contributors</Authors>
+    <PackageId>MulletaFlix.Model</PackageId>
     <VersionPrefix>12.0.0</VersionPrefix>
-    <RepositoryUrl>https://github.com/jellyfin/jellyfin</RepositoryUrl>
+    <RepositoryUrl>https://github.com/MulletaFlix/MulletaFlix</RepositoryUrl>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
   </PropertyGroup>
 
@@ -68,3 +68,4 @@
   </ItemGroup>
 
 </Project>
+

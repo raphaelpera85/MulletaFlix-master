@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class PreviousItemRequestDto.
@@ -21,3 +21,4 @@ public class PreviousItemRequestDto
     /// <value>The playing item identifier.</value>
     public Guid PlaylistItemId { get; set; }
 }
+

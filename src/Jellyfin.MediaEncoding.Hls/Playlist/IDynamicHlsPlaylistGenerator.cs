@@ -1,4 +1,4 @@
-namespace Jellyfin.MediaEncoding.Hls.Playlist;
+﻿namespace MulletaFlix.MediaEncoding.Hls.Playlist;
 
 /// <summary>
 /// Generator for dynamic HLS playlists where the segment lengths aren't known in advance.
@@ -12,3 +12,4 @@ public interface IDynamicHlsPlaylistGenerator
     /// <returns>The playlist as a formatted string.</returns>
     string CreateMainPlaylist(CreateMainPlaylistRequest request);
 }
+

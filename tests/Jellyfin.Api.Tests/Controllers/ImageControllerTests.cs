@@ -1,7 +1,7 @@
-using Jellyfin.Api.Controllers;
+﻿using MulletaFlix.Api.Controllers;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.Controllers;
+namespace MulletaFlix.Api.Tests.Controllers;
 
 public static class ImageControllerTests
 {
@@ -33,3 +33,4 @@ public static class ImageControllerTests
         Assert.Null(ex);
     }
 }
+

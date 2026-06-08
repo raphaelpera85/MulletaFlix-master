@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -7,30 +7,30 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.Data;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Server.Implementations.Item;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Server.Implementations.Item;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
-[JellyfinMigration("2025-06-18T01:00:00", nameof(MigrateLibraryUserData))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2025-06-18T01:00:00", nameof(MigrateLibraryUserData))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 internal class MigrateLibraryUserData : IAsyncMigrationRoutine
 {
     private const string DbFilename = "library.db.old";
 
     private readonly IStartupLogger _logger;
     private readonly IServerApplicationPaths _paths;
-    private readonly IDbContextFactory<JellyfinDbContext> _provider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
 
     public MigrateLibraryUserData(
             IStartupLogger<MigrateLibraryDb> startupLogger,
-            IDbContextFactory<JellyfinDbContext> provider,
+            IDbContextFactory<MulletaFlixDbContext> provider,
             IServerApplicationPaths paths)
     {
         _logger = startupLogger;
@@ -40,7 +40,7 @@ internal class MigrateLibraryUserData : IAsyncMigrationRoutine
 
     public async Task PerformAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Migrating the userdata from library.db.old may take a while, do not stop Jellyfin.");
+        _logger.LogInformation("Migrating the userdata from library.db.old may take a while, do not stop MulletaFlix.");
 
         var dataPath = _paths.DataPath;
         var libraryDbPath = Path.Combine(dataPath, DbFilename);
@@ -121,3 +121,4 @@ internal class MigrateLibraryUserData : IAsyncMigrationRoutine
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -8,14 +8,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Scheduled Tasks Controller.
 /// </summary>
 [Authorize(Policy = Policies.RequiresElevation)]
 [Tags("ScheduledTask")]
-public class ScheduledTasksController : BaseJellyfinApiController
+public class ScheduledTasksController : BaseMulletaFlixApiController
 {
     private readonly ITaskManager _taskManager;
 
@@ -159,3 +159,4 @@ public class ScheduledTasksController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

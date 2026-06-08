@@ -1,4 +1,4 @@
-name: Commands
+﻿name: Commands
 on:
   issue_comment:
     types:
@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   rebase:
     name: Rebase
-    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '@jellyfin-bot rebase') && github.event.comment.author_association == 'MEMBER'
+    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '@MulletaFlix-bot rebase') && github.event.comment.author_association == 'MEMBER'
     runs-on: ubuntu-latest
     steps:
       - name: Notify as seen
@@ -36,13 +36,13 @@ jobs:
 
   rename:
     name: Rename
-    if: contains(github.event.comment.body, '@jellyfin-bot rename')
+    if: contains(github.event.comment.body, '@MulletaFlix-bot rename')
     runs-on: ubuntu-latest
     steps:
       - name: pull in script
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          repository: jellyfin/jellyfin-triage-script
+          repository: MulletaFlix/MulletaFlix-triage-script
 
       - name: install python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -61,3 +61,4 @@ jobs:
           GH_REPO: ${{ github.repository }}
           ISSUE: ${{ github.event.issue.number }}
           COMMENT_ID: ${{ github.event.comment.id }}
+

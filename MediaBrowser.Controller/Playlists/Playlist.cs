@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -9,10 +9,10 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -70,7 +70,7 @@ namespace MediaBrowser.Controller.Playlists
         public override bool SupportsInheritedParentImages => false;
 
         [JsonIgnore]
-        public override bool SupportsPlayedStatus => MediaType == Jellyfin.Data.Enums.MediaType.Video;
+        public override bool SupportsPlayedStatus => MediaType == MulletaFlix.Data.Enums.MediaType.Video;
 
         [JsonIgnore]
         public override bool AlwaysScanInternalMetadataPath => true;
@@ -274,3 +274,4 @@ namespace MediaBrowser.Controller.Playlists
         }
     }
 }
+

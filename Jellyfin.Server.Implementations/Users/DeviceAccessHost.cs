@@ -1,16 +1,16 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data;
-using Jellyfin.Data.Events;
-using Jellyfin.Data.Queries;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Data.Queries;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Devices;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using Microsoft.Extensions.Hosting;
 
-namespace Jellyfin.Server.Implementations.Users;
+namespace MulletaFlix.Server.Implementations.Users;
 
 /// <summary>
 /// <see cref="IHostedService"/> responsible for managing user device permissions.
@@ -75,3 +75,4 @@ public sealed class DeviceAccessHost : IHostedService
         }
     }
 }
+

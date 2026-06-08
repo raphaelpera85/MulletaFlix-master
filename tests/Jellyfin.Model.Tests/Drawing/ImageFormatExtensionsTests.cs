@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using MediaBrowser.Model.Drawing;
 using Xunit;
 
-namespace Jellyfin.Model.Drawing;
+namespace MulletaFlix.Model.Drawing;
 
 public static class ImageFormatExtensionsTests
 {
@@ -44,3 +44,4 @@ public static class ImageFormatExtensionsTests
     public static void GetExtension_Valid_ThrowsInvalidEnumArgumentException(ImageFormat format)
         => Assert.Throws<InvalidEnumArgumentException>(() => format.GetExtension());
 }
+

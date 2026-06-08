@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using MediaBrowser.Controller.BaseItemManager;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -7,7 +7,7 @@ using MediaBrowser.Model.Configuration;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Controller.Tests
+namespace MulletaFlix.Controller.Tests
 {
     public class BaseItemManagerTests
     {
@@ -78,3 +78,4 @@ namespace Jellyfin.Controller.Tests
         }
     }
 }
+

@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Common.Updates;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Notifications;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Updates
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Updates
 {
     /// <summary>
     /// Creates an entry in the activity log when a package installation fails.
@@ -49,3 +49,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.Updates
         }
     }
 }
+

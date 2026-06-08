@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -13,14 +13,14 @@ using MediaBrowser.Controller.MediaEncoding;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Attachments controller.
 /// </summary>
 [Route("Videos")]
 [Tags("Video")]
-public class VideoAttachmentsController : BaseJellyfinApiController
+public class VideoAttachmentsController : BaseMulletaFlixApiController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IAttachmentExtractor _attachmentExtractor;
@@ -83,3 +83,4 @@ public class VideoAttachmentsController : BaseJellyfinApiController
         }
     }
 }
+

@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using Emby.Server.Implementations;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Integration.Tests
+namespace MulletaFlix.Server.Integration.Tests
 {
     /// <summary>
     /// Implementation of the abstract <see cref="ApplicationHost" /> class.
@@ -44,3 +44,4 @@ namespace Jellyfin.Server.Integration.Tests
         }
     }
 }
+

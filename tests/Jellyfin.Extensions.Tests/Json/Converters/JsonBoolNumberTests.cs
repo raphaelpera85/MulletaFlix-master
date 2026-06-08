@@ -1,11 +1,11 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions.Json.Converters;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests.Json.Converters
+namespace MulletaFlix.Extensions.Tests.Json.Converters
 {
     public class JsonBoolNumberTests
     {
@@ -43,3 +43,4 @@ namespace Jellyfin.Extensions.Tests.Json.Converters
             => JsonSerializer.Deserialize<bool>(input.ToString(), _jsonOptions).ToProperty();
     }
 }
+

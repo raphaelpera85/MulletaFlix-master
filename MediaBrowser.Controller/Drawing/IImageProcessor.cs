@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Drawing;
 using MediaBrowser.Model.Dto;
@@ -115,3 +115,4 @@ namespace MediaBrowser.Controller.Drawing
         void CreateImageCollage(ImageCollageOptions options, string? libraryName);
     }
 }
+

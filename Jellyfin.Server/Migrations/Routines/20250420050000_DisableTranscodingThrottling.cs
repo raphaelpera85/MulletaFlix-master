@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using MediaBrowser.Common.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines
+namespace MulletaFlix.Server.Migrations.Routines
 {
     /// <summary>
     /// Disable transcode throttling for all installations since it is currently broken for certain video formats.
     /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-    [JellyfinMigration("2025-04-20T05:00:00", nameof(DisableTranscodingThrottling), "4124C2CD-E939-4FFB-9BE9-9B311C413638")]
+    [MulletaFlixMigration("2025-04-20T05:00:00", nameof(DisableTranscodingThrottling), "4124C2CD-E939-4FFB-9BE9-9B311C413638")]
     internal class DisableTranscodingThrottling : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
     {
@@ -36,3 +36,4 @@ namespace Jellyfin.Server.Migrations.Routines
         }
     }
 }
+

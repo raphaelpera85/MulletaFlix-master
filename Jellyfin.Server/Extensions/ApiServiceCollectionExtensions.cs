@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -7,22 +7,22 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
 using Emby.Server.Implementations;
-using Jellyfin.Api.Auth;
-using Jellyfin.Api.Auth.AnonymousLanAccessPolicy;
-using Jellyfin.Api.Auth.DefaultAuthorizationPolicy;
-using Jellyfin.Api.Auth.FirstTimeSetupPolicy;
-using Jellyfin.Api.Auth.LocalAccessOrRequiresElevationPolicy;
-using Jellyfin.Api.Auth.SyncPlayAccessPolicy;
-using Jellyfin.Api.Auth.UserPermissionPolicy;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Controllers;
-using Jellyfin.Api.Formatters;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Server.Configuration;
-using Jellyfin.Server.Filters;
+using MulletaFlix.Api.Auth;
+using MulletaFlix.Api.Auth.AnonymousLanAccessPolicy;
+using MulletaFlix.Api.Auth.DefaultAuthorizationPolicy;
+using MulletaFlix.Api.Auth.FirstTimeSetupPolicy;
+using MulletaFlix.Api.Auth.LocalAccessOrRequiresElevationPolicy;
+using MulletaFlix.Api.Auth.SyncPlayAccessPolicy;
+using MulletaFlix.Api.Auth.UserPermissionPolicy;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Controllers;
+using MulletaFlix.Api.Formatters;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.Server.Configuration;
+using MulletaFlix.Server.Filters;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Model.Entities;
@@ -36,9 +36,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using AuthenticationSchemes = Jellyfin.Api.Constants.AuthenticationSchemes;
+using AuthenticationSchemes = MulletaFlix.Api.Constants.AuthenticationSchemes;
 
-namespace Jellyfin.Server.Extensions
+namespace MulletaFlix.Server.Extensions
 {
     /// <summary>
     /// API specific extensions for the service collection.
@@ -46,11 +46,11 @@ namespace Jellyfin.Server.Extensions
     public static class ApiServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds jellyfin API authorization policies to the DI container.
+        /// Adds MulletaFlix API authorization policies to the DI container.
         /// </summary>
         /// <param name="serviceCollection">The service collection.</param>
         /// <returns>The updated service collection.</returns>
-        public static IServiceCollection AddJellyfinApiAuthorization(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddMulletaFlixApiAuthorization(this IServiceCollection serviceCollection)
         {
             // The default handler must be first so that it is evaluated first
             serviceCollection.AddSingleton<IAuthorizationHandler, DefaultAuthorizationHandler>();
@@ -102,13 +102,13 @@ namespace Jellyfin.Server.Extensions
         }
 
         /// <summary>
-        /// Extension method for adding the Jellyfin API to the service collection.
+        /// Extension method for adding the MulletaFlix API to the service collection.
         /// </summary>
         /// <param name="serviceCollection">The service collection.</param>
         /// <param name="pluginAssemblies">An IEnumerable containing all plugin assemblies with API controllers.</param>
         /// <param name="config">The <see cref="NetworkConfiguration"/>.</param>
         /// <returns>The MVC builder.</returns>
-        public static IMvcBuilder AddJellyfinApi(this IServiceCollection serviceCollection, IEnumerable<Assembly> pluginAssemblies, NetworkConfiguration config)
+        public static IMvcBuilder AddMulletaFlixApi(this IServiceCollection serviceCollection, IEnumerable<Assembly> pluginAssemblies, NetworkConfiguration config)
         {
             IMvcBuilder mvcBuilder = serviceCollection
                 .AddCors()
@@ -192,19 +192,19 @@ namespace Jellyfin.Server.Extensions
         /// </summary>
         /// <param name="serviceCollection">The service collection.</param>
         /// <returns>The updated service collection.</returns>
-        public static IServiceCollection AddJellyfinApiSwagger(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddMulletaFlixApiSwagger(this IServiceCollection serviceCollection)
         {
             return serviceCollection.AddSwaggerGen(c =>
             {
                 var version = typeof(ApplicationHost).Assembly.GetName().Version?.ToString(3) ?? "0.0.1";
                 c.SwaggerDoc("api-docs", new OpenApiInfo
                 {
-                    Title = "Jellyfin API",
+                    Title = "MulletaFlix API",
                     Version = version,
                     Extensions = new Dictionary<string, IOpenApiExtension>
                     {
                         {
-                            "x-jellyfin-version",
+                            "x-MulletaFlix-version",
                             new JsonNodeExtension(JsonValue.Create(version))
                         }
                     }
@@ -357,3 +357,4 @@ namespace Jellyfin.Server.Extensions
         }
     }
 }
+

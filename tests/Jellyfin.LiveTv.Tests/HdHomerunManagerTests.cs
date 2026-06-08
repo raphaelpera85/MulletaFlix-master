@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Text;
-using Jellyfin.LiveTv.TunerHosts.HdHomerun;
+using MulletaFlix.LiveTv.TunerHosts.HdHomerun;
 using Xunit;
 
-namespace Jellyfin.LiveTv.Tests
+namespace MulletaFlix.LiveTv.Tests
 {
     public class HdHomerunManagerTests
     {
@@ -324,3 +324,4 @@ namespace Jellyfin.LiveTv.Tests
         }
     }
 }
+

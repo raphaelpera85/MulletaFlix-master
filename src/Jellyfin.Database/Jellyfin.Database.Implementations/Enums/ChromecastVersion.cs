@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// An enum representing the version of Chromecast to be used by clients.
@@ -15,3 +15,4 @@ public enum ChromecastVersion
     /// </summary>
     Unstable = 1
 }
+

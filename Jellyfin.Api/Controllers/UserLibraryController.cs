@@ -4,12 +4,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -24,7 +24,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// User library controller.
@@ -32,7 +32,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("")]
 [Authorize]
 [Tags("Library")]
-public class UserLibraryController : BaseJellyfinApiController
+public class UserLibraryController : BaseMulletaFlixApiController
 {
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataRepository;
@@ -98,7 +98,7 @@ public class UserLibraryController : BaseJellyfinApiController
 
         var dtoOptions = new DtoOptions();
 
-        return _dtoService.GetBaseItemDto(item, dtoOptions, user);
+        return await _dtoService.GetBaseItemDtoAsync(item, dtoOptions, user).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public class UserLibraryController : BaseJellyfinApiController
     /// <returns>An <see cref="OkResult"/> containing the user's root folder.</returns>
     [HttpGet("Items/Root")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<BaseItemDto> GetRootFolder([FromQuery] Guid? userId)
+    public async Task<ActionResult<BaseItemDto>> GetRootFolder([FromQuery] Guid? userId)
     {
         userId = RequestHelpers.GetUserId(User, userId);
         var user = _userManager.GetUserById(userId.Value);
@@ -136,7 +136,7 @@ public class UserLibraryController : BaseJellyfinApiController
 
         var item = _libraryManager.GetUserRootFolder();
         var dtoOptions = new DtoOptions();
-        return _dtoService.GetBaseItemDto(item, dtoOptions, user);
+        return await _dtoService.GetBaseItemDtoAsync(item, dtoOptions, user).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -149,9 +149,9 @@ public class UserLibraryController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Obsolete("Kept for backwards compatibility")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public ActionResult<BaseItemDto> GetRootFolderLegacy(
+    public async Task<ActionResult<BaseItemDto>> GetRootFolderLegacy(
         [FromRoute, Required] Guid userId)
-        => GetRootFolder(userId);
+        => await GetRootFolder(userId).ConfigureAwait(false);
 
     /// <summary>
     /// Gets intros to play before the main media item plays.
@@ -183,7 +183,7 @@ public class UserLibraryController : BaseJellyfinApiController
 
         var items = await _libraryManager.GetIntros(item, user).ConfigureAwait(false);
         var dtoOptions = new DtoOptions();
-        var dtos = items.Select(i => _dtoService.GetBaseItemDto(i, dtoOptions, user)).ToArray();
+        var dtos = await _dtoService.GetBaseItemDtosAsync(items.ToList(), dtoOptions, user).ConfigureAwait(false);
 
         return new QueryResult<BaseItemDto>(dtos);
     }
@@ -409,7 +409,7 @@ public class UserLibraryController : BaseJellyfinApiController
     /// <returns>The items local trailers.</returns>
     [HttpGet("Items/{itemId}/LocalTrailers")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<BaseItemDto>> GetLocalTrailers(
+    public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetLocalTrailers(
         [FromQuery] Guid? userId,
         [FromRoute, Required] Guid itemId)
     {
@@ -432,12 +432,13 @@ public class UserLibraryController : BaseJellyfinApiController
         if (item is IHasTrailers hasTrailers)
         {
             var trailers = hasTrailers.LocalTrailers;
-            return Ok(_dtoService.GetBaseItemDtos(trailers, dtoOptions, user, item).AsEnumerable());
+            var dtos = await _dtoService.GetBaseItemDtosAsync(trailers, dtoOptions, user, item).ConfigureAwait(false);
+            return Ok(dtos.AsEnumerable());
         }
 
-        return Ok(item.GetExtras()
-            .Where(e => e.ExtraType == ExtraType.Trailer)
-            .Select(i => _dtoService.GetBaseItemDto(i, dtoOptions, user, item)));
+        var extras = item.GetExtras().Where(e => e.ExtraType == ExtraType.Trailer).ToList();
+        var extraDtos = await _dtoService.GetBaseItemDtosAsync(extras, dtoOptions, user, item).ConfigureAwait(false);
+        return Ok(extraDtos.AsEnumerable());
     }
 
     /// <summary>
@@ -451,10 +452,10 @@ public class UserLibraryController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Obsolete("Kept for backwards compatibility")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public ActionResult<IEnumerable<BaseItemDto>> GetLocalTrailersLegacy(
+    public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetLocalTrailersLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => GetLocalTrailers(userId, itemId);
+        => await GetLocalTrailers(userId, itemId).ConfigureAwait(false);
 
     /// <summary>
     /// Gets special features for an item.
@@ -465,7 +466,7 @@ public class UserLibraryController : BaseJellyfinApiController
     /// <returns>An <see cref="OkResult"/> containing the special features.</returns>
     [HttpGet("Items/{itemId}/SpecialFeatures")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<IEnumerable<BaseItemDto>> GetSpecialFeatures(
+    public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetSpecialFeatures(
         [FromQuery] Guid? userId,
         [FromRoute, Required] Guid itemId)
     {
@@ -485,11 +486,12 @@ public class UserLibraryController : BaseJellyfinApiController
         }
 
         var dtoOptions = new DtoOptions();
-
-        return Ok(item
-            .GetExtras()
+        var extras = item.GetExtras()
             .Where(i => i.ExtraType.HasValue && BaseItem.DisplayExtraTypes.Contains(i.ExtraType.Value))
-            .Select(i => _dtoService.GetBaseItemDto(i, dtoOptions, user, item)));
+            .ToList();
+        var dtos = await _dtoService.GetBaseItemDtosAsync(extras, dtoOptions, user, item).ConfigureAwait(false);
+
+        return Ok(dtos.AsEnumerable());
     }
 
     /// <summary>
@@ -503,10 +505,10 @@ public class UserLibraryController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Obsolete("Kept for backwards compatibility")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public ActionResult<IEnumerable<BaseItemDto>> GetSpecialFeaturesLegacy(
+    public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetSpecialFeaturesLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => GetSpecialFeatures(userId, itemId);
+        => await GetSpecialFeatures(userId, itemId).ConfigureAwait(false);
 
     /// <summary>
     /// Gets latest media.
@@ -590,7 +592,7 @@ public class UserLibraryController : BaseJellyfinApiController
         }
 
         // Fetch DTOs without visibility check since we've already done that in GetLatestItems and restore child counts afterwards
-        var dtos = _dtoService.GetBaseItemDtos(resolvedItems, dtoOptions, user, skipVisibilityCheck: true);
+        var dtos = await _dtoService.GetBaseItemDtosAsync(resolvedItems, dtoOptions, user, skipVisibilityCheck: true).ConfigureAwait(false);
         for (int i = 0; i < dtos.Count; i++)
         {
             if (childCounts[i] > 0)
@@ -711,3 +713,4 @@ public class UserLibraryController : BaseJellyfinApiController
         return _userDataRepository.GetUserDataDto(item, user);
     }
 }
+

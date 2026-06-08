@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Jellyfin.Api.Helpers;
+using MulletaFlix.Api.Helpers;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Authentication;
 using MediaBrowser.Controller.Net;
@@ -11,13 +11,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Quick connect controller.
 /// </summary>
 [Tags("Authentication")]
-public class QuickConnectController : BaseJellyfinApiController
+public class QuickConnectController : BaseMulletaFlixApiController
 {
     private readonly IQuickConnect _quickConnect;
     private readonly IAuthorizationContext _authContext;
@@ -119,3 +119,4 @@ public class QuickConnectController : BaseJellyfinApiController
         }
     }
 }
+

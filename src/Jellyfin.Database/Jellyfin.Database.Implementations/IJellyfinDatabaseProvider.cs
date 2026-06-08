@@ -1,27 +1,27 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.DbConfiguration;
+using MulletaFlix.Database.Implementations.DbConfiguration;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Database.Implementations;
+namespace MulletaFlix.Database.Implementations;
 
 /// <summary>
 /// Defines the type and extension points for multi database support.
 /// </summary>
-public interface IJellyfinDatabaseProvider
+public interface IMulletaFlixDatabaseProvider
 {
     /// <summary>
     /// Gets or Sets the Database Factory when initialisaition is done.
     /// </summary>
-    IDbContextFactory<JellyfinDbContext>? DbContextFactory { get; set; }
+    IDbContextFactory<MulletaFlixDbContext>? DbContextFactory { get; set; }
 
     /// <summary>
-    /// Initialises jellyfins EFCore database access.
+    /// Initialises MulletaFlixs EFCore database access.
     /// </summary>
     /// <param name="options">The EFCore database options.</param>
-    /// <param name="databaseConfiguration">The Jellyfin database options.</param>
+    /// <param name="databaseConfiguration">The MulletaFlix database options.</param>
     void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration);
 
     /// <summary>
@@ -44,7 +44,7 @@ public interface IJellyfinDatabaseProvider
     Task RunScheduledOptimisation(CancellationToken cancellationToken);
 
     /// <summary>
-    /// If supported this should perform any actions that are required on stopping the jellyfin server.
+    /// If supported this should perform any actions that are required on stopping the MulletaFlix server.
     /// </summary>
     /// <param name="cancellationToken">The token that will be used to abort the operation.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
@@ -79,5 +79,6 @@ public interface IJellyfinDatabaseProvider
     /// <param name="dbContext">The Database context.</param>
     /// <param name="tableNames">The names of the tables to purge or null for all tables to be purged.</param>
     /// <returns>A Task.</returns>
-    Task PurgeDatabase(JellyfinDbContext dbContext, IEnumerable<string>? tableNames);
+    Task PurgeDatabase(MulletaFlixDbContext dbContext, IEnumerable<string>? tableNames);
 }
+

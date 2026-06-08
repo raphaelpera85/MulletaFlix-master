@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Naming.Common;
@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.MediaInfo;
+namespace MulletaFlix.Providers.Tests.MediaInfo;
 
 public class AudioResolverTests
 {
@@ -88,3 +88,4 @@ public class AudioResolverTests
         }
     }
 }
+

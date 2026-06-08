@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity that holds metadata for seasons.
@@ -27,3 +27,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         public string? Outline { get; set; }
     }
 }
+

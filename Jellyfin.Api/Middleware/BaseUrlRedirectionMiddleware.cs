@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using static MediaBrowser.Controller.Extensions.ConfigurationExtensions;
 
-namespace Jellyfin.Api.Middleware;
+namespace MulletaFlix.Api.Middleware;
 
 /// <summary>
 /// Redirect requests without baseurl prefix to the baseurl prefixed URL.
@@ -76,3 +76,4 @@ public class BaseUrlRedirectionMiddleware
         await _next(httpContext).ConfigureAwait(false);
     }
 }
+

@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// An entity representing the metadata for a group of trickplay tiles.
@@ -40,3 +40,4 @@ public class MediaSegment
     /// </summary>
     public required string SegmentProviderId { get; set; }
 }
+

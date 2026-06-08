@@ -1,6 +1,6 @@
-#nullable disable
+﻿#nullable disable
 
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 
 namespace MediaBrowser.Controller.Entities
 {
@@ -16,3 +16,4 @@ namespace MediaBrowser.Controller.Entities
         string DisplayOrder { get; set; }
     }
 }
+

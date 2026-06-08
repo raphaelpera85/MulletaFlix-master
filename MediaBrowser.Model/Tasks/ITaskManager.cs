@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events;
+using MulletaFlix.Data.Events;
 
 namespace MediaBrowser.Model.Tasks
 {
@@ -105,3 +105,4 @@ namespace MediaBrowser.Model.Tasks
             where T : IScheduledTask;
     }
 }
+

@@ -1,13 +1,13 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events;
+using MulletaFlix.Data.Events;
 using MediaBrowser.Controller.Net;
 using MediaBrowser.Model.Session;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.WebSocketListeners;
+namespace MulletaFlix.Api.WebSocketListeners;
 
 /// <summary>
 /// Class ScheduledTasksWebSocketListener.
@@ -87,3 +87,4 @@ public class ScheduledTasksWebSocketListener : BasePeriodicWebSocketListener<IEn
         SendData(false);
     }
 }
+

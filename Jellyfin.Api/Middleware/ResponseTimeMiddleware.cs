@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Extensions;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Middleware;
+namespace MulletaFlix.Api.Middleware;
 
 /// <summary>
 /// Response time middleware.
@@ -66,3 +66,4 @@ public class ResponseTimeMiddleware
         await this._next(context).ConfigureAwait(false);
     }
 }
+

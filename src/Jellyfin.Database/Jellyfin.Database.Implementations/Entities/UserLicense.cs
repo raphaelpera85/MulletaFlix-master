@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// An entity representing a user's license/subscription.
-/// Controls time-limited access to the Jellyfin server.
+/// Controls time-limited access to the MulletaFlix server.
 /// </summary>
 public class UserLicense
 {
@@ -68,3 +68,4 @@ public class UserLicense
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 }
+

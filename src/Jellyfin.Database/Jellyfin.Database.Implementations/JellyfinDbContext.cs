@@ -1,27 +1,27 @@
-using System;
+﻿using System;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Entities.Security;
-using Jellyfin.Database.Implementations.Interfaces;
-using Jellyfin.Database.Implementations.Locking;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities.Security;
+using MulletaFlix.Database.Implementations.Interfaces;
+using MulletaFlix.Database.Implementations.Locking;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Database.Implementations;
+namespace MulletaFlix.Database.Implementations;
 
 /// <inheritdoc/>
 /// <summary>
-/// Initializes a new instance of the <see cref="JellyfinDbContext"/> class.
+/// Initializes a new instance of the <see cref="MulletaFlixDbContext"/> class.
 /// </summary>
 /// <param name="options">The database context options.</param>
 /// <param name="logger">Logger.</param>
-/// <param name="jellyfinDatabaseProvider">The provider for the database engine specific operations.</param>
+/// <param name="MulletaFlixDatabaseProvider">The provider for the database engine specific operations.</param>
 /// <param name="entityFrameworkCoreLocking">The locking behavior.</param>
-public class JellyfinDbContext(DbContextOptions<JellyfinDbContext> options, ILogger<JellyfinDbContext> logger, IJellyfinDatabaseProvider jellyfinDatabaseProvider, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options, ILogger<MulletaFlixDbContext> logger, IMulletaFlixDatabaseProvider MulletaFlixDatabaseProvider, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
 {
     /// <summary>
     /// Gets the <see cref="DbSet{TEntity}"/> containing the access schedules.
@@ -243,7 +243,7 @@ public class JellyfinDbContext(DbContextOptions<JellyfinDbContext> options, ILog
     public DbSet<Rating> Ratings => Set<Rating>();
 
     /// <summary>
-    /// Repository for global::Jellyfin.Data.Entities.RatingSource - This is the entity to
+    /// Repository for global::MulletaFlix.Data.Entities.RatingSource - This is the entity to
     /// store review ratings, not age ratings.
     /// </summary>
     public DbSet<RatingSource> RatingSources => Set<RatingSource>();
@@ -330,17 +330,18 @@ public class JellyfinDbContext(DbContextOptions<JellyfinDbContext> options, ILog
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        jellyfinDatabaseProvider.OnModelCreating(modelBuilder);
+        MulletaFlixDatabaseProvider.OnModelCreating(modelBuilder);
         base.OnModelCreating(modelBuilder);
 
         // Configuration for each entity is in its own class inside 'ModelConfiguration'.
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(JellyfinDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MulletaFlixDbContext).Assembly);
     }
 
     /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        jellyfinDatabaseProvider.ConfigureConventions(configurationBuilder);
+        MulletaFlixDatabaseProvider.ConfigureConventions(configurationBuilder);
         base.ConfigureConventions(configurationBuilder);
     }
 }
+

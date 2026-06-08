@@ -1,10 +1,10 @@
-using FsCheck;
+﻿using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
 using MediaBrowser.Common.Net;
 using Xunit;
 
-namespace Jellyfin.Networking.Tests
+namespace MulletaFlix.Networking.Tests
 {
     public static class NetworkExtensionsTests
     {
@@ -51,3 +51,4 @@ namespace Jellyfin.Networking.Tests
             => Assert.False(NetworkUtils.TryParseHost(address, out _, true, true));
     }
 }
+

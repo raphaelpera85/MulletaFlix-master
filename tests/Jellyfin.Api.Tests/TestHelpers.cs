@@ -1,21 +1,21 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
 using System.Security.Claims;
-using Jellyfin.Api.Constants;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Server.Implementations.Users;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Server.Implementations.Users;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Configuration;
 using Microsoft.AspNetCore.Http;
 using Moq;
-using AccessSchedule = Jellyfin.Database.Implementations.Entities.AccessSchedule;
+using AccessSchedule = MulletaFlix.Database.Implementations.Entities.AccessSchedule;
 
-namespace Jellyfin.Api.Tests
+namespace MulletaFlix.Api.Tests
 {
     public static class TestHelpers
     {
@@ -26,7 +26,7 @@ namespace Jellyfin.Api.Tests
             IEnumerable<AccessSchedule>? accessSchedules = null)
         {
             var user = new User(
-                "jellyfin",
+                "MulletaFlix",
                 typeof(DefaultAuthenticationProvider).FullName!,
                 typeof(DefaultPasswordResetProvider).FullName!);
 
@@ -48,7 +48,7 @@ namespace Jellyfin.Api.Tests
             var claims = new[]
             {
                 new Claim(ClaimTypes.Role, role),
-                new Claim(ClaimTypes.Name, "jellyfin"),
+                new Claim(ClaimTypes.Name, "MulletaFlix"),
                 new Claim(InternalClaimTypes.UserId, Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)),
                 new Claim(InternalClaimTypes.DeviceId, Guid.Empty.ToString("N", CultureInfo.InvariantCulture)),
                 new Claim(InternalClaimTypes.Device, "test"),
@@ -83,3 +83,4 @@ namespace Jellyfin.Api.Tests
         }
     }
 }
+

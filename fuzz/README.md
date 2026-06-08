@@ -1,4 +1,4 @@
-# Jellyfin fuzzing
+﻿# MulletaFlix fuzzing
 
 ## Setup
 
@@ -18,3 +18,4 @@ dotnet tool install --global SharpFuzz.CommandLine
 ## Running
 Run the `fuzz.sh` in the directory corresponding to the project you want to fuzz.
 The script takes a parameter of which fuzz case you want to run.
+

@@ -1,10 +1,10 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 #pragma warning disable SA1601
 
 using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     public partial class AddIndexesAndCollations : Migration
     {
@@ -12,42 +12,42 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_ImageInfos_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "ImageInfos");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Permissions_Users_Permission_Permissions_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Preferences_Users_Preference_Preferences_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences");
 
             migrationBuilder.DropIndex(
                 name: "IX_Preferences_Preference_Preferences_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences");
 
             migrationBuilder.DropIndex(
                 name: "IX_Permissions_Permission_Permissions_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions");
 
             migrationBuilder.DropIndex(
                 name: "IX_DisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences");
 
             migrationBuilder.DropIndex(
                 name: "IX_CustomItemDisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "CustomItemDisplayPreferences");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Username",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users",
                 type: "TEXT",
                 maxLength: 255,
@@ -59,14 +59,14 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.AddColumn<Guid>(
                 name: "UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences",
                 type: "TEXT",
                 nullable: true);
 
             migrationBuilder.AddColumn<Guid>(
                 name: "UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions",
                 type: "TEXT",
                 nullable: true);
@@ -76,14 +76,14 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Username",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users",
                 column: "Username",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Preferences_UserId_Kind",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences",
                 columns: new[] { "UserId", "Kind" },
                 unique: true,
@@ -91,7 +91,7 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_Permissions_UserId_Kind",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions",
                 columns: new[] { "UserId", "Kind" },
                 unique: true,
@@ -99,30 +99,30 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ImageInfos_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "ImageInfos",
                 column: "UserId",
-                principalSchema: "jellyfin",
+                principalSchema: "MulletaFlix",
                 principalTable: "Users",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Permissions_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions",
                 column: "UserId",
-                principalSchema: "jellyfin",
+                principalSchema: "MulletaFlix",
                 principalTable: "Users",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Preferences_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences",
                 column: "UserId",
-                principalSchema: "jellyfin",
+                principalSchema: "MulletaFlix",
                 principalTable: "Users",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
@@ -132,47 +132,47 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_ImageInfos_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "ImageInfos");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Permissions_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Preferences_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences");
 
             migrationBuilder.DropIndex(
                 name: "IX_Users_Username",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users");
 
             migrationBuilder.DropIndex(
                 name: "IX_Preferences_UserId_Kind",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences");
 
             migrationBuilder.DropIndex(
                 name: "IX_Permissions_UserId_Kind",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions");
 
             migrationBuilder.DropColumn(
                 name: "UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences");
 
             migrationBuilder.DropColumn(
                 name: "UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Username",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users",
                 type: "TEXT",
                 maxLength: 255,
@@ -184,57 +184,58 @@ namespace Jellyfin.Server.Implementations.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_Preferences_Preference_Preferences_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences",
                 column: "Preference_Preferences_Guid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Permissions_Permission_Permissions_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions",
                 column: "Permission_Permissions_Guid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "DisplayPreferences",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CustomItemDisplayPreferences_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "CustomItemDisplayPreferences",
                 column: "UserId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ImageInfos_Users_UserId",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "ImageInfos",
                 column: "UserId",
-                principalSchema: "jellyfin",
+                principalSchema: "MulletaFlix",
                 principalTable: "Users",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Permissions_Users_Permission_Permissions_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Permissions",
                 column: "Permission_Permissions_Guid",
-                principalSchema: "jellyfin",
+                principalSchema: "MulletaFlix",
                 principalTable: "Users",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Preferences_Users_Preference_Preferences_Guid",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Preferences",
                 column: "Preference_Preferences_Guid",
-                principalSchema: "jellyfin",
+                principalSchema: "MulletaFlix",
                 principalTable: "Users",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
         }
     }
 }
+

@@ -2,13 +2,13 @@ using System;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Model.Updates;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to initialize system configuration with the default plugin repository.
 /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T11:00:00", nameof(ReaddDefaultPluginRepository), "5F86E7F6-D966-4C77-849D-7A7B40B68C4E", RunMigrationOnSetup = true)]
+[MulletaFlixMigration("2025-04-20T11:00:00", nameof(ReaddDefaultPluginRepository), "5F86E7F6-D966-4C77-849D-7A7B40B68C4E", RunMigrationOnSetup = true)]
 public class ReaddDefaultPluginRepository : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -16,7 +16,7 @@ public class ReaddDefaultPluginRepository : IMigrationRoutine
 
     private readonly RepositoryInfo _defaultRepositoryInfo = new RepositoryInfo
     {
-        Name = "Jellyfin Stable",
+        Name = "MulletaFlix Stable",
         Url = "https://repo.jellyfin.org/releases/plugin/manifest-stable.json"
     };
 
@@ -40,3 +40,4 @@ public class ReaddDefaultPluginRepository : IMigrationRoutine
         }
     }
 }
+

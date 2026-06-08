@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -16,14 +16,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Persons controller.
 /// </summary>
 [Authorize]
 [Tags("Person")]
-public class PersonsController : BaseJellyfinApiController
+public class PersonsController : BaseMulletaFlixApiController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IDtoService _dtoService;
@@ -155,3 +155,4 @@ public class PersonsController : BaseJellyfinApiController
         return _dtoService.GetBaseItemDto(item, dtoOptions);
     }
 }
+

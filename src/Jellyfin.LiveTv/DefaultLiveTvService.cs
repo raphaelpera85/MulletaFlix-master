@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -9,12 +9,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Data.Events;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
-using Jellyfin.LiveTv.Configuration;
-using Jellyfin.LiveTv.Timers;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
+using MulletaFlix.LiveTv.Configuration;
+using MulletaFlix.LiveTv.Timers;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Dto;
@@ -25,7 +25,7 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.LiveTv;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv
+namespace MulletaFlix.LiveTv
 {
     public sealed class DefaultLiveTvService : ILiveTvService, ISupportsDirectStreamProvider, ISupportsNewTimerIds
     {
@@ -73,7 +73,7 @@ namespace Jellyfin.LiveTv
         public string Name => ServiceName;
 
         /// <inheritdoc />
-        public string HomePageUrl => "https://github.com/jellyfin/jellyfin";
+        public string HomePageUrl => "https://github.com/MulletaFlix/MulletaFlix";
 
         public async Task RefreshSeriesTimers(CancellationToken cancellationToken)
         {
@@ -696,7 +696,7 @@ namespace Jellyfin.LiveTv
                     continue;
                 }
 
-                // Skip ShowId without SubKey from duplicate removal actions - https://github.com/jellyfin/jellyfin/issues/5856
+                // Skip ShowId without SubKey from duplicate removal actions - https://github.com/MulletaFlix/MulletaFlix/issues/5856
                 if (group.Key.EndsWith("0000", StringComparison.Ordinal))
                 {
                     continue;
@@ -1000,3 +1000,4 @@ namespace Jellyfin.LiveTv
         }
     }
 }
+

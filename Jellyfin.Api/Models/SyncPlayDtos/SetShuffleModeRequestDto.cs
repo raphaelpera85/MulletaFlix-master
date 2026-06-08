@@ -1,6 +1,6 @@
-using MediaBrowser.Model.SyncPlay;
+﻿using MediaBrowser.Model.SyncPlay;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class SetShuffleModeRequestDto.
@@ -13,3 +13,4 @@ public class SetShuffleModeRequestDto
     /// <value>The shuffle mode.</value>
     public GroupShuffleMode Mode { get; set; }
 }
+

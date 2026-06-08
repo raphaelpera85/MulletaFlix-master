@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
     /// <summary>
     /// Static extensions for the <see cref="IReadOnlyDictionary{TKey,TValue}"/> interface.
@@ -43,3 +43,4 @@ namespace Jellyfin.Extensions
         }
     }
 }
+

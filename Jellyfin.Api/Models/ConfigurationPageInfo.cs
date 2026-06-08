@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 
-namespace Jellyfin.Api.Models;
+namespace MulletaFlix.Api.Models;
 
 /// <summary>
 /// The configuration page info.
@@ -64,3 +64,4 @@ public class ConfigurationPageInfo
     /// <value>The plugin id.</value>
     public Guid? PluginId { get; set; }
 }
+

@@ -10,7 +10,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- TODO: Remove once we update SkiaSharp > 2.88.5 -->
-    <NoWarn>NU1903</NoWarn>
+    <NoWarn>NU1903;SA1518;SA1210;CS8632;CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

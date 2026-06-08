@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Jellyfin.Database.Providers.Sqlite.ValueConverters
+namespace MulletaFlix.Database.Providers.Sqlite.ValueConverters
 {
     /// <summary>
     /// ValueConverter to specify kind.
@@ -19,3 +19,4 @@ namespace Jellyfin.Database.Providers.Sqlite.ValueConverters
         }
     }
 }
+

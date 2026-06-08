@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Authentication;
 using MediaBrowser.Model.Cryptography;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.Users
+namespace MulletaFlix.Server.Implementations.Users
 {
     /// <summary>
     /// The default authentication provider.
@@ -58,7 +58,7 @@ namespace Jellyfin.Server.Implementations.Users
                 ThrowAuthenticationException();
             }
 
-            // As long as jellyfin supports password-less users, we need this little block here to accommodate
+            // As long as MulletaFlix supports password-less users, we need this little block here to accommodate
             if (string.IsNullOrEmpty(resolvedUser.Password) && string.IsNullOrEmpty(password))
             {
                 return Task.FromResult(new ProviderAuthenticationResult
@@ -109,3 +109,4 @@ namespace Jellyfin.Server.Implementations.Users
         }
     }
 }
+

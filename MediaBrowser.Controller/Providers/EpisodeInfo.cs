@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA2227, CS1591
 
 using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 
 namespace MediaBrowser.Controller.Providers
 {
@@ -27,3 +27,4 @@ namespace MediaBrowser.Controller.Providers
         public string SeriesDisplayOrder { get; set; }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// An enum representing the type of media file.
@@ -30,3 +30,4 @@ public enum MediaFileKind
     /// </summary>
     AdditionalStream = 4
 }
+

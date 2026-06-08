@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.DbConfiguration;
+﻿namespace MulletaFlix.Database.Implementations.DbConfiguration;
 
 /// <summary>
 /// Defines all possible methods for locking database access for concurrent queries.
@@ -20,3 +20,4 @@ public enum DatabaseLockingBehaviorTypes
     /// </summary>
     Optimistic = 2
 }
+

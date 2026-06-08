@@ -1,18 +1,17 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using ICU4N.Text;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
-    /// <summary>
-    /// Provides extensions methods for <see cref="string" />.
-    /// </summary>
     public static partial class StringExtensions
     {
         private static readonly Lazy<string> _transliteratorId = new(() =>
-            Environment.GetEnvironmentVariable("JELLYFIN_TRANSLITERATOR_ID")
+            Environment.GetEnvironmentVariable("MulletaFlix_TRANSLITERATOR_ID")
             ?? "Any-Latin; Latin-Ascii; Lower; NFD; [:Nonspacing Mark:] Remove; [:Punctuation:] Remove;");
 
         private static readonly Lazy<Transliterator?> _transliterator = new(() =>
@@ -27,36 +26,82 @@ namespace Jellyfin.Extensions
             }
         });
 
-        // Matches non-conforming unicode chars
-        // https://mnaoumov.wordpress.com/2014/06/14/stripping-invalid-characters-from-utf-16-strings/
-
-        [GeneratedRegex("([\ud800-\udbff](?![\udc00-\udfff]))|((?<![\ud800-\udbff])[\udc00-\udfff])|(�)")]
+        [GeneratedRegex("([\ud800-\udbff](?![\udc00-\udfff]))|((?<![\ud800-\udbff])[\udc00-\udfff])|(\ufffd)")]
         private static partial Regex NonConformingUnicodeRegex();
 
-        /// <summary>
-        /// Removes the diacritics character from the strings.
-        /// </summary>
-        /// <param name="text">The string to act on.</param>
-        /// <returns>The string without diacritics character.</returns>
         public static string RemoveDiacritics(this string text)
-            => Diacritics.Extensions.StringExtensions.RemoveDiacritics(
-                NonConformingUnicodeRegex().Replace(text, string.Empty));
+        {
+            text = NonConformingUnicodeRegex().Replace(text, string.Empty);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return text;
+            }
 
-        /// <summary>
-        /// Checks whether or not the specified string has diacritics in it.
-        /// </summary>
-        /// <param name="text">The string to check.</param>
-        /// <returns>True if the string has diacritics, false otherwise.</returns>
+            try
+            {
+                var sb = new StringBuilder(text.Length);
+                foreach (var ch in text)
+                {
+                    switch (ch)
+                    {
+                        case '\u0152': sb.Append("OE"); break;
+                        case '\u0153': sb.Append("oe"); break;
+                        case '\u00C6': sb.Append("AE"); break;
+                        case '\u00E6': sb.Append("ae"); break;
+                        default: sb.Append(ch); break;
+                    }
+                }
+
+                var normalized = sb.ToString().Normalize(NormalizationForm.FormKD);
+                sb.Clear();
+                foreach (var ch in normalized)
+                {
+                    var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
+                    if (cat == UnicodeCategory.NonSpacingMark)
+                    {
+                        continue;
+                    }
+
+                    if (cat == UnicodeCategory.Format && (ch == 0x200B || ch == 0x200C || ch == 0x200D || ch == 0xFEFF))
+                    {
+                        continue;
+                    }
+
+                    sb.Append(ch);
+                }
+
+                return sb.ToString().Normalize(NormalizationForm.FormC);
+            }
+            catch
+            {
+                return text;
+            }
+        }
+
         public static bool HasDiacritics(this string text)
-            => Diacritics.Extensions.StringExtensions.HasDiacritics(text)
-                || NonConformingUnicodeRegex().IsMatch(text);
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
 
-        /// <summary>
-        /// Counts the number of occurrences of [needle] in the string.
-        /// </summary>
-        /// <param name="value">The haystack to search in.</param>
-        /// <param name="needle">The character to search for.</param>
-        /// <returns>The number of occurrences of the [needle] character.</returns>
+            if (NonConformingUnicodeRegex().IsMatch(text))
+            {
+                return true;
+            }
+
+            try
+            {
+                var withoutDiacritics = RemoveDiacritics(text);
+                return !string.Equals(text, withoutDiacritics, StringComparison.Ordinal);
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
         public static int Count(this ReadOnlySpan<char> value, char needle)
         {
             var count = 0;
@@ -72,12 +117,6 @@ namespace Jellyfin.Extensions
             return count;
         }
 
-        /// <summary>
-        /// Returns the part on the left of the <c>needle</c>.
-        /// </summary>
-        /// <param name="haystack">The string to seek.</param>
-        /// <param name="needle">The needle to find.</param>
-        /// <returns>The part left of the <paramref name="needle" />.</returns>
         public static ReadOnlySpan<char> LeftPart(this ReadOnlySpan<char> haystack, char needle)
         {
             if (haystack.IsEmpty)
@@ -89,12 +128,6 @@ namespace Jellyfin.Extensions
             return pos == -1 ? haystack : haystack[..pos];
         }
 
-        /// <summary>
-        /// Returns the part on the right of the <c>needle</c>.
-        /// </summary>
-        /// <param name="haystack">The string to seek.</param>
-        /// <param name="needle">The needle to find.</param>
-        /// <returns>The part right of the <paramref name="needle" />.</returns>
         public static ReadOnlySpan<char> RightPart(this ReadOnlySpan<char> haystack, char needle)
         {
             if (haystack.IsEmpty)
@@ -116,45 +149,21 @@ namespace Jellyfin.Extensions
             return haystack[(pos + 1)..];
         }
 
-        /// <summary>
-        /// Returns a transliterated string which only contain ascii characters.
-        /// </summary>
-        /// <param name="text">The string to act on.</param>
-        /// <returns>The transliterated string.</returns>
         public static string Transliterated(this string text)
         {
             return (_transliterator.Value is null) ? text : _transliterator.Value.Transliterate(text);
         }
 
-        /// <summary>
-        /// Ensures all strings are non-null and trimmed of leading an trailing blanks.
-        /// </summary>
-        /// <param name="values">The enumerable of strings to trim.</param>
-        /// <returns>The enumeration of trimmed strings.</returns>
         public static IEnumerable<string> Trimmed(this IEnumerable<string?> values)
         {
             return values.Select(i => (i ?? string.Empty).Trim());
         }
 
-        /// <summary>
-        /// Truncates a string at the first null character ('\0').
-        /// </summary>
-        /// <param name="text">The input string.</param>
-        /// <returns>
-        /// The substring up to (but not including) the first null character,
-        /// or the original string if no null character is present.
-        /// </returns>
         public static string TruncateAtNull(this string text)
         {
             return string.IsNullOrEmpty(text) ? text : text.AsSpan().LeftPart('\0').ToString();
         }
 
-        /// <summary>
-        /// Normalizes a string for comparison by removing diacritics, converting to lowercase,
-        /// replacing punctuation/special characters with spaces, and collapsing whitespace.
-        /// </summary>
-        /// <param name="value">The string to normalize.</param>
-        /// <returns>The normalized string, or the original if null/whitespace.</returns>
         public static string GetCleanValue(this string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -162,13 +171,8 @@ namespace Jellyfin.Extensions
                 return value;
             }
 
-            // Remove diacritics and convert to lowercase
             var cleaned = value.RemoveDiacritics().ToLowerInvariant();
-
-            // Replace all punctuation and special characters with spaces
             cleaned = Regex.Replace(cleaned, @"[^\p{L}\p{N}\s]", " ");
-
-            // Collapse multiple spaces into single space and trim
             cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim();
 
             return cleaned;

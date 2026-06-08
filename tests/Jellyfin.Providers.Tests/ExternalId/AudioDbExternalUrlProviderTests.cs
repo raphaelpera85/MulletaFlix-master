@@ -1,10 +1,10 @@
-using MediaBrowser.Controller.Entities;
+﻿using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Providers.Plugins.AudioDb;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.ExternalId
+namespace MulletaFlix.Providers.Tests.ExternalId
 {
     public sealed class AudioDbExternalUrlProviderTests
     {
@@ -87,3 +87,4 @@ namespace Jellyfin.Providers.Tests.ExternalId
         }
     }
 }
+

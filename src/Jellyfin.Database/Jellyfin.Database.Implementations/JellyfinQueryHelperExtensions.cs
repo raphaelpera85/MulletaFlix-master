@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Concurrent;
@@ -6,15 +6,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Database.Implementations;
+namespace MulletaFlix.Database.Implementations;
 
 /// <summary>
 /// Contains a number of query related extensions.
 /// </summary>
-public static class JellyfinQueryHelperExtensions
+public static class MulletaFlixQueryHelperExtensions
 {
     private static readonly MethodInfo _containsMethodGenericCache = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static).First(m => m.Name == nameof(Enumerable.Contains) && m.GetParameters().Length == 2);
     private static readonly MethodInfo _efParameterInstruction = typeof(EF).GetMethod(nameof(EF.Parameter), BindingFlags.Public | BindingFlags.Static)!;
@@ -45,7 +45,7 @@ public static class JellyfinQueryHelperExtensions
     /// <returns>A Query.</returns>
     public static IQueryable<BaseItemEntity> WhereReferencedItem(
         this IQueryable<BaseItemEntity> baseQuery,
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         ItemValueType itemValueType,
         IList<Guid> referenceIds,
         bool invert = false)
@@ -64,7 +64,7 @@ public static class JellyfinQueryHelperExtensions
     /// <returns>A Query.</returns>
     public static IQueryable<BaseItemEntity> WhereReferencedItemMultipleTypes(
         this IQueryable<BaseItemEntity> baseQuery,
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         IList<ItemValueType> itemValueTypes,
         IList<Guid> referenceIds,
         bool invert = false)
@@ -90,7 +90,7 @@ public static class JellyfinQueryHelperExtensions
     /// <param name="invert">If set an exclusion check is performed instead.</param>
     /// <returns>A Query.</returns>
     public static Expression<Func<BaseItemEntity, bool>> ReferencedItemFilterExpressionBuilder(
-        this JellyfinDbContext context,
+        this MulletaFlixDbContext context,
         ItemValueType itemValueType,
         IList<Guid> referenceIds,
         bool invert = false)
@@ -192,3 +192,4 @@ public static class JellyfinQueryHelperExtensions
         }
     }
 }
+

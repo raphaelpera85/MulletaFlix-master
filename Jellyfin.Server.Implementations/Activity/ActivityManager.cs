@@ -1,33 +1,33 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Data.Events;
-using Jellyfin.Data.Queries;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Data.Queries;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Querying;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Activity;
+namespace MulletaFlix.Server.Implementations.Activity;
 
 /// <summary>
 /// Manages the storage and retrieval of <see cref="ActivityLog"/> instances.
 /// </summary>
 public class ActivityManager : IActivityManager
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _provider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ActivityManager"/> class.
     /// </summary>
-    /// <param name="provider">The Jellyfin database provider.</param>
-    public ActivityManager(IDbContextFactory<JellyfinDbContext> provider)
+    /// <param name="provider">The MulletaFlix database provider.</param>
+    public ActivityManager(IDbContextFactory<MulletaFlixDbContext> provider)
     {
         _provider = provider;
     }
@@ -211,3 +211,4 @@ public class ActivityManager : IActivityManager
         public string? Username { get; set; }
     }
 }
+

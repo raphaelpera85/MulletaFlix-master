@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Jellyfin.Database.Implementations.Interfaces;
+using MulletaFlix.Database.Implementations.Interfaces;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity representing a release for a library item, eg. Director's cut vs. standard.
@@ -65,3 +65,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         }
     }
 }
+

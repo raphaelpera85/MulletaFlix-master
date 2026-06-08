@@ -1,5 +1,5 @@
 {
-    "Name": "Jellyfin Tizen 3 Stereo",
+    "Name": "MulletaFlix Tizen 3 Stereo",
     "EnableAlbumArtInDidl": false,
     "EnableSingleAlbumArtLimit": false,
     "EnableSingleSubtitleLimit": false,
@@ -553,3 +553,4 @@
     ],
     "$type": "DeviceProfile"
 }
+

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Models;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Models;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Net;
@@ -14,14 +14,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The dashboard controller.
 /// </summary>
 [Route("")]
 [Tags("Plugin")]
-public class DashboardController : BaseJellyfinApiController
+public class DashboardController : BaseMulletaFlixApiController
 {
     private readonly ILogger<DashboardController> _logger;
     private readonly IPluginManager _pluginManager;
@@ -114,3 +114,4 @@ public class DashboardController : BaseJellyfinApiController
         return _pluginManager.Plugins.SelectMany(GetPluginPages);
     }
 }
+

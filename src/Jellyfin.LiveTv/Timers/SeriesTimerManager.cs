@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.IO;
@@ -6,7 +6,7 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.LiveTv;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Timers
+namespace MulletaFlix.LiveTv.Timers
 {
     public class SeriesTimerManager : ItemDataProvider<SeriesTimerInfo>
     {
@@ -27,3 +27,4 @@ namespace Jellyfin.LiveTv.Timers
         }
     }
 }
+

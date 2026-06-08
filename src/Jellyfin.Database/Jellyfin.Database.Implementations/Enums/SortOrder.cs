@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// An enum representing the sorting order.
@@ -15,3 +15,4 @@ public enum SortOrder
     /// </summary>
     Descending = 1
 }
+

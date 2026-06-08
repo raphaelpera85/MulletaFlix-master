@@ -1,30 +1,30 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.ServerSetupApp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Cleans up all Music artists that have been migrated in the 10.11 RC migrations.
 /// </summary>
-[JellyfinMigration("2025-10-09T20:00:00", nameof(CleanMusicArtist))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2025-10-09T20:00:00", nameof(CleanMusicArtist))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 public class CleanMusicArtist : IAsyncMigrationRoutine
 {
     private readonly IStartupLogger<CleanMusicArtist> _startupLogger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CleanMusicArtist"/> class.
     /// </summary>
     /// <param name="startupLogger">The startup logger.</param>
     /// <param name="dbContextFactory">The Db context factory.</param>
-    public CleanMusicArtist(IStartupLogger<CleanMusicArtist> startupLogger, IDbContextFactory<JellyfinDbContext> dbContextFactory)
+    public CleanMusicArtist(IStartupLogger<CleanMusicArtist> startupLogger, IDbContextFactory<MulletaFlixDbContext> dbContextFactory)
     {
         _startupLogger = startupLogger;
         _dbContextFactory = dbContextFactory;
@@ -45,3 +45,4 @@ public class CleanMusicArtist : IAsyncMigrationRoutine
         }
     }
 }
+

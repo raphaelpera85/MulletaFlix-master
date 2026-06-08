@@ -1,9 +1,9 @@
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+﻿#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 
-namespace Jellyfin.Database.Implementations.MatchCriteria;
+namespace MulletaFlix.Database.Implementations.MatchCriteria;
 
 /// <summary>
 /// Matches folders containing descendants with a specific media stream type and language.
@@ -29,3 +29,4 @@ public sealed record HasMediaStreamType(
     {
     }
 }
+

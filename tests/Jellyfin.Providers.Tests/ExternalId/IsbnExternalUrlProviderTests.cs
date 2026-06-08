@@ -1,10 +1,10 @@
-using MediaBrowser.Controller.Entities;
+﻿using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Providers.Books.Isbn;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.ExternalId
+namespace MulletaFlix.Providers.Tests.ExternalId
 {
     public sealed class IsbnExternalUrlProviderTests
     {
@@ -43,3 +43,4 @@ namespace Jellyfin.Providers.Tests.ExternalId
         }
     }
 }
+

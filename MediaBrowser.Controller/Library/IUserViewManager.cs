@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Library;
@@ -39,13 +39,7 @@ namespace MediaBrowser.Controller.Library
         /// <returns>User view.</returns>
         UserView GetUserSubView(Guid parentId, CollectionType? type, string localizationKey, string sortName);
 
-        /// <summary>
-        /// Gets latest items.
-        /// </summary>
-        /// <param name="request">Query to use.</param>
-        /// <param name="options">Options to use.</param>
-        /// <returns>Set of items.</returns>
-        List<Tuple<BaseItem, List<BaseItem>>> GetLatestItems(LatestItemsQuery request, DtoOptions options);
+
 
         /// <summary>
         /// Gets latest items asynchronously.
@@ -56,3 +50,4 @@ namespace MediaBrowser.Controller.Library
         Task<List<Tuple<BaseItem, List<BaseItem>>>> GetLatestItemsAsync(LatestItemsQuery request, DtoOptions options);
     }
 }
+

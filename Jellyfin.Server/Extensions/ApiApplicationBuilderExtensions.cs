@@ -1,11 +1,11 @@
-using System.Collections.Generic;
-using Jellyfin.Api.Middleware;
+﻿using System.Collections.Generic;
+using MulletaFlix.Api.Middleware;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.OpenApi;
 
-namespace Jellyfin.Server.Extensions
+namespace MulletaFlix.Server.Extensions
 {
     /// <summary>
     /// Extensions for adding API specific functionality to the application pipeline.
@@ -18,7 +18,7 @@ namespace Jellyfin.Server.Extensions
         /// <param name="applicationBuilder">The application builder.</param>
         /// <param name="serverConfigurationManager">The server configuration.</param>
         /// <returns>The updated application builder.</returns>
-        public static IApplicationBuilder UseJellyfinApiSwagger(
+        public static IApplicationBuilder UseMulletaFlixApiSwagger(
             this IApplicationBuilder applicationBuilder,
             IServerConfigurationManager serverConfigurationManager)
         {
@@ -44,14 +44,14 @@ namespace Jellyfin.Server.Extensions
                 })
                 .UseSwaggerUI(c =>
                 {
-                    c.DocumentTitle = "Jellyfin API";
-                    c.SwaggerEndpoint($"/{baseUrl}api-docs/openapi.json", "Jellyfin API");
+                    c.DocumentTitle = "MulletaFlix API";
+                    c.SwaggerEndpoint($"/{baseUrl}api-docs/openapi.json", "MulletaFlix API");
                     c.InjectStylesheet($"/{baseUrl}api-docs/swagger/custom.css");
                     c.RoutePrefix = "api-docs/swagger";
                 })
                 .UseReDoc(c =>
                 {
-                    c.DocumentTitle = "Jellyfin API";
+                    c.DocumentTitle = "MulletaFlix API";
                     c.SpecUrl($"/{baseUrl}api-docs/openapi.json");
                     c.InjectStylesheet($"/{baseUrl}api-docs/redoc/custom.css");
                     c.RoutePrefix = "api-docs/redoc";
@@ -119,3 +119,4 @@ namespace Jellyfin.Server.Extensions
         }
     }
 }
+

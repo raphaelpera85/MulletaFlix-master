@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Text;
 using MediaBrowser.Common;
 using Xunit;
 
-namespace Jellyfin.Common.Tests
+namespace MulletaFlix.Common.Tests
 {
     public static class Crc32Tests
     {
@@ -31,3 +31,4 @@ namespace Jellyfin.Common.Tests
         }
     }
 }
+

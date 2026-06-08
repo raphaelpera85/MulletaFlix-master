@@ -1,22 +1,22 @@
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Models.ClientLogDtos;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Models.ClientLogDtos;
 using MediaBrowser.Controller.ClientEvent;
 using MediaBrowser.Controller.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Client log controller.
 /// </summary>
 [Authorize]
 [Tags("System")]
-public class ClientLogController : BaseJellyfinApiController
+public class ClientLogController : BaseMulletaFlixApiController
 {
     private const int MaxDocumentSize = 1_000_000;
     private readonly IClientEventLogger _clientEventLogger;
@@ -77,3 +77,4 @@ public class ClientLogController : BaseJellyfinApiController
         return (clientName, clientVersion);
     }
 }
+

@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 #pragma warning disable SA1601
 
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     public partial class AddMaxActiveSessions : Migration
     {
@@ -11,7 +11,7 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.AddColumn<int>(
                 name: "MaxActiveSessions",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users",
                 nullable: false,
                 defaultValue: 0);
@@ -21,8 +21,9 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "MaxActiveSessions",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users");
         }
     }
 }
+

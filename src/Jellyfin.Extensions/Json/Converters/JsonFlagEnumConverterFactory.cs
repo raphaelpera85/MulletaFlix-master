@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters;
+namespace MulletaFlix.Extensions.Json.Converters;
 
 /// <summary>
 /// Json flag enum converter factory.
@@ -22,3 +22,4 @@ public class JsonFlagEnumConverterFactory : JsonConverterFactory
         return (JsonConverter?)Activator.CreateInstance(typeof(JsonFlagEnumConverter<>).MakeGenericType(typeToConvert));
     }
 }
+

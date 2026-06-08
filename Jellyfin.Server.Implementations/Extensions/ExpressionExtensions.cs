@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace Jellyfin.Server.Implementations.Extensions;
+namespace MulletaFlix.Server.Implementations.Extensions;
 
 /// <summary>
 /// Provides <see cref="Expression"/> extension methods.
@@ -68,3 +68,4 @@ public static class ExpressionExtensions
         return predicates.Aggregate((aggregatePredicate, nextPredicate) => aggregatePredicate.And(nextPredicate));
     }
 }
+

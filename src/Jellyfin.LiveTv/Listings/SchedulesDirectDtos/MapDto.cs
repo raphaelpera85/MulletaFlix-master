@@ -1,6 +1,6 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos
 {
     /// <summary>
     /// Map dto.
@@ -56,3 +56,4 @@ namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
         public string? MatchType { get; set; }
     }
 }
+

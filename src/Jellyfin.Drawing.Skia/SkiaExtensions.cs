@@ -1,6 +1,6 @@
-using SkiaSharp;
+﻿using SkiaSharp;
 
-namespace Jellyfin.Drawing.Skia;
+namespace MulletaFlix.Drawing.Skia;
 
 /// <summary>
 /// The SkiaSharp extensions.
@@ -56,3 +56,4 @@ public static class SkiaExtensions
         canvas.DrawImage(image, source, dest, options, paint);
     }
 }
+

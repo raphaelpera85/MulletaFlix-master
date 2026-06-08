@@ -1,20 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.DbConfiguration;
-using Jellyfin.Database.Implementations.Locking;
-using Jellyfin.Database.Providers.Sqlite;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.DbConfiguration;
+using MulletaFlix.Database.Implementations.Locking;
+using MulletaFlix.Database.Providers.Sqlite;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using JellyfinDbProviderFactory = System.Func<System.IServiceProvider, Jellyfin.Database.Implementations.IJellyfinDatabaseProvider>;
+using MulletaFlixDbProviderFactory = System.Func<System.IServiceProvider, MulletaFlix.Database.Implementations.IMulletaFlixDatabaseProvider>;
 
-namespace Jellyfin.Server.Implementations.Extensions;
+namespace MulletaFlix.Server.Implementations.Extensions;
 
 /// <summary>
 /// Extensions for the <see cref="IServiceCollection"/> interface.
@@ -26,25 +26,25 @@ public static class ServiceCollectionExtensions
         yield return typeof(SqliteDatabaseProvider);
     }
 
-    private static IDictionary<string, JellyfinDbProviderFactory> GetSupportedDbProviders()
+    private static IDictionary<string, MulletaFlixDbProviderFactory> GetSupportedDbProviders()
     {
-        var items = new Dictionary<string, JellyfinDbProviderFactory>(StringComparer.InvariantCultureIgnoreCase);
+        var items = new Dictionary<string, MulletaFlixDbProviderFactory>(StringComparer.InvariantCultureIgnoreCase);
         foreach (var providerType in DatabaseProviderTypes())
         {
-            var keyAttribute = providerType.GetCustomAttribute<JellyfinDatabaseProviderKeyAttribute>();
+            var keyAttribute = providerType.GetCustomAttribute<MulletaFlixDatabaseProviderKeyAttribute>();
             if (keyAttribute is null || string.IsNullOrWhiteSpace(keyAttribute.DatabaseProviderKey))
             {
                 continue;
             }
 
             var provider = providerType;
-            items[keyAttribute.DatabaseProviderKey] = (services) => (IJellyfinDatabaseProvider)ActivatorUtilities.CreateInstance(services, providerType);
+            items[keyAttribute.DatabaseProviderKey] = (services) => (IMulletaFlixDatabaseProvider)ActivatorUtilities.CreateInstance(services, providerType);
         }
 
         return items;
     }
 
-    private static JellyfinDbProviderFactory? LoadDatabasePlugin(CustomDatabaseOptions customProviderOptions, IApplicationPaths applicationPaths)
+    private static MulletaFlixDbProviderFactory? LoadDatabasePlugin(CustomDatabaseOptions customProviderOptions, IApplicationPaths applicationPaths)
     {
         var plugin = Directory.EnumerateDirectories(applicationPaths.PluginsPath)
             .Where(e => Path.GetFileName(e)!.StartsWith(customProviderOptions.PluginName, StringComparison.OrdinalIgnoreCase))
@@ -60,10 +60,10 @@ public static class ServiceCollectionExtensions
 
         // we have to load the assembly without proxy to ensure maximum performance for this.
         var assembly = Assembly.LoadFrom(dbProviderAssembly);
-        var dbProviderType = assembly.GetExportedTypes().FirstOrDefault(f => f.IsAssignableTo(typeof(IJellyfinDatabaseProvider)))
-            ?? throw new InvalidOperationException($"Could not find any type implementing the '{nameof(IJellyfinDatabaseProvider)}' interface.");
+        var dbProviderType = assembly.GetExportedTypes().FirstOrDefault(f => f.IsAssignableTo(typeof(IMulletaFlixDatabaseProvider)))
+            ?? throw new InvalidOperationException($"Could not find any type implementing the '{nameof(IMulletaFlixDatabaseProvider)}' interface.");
 
-        return (services) => (IJellyfinDatabaseProvider)ActivatorUtilities.CreateInstance(services, dbProviderType);
+        return (services) => (IMulletaFlixDatabaseProvider)ActivatorUtilities.CreateInstance(services, dbProviderType);
     }
 
     /// <summary>
@@ -73,13 +73,13 @@ public static class ServiceCollectionExtensions
     /// <param name="configurationManager">The server configuration manager.</param>
     /// <param name="configuration">The startup Configuration.</param>
     /// <returns>The updated service collection.</returns>
-    public static IServiceCollection AddJellyfinDbContext(
+    public static IServiceCollection AddMulletaFlixDbContext(
         this IServiceCollection serviceCollection,
         IServerConfigurationManager configurationManager,
         IConfiguration configuration)
     {
         var efCoreConfiguration = configurationManager.GetConfiguration<DatabaseConfigurationOptions>("database");
-        JellyfinDbProviderFactory? providerFactory = null;
+        MulletaFlixDbProviderFactory? providerFactory = null;
 
         if (efCoreConfiguration?.DatabaseType is null)
         {
@@ -96,7 +96,7 @@ public static class ServiceCollectionExtensions
                 // when nothing is setup via new Database configuration, fallback to SQLite with default settings.
                 efCoreConfiguration = new DatabaseConfigurationOptions()
                 {
-                    DatabaseType = "Jellyfin-SQLite",
+                    DatabaseType = "MulletaFlix-SQLite",
                     LockingBehavior = DatabaseLockingBehaviorTypes.NoLock
                 };
                 configurationManager.SaveConfiguration("database", efCoreConfiguration);
@@ -117,11 +117,11 @@ public static class ServiceCollectionExtensions
             var providers = GetSupportedDbProviders();
             if (!providers.TryGetValue(efCoreConfiguration.DatabaseType.ToUpperInvariant(), out providerFactory!))
             {
-                throw new InvalidOperationException($"Jellyfin cannot find the database provider of type '{efCoreConfiguration.DatabaseType}'. Supported types are {string.Join(", ", providers.Keys)}");
+                throw new InvalidOperationException($"MulletaFlix cannot find the database provider of type '{efCoreConfiguration.DatabaseType}'. Supported types are {string.Join(", ", providers.Keys)}");
             }
         }
 
-        serviceCollection.AddSingleton<IJellyfinDatabaseProvider>(providerFactory!);
+        serviceCollection.AddSingleton<IMulletaFlixDatabaseProvider>(providerFactory!);
 
         switch (efCoreConfiguration.LockingBehavior)
         {
@@ -136,9 +136,9 @@ public static class ServiceCollectionExtensions
                 break;
         }
 
-        serviceCollection.AddPooledDbContextFactory<JellyfinDbContext>((serviceProvider, opt) =>
+        serviceCollection.AddPooledDbContextFactory<MulletaFlixDbContext>((serviceProvider, opt) =>
         {
-            var provider = serviceProvider.GetRequiredService<IJellyfinDatabaseProvider>();
+            var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
             provider.Initialise(opt, efCoreConfiguration);
             var lockingBehavior = serviceProvider.GetRequiredService<IEntityFrameworkCoreLockingBehavior>();
             lockingBehavior.Initialise(opt);
@@ -147,3 +147,4 @@ public static class ServiceCollectionExtensions
         return serviceCollection;
     }
 }
+

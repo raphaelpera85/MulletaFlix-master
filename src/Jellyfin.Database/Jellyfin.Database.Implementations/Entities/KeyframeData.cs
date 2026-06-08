@@ -1,9 +1,9 @@
-#pragma warning disable CA2227 // Collection properties should be read only
+﻿#pragma warning disable CA2227 // Collection properties should be read only
 
 using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Keyframe information for a specific file.
@@ -30,3 +30,4 @@ public class KeyframeData
     /// </summary>
     public BaseItemEntity? Item { get; set; }
 }
+

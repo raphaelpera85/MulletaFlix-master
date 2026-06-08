@@ -1,8 +1,8 @@
-#pragma warning disable CA1813 // Avoid unsealed attributes
+﻿#pragma warning disable CA1813 // Avoid unsealed attributes
 
 using System;
 
-namespace Jellyfin.Api.Attributes;
+namespace MulletaFlix.Api.Attributes;
 
 /// <summary>
 /// Internal produces image attribute.
@@ -27,3 +27,4 @@ public class AcceptsFileAttribute : Attribute
     /// <returns>the configured content types.</returns>
     public string[] ContentTypes => _contentTypes;
 }
+

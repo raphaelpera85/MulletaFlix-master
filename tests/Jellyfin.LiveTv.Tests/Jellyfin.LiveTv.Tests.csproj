@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
@@ -27,3 +27,4 @@
     <ProjectReference Include="..\..\src\Jellyfin.LiveTv\Jellyfin.LiveTv.csproj" />
   </ItemGroup>
 </Project>
+

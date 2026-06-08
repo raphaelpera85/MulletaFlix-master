@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.StartupDtos;
+﻿namespace MulletaFlix.Api.Models.StartupDtos;
 
 /// <summary>
 /// The startup configuration DTO.
@@ -25,3 +25,4 @@ public class StartupConfigurationDto
     /// </summary>
     public string? PreferredMetadataLanguage { get; set; }
 }
+

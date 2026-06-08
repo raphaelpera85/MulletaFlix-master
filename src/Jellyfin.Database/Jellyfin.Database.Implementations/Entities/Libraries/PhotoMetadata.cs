@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+﻿namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity that holds metadata for a photo.
@@ -15,3 +15,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         }
     }
 }
+

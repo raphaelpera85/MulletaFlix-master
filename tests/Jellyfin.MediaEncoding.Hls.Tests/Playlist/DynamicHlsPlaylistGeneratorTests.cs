@@ -1,9 +1,9 @@
-using System;
-using Jellyfin.MediaEncoding.Hls.Playlist;
-using Jellyfin.MediaEncoding.Keyframes;
+﻿using System;
+using MulletaFlix.MediaEncoding.Hls.Playlist;
+using MulletaFlix.MediaEncoding.Keyframes;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Hls.Tests.Playlist
+namespace MulletaFlix.MediaEncoding.Hls.Tests.Playlist
 {
     public class DynamicHlsPlaylistGeneratorTests
     {
@@ -106,3 +106,4 @@ namespace Jellyfin.MediaEncoding.Hls.Tests.Playlist
         private static long MsToTicks(int value) => TimeSpan.FromMilliseconds(value).Ticks;
     }
 }
+

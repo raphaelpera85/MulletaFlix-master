@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests
+namespace MulletaFlix.Server.Integration.Tests
 {
-    public sealed class WebSocketTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class WebSocketTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
 
-        public WebSocketTests(JellyfinApplicationFactory factory)
+        public WebSocketTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -31,3 +31,4 @@ namespace Jellyfin.Server.Integration.Tests
         }
     }
 }
+

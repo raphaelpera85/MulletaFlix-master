@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Api.Models.UserDtos;
+namespace MulletaFlix.Api.Models.UserDtos;
 
 /// <summary>
 /// The quick connect request body.
@@ -13,3 +13,4 @@ public class QuickConnectDto
     [Required]
     public string Secret { get; set; } = null!;
 }
+

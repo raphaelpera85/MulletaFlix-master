@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
@@ -16,14 +16,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Movies controller.
 /// </summary>
 [Authorize]
 [Tags("Movie")]
-public class MoviesController : BaseJellyfinApiController
+public class MoviesController : BaseMulletaFlixApiController
 {
     private readonly IUserManager _userManager;
     private readonly IDtoService _dtoService;
@@ -84,3 +84,4 @@ public class MoviesController : BaseJellyfinApiController
         }));
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using MediaBrowser.Common.Api;
@@ -8,13 +8,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Localization controller.
 /// </summary>
 [Authorize(Policy = Policies.FirstTimeSetupOrDefault)]
-public class LocalizationController : BaseJellyfinApiController
+public class LocalizationController : BaseMulletaFlixApiController
 {
     private readonly ILocalizationManager _localization;
 
@@ -59,6 +59,19 @@ public class LocalizationController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Gets the default metadata language for a country.
+    /// </summary>
+    /// <param name="countryCode">The optional country code.</param>
+    /// <response code="200">Default metadata language returned.</response>
+    /// <returns>The preferred metadata language for the country.</returns>
+    [HttpGet("DefaultMetadataLanguage")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult<string> GetDefaultMetadataLanguage([FromQuery] string? countryCode = null)
+    {
+        return Ok(_localization.GetDefaultMetadataLanguage(countryCode));
+    }
+
+    /// <summary>
     /// Gets known parental ratings.
     /// </summary>
     /// <response code="200">Known parental ratings returned.</response>
@@ -82,3 +95,4 @@ public class LocalizationController : BaseJellyfinApiController
         return Ok(_localization.GetLocalizationOptions());
     }
 }
+

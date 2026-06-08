@@ -1,6 +1,6 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 
 namespace MediaBrowser.Model.LiveTv
 {
@@ -19,3 +19,4 @@ namespace MediaBrowser.Model.LiveTv
         public SortOrder SortOrder { get; set; }
     }
 }
+

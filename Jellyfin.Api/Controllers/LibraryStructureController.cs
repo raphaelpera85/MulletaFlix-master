@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -6,10 +6,10 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Api.Models.LibraryStructureDto;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Api.Models.LibraryStructureDto;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
@@ -17,22 +17,25 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The library structure controller.
 /// </summary>
 [Route("Library/VirtualFolders")]
 [Authorize(Policy = Policies.FirstTimeSetupOrElevated)]
-public class LibraryStructureController : BaseJellyfinApiController
+public class LibraryStructureController : BaseMulletaFlixApiController
 {
     private readonly IServerApplicationPaths _appPaths;
+    private readonly IServerConfigurationManager _serverConfigurationManager;
     private readonly ILibraryManager _libraryManager;
     private readonly ILibraryMonitor _libraryMonitor;
+    private readonly ILocalizationManager _localizationManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LibraryStructureController"/> class.
@@ -40,14 +43,18 @@ public class LibraryStructureController : BaseJellyfinApiController
     /// <param name="serverConfigurationManager">Instance of <see cref="IServerConfigurationManager"/> interface.</param>
     /// <param name="libraryManager">Instance of <see cref="ILibraryManager"/> interface.</param>
     /// <param name="libraryMonitor">Instance of <see cref="ILibraryMonitor"/> interface.</param>
+    /// <param name="localizationManager">Instance of <see cref="ILocalizationManager"/> interface.</param>
     public LibraryStructureController(
         IServerConfigurationManager serverConfigurationManager,
         ILibraryManager libraryManager,
-        ILibraryMonitor libraryMonitor)
+        ILibraryMonitor libraryMonitor,
+        ILocalizationManager localizationManager)
     {
+        _serverConfigurationManager = serverConfigurationManager;
         _appPaths = serverConfigurationManager.ApplicationPaths;
         _libraryManager = libraryManager;
         _libraryMonitor = libraryMonitor;
+        _localizationManager = localizationManager;
     }
 
     /// <summary>
@@ -84,6 +91,7 @@ public class LibraryStructureController : BaseJellyfinApiController
         [FromQuery] bool refreshLibrary = false)
     {
         var libraryOptions = libraryOptionsDto?.LibraryOptions ?? new LibraryOptions();
+        ApplyLibraryDefaults(libraryOptions);
 
         if (paths is not null && paths.Length > 0)
         {
@@ -348,8 +356,11 @@ public class LibraryStructureController : BaseJellyfinApiController
             return NotFound();
         }
 
+        var libraryOptions = request.LibraryOptions ?? new LibraryOptions();
+        ApplyLibraryDefaults(libraryOptions);
+
         LibraryOptions options = item.GetLibraryOptions();
-        foreach (var mediaPath in request.LibraryOptions!.PathInfos)
+        foreach (var mediaPath in libraryOptions.PathInfos)
         {
             if (options.PathInfos.Any(i => i.Path == mediaPath.Path))
             {
@@ -359,7 +370,23 @@ public class LibraryStructureController : BaseJellyfinApiController
             _libraryManager.CreateShortcut(item.Path, mediaPath);
         }
 
-        item.UpdateLibraryOptions(request.LibraryOptions);
+        item.UpdateLibraryOptions(libraryOptions);
         return NoContent();
     }
+
+    private void ApplyLibraryDefaults(LibraryOptions options)
+    {
+        options.EnableRealtimeMonitor = true;
+
+        if (string.IsNullOrWhiteSpace(options.MetadataCountryCode))
+        {
+            options.MetadataCountryCode = _serverConfigurationManager.Configuration.MetadataCountryCode;
+        }
+
+        if (string.IsNullOrWhiteSpace(options.PreferredMetadataLanguage))
+        {
+            options.PreferredMetadataLanguage = _localizationManager.GetDefaultMetadataLanguage(options.MetadataCountryCode);
+        }
+    }
 }
+

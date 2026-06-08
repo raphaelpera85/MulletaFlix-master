@@ -1,8 +1,8 @@
-using System.Text.Json;
-using Jellyfin.Extensions.Json.Converters;
+﻿using System.Text.Json;
+using MulletaFlix.Extensions.Json.Converters;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests.Json.Converters
+namespace MulletaFlix.Extensions.Tests.Json.Converters
 {
     public class JsonStringConverterTests
     {
@@ -36,3 +36,4 @@ namespace Jellyfin.Extensions.Tests.Json.Converters
         }
     }
 }
+

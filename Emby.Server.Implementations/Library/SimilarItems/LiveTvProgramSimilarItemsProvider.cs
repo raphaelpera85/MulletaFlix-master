@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -92,3 +92,4 @@ public class LiveTvProgramSimilarItemsProvider : ILocalSimilarItemsProvider<Live
         return Task.FromResult(_libraryManager.GetItemList(internalQuery));
     }
 }
+

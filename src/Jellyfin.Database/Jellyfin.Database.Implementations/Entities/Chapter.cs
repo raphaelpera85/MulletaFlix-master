@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// The Chapter entity.
@@ -42,3 +42,4 @@ public class Chapter
     /// </summary>
     public DateTime? ImageDateModified { get; set; }
 }
+

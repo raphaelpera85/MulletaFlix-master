@@ -1,17 +1,17 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
+using MulletaFlix.Api.Extensions;
 using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Controller.Streaming;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 
-namespace Jellyfin.Api.Helpers;
+namespace MulletaFlix.Api.Helpers;
 
 /// <summary>
 /// The stream response helpers.
@@ -167,3 +167,4 @@ public static class FileStreamResponseHelpers
         }
     }
 }
+

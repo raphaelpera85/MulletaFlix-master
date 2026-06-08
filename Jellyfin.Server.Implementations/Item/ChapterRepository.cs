@@ -1,23 +1,23 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// The Chapter manager.
 /// </summary>
 public class ChapterRepository : IChapterRepository
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IImageProcessor _imageProcessor;
 
     /// <summary>
@@ -25,7 +25,7 @@ public class ChapterRepository : IChapterRepository
     /// </summary>
     /// <param name="dbProvider">The EFCore provider.</param>
     /// <param name="imageProcessor">The Image Processor.</param>
-    public ChapterRepository(IDbContextFactory<JellyfinDbContext> dbProvider, IImageProcessor imageProcessor)
+    public ChapterRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider, IImageProcessor imageProcessor)
     {
         _dbProvider = dbProvider;
         _imageProcessor = imageProcessor;
@@ -125,3 +125,4 @@ public class ChapterRepository : IChapterRepository
         return chapterEntity;
     }
 }
+

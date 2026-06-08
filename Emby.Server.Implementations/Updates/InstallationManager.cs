@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -10,9 +10,9 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events;
-using Jellyfin.Extensions;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Extensions;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Common.Plugins;
@@ -584,3 +584,4 @@ namespace Emby.Server.Implementations.Updates
         }
     }
 }
+

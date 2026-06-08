@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Emby.Naming.Common;
 using Emby.Naming.Video;
@@ -10,7 +10,7 @@ using MediaBrowser.Model.IO;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library;
+namespace MulletaFlix.Server.Implementations.Tests.Library;
 
 public class CoreResolutionIgnoreRuleTest
 {
@@ -127,3 +127,4 @@ public class CoreResolutionIgnoreRuleTest
             MakeParent()));
     }
 }
+

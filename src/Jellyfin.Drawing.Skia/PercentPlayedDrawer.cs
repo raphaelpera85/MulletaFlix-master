@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using MediaBrowser.Model.Drawing;
 using SkiaSharp;
 
-namespace Jellyfin.Drawing.Skia;
+namespace MulletaFlix.Drawing.Skia;
 
 /// <summary>
 /// Static helper class used to draw percentage-played indicators on images.
@@ -33,3 +33,4 @@ public static class PercentPlayedDrawer
         canvas.DrawRect(SKRect.Create(0, (float)endY - IndicatorHeight, Convert.ToInt32(foregroundWidth), endY), paint);
     }
 }
+

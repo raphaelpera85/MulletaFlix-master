@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 // We need lowercase normalized string for ffmpeg
@@ -13,10 +13,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Extensions;
 using MediaBrowser.Controller.IO;
@@ -1043,7 +1043,7 @@ namespace MediaBrowser.Controller.MediaEncoding
                 {
                     // Only override i965 since it has lower priority than iHD in libva lookup.
                     Environment.SetEnvironmentVariable("LIBVA_DRIVER_NAME", "i965");
-                    Environment.SetEnvironmentVariable("LIBVA_DRIVER_NAME_JELLYFIN", "i965");
+                    Environment.SetEnvironmentVariable("LIBVA_DRIVER_NAME_MulletaFlix", "i965");
                     args.Append(GetVaapiDeviceArgs(options.VaapiDevice, "i965", null, null, null, VaapiAlias));
                 }
 
@@ -1575,7 +1575,7 @@ namespace MediaBrowser.Controller.MediaEncoding
 
         // When video is transcoded, accurate_seek (the default) trims video to the
         // exact seek point via decoder-side frame discard. But stream-copied audio
-        // bypasses the decoder, so it starts from the nearest keyframe — potentially
+        // bypasses the decoder, so it starts from the nearest keyframe â€” potentially
         // seconds before the target. Use the noise bsf to drop copied audio packets
         // before the seek target, achieving the same trim precision without
         // re-encoding. The noise bsf's drop= parameter requires ffmpeg >= 5.0.
@@ -5402,7 +5402,7 @@ namespace MediaBrowser.Controller.MediaEncoding
                             mainFilters.Add("format=drm_prime");
                         }
                     }
-                    else // legacy va-vk mapping that works only in jellyfin-ffmpeg6
+                    else // legacy va-vk mapping that works only in MulletaFlix-ffmpeg6
                     {
                         mainFilters.Add("hwmap=derive_device=vulkan");
                         mainFilters.Add("format=vulkan");
@@ -5915,7 +5915,7 @@ namespace MediaBrowser.Controller.MediaEncoding
                 return (mainFilters, subFilters, overlayFilters);
             }
 
-            // For old jellyfin-ffmpeg that has broken hwsurface, add a hwupload
+            // For old MulletaFlix-ffmpeg that has broken hwsurface, add a hwupload
             var needFiltering = mainFilters.Any(f => !string.IsNullOrEmpty(f)) ||
                                 subFilters.Any(f => !string.IsNullOrEmpty(f)) ||
                                 overlayFilters.Any(f => !string.IsNullOrEmpty(f));
@@ -7036,7 +7036,7 @@ namespace MediaBrowser.Controller.MediaEncoding
                 || string.Equals("yuv444p12le", videoStream.PixelFormat, StringComparison.OrdinalIgnoreCase);
             var isAv1SupportedSwFormatsVt = is8_10bitSwFormatsVt || string.Equals("yuv420p12le", videoStream.PixelFormat, StringComparison.OrdinalIgnoreCase);
 
-            // The related patches make videotoolbox hardware surface working is only available in jellyfin-ffmpeg 7.0.1 at the moment.
+            // The related patches make videotoolbox hardware surface working is only available in MulletaFlix-ffmpeg 7.0.1 at the moment.
             bool useHwSurface = (_mediaEncoder.EncoderVersion >= _minFFmpegWorkingVtHwSurface) && IsVideoToolboxFullSupported();
 
             if (is8bitSwFormatsVt)
@@ -7969,3 +7969,4 @@ namespace MediaBrowser.Controller.MediaEncoding
         }
     }
 }
+

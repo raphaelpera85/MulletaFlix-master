@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.UserDtos;
+﻿namespace MulletaFlix.Api.Models.UserDtos;
 
 /// <summary>
 /// The authenticate user by name request body.
@@ -15,3 +15,4 @@ public class AuthenticateUserByName
     /// </summary>
     public string? Pw { get; set; }
 }
+

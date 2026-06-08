@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Buffers;
@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Model.IO;
 
-namespace Jellyfin.LiveTv.IO
+namespace MulletaFlix.LiveTv.IO
 {
     public class StreamHelper : IStreamHelper
     {
@@ -118,3 +118,4 @@ namespace Jellyfin.LiveTv.IO
         }
     }
 }
+

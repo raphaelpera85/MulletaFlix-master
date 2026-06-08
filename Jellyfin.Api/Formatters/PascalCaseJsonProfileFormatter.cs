@@ -1,9 +1,9 @@
-using System.Net.Mime;
-using Jellyfin.Extensions.Json;
+﻿using System.Net.Mime;
+using MulletaFlix.Extensions.Json;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 
-namespace Jellyfin.Api.Formatters;
+namespace MulletaFlix.Api.Formatters;
 
 /// <summary>
 /// Pascal Case Json Profile Formatter.
@@ -21,3 +21,4 @@ public class PascalCaseJsonProfileFormatter : SystemTextJsonOutputFormatter
         SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse(JsonDefaults.PascalCaseMediaType));
     }
 }
+

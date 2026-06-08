@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.IO;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Lyrics;
 using MediaBrowser.Controller.Resolvers;
 using MediaBrowser.Model.Lyrics;
@@ -43,3 +43,4 @@ public class TxtLyricParser : ILyricParser
         return new LyricDto { Lyrics = lyricList };
     }
 }
+

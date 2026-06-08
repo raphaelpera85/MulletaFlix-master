@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Jellyfin.CodeAnalysis;
+namespace MulletaFlix.CodeAnalysis;
 
 /// <summary>
 /// Analyzer to detect sync disposal of async-created IAsyncDisposable objects.
@@ -80,3 +80,4 @@ public class AsyncDisposalPatternAnalyzer : DiagnosticAnalyzer
             && string.Equals(i.ContainingNamespace?.ToDisplayString(), "System", StringComparison.Ordinal));
     }
 }
+

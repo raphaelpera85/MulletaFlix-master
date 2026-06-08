@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using Jellyfin.Extensions.Json;
-using Jellyfin.LiveTv.Listings.SchedulesDirectDtos;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.LiveTv.Listings.SchedulesDirectDtos;
 using Xunit;
 
-namespace Jellyfin.LiveTv.Tests.SchedulesDirect
+namespace MulletaFlix.LiveTv.Tests.SchedulesDirect
 {
     public class SchedulesDirectDeserializeTests
     {
@@ -238,3 +238,4 @@ namespace Jellyfin.LiveTv.Tests.SchedulesDirect
         }
     }
 }
+

@@ -1,7 +1,7 @@
-using Microsoft.OpenApi;
+﻿using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters;
+namespace MulletaFlix.Server.Filters;
 
 /// <summary>
 /// Document filter that fixes security scheme references after document generation.
@@ -54,3 +54,4 @@ internal class SecuritySchemeReferenceFixupFilter : IDocumentFilter
         }
     }
 }
+

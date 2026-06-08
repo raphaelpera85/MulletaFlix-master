@@ -113,6 +113,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 
         private static async Task<string?> ResolveLogoAsync(IMidiaStorageOnlineM3uEntry entry, string logoUrl, IptvOrgLogoCatalog catalog, string logoDir, string baseUrl, CancellationToken ct)
         {
+            var approvedLogoUrl = MidiaStorageOnlineApprovedChannelMappings.TryGetLogoUrl(entry.TvgName, entry.Name, entry.TvgId);
+            if (!string.IsNullOrWhiteSpace(approvedLogoUrl))
+            {
+                logoUrl = approvedLogoUrl;
+            }
+
             if (TryGetLocalFileName(logoUrl, out var localFileName))
             {
                 var existingPath = TryResolveLocalLogoPath(localFileName);

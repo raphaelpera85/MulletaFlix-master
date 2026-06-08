@@ -1,17 +1,17 @@
-using Jellyfin.LiveTv.Channels;
-using Jellyfin.LiveTv.Guide;
-using Jellyfin.LiveTv.IO;
-using Jellyfin.LiveTv.Listings;
-using Jellyfin.LiveTv.Recordings;
-using Jellyfin.LiveTv.Timers;
-using Jellyfin.LiveTv.TunerHosts;
-using Jellyfin.LiveTv.TunerHosts.HdHomerun;
+﻿using MulletaFlix.LiveTv.Channels;
+using MulletaFlix.LiveTv.Guide;
+using MulletaFlix.LiveTv.IO;
+using MulletaFlix.LiveTv.Listings;
+using MulletaFlix.LiveTv.Recordings;
+using MulletaFlix.LiveTv.Timers;
+using MulletaFlix.LiveTv.TunerHosts;
+using MulletaFlix.LiveTv.TunerHosts.HdHomerun;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.IO;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Jellyfin.LiveTv.Extensions;
+namespace MulletaFlix.LiveTv.Extensions;
 
 /// <summary>
 /// Live TV extensions for <see cref="IServiceCollection"/>.
@@ -46,3 +46,4 @@ public static class LiveTvServiceCollectionExtensions
         services.AddSingleton<IListingsProvider, XmlTvListingsProvider>();
     }
 }
+

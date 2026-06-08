@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Model.Drawing;
 
-namespace Jellyfin.Drawing;
+namespace MulletaFlix.Drawing;
 
 /// <summary>
 /// A fallback implementation of <see cref="IImageEncoder" />.
@@ -61,3 +61,4 @@ public class NullImageEncoder : IImageEncoder
         throw new NotImplementedException();
     }
 }
+

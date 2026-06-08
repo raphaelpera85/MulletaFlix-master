@@ -1,8 +1,8 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Naming.Video;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Video
+namespace MulletaFlix.Naming.Tests.Video
 {
     public class Format3DTests
     {
@@ -72,3 +72,4 @@ namespace Jellyfin.Naming.Tests.Video
         }
     }
 }
+

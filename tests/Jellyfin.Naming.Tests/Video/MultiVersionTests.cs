@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Emby.Naming.Common;
 using Emby.Naming.Video;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Entities;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Video
+namespace MulletaFlix.Naming.Tests.Video
 {
     public class MultiVersionTests
     {
@@ -1132,3 +1132,4 @@ namespace Jellyfin.Naming.Tests.Video
         }
     }
 }
+

@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1711
 #pragma warning disable CS1591
@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
 
-namespace Jellyfin.LiveTv.IO
+namespace MulletaFlix.LiveTv.IO
 {
     public sealed class ExclusiveLiveStream : ILiveStream
     {
@@ -59,3 +59,4 @@ namespace Jellyfin.LiveTv.IO
         }
     }
 }
+

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Linq;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Controller.Entities
@@ -40,3 +40,4 @@ namespace MediaBrowser.Controller.Entities
         }
     }
 }
+

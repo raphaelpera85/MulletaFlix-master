@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events.Users;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Events.Users;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Users
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Users
 {
     /// <summary>
     /// Adds an entry to the activity log when a user is deleted.
@@ -42,3 +42,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.Users
         }
     }
 }
+

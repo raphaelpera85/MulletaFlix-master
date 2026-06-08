@@ -7,7 +7,7 @@
         {{#IF isInReportingMode}}
         ❌
         {{/IF}}
-        Jellyfin Startup
+        MulletaFlix Startup
     </title>
     <style>
         * {
@@ -173,9 +173,9 @@
         <header class="flex-row">
 
             {{^IF isInReportingMode}}
-            <p>Jellyfin Server {{version.ToString(2)}} still starting. Please wait.</p>
+            <p>MulletaFlix Server {{version.ToString(2)}} still starting. Please wait.</p>
             {{#ELSE}}
-            <p>Jellyfin Server {{version.ToString(2)}} has encountered an error and was not able to start.</p>
+            <p>MulletaFlix Server {{version.ToString(2)}} has encountered an error and was not able to start.</p>
             {{/ELSE}}
             {{/IF}}
 

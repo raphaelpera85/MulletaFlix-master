@@ -1,10 +1,10 @@
-namespace Jellyfin.Server.Migrations.Stages;
+﻿namespace MulletaFlix.Server.Migrations.Stages;
 
 /// <summary>
-/// Defines the stages the <see cref="JellyfinMigrationService"/> supports.
+/// Defines the stages the <see cref="MulletaFlixMigrationService"/> supports.
 /// </summary>
 #pragma warning disable CA1008 // Enums should have zero value
-public enum JellyfinMigrationStageTypes
+public enum MulletaFlixMigrationStageTypes
 #pragma warning restore CA1008 // Enums should have zero value
 {
     /// <summary>
@@ -24,3 +24,4 @@ public enum JellyfinMigrationStageTypes
     /// </summary>
     AppInitialisation = 3
 }
+

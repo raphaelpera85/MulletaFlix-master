@@ -5,7 +5,7 @@ using FsCheck.Xunit;
 using MediaBrowser.Model.Extensions;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Extensions
+namespace MulletaFlix.Model.Tests.Extensions
 {
     public class StringHelperTests
     {
@@ -13,7 +13,7 @@ namespace Jellyfin.Model.Tests.Extensions
         [InlineData("", "")]
         [InlineData("banana", "Banana")]
         [InlineData("Banana", "Banana")]
-        [InlineData("ä", "Ä")]
+        [InlineData("\u00E4", "\u00C4")]
         [InlineData("\027", "\027")]
         public void StringHelper_ValidArgs_Success(string input, string expectedResult)
         {
@@ -31,3 +31,4 @@ namespace Jellyfin.Model.Tests.Extensions
         }
     }
 }
+

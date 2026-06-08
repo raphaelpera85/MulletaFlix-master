@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
     /// <summary>
     /// Static extensions for the <see cref="IReadOnlyList{T}"/> interface.
@@ -75,3 +75,4 @@ namespace Jellyfin.Extensions
         }
     }
 }
+

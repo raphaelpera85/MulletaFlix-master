@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Data.Queries;
+namespace MulletaFlix.Data.Queries;
 
 /// <summary>
 /// A class representing a query to the activity logs.
@@ -66,3 +66,4 @@ public class ActivityLogQuery : PaginatedQuery
     /// </summary>
     public IReadOnlyCollection<(ActivityLogSortBy, SortOrder)>? OrderBy { get; set; }
 }
+

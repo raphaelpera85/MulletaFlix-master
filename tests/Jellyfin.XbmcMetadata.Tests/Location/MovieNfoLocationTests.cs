@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
@@ -6,7 +6,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.XbmcMetadata.Savers;
 using Xunit;
 
-namespace Jellyfin.XbmcMetadata.Tests.Location
+namespace MulletaFlix.XbmcMetadata.Tests.Location
 {
     public class MovieNfoLocationTests
     {
@@ -66,3 +66,4 @@ namespace Jellyfin.XbmcMetadata.Tests.Location
         }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.EnvironmentDtos;
+﻿namespace MulletaFlix.Api.Models.EnvironmentDtos;
 
 /// <summary>
 /// Validate path object.
@@ -20,3 +20,4 @@ public class ValidatePathDto
     /// </summary>
     public bool? IsFile { get; set; }
 }
+

@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.Collections.Generic;
@@ -9,8 +9,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.ScheduledTasks.Triggers;
-using Jellyfin.Data.Events;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Model.Tasks;
@@ -676,3 +676,4 @@ public class ScheduledTaskWorker : IScheduledTaskWorker
         }
     }
 }
+

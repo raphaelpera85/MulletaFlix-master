@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Database.Implementations;
+namespace MulletaFlix.Database.Implementations;
 
 /// <summary>
 /// Contains helpers to partition EFCore queries.
@@ -213,3 +213,4 @@ public static class QueryPartitionHelpers
         }
     }
 }
+

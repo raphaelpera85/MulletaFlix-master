@@ -11,10 +11,10 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <Authors>Jellyfin Contributors</Authors>
-    <PackageId>Jellyfin.Database.Implementations</PackageId>
+    <Authors>MulletaFlix Contributors</Authors>
+    <PackageId>MulletaFlix.Database.Implementations</PackageId>
     <VersionPrefix>10.11.0</VersionPrefix>
-    <RepositoryUrl>https://github.com/jellyfin/jellyfin</RepositoryUrl>
+    <RepositoryUrl>https://github.com/MulletaFlix/MulletaFlix</RepositoryUrl>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
   </PropertyGroup>
 
@@ -37,3 +37,4 @@
   </ItemGroup>
 
 </Project>
+

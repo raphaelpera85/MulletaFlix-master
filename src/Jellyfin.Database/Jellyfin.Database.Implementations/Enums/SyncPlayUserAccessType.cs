@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// Enum SyncPlayUserAccessType.
@@ -20,3 +20,4 @@ public enum SyncPlayUserAccessType
     /// </summary>
     None = 2
 }
+

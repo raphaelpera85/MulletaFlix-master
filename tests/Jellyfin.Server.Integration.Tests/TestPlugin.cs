@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 
-namespace Jellyfin.Server.Integration.Tests
+namespace MulletaFlix.Server.Integration.Tests
 {
     public class TestPlugin : BasePlugin<BasePluginConfiguration>, IHasWebPages
     {
@@ -41,3 +41,4 @@ namespace Jellyfin.Server.Integration.Tests
         }
     }
 }
+

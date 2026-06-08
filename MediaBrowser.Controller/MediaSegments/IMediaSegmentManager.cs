@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.MediaSegments;
@@ -80,3 +80,4 @@ public interface IMediaSegmentManager
     /// <returns>A list of all providers for the tested item.</returns>
     IEnumerable<(string Name, string Id)> GetSupportedProviders(BaseItem item);
 }
+

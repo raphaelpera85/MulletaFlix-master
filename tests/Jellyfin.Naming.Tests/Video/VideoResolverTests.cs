@@ -1,10 +1,10 @@
-using System.Linq;
+﻿using System.Linq;
 using Emby.Naming.Common;
 using Emby.Naming.Video;
 using MediaBrowser.Model.Entities;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Video
+namespace MulletaFlix.Naming.Tests.Video
 {
     public class VideoResolverTests
     {
@@ -137,6 +137,12 @@ namespace Jellyfin.Naming.Tests.Video
                     name: "Rain Man",
                     year: 1988));
 
+            data.Add(
+                new VideoFileInfo(
+                    path: "/server/Movies/The Accursed (LEG)/The Accursed (LEG).mkv",
+                    container: "mkv",
+                    name: "The Accursed"));
+
             return data;
         }
 
@@ -192,3 +198,4 @@ namespace Jellyfin.Naming.Tests.Video
         }
     }
 }
+

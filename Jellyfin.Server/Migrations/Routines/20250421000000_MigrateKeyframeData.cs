@@ -1,31 +1,31 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to move extracted files to the new directories.
 /// </summary>
-[JellyfinMigration("2025-04-21T00:00:00", nameof(MigrateKeyframeData))]
+[MulletaFlixMigration("2025-04-21T00:00:00", nameof(MigrateKeyframeData))]
 public class MigrateKeyframeData : IDatabaseMigrationRoutine
 {
     private readonly IStartupLogger _logger;
     private readonly IApplicationPaths _appPaths;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private static readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
 
     /// <summary>
@@ -37,7 +37,7 @@ public class MigrateKeyframeData : IDatabaseMigrationRoutine
     public MigrateKeyframeData(
         IStartupLogger<MigrateKeyframeData> startupLogger,
         IApplicationPaths appPaths,
-        IDbContextFactory<JellyfinDbContext> dbProvider)
+        IDbContextFactory<MulletaFlixDbContext> dbProvider)
     {
         _logger = startupLogger;
         _appPaths = appPaths;
@@ -167,3 +167,4 @@ public class MigrateKeyframeData : IDatabaseMigrationRoutine
         return false;
     }
 }
+

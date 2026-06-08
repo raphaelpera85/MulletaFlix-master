@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Data.Queries;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Data.Queries;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Querying;
@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Activity log controller.
@@ -20,7 +20,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("System/ActivityLog")]
 [Authorize(Policy = Policies.RequiresElevation)]
 [Tags("System")]
-public class ActivityLogController : BaseJellyfinApiController
+public class ActivityLogController : BaseMulletaFlixApiController
 {
     private readonly IActivityManager _activityManager;
 
@@ -117,3 +117,4 @@ public class ActivityLogController : BaseJellyfinApiController
         return result;
     }
 }
+

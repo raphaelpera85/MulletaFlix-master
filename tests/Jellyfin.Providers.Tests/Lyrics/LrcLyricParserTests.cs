@@ -1,9 +1,9 @@
-using System.IO;
+﻿using System.IO;
 using MediaBrowser.Model.Lyrics;
 using MediaBrowser.Providers.Lyric;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.Lyrics;
+namespace MulletaFlix.Providers.Tests.Lyrics;
 
 public static class LrcLyricParserTests
 {
@@ -45,3 +45,4 @@ public static class LrcLyricParserTests
         Assert.Null(lastLine.Cues[^1].End);
     }
 }
+

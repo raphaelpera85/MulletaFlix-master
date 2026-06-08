@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Net.Mime;
 using System.Threading.Tasks;
 using MediaBrowser.Controller;
 using MediaBrowser.Model.Globalization;
 using Microsoft.AspNetCore.Http;
 
-namespace Jellyfin.Api.Middleware;
+namespace MulletaFlix.Api.Middleware;
 
 /// <summary>
 /// Shows a custom message during server startup.
@@ -48,3 +48,4 @@ public class ServerStartupMessageMiddleware
         await httpContext.Response.WriteAsync(message, httpContext.RequestAborted).ConfigureAwait(false);
     }
 }
+

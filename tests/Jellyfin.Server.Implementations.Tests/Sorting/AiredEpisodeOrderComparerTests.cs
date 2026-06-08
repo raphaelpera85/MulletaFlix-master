@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using Emby.Server.Implementations.Sorting;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Sorting
+namespace MulletaFlix.Server.Implementations.Tests.Sorting
 {
     public class AiredEpisodeOrderComparerTests
     {
@@ -161,3 +161,4 @@ namespace Jellyfin.Server.Implementations.Tests.Sorting
         }
     }
 }
+

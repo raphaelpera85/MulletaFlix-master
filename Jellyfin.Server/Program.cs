@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -11,16 +11,16 @@ using CommandLine;
 using Emby.Server.Implementations;
 using Emby.Server.Implementations.Configuration;
 using Emby.Server.Implementations.Serialization;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.Extensions;
-using Jellyfin.Server.Helpers;
-using Jellyfin.Server.Implementations.DatabaseConfiguration;
-using Jellyfin.Server.Implementations.Extensions;
-using Jellyfin.Server.Implementations.StorageHelpers;
-using Jellyfin.Server.Implementations.SystemBackupService;
-using Jellyfin.Server.Migrations;
-using Jellyfin.Server.Migrations.Stages;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.Extensions;
+using MulletaFlix.Server.Helpers;
+using MulletaFlix.Server.Implementations.DatabaseConfiguration;
+using MulletaFlix.Server.Implementations.Extensions;
+using MulletaFlix.Server.Implementations.StorageHelpers;
+using MulletaFlix.Server.Implementations.SystemBackupService;
+using MulletaFlix.Server.Migrations;
+using MulletaFlix.Server.Migrations.Stages;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
@@ -36,7 +36,7 @@ using Serilog.Extensions.Logging;
 using static MediaBrowser.Controller.Extensions.ConfigurationExtensions;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace Jellyfin.Server
+namespace MulletaFlix.Server
 {
     /// <summary>
     /// Class containing the entry point of the application.
@@ -56,11 +56,11 @@ namespace Jellyfin.Server
         private static readonly SerilogLoggerFactory _loggerFactory = new SerilogLoggerFactory();
         private static SetupServer? _setupServer;
         private static CoreAppHost? _appHost;
-        private static IHost? _jellyfinHost = null;
+        private static IHost? _MulletaFlixHost = null;
         private static long _startTimestamp;
         private static ILogger _logger = NullLogger.Instance;
         private static bool _restartOnShutdown;
-        private static IStartupLogger<JellyfinMigrationService>? _migrationLogger;
+        private static IStartupLogger<MulletaFlixMigrationService>? _migrationLogger;
         private static string? _restoreFromBackup;
 
         /// <summary>
@@ -88,8 +88,8 @@ namespace Jellyfin.Server
             ServerApplicationPaths appPaths = StartupHelpers.CreateApplicationPaths(options);
             appPaths.MakeSanityCheckOrThrow();
 
-            // $JELLYFIN_LOG_DIR needs to be set for the logger configuration manager
-            Environment.SetEnvironmentVariable("JELLYFIN_LOG_DIR", appPaths.LogDirectoryPath);
+            // $MulletaFlix_LOG_DIR needs to be set for the logger configuration manager
+            Environment.SetEnvironmentVariable("MulletaFlix_LOG_DIR", appPaths.LogDirectoryPath);
 
             // Enable cl-va P010 interop for tonemapping on Intel VAAPI
             Environment.SetEnvironmentVariable("NEOReadDebugKeys", "1");
@@ -100,7 +100,7 @@ namespace Jellyfin.Server
             // Create an instance of the application configuration to use for application startup
             IConfiguration startupConfig = CreateAppConfiguration(options, appPaths);
             StartupHelpers.InitializeLoggingFramework(startupConfig, appPaths);
-            _setupServer = new SetupServer(static () => _jellyfinHost?.Services?.GetService<INetworkManager>(), appPaths, static () => _appHost, _loggerFactory, startupConfig);
+            _setupServer = new SetupServer(static () => _MulletaFlixHost?.Services?.GetService<INetworkManager>(), appPaths, static () => _appHost, _loggerFactory, startupConfig);
             await _setupServer.RunAsync().ConfigureAwait(false);
             _logger = _loggerFactory.CreateLogger("Main");
             StartupLogger.Logger = new StartupLogger(_logger);
@@ -110,7 +110,7 @@ namespace Jellyfin.Server
                 => _logger.LogCritical((Exception)e.ExceptionObject, "Unhandled Exception");
 
             _logger.LogInformation(
-                "Jellyfin version: {Version}",
+                "MulletaFlix version: {Version}",
                 Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3));
 
             StartupHelpers.LogEnvironmentInfo(_logger, appPaths);
@@ -164,15 +164,15 @@ namespace Jellyfin.Server
             var configurationCompleted = false;
             try
             {
-                _jellyfinHost = Host.CreateDefaultBuilder()
+                _MulletaFlixHost = Host.CreateDefaultBuilder()
                     .UseConsoleLifetime()
                     .ConfigureServices(services => appHost.Init(services))
                     .ConfigureWebHostDefaults(webHostBuilder =>
                     {
                         webHostBuilder.ConfigureWebHostBuilder(appHost, startupConfig, appPaths, _logger);
-                        if (bool.TryParse(Environment.GetEnvironmentVariable("JELLYFIN_ENABLE_IIS"), out var iisEnabled) && iisEnabled)
+                        if (bool.TryParse(Environment.GetEnvironmentVariable("MulletaFlix_ENABLE_IIS"), out var iisEnabled) && iisEnabled)
                         {
-                            _logger.LogCritical("UNSUPPORTED HOSTING ENVIRONMENT Microsoft Internet Information Services. The option to run Jellyfin on IIS is an unsupported and untested feature. Only use at your own discretion.");
+                            _logger.LogCritical("UNSUPPORTED HOSTING ENVIRONMENT Microsoft Internet Information Services. The option to run MulletaFlix on IIS is an unsupported and untested feature. Only use at your own discretion.");
                             webHostBuilder.UseIIS();
                         }
                     })
@@ -184,13 +184,13 @@ namespace Jellyfin.Server
                     .Build();
 
                 /*
-                 * Initialize the transcode path marker so we avoid starting Jellyfin in a broken state.
+                 * Initialize the transcode path marker so we avoid starting MulletaFlix in a broken state.
                  * This should really be a part of IApplicationPaths but this path is configured differently.
                  */
                 _ = appHost.ConfigurationManager.GetTranscodePath();
 
                 // Re-use the host service provider in the app host since ASP.NET doesn't allow a custom service collection.
-                appHost.ServiceProvider = _jellyfinHost.Services;
+                appHost.ServiceProvider = _MulletaFlixHost.Services;
                 PrepareDatabaseProvider(appHost.ServiceProvider);
 
                 if (!string.IsNullOrWhiteSpace(_restoreFromBackup))
@@ -201,15 +201,15 @@ namespace Jellyfin.Server
                     return;
                 }
 
-                var jellyfinMigrationService = ActivatorUtilities.CreateInstance<JellyfinMigrationService>(appHost.ServiceProvider);
-                await jellyfinMigrationService.PrepareSystemForMigration(_logger).ConfigureAwait(false);
-                await jellyfinMigrationService.MigrateStepAsync(JellyfinMigrationStageTypes.CoreInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
+                var MulletaFlixMigrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(appHost.ServiceProvider);
+                await MulletaFlixMigrationService.PrepareSystemForMigration(_logger).ConfigureAwait(false);
+                await MulletaFlixMigrationService.MigrateStepAsync(MulletaFlixMigrationStageTypes.CoreInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
 
                 await appHost.InitializeServices(startupConfig).ConfigureAwait(false);
                 _appHost = appHost;
 
-                await jellyfinMigrationService.MigrateStepAsync(JellyfinMigrationStageTypes.AppInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
-                await jellyfinMigrationService.CleanupSystemAfterMigration(_logger).ConfigureAwait(false);
+                await MulletaFlixMigrationService.MigrateStepAsync(MulletaFlixMigrationStageTypes.AppInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
+                await MulletaFlixMigrationService.CleanupSystemAfterMigration(_logger).ConfigureAwait(false);
                 try
                 {
                     configurationCompleted = true;
@@ -217,7 +217,7 @@ namespace Jellyfin.Server
 
                     if (options.StartupMode is null or Configuration.StartupMode.MediaServer)
                     {
-                        await _jellyfinHost.StartAsync().ConfigureAwait(false);
+                        await _MulletaFlixHost.StartAsync().ConfigureAwait(false);
 
                         if (!OperatingSystem.IsWindows() && startupConfig.UseUnixSocket())
                         {
@@ -238,7 +238,7 @@ namespace Jellyfin.Server
                     await appHost.RunStartupTasksAsync().ConfigureAwait(false);
                     _logger.LogInformation("Startup complete {Time:g}", Stopwatch.GetElapsedTime(_startTimestamp));
 
-                    await _jellyfinHost.WaitForShutdownAsync().ConfigureAwait(false);
+                    await _MulletaFlixHost.WaitForShutdownAsync().ConfigureAwait(false);
                 }
 
                 _restartOnShutdown = appHost.ShouldRestart;
@@ -266,15 +266,15 @@ namespace Jellyfin.Server
                 {
                     _logger.LogInformation("Running query planner optimizations in the database... This might take a while");
 
-                    var databaseProvider = appHost.ServiceProvider.GetRequiredService<IJellyfinDatabaseProvider>();
+                    var databaseProvider = appHost.ServiceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
                     using var shutdownSource = new CancellationTokenSource();
                     shutdownSource.CancelAfter((int)TimeSpan.FromSeconds(60).TotalMicroseconds);
                     await databaseProvider.RunShutdownTask(shutdownSource.Token).ConfigureAwait(false);
                 }
 
                 _appHost = null;
-                _jellyfinHost?.Dispose();
-                _jellyfinHost = null;
+                _MulletaFlixHost?.Dispose();
+                _MulletaFlixHost = null;
             }
         }
 
@@ -282,7 +282,7 @@ namespace Jellyfin.Server
         /// [Internal]Runs the startup Migrations.
         /// </summary>
         /// <remarks>
-        /// Not intended to be used other then by jellyfin and its tests.
+        /// Not intended to be used other then by MulletaFlix and its tests.
         /// </remarks>
         /// <param name="appPaths">Application Paths.</param>
         /// <param name="startupConfig">Startup Config.</param>
@@ -290,12 +290,12 @@ namespace Jellyfin.Server
         /// <returns>A task.</returns>
         public static async Task ApplyStartupMigrationAsync(ServerApplicationPaths appPaths, IConfiguration startupConfig, StartupOptions startupOptions)
         {
-            _migrationLogger = StartupLogger.Logger.BeginGroup<JellyfinMigrationService>($"Migration Service");
+            _migrationLogger = StartupLogger.Logger.BeginGroup<MulletaFlixMigrationService>($"Migration Service");
             var startupConfigurationManager = new ServerConfigurationManager(appPaths, _loggerFactory, new MyXmlSerializer());
             startupConfigurationManager.AddParts([new DatabaseConfigurationFactory()]);
             var migrationStartupServiceProvider = new ServiceCollection()
                 .AddLogging(d => d.AddSerilog())
-                .AddJellyfinDbContext(startupConfigurationManager, startupConfig)
+                .AddMulletaFlixDbContext(startupConfigurationManager, startupConfig)
                 .AddSingleton<IApplicationPaths>(appPaths)
                 .AddSingleton<ServerApplicationPaths>(appPaths)
                 .RegisterStartupLogger();
@@ -305,24 +305,24 @@ namespace Jellyfin.Server
 
             PrepareDatabaseProvider(startupService);
 
-            var jellyfinMigrationService = ActivatorUtilities.CreateInstance<JellyfinMigrationService>(startupService);
-            await jellyfinMigrationService.CheckFirstTimeRunOrMigration(appPaths, startupOptions).ConfigureAwait(false);
-            await jellyfinMigrationService.MigrateStepAsync(Migrations.Stages.JellyfinMigrationStageTypes.PreInitialisation, startupService).ConfigureAwait(false);
+            var MulletaFlixMigrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(startupService);
+            await MulletaFlixMigrationService.CheckFirstTimeRunOrMigration(appPaths, startupOptions).ConfigureAwait(false);
+            await MulletaFlixMigrationService.MigrateStepAsync(Migrations.Stages.MulletaFlixMigrationStageTypes.PreInitialisation, startupService).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// [Internal]Runs the Jellyfin migrator service with the Core stage.
+        /// [Internal]Runs the MulletaFlix migrator service with the Core stage.
         /// </summary>
         /// <remarks>
-        /// Not intended to be used other then by jellyfin and its tests.
+        /// Not intended to be used other then by MulletaFlix and its tests.
         /// </remarks>
         /// <param name="serviceProvider">The service provider.</param>
-        /// <param name="jellyfinMigrationStage">The stage to run.</param>
+        /// <param name="MulletaFlixMigrationStage">The stage to run.</param>
         /// <returns>A task.</returns>
-        public static async Task ApplyCoreMigrationsAsync(IServiceProvider serviceProvider, Migrations.Stages.JellyfinMigrationStageTypes jellyfinMigrationStage)
+        public static async Task ApplyCoreMigrationsAsync(IServiceProvider serviceProvider, Migrations.Stages.MulletaFlixMigrationStageTypes MulletaFlixMigrationStage)
         {
-            var jellyfinMigrationService = ActivatorUtilities.CreateInstance<JellyfinMigrationService>(serviceProvider, _migrationLogger!);
-            await jellyfinMigrationService.MigrateStepAsync(jellyfinMigrationStage, serviceProvider).ConfigureAwait(false);
+            var MulletaFlixMigrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(serviceProvider, _migrationLogger!);
+            await MulletaFlixMigrationService.MigrateStepAsync(MulletaFlixMigrationStage, serviceProvider).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -356,15 +356,16 @@ namespace Jellyfin.Server
                 .AddInMemoryCollection(inMemoryDefaultConfig)
                 .AddJsonFile(LoggingConfigFileDefault, optional: false, reloadOnChange: true)
                 .AddJsonFile(LoggingConfigFileSystem, optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables("JELLYFIN_")
+                .AddEnvironmentVariables("MulletaFlix_")
                 .AddInMemoryCollection(commandLineOpts.ConvertToConfig());
         }
 
         private static void PrepareDatabaseProvider(IServiceProvider services)
         {
-            var factory = services.GetRequiredService<IDbContextFactory<JellyfinDbContext>>();
-            var provider = services.GetRequiredService<IJellyfinDatabaseProvider>();
+            var factory = services.GetRequiredService<IDbContextFactory<MulletaFlixDbContext>>();
+            var provider = services.GetRequiredService<IMulletaFlixDatabaseProvider>();
             provider.DbContextFactory = factory;
         }
     }
 }
+

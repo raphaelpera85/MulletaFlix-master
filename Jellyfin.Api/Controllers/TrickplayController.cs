@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Trickplay;
@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Trickplay controller.
@@ -21,7 +21,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("")]
 [Authorize]
 [Tags("TrickPlay")]
-public class TrickplayController : BaseJellyfinApiController
+public class TrickplayController : BaseMulletaFlixApiController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly ITrickplayManager _trickplayManager;
@@ -103,3 +103,4 @@ public class TrickplayController : BaseJellyfinApiController
         return NotFound();
     }
 }
+

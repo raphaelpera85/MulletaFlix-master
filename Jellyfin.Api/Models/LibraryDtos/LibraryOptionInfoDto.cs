@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.LibraryDtos;
+﻿namespace MulletaFlix.Api.Models.LibraryDtos;
 
 /// <summary>
 /// Library option info dto.
@@ -15,3 +15,4 @@ public class LibraryOptionInfoDto
     /// </summary>
     public bool DefaultEnabled { get; set; }
 }
+

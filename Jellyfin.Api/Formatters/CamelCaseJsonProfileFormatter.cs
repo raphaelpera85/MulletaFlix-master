@@ -1,8 +1,8 @@
-using Jellyfin.Extensions.Json;
+﻿using MulletaFlix.Extensions.Json;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 
-namespace Jellyfin.Api.Formatters;
+namespace MulletaFlix.Api.Formatters;
 
 /// <summary>
 /// Camel Case Json Profile Formatter.
@@ -18,3 +18,4 @@ public class CamelCaseJsonProfileFormatter : SystemTextJsonOutputFormatter
         SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse(JsonDefaults.CamelCaseMediaType));
     }
 }
+

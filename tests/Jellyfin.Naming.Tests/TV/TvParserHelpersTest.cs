@@ -1,8 +1,8 @@
-using Emby.Naming.TV;
+﻿using Emby.Naming.TV;
 using MediaBrowser.Model.Entities;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.TV;
+namespace MulletaFlix.Naming.Tests.TV;
 
 public class TvParserHelpersTest
 {
@@ -29,3 +29,4 @@ public class TvParserHelpersTest
         Assert.Null(parsed);
     }
 }
+

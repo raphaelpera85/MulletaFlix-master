@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1002, CA2227, CS1591
 
 using System;
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Dto;
@@ -46,3 +46,4 @@ namespace MediaBrowser.Controller.Library
         public SessionInfo Session { get; set; }
     }
 }
+

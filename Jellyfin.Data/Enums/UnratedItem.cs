@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums
+﻿namespace MulletaFlix.Data.Enums
 {
     /// <summary>
     /// An enum representing an unrated item.
@@ -51,3 +51,4 @@ namespace Jellyfin.Data.Enums
         Other = 8
     }
 }
+

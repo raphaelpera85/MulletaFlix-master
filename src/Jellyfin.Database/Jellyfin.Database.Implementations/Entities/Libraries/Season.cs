@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity representing a season.
@@ -33,3 +33,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         public virtual ICollection<Episode> Episodes { get; private set; }
     }
 }
+

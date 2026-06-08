@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -18,7 +18,7 @@ public class JsonWriter : SubtitleFormat
     public override string Extension => ".json";
 
     /// <inheritdoc />
-    public override string Name => "JSON Jellyfin";
+    public override string Name => "JSON MulletaFlix";
 
     /// <inheritdoc />
     public override string ToText(Subtitle subtitle, string title)
@@ -56,3 +56,4 @@ public class JsonWriter : SubtitleFormat
     public override void LoadSubtitle(Subtitle subtitle, List<string> lines, string fileName)
         => throw new NotImplementedException();
 }
+

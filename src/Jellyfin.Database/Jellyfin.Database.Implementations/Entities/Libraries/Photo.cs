@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Interfaces;
+﻿using System.Collections.Generic;
+using MulletaFlix.Database.Implementations.Interfaces;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity representing a photo.
@@ -27,3 +27,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         public virtual ICollection<Release> Releases { get; private set; }
     }
 }
+

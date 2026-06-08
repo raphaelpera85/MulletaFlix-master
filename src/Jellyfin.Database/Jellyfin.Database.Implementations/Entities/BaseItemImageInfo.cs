@@ -1,8 +1,8 @@
-#pragma warning disable CA2227
+﻿#pragma warning disable CA2227
 
 using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Enum TrailerTypes.
@@ -56,3 +56,4 @@ public class BaseItemImageInfo
     /// </summary>
     public required BaseItemEntity Item { get; set; }
 }
+

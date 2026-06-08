@@ -60,6 +60,7 @@ namespace Emby.Naming.TV
             if (!string.IsNullOrEmpty(seriesName))
             {
                 seriesName = SeriesNameRegex().Replace(seriesName, "${a} ${b}").Trim();
+                seriesName = TitleNormalization.RemoveTrailingReleaseTags(seriesName);
             }
 
             return new SeriesInfo(path)

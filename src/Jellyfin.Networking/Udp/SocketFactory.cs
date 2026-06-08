@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using MediaBrowser.Model.Net;
 
-namespace Jellyfin.Networking.Udp;
+namespace MulletaFlix.Networking.Udp;
 
 /// <summary>
 /// Factory class to create different kinds of sockets.
@@ -36,3 +36,4 @@ public class SocketFactory : ISocketFactory
         }
     }
 }
+

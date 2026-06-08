@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Concurrent;
@@ -6,14 +6,14 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Jellyfin.Data.Events;
-using Jellyfin.LiveTv.Recordings;
+using MulletaFlix.Data.Events;
+using MulletaFlix.LiveTv.Recordings;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.LiveTv;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Timers
+namespace MulletaFlix.LiveTv.Timers
 {
     public class TimerManager : ItemDataProvider<TimerInfo>
     {
@@ -170,3 +170,4 @@ namespace Jellyfin.LiveTv.Timers
             => GetAll().FirstOrDefault(r => string.Equals(r.ProgramId, programId, StringComparison.OrdinalIgnoreCase));
     }
 }
+

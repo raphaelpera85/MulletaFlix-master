@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Jellyfin.Data.Dtos;
-using Jellyfin.Data.Events;
-using Jellyfin.Data.Queries;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Entities.Security;
+using MulletaFlix.Data.Dtos;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Data.Queries;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities.Security;
 using MediaBrowser.Model.Devices;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
@@ -115,3 +115,4 @@ public interface IDeviceManager
     /// <returns><see cref="ClientCapabilitiesDto"/> of the device.</returns>
     ClientCapabilitiesDto ToClientCapabilitiesDto(ClientCapabilities capabilities);
 }
+

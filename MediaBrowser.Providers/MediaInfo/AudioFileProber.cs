@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ATL;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -21,7 +21,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
-using static Jellyfin.Extensions.StringExtensions;
+using static MulletaFlix.Extensions.StringExtensions;
 
 namespace MediaBrowser.Providers.MediaInfo
 {
@@ -450,7 +450,7 @@ namespace MediaBrowser.Providers.MediaInfo
                     }
                 }
 
-                // Publisher → Studio
+                // Publisher â†’ Studio
                 var trackPublisher = GetSanitizedStringTag(track.Publisher, audio.Path);
                 if (!string.IsNullOrWhiteSpace(trackPublisher)
                     && (options.ReplaceAllMetadata || audio.Studios is null || audio.Studios.Length == 0))
@@ -690,3 +690,4 @@ namespace MediaBrowser.Providers.MediaInfo
         }
     }
 }
+

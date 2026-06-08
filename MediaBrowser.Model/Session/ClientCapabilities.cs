@@ -1,9 +1,9 @@
-#nullable disable
+﻿#nullable disable
 #pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Dlna;
 
 namespace MediaBrowser.Model.Session
@@ -32,3 +32,4 @@ namespace MediaBrowser.Model.Session
         public string IconUrl { get; set; }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace Jellyfin.MediaEncoding.Keyframes.Matroska;
+﻿namespace MulletaFlix.MediaEncoding.Keyframes.Matroska;
 
 /// <summary>
 /// Constants for the Matroska identifiers.
@@ -28,3 +28,4 @@ public static class MatroskaConstants
     internal const ulong CueTrackPositions = 0xB7;
     internal const ulong CuePointTrackNumber = 0xF7;
 }
+

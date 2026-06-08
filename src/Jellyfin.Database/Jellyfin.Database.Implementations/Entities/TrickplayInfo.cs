@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// An entity representing the metadata for a group of trickplay tiles.
@@ -72,3 +72,4 @@ public class TrickplayInfo
     /// </remarks>
     public int Bandwidth { get; set; }
 }
+

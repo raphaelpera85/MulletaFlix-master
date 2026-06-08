@@ -4,11 +4,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Api.Models.UserViewDtos;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Api.Models.UserViewDtos;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -20,7 +20,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// User views controller.
@@ -28,7 +28,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("")]
 [Authorize]
 [Tags("UserView")]
-public class UserViewsController : BaseJellyfinApiController
+public class UserViewsController : BaseMulletaFlixApiController
 {
     private readonly IUserManager _userManager;
     private readonly IUserViewManager _userViewManager;
@@ -91,7 +91,7 @@ public class UserViewsController : BaseJellyfinApiController
         var dtoOptions = new DtoOptions();
         dtoOptions.Fields = [.. dtoOptions.Fields, ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId];
 
-        var dtos = Array.ConvertAll(folders, i => _dtoService.GetBaseItemDto(i, dtoOptions, user));
+        var dtos = await _dtoService.GetBaseItemDtosAsync(folders, dtoOptions, user).ConfigureAwait(false);
 
         return new QueryResult<BaseItemDto>(dtos);
     }
@@ -170,3 +170,4 @@ public class UserViewsController : BaseJellyfinApiController
         [FromRoute, Required] Guid userId)
         => GetGroupingOptions(userId);
 }
+

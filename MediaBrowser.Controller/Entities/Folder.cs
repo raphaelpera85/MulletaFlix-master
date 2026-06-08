@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1002, CA1721, CA1819, CS1591
 
@@ -12,11 +12,11 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using J2N.Collections.Generic.Extensions;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Configuration;
@@ -422,7 +422,7 @@ namespace MediaBrowser.Controller.Entities
                 var newItems = new List<BaseItem>();
                 var actuallyRemoved = new List<BaseItem>();
 
-                // Build a reverse path→item lookup for detecting type changes
+                // Build a reverse pathâ†’item lookup for detecting type changes
                 var currentChildrenByPath = new Dictionary<string, BaseItem>(StringComparer.OrdinalIgnoreCase);
                 foreach (var kvp in currentChildren)
                 {
@@ -592,13 +592,13 @@ namespace MediaBrowser.Controller.Entities
                     oldPrimary.LocalAlternateVersions = [];
                     oldPrimary.LinkedAlternateVersions = [];
 
-                    // Safe to delete now — no promotion will happen
+                    // Safe to delete now â€” no promotion will happen
                     LibraryManager.DeleteItem(oldPrimary, new DeleteOptions { DeleteFileLocation = false }, this, false);
                 }
 
                 // Demote old primaries that are now alternate versions of newly created primaries.
                 // This handles the case where a new file is added that becomes the new primary
-                // (e.g. movie-2 added, movie-3 was primary → movie-3 needs demotion).
+                // (e.g. movie-2 added, movie-3 was primary â†’ movie-3 needs demotion).
                 // Items in replacedPrimaries are excluded (already in actuallyRemoved).
                 var oldPrimariesToDemote = new List<(Video OldPrimary, Video NewPrimary)>();
                 foreach (var item in itemsRemoved.Except(actuallyRemoved))
@@ -629,7 +629,7 @@ namespace MediaBrowser.Controller.Entities
                         newPrimary.Id);
 
                     // First: update old primary's alternate items to point to new primary.
-                    // Order matters — update alternates FIRST so they don't get orphan-deleted
+                    // Order matters â€” update alternates FIRST so they don't get orphan-deleted
                     // when old primary's arrays are cleared.
                     var oldAlternateIds = LibraryManager.GetLocalAlternateVersionIds(oldPrimary)
                         .Concat(LibraryManager.GetLinkedAlternateVersions(oldPrimary).Select(v => v.Id))
@@ -646,7 +646,7 @@ namespace MediaBrowser.Controller.Entities
                         }
                     }
 
-                    // Then: demote old primary — clear its arrays and set it as alternate of new primary
+                    // Then: demote old primary â€” clear its arrays and set it as alternate of new primary
                     oldPrimary.LocalAlternateVersions = [];
                     oldPrimary.LinkedAlternateVersions = [];
                     oldPrimary.SetPrimaryVersionId(newPrimary.Id);
@@ -2017,3 +2017,4 @@ namespace MediaBrowser.Controller.Entities
         }
     }
 }
+

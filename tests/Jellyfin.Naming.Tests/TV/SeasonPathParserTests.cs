@@ -1,7 +1,7 @@
 using Emby.Naming.TV;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.TV;
+namespace MulletaFlix.Naming.Tests.TV;
 
 public class SeasonPathParserTests
 {
@@ -12,16 +12,16 @@ public class SeasonPathParserTests
     [InlineData("/Drive/STAFFEL 1", "/Drive", 1, true)]
     [InlineData("/Drive/Stagione 1", "/Drive", 1, true)]
     [InlineData("/Drive/STAGIONE 1", "/Drive", 1, true)]
-    [InlineData("/Drive/sæson 1", "/Drive", 1, true)]
-    [InlineData("/Drive/SÆSON 1", "/Drive", 1, true)]
+    [InlineData("/Drive/s\u00E6son 1", "/Drive", 1, true)]
+    [InlineData("/Drive/S\u00C6SON 1", "/Drive", 1, true)]
     [InlineData("/Drive/Temporada 1", "/Drive", 1, true)]
     [InlineData("/Drive/TEMPORADA 1", "/Drive", 1, true)]
     [InlineData("/Drive/series 1", "/Drive", 1, true)]
     [InlineData("/Drive/SERIES 1", "/Drive", 1, true)]
     [InlineData("/Drive/Kausi 1", "/Drive", 1, true)]
     [InlineData("/Drive/KAUSI 1", "/Drive", 1, true)]
-    [InlineData("/Drive/Säsong 1", "/Drive", 1, true)]
-    [InlineData("/Drive/SÄSONG 1", "/Drive", 1, true)]
+    [InlineData("/Drive/S\u00E4song 1", "/Drive", 1, true)]
+    [InlineData("/Drive/S\u00C4SONG 1", "/Drive", 1, true)]
     [InlineData("/Drive/Seizoen 1", "/Drive", 1, true)]
     [InlineData("/Drive/SEIZOEN 1", "/Drive", 1, true)]
     [InlineData("/Drive/Seasong 1", "/Drive", 1, true)]
@@ -30,15 +30,15 @@ public class SeasonPathParserTests
     [InlineData("/Drive/SEZON 1", "/Drive", 1, true)]
     [InlineData("/Drive/sezona 1", "/Drive", 1, true)]
     [InlineData("/Drive/SEZONA 1", "/Drive", 1, true)]
-    [InlineData("/Drive/sezóna 1", "/Drive", 1, true)]
-    [InlineData("/Drive/SEZÓNA 1", "/Drive", 1, true)]
+    [InlineData("/Drive/sez\u00F3na 1", "/Drive", 1, true)]
+    [InlineData("/Drive/SEZ\u00D3NA 1", "/Drive", 1, true)]
     [InlineData("/Drive/Sezonul 1", "/Drive", 1, true)]
     [InlineData("/Drive/SEZONUL 1", "/Drive", 1, true)]
-    [InlineData("/Drive/시즌 1", "/Drive", 1, true)]
-    [InlineData("/Drive/シーズン 1", "/Drive", 1, true)]
-    [InlineData("/Drive/сезон 1", "/Drive", 1, true)]
-    [InlineData("/Drive/Сезон 1", "/Drive", 1, true)]
-    [InlineData("/Drive/СЕЗОН 1", "/Drive", 1, true)]
+    [InlineData("/Drive/\uC2DC\uC98C 1", "/Drive", 1, true)]
+    [InlineData("/Drive/\u30B7\u30FC\u30BA\u30F3 1", "/Drive", 1, true)]
+    [InlineData("/Drive/\u0441\u0435\u0437\u043E\u043D 1", "/Drive", 1, true)]
+    [InlineData("/Drive/\u0421\u0435\u0437\u043E\u043D 1", "/Drive", 1, true)]
+    [InlineData("/Drive/\u0421\u0415\u0417\u041E\u041D 1", "/Drive", 1, true)]
     [InlineData("/Drive/Season 10", "/Drive", 10, true)]
     [InlineData("/Drive/Season 100", "/Drive", 100, true)]
     [InlineData("/Drive/s1", "/Drive", 1, true)]
@@ -106,3 +106,4 @@ public class SeasonPathParserTests
         Assert.Equal(isSeasonDirectory, result.IsSeasonFolder);
     }
 }
+

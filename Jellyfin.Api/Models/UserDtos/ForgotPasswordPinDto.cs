@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Api.Models.UserDtos;
+namespace MulletaFlix.Api.Models.UserDtos;
 
 /// <summary>
 /// Forgot Password Pin enter request body DTO.
@@ -13,3 +13,4 @@ public class ForgotPasswordPinDto
     [Required]
     public required string Pin { get; set; }
 }
+

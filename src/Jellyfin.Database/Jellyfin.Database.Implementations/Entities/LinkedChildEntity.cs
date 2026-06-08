@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Represents a linked child relationship between items (e.g., BoxSet to Movies, Playlist to tracks).
@@ -37,3 +37,4 @@ public class LinkedChildEntity
     /// </summary>
     public BaseItemEntity? Child { get; set; }
 }
+

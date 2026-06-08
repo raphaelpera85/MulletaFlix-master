@@ -1,4 +1,4 @@
-# Jellyfin Contributors
+﻿# MulletaFlix Contributors
 
  - [0x25CBFC4F](https://github.com/0x25CBFC4F)
  - [1337joe](https://github.com/1337joe)
@@ -125,7 +125,7 @@
  - [RazeLighter777](https://github.com/RazeLighter777)
  - [redSpoutnik](https://github.com/redSpoutnik)
  - [ringmatter](https://github.com/ringmatter)
- - [Robert Lützner](https://github.com/rluetzner)
+ - [Robert LÃ¼tzner](https://github.com/rluetzner)
  - [ryan-hartzell](https://github.com/ryan-hartzell)
  - [s0urcelab](https://github.com/s0urcelab)
  - [sachk](https://github.com/sachk)
@@ -164,7 +164,7 @@
  - [twinkybot](https://github.com/twinkybot)
  - [Ullmie02](https://github.com/Ullmie02)
  - [Unhelpful](https://github.com/Unhelpful)
- - [Utku Özdemir](https://github.com/utkuozdemir)
+ - [Utku Ã–zdemir](https://github.com/utkuozdemir)
  - [viaregio](https://github.com/viaregio)
  - [vitorsemeano](https://github.com/vitorsemeano)
  - [voodoos](https://github.com/voodoos)
@@ -199,7 +199,7 @@
  - [scampower3](https://github.com/scampower3)
  - [Chris-Codes-It](https://github.com/Chris-Codes-It)
  - [Pithaya](https://github.com/Pithaya)
- - [Çağrı Sakaoğlu](https://github.com/ilovepilav)
+ - [Ã‡aÄŸrÄ± SakaoÄŸlu](https://github.com/ilovepilav)
  - [Barasingha](https://github.com/MaVdbussche)
  - [Gauvino](https://github.com/Gauvino)
  - [felix920506](https://github.com/felix920506)
@@ -295,3 +295,4 @@
  - [tikuf](https://github.com/tikuf/)
  - [Tim Hobbs](https://github.com/timhobbs)
  - [SvenVandenbrande](https://github.com/SvenVandenbrande)
+

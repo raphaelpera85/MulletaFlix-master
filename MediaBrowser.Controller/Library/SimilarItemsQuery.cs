@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Dto;
 
 namespace MediaBrowser.Controller.Library;
@@ -35,3 +35,4 @@ public class SimilarItemsQuery
     /// </summary>
     public IReadOnlyList<Guid> ExcludeArtistIds { get; set; } = [];
 }
+

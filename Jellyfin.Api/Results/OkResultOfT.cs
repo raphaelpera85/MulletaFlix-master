@@ -1,8 +1,8 @@
-#pragma warning disable SA1649 // File name should match type name.
+﻿#pragma warning disable SA1649 // File name should match type name.
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Results;
+namespace MulletaFlix.Api.Results;
 
 /// <summary>
 /// Ok result with type specified.
@@ -19,3 +19,4 @@ public class OkResult<T> : OkObjectResult
     {
     }
 }
+

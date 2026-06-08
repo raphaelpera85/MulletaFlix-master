@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
@@ -38,7 +38,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasEmbedde
         Instance = this;
         _logger = logger;
 
-        // TODO: Change this to "JellyfinMusicBrainzPlugin" once we take it out of the server repo.
+        // TODO: Change this to "MulletaFlixMusicBrainzPlugin" once we take it out of the server repo.
         Query.DefaultUserAgent.Add(new ProductInfoHeaderValue(applicationHost.Name.Replace(' ', '-'), applicationHost.ApplicationVersionString));
         Query.DefaultUserAgent.Add(new ProductInfoHeaderValue($"({applicationHost.ApplicationUserAgentAddress})"));
 
@@ -65,16 +65,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasEmbedde
 
     /// <inheritdoc />
     // TODO remove when plugin removed from server.
-    public override string ConfigurationFileName => "Jellyfin.Plugin.MusicBrainz.xml";
+    public override string ConfigurationFileName => "MulletaFlix.Plugin.MusicBrainz.xml";
 
     /// <inheritdoc />
-    public string ImageResourceName => GetType().Namespace + ".jellyfin-plugin-musicbrainz.svg";
+    public string ImageResourceName => GetType().Namespace + ".MulletaFlix-plugin-musicbrainz.svg";
 
     /// <summary>
     /// Gets the current MusicBrainz query client.
     /// </summary>
     /// <remarks>
-    /// Always read this property anew before each request — the underlying instance is
+    /// Always read this property anew before each request â€” the underlying instance is
     /// replaced when the server URL changes. Old instances are intentionally left alive
     /// so in-flight requests can finish; their unmanaged resources leak until GC.
     /// </remarks>
@@ -160,3 +160,4 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasEmbedde
         }
     }
 }
+

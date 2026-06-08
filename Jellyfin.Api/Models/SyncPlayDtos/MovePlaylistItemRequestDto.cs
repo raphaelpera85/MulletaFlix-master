@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class MovePlaylistItemRequestDto.
@@ -27,3 +27,4 @@ public class MovePlaylistItemRequestDto
     /// <value>The new position.</value>
     public int NewIndex { get; set; }
 }
+

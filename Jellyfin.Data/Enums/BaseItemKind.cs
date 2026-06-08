@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums
+﻿namespace MulletaFlix.Data.Enums
 {
     /// <summary>
     /// The base item kind.
@@ -203,3 +203,4 @@ namespace Jellyfin.Data.Enums
         Year
     }
 }
+

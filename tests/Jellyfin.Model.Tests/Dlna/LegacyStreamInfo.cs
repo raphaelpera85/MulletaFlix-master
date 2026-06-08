@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.Dto;
 
-namespace Jellyfin.Model.Tests.Dlna;
+namespace MulletaFlix.Model.Tests.Dlna;
 
 public class LegacyStreamInfo : StreamInfo
 {
@@ -211,3 +211,4 @@ public class LegacyStreamInfo : StreamInfo
         return list;
     }
 }
+

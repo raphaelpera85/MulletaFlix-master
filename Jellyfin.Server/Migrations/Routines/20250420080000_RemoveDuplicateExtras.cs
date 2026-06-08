@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -7,13 +7,13 @@ using MediaBrowser.Controller;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Remove duplicate entries which were caused by a bug where a file was considered to be an "Extra" to itself.
 /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T08:00:00", nameof(RemoveDuplicateExtras), "ACBE17B7-8435-4A83-8B64-6FCF162CB9BD")]
+[MulletaFlixMigration("2025-04-20T08:00:00", nameof(RemoveDuplicateExtras), "ACBE17B7-8435-4A83-8B64-6FCF162CB9BD")]
 internal class RemoveDuplicateExtras : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -74,3 +74,4 @@ internal class RemoveDuplicateExtras : IMigrationRoutine
         }
     }
 }
+

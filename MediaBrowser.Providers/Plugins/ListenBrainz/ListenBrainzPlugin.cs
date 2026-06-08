@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
@@ -40,7 +40,7 @@ public class ListenBrainzPlugin : BasePlugin<PluginConfiguration>, IHasWebPages,
     public override string Description => "Get similar artist recommendations from ListenBrainz Labs.";
 
     /// <inheritdoc />
-    public override string ConfigurationFileName => "Jellyfin.Plugin.ListenBrainz.xml";
+    public override string ConfigurationFileName => "MulletaFlix.Plugin.ListenBrainz.xml";
 
     /// <inheritdoc />
     public string ImageResourceName => GetType().Namespace + ".Configuration.ListenBrainz_logo.svg";
@@ -61,3 +61,4 @@ public class ListenBrainzPlugin : BasePlugin<PluginConfiguration>, IHasWebPages,
         };
     }
 }
+

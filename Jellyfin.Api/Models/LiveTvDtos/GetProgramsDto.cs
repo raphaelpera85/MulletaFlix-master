@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
 
-namespace Jellyfin.Api.Models.LiveTvDtos;
+namespace MulletaFlix.Api.Models.LiveTvDtos;
 
 /// <summary>
 /// Get programs dto.
@@ -158,3 +158,4 @@ public class GetProgramsDto
     [JsonConverter(typeof(JsonCommaDelimitedCollectionConverterFactory))]
     public IReadOnlyList<ItemFields>? Fields { get; set; }
 }
+

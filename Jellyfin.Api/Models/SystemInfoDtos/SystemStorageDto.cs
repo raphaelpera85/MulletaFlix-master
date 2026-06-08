@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using MediaBrowser.Model.System;
 
-namespace Jellyfin.Api.Models.SystemInfoDtos;
+namespace MulletaFlix.Api.Models.SystemInfoDtos;
 
 /// <summary>
 /// Contains informations about the systems storage.
@@ -65,3 +65,4 @@ public record SystemStorageDto
         };
     }
 }
+

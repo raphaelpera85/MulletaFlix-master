@@ -1,20 +1,20 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines
+namespace MulletaFlix.Server.Migrations.Routines
 {
     /// <summary>
     /// Fixes the data column of audio types to be deserializable.
     /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-    [JellyfinMigration("2025-04-20T18:00:00", nameof(FixAudioData), "CF6FABC2-9FBE-4933-84A5-FFE52EF22A58")]
-    [JellyfinMigrationBackup(LegacyLibraryDb = true)]
+    [MulletaFlixMigration("2025-04-20T18:00:00", nameof(FixAudioData), "CF6FABC2-9FBE-4933-84A5-FFE52EF22A58")]
+    [MulletaFlixMigrationBackup(LegacyLibraryDb = true)]
     internal class FixAudioData : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
     {
@@ -74,3 +74,4 @@ namespace Jellyfin.Server.Migrations.Routines
         }
     }
 }
+

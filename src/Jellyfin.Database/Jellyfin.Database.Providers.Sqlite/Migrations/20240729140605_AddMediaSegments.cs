@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     /// <inheritdoc />
     public partial class AddMediaSegments : Migration
@@ -36,3 +36,4 @@ namespace Jellyfin.Server.Implementations.Migrations
         }
     }
 }
+

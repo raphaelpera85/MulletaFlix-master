@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
@@ -6,13 +6,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Jellyfin.LiveTv.TunerHosts.HdHomerun;
+using MulletaFlix.LiveTv.TunerHosts.HdHomerun;
 using MediaBrowser.Model.LiveTv;
 using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace Jellyfin.LiveTv.Tests
+namespace MulletaFlix.LiveTv.Tests
 {
     public class HdHomerunHostTests
     {
@@ -154,3 +154,4 @@ namespace Jellyfin.LiveTv.Tests
         }
     }
 }
+

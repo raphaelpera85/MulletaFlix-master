@@ -1,21 +1,21 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Manager for handling Media Attachments.
 /// </summary>
 /// <param name="dbProvider">Efcore Factory.</param>
-public class MediaAttachmentRepository(IDbContextFactory<JellyfinDbContext> dbProvider) : IMediaAttachmentRepository
+public class MediaAttachmentRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider) : IMediaAttachmentRepository
 {
     /// <inheritdoc />
     public void SaveMediaAttachments(
@@ -80,3 +80,4 @@ public class MediaAttachmentRepository(IDbContextFactory<JellyfinDbContext> dbPr
         };
     }
 }
+

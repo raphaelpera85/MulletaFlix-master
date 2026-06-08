@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Jellyfin.MediaEncoding.Keyframes;
+using MulletaFlix.MediaEncoding.Keyframes;
 
-namespace Jellyfin.MediaEncoding.Hls.Extractors;
+namespace MulletaFlix.MediaEncoding.Hls.Extractors;
 
 /// <summary>
 /// Keyframe extractor.
@@ -23,3 +23,4 @@ public interface IKeyframeExtractor
     /// <returns>A value indicating whether the keyframe extraction was successful.</returns>
     bool TryExtractKeyframes(Guid itemId, string filePath, [NotNullWhen(true)] out KeyframeData? keyframeData);
 }
+

@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.UserDtos;
+﻿namespace MulletaFlix.Api.Models.UserDtos;
 
 /// <summary>
 /// The update user password request body.
@@ -25,3 +25,4 @@ public class UpdateUserPassword
     /// </summary>
     public bool ResetPassword { get; set; }
 }
+

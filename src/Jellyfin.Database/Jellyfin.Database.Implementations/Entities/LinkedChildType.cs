@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Entities;
+﻿namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// The linked child type.
@@ -25,3 +25,4 @@ public enum LinkedChildType
     /// </summary>
     LinkedAlternateVersion = 3
 }
+

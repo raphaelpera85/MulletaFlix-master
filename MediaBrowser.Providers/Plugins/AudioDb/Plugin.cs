@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 #pragma warning disable CS1591
 
 using System;
@@ -28,9 +28,9 @@ namespace MediaBrowser.Providers.Plugins.AudioDb
         public override string Description => "Get artist and album metadata or images from AudioDB.";
 
         // TODO remove when plugin removed from server.
-        public override string ConfigurationFileName => "Jellyfin.Plugin.AudioDb.xml";
+        public override string ConfigurationFileName => "MulletaFlix.Plugin.AudioDb.xml";
 
-        public string ImageResourceName => GetType().Namespace + ".jellyfin-plugin-tadb.svg";
+        public string ImageResourceName => GetType().Namespace + ".MulletaFlix-plugin-tadb.svg";
 
         public IEnumerable<PluginPageInfo> GetPages()
         {
@@ -42,3 +42,4 @@ namespace MediaBrowser.Providers.Plugins.AudioDb
         }
     }
 }
+

@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 
-namespace Jellyfin.Data
+namespace MulletaFlix.Data
 {
     public static class DayOfWeekHelper
     {
@@ -30,3 +30,4 @@ namespace Jellyfin.Data
         }
     }
 }
+

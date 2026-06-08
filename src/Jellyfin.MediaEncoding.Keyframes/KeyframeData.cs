@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Jellyfin.MediaEncoding.Keyframes;
+namespace MulletaFlix.MediaEncoding.Keyframes;
 
 /// <summary>
 /// Keyframe information for a specific file.
@@ -28,3 +28,4 @@ public class KeyframeData
     /// </summary>
     public IReadOnlyList<long> KeyframeTicks { get; }
 }
+

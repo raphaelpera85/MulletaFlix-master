@@ -1,9 +1,9 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1819, CS1591
 
 using System;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 
 namespace MediaBrowser.Controller.Entities
 {
@@ -31,3 +31,4 @@ namespace MediaBrowser.Controller.Entities
         CollectionType? CollectionType { get; }
     }
 }
+

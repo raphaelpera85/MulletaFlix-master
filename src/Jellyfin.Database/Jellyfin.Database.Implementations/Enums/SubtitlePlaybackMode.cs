@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// An enum representing a subtitle playback mode.
@@ -30,3 +30,4 @@ public enum SubtitlePlaybackMode
     /// </summary>
     Smart = 4
 }
+

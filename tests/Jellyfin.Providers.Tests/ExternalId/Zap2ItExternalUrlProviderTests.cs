@@ -1,9 +1,9 @@
-using MediaBrowser.Controller.Entities.TV;
+﻿using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Providers.TV;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.ExternalId
+namespace MulletaFlix.Providers.Tests.ExternalId
 {
     public sealed class Zap2ItExternalUrlProviderTests
     {
@@ -31,3 +31,4 @@ namespace Jellyfin.Providers.Tests.ExternalId
         }
     }
 }
+

@@ -1,8 +1,7 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System.Threading.Tasks;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data;
 using MediaBrowser.Controller.Net;
 using Microsoft.AspNetCore.Http;
 
@@ -32,12 +31,8 @@ namespace Emby.Server.Implementations.HttpServer.Security
                 throw new SecurityException("Invalid token.");
             }
 
-            if (auth.User?.HasPermission(PermissionKind.IsDisabled) ?? false)
-            {
-                throw new SecurityException("User account has been disabled.");
-            }
-
             return auth;
         }
     }
 }
+

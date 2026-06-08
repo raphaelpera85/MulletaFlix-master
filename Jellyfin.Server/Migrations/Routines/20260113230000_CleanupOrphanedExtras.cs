@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.Implementations.Item;
-using Jellyfin.Server.Migrations.Stages;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.Implementations.Item;
+using MulletaFlix.Server.Migrations.Stages;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -18,18 +18,18 @@ using MediaBrowser.Model.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Removes orphaned extras (items with OwnerId pointing to non-existent items).
 /// Must run before EF migrations that add FK constraints on OwnerId.
 /// </summary>
-[JellyfinMigration("2026-01-13T23:00:00", nameof(CleanupOrphanedExtras), Stage = JellyfinMigrationStageTypes.AppInitialisation)]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2026-01-13T23:00:00", nameof(CleanupOrphanedExtras), Stage = MulletaFlixMigrationStageTypes.AppInitialisation)]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 public class CleanupOrphanedExtras : IAsyncMigrationRoutine
 {
     private readonly IStartupLogger<CleanupOrphanedExtras> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
     private readonly ILibraryManager _libraryManager;
 
     /// <summary>
@@ -40,7 +40,7 @@ public class CleanupOrphanedExtras : IAsyncMigrationRoutine
     /// <param name="libraryManager">The library manager.</param>
     public CleanupOrphanedExtras(
         IStartupLogger<CleanupOrphanedExtras> logger,
-        IDbContextFactory<JellyfinDbContext> dbContextFactory,
+        IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
         ILibraryManager libraryManager)
     {
         _logger = logger;
@@ -98,3 +98,4 @@ public class CleanupOrphanedExtras : IAsyncMigrationRoutine
         }
     }
 }
+

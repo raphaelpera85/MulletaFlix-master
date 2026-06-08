@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
@@ -6,14 +6,14 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Static class for methods which maps types of ordering to their respecting ordering functions.
@@ -25,9 +25,9 @@ public static class OrderMapper
     /// </summary>
     /// <param name="sortBy">Item property to sort by.</param>
     /// <param name="query">Context Query.</param>
-    /// <param name="jellyfinDbContext">Context.</param>
+    /// <param name="MulletaFlixDbContext">Context.</param>
     /// <returns>Func to be executed later for sorting query.</returns>
-    public static Expression<Func<BaseItemEntity, object?>> MapOrderByField(ItemSortBy sortBy, InternalItemsQuery query, JellyfinDbContext jellyfinDbContext)
+    public static Expression<Func<BaseItemEntity, object?>> MapOrderByField(ItemSortBy sortBy, InternalItemsQuery query, MulletaFlixDbContext MulletaFlixDbContext)
     {
         return (sortBy, query.User) switch
         {
@@ -60,11 +60,11 @@ public static class OrderMapper
             // SeriesDatePlayed is normally handled via pre-aggregated join in ApplySeriesDatePlayedOrder.
             // This correlated subquery fallback is only reached when combined with search.
             (ItemSortBy.SeriesDatePlayed, not null) => e =>
-                jellyfinDbContext.UserData
+                MulletaFlixDbContext.UserData
                     .Where(w => w.UserId == query.User.Id && w.Played && w.Item!.SeriesPresentationUniqueKey == e.PresentationUniqueKey)
                     .Max(f => f.LastPlayedDate),
             (ItemSortBy.SeriesDatePlayed, null) => e =>
-                jellyfinDbContext.UserData
+                MulletaFlixDbContext.UserData
                     .Where(w => w.Played && w.Item!.SeriesPresentationUniqueKey == e.PresentationUniqueKey)
                     .Max(f => f.LastPlayedDate),
             _ => e => e.SortName
@@ -103,3 +103,4 @@ public static class OrderMapper
         return value.RemoveDiacritics().ToLowerInvariant();
     }
 }
+

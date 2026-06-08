@@ -1,12 +1,12 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Extension methods for applying folder-aware filters that check items and their descendants.
@@ -23,7 +23,7 @@ internal static class FolderAwareFilterExtensions
     /// <returns>Filtered query.</returns>
     public static IQueryable<BaseItemEntity> WhereItemOrDescendantMatches(
         this IQueryable<BaseItemEntity> query,
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         Expression<Func<BaseItemEntity, bool>> condition)
     {
         // Get IDs of items that directly match the condition
@@ -57,7 +57,7 @@ internal static class FolderAwareFilterExtensions
     /// <returns>Filtered query.</returns>
     public static IQueryable<BaseItemEntity> WhereNeitherItemNorDescendantMatches(
         this IQueryable<BaseItemEntity> query,
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         Expression<Func<BaseItemEntity, bool>> condition)
     {
         // Get IDs of items that directly match the condition
@@ -81,3 +81,4 @@ internal static class FolderAwareFilterExtensions
         return query.Where(e => !allMatchingIds.Contains(e.Id));
     }
 }
+

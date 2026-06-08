@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
@@ -23,7 +23,7 @@ using MediaBrowser.Model.Net;
 using Microsoft.Extensions.Logging;
 using Photo = MediaBrowser.Controller.Entities.Photo;
 
-namespace Jellyfin.Drawing;
+namespace MulletaFlix.Drawing;
 
 /// <summary>
 /// Class ImageProcessor.
@@ -548,3 +548,4 @@ public sealed class ImageProcessor : IImageProcessor, IDisposable
         _disposed = true;
     }
 }
+

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -14,16 +14,16 @@ using MediaBrowser.Model.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to re-read creation dates for library items with internal metadata paths.
 /// </summary>
-[JellyfinMigration("2025-04-20T23:00:00", nameof(RefreshInternalDateModified))]
+[MulletaFlixMigration("2025-04-20T23:00:00", nameof(RefreshInternalDateModified))]
 public class RefreshInternalDateModified : IDatabaseMigrationRoutine
 {
     private readonly ILogger<RefreshInternalDateModified> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IFileSystem _fileSystem;
     private readonly IServerApplicationHost _applicationHost;
     private readonly bool _useFileCreationTimeForDateAdded;
@@ -44,14 +44,14 @@ public class RefreshInternalDateModified : IDatabaseMigrationRoutine
     /// <param name="applicationHost">Instance of the <see cref="IServerApplicationHost"/> interface.</param>
     /// <param name="applicationPaths">Instance of the <see cref="IServerApplicationPaths"/> interface.</param>
     /// <param name="configurationManager">Instance of the <see cref="IServerConfigurationManager"/> interface.</param>
-    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{JellyfinDbContext}"/> interface.</param>
+    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{MulletaFlixDbContext}"/> interface.</param>
     /// <param name="logger">The logger.</param>
     /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
     public RefreshInternalDateModified(
         IServerApplicationHost applicationHost,
         IServerApplicationPaths applicationPaths,
         IServerConfigurationManager configurationManager,
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         ILogger<RefreshInternalDateModified> logger,
         IFileSystem fileSystem)
     {
@@ -129,3 +129,4 @@ public class RefreshInternalDateModified : IDatabaseMigrationRoutine
         _logger.LogInformation("Refreshed DateModified for {Count} items in {Time}", itemCount, sw.Elapsed);
     }
 }
+

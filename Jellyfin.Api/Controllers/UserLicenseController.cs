@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Models.UserDtos;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Models.UserDtos;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
@@ -12,14 +12,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// User license management controller.
 /// </summary>
 [Route("Users/{userId}/License")]
-[Authorize(Policy = Policies.RequiresElevation)]
-public class UserLicenseController : BaseJellyfinApiController
+[Authorize(Policy = Policies.LocalAccessOrRequiresElevation)]
+public class UserLicenseController : BaseMulletaFlixApiController
 {
     private readonly IUserLicenseManager _licenseManager;
     private readonly IUserManager _userManager;
@@ -137,3 +137,4 @@ public class UserLicenseController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

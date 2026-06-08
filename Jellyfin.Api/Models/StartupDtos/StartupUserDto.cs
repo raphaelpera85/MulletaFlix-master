@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.StartupDtos;
+﻿namespace MulletaFlix.Api.Models.StartupDtos;
 
 /// <summary>
 /// The startup user DTO.
@@ -15,3 +15,4 @@ public class StartupUserDto
     /// </summary>
     public string? Password { get; set; }
 }
+

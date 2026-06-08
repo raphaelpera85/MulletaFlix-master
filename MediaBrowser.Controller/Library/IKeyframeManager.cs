@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.MediaEncoding.Keyframes;
+using MulletaFlix.MediaEncoding.Keyframes;
 
 namespace MediaBrowser.Controller.IO;
 
@@ -35,3 +35,4 @@ public interface IKeyframeManager
     /// <returns>The task object representing the asynchronous operation.</returns>
     Task DeleteKeyframeDataAsync(Guid itemId, CancellationToken cancellationToken);
 }
+

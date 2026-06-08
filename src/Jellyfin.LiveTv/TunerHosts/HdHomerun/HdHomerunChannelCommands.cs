@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
+namespace MulletaFlix.LiveTv.TunerHosts.HdHomerun
 {
     public class HdHomerunChannelCommands : IHdHomerunChannelCommands
     {
@@ -33,3 +33,4 @@ namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
         }
     }
 }
+

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Enum MetadataFields.
@@ -22,3 +22,4 @@ public class BaseItemMetadataField
     /// </summary>
     public required BaseItemEntity Item { get; set; }
 }
+

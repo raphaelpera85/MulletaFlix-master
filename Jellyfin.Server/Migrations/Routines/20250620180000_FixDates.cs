@@ -1,36 +1,36 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.ServerSetupApp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to fix dates saved in the database to always be UTC.
 /// </summary>
-[JellyfinMigration("2025-06-20T18:00:00", nameof(FixDates))]
+[MulletaFlixMigration("2025-06-20T18:00:00", nameof(FixDates))]
 public class FixDates : IAsyncMigrationRoutine
 {
     private const int PageSize = 5000;
 
     private readonly ILogger _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FixDates"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="startupLogger">The startup logger for Startup UI integration.</param>
-    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{JellyfinDbContext}"/> interface.</param>
+    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{MulletaFlixDbContext}"/> interface.</param>
     public FixDates(
         ILogger<FixDates> logger,
         IStartupLogger<FixDates> startupLogger,
-        IDbContextFactory<JellyfinDbContext> dbProvider)
+        IDbContextFactory<MulletaFlixDbContext> dbProvider)
     {
         _logger = startupLogger.With(logger);
         _dbProvider = dbProvider;
@@ -55,7 +55,7 @@ public class FixDates : IAsyncMigrationRoutine
         }
     }
 
-    private async Task FixBaseItemsAsync(JellyfinDbContext context, Stopwatch sw, CancellationToken cancellationToken)
+    private async Task FixBaseItemsAsync(MulletaFlixDbContext context, Stopwatch sw, CancellationToken cancellationToken)
     {
         int itemCount = 0;
 
@@ -89,7 +89,7 @@ public class FixDates : IAsyncMigrationRoutine
         _logger.LogInformation("BaseItems: Processed {ItemCount} items, saved {SaveCount} changes in {ElapsedTime}", itemCount, saveCount, sw.Elapsed);
     }
 
-    private async Task FixChaptersAsync(JellyfinDbContext context, Stopwatch sw, CancellationToken cancellationToken)
+    private async Task FixChaptersAsync(MulletaFlixDbContext context, Stopwatch sw, CancellationToken cancellationToken)
     {
         int itemCount = 0;
 
@@ -119,7 +119,7 @@ public class FixDates : IAsyncMigrationRoutine
         _logger.LogInformation("Chapters: Processed {ItemCount} items, saved {SaveCount} changes in {ElapsedTime}", itemCount, saveCount, sw.Elapsed);
     }
 
-    private async Task FixBaseItemImageInfos(JellyfinDbContext context, Stopwatch sw, CancellationToken cancellationToken)
+    private async Task FixBaseItemImageInfos(MulletaFlixDbContext context, Stopwatch sw, CancellationToken cancellationToken)
     {
         int itemCount = 0;
 
@@ -169,3 +169,4 @@ public class FixDates : IAsyncMigrationRoutine
         return dateTime.Value.ToUniversalTime();
     }
 }
+

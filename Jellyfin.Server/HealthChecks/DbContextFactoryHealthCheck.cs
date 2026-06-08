@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace Jellyfin.Server.HealthChecks;
+namespace MulletaFlix.Server.HealthChecks;
 
 /// <summary>
 /// Implementation of the <see cref="DbContextHealthCheck{TContext}"/> for a <see cref="IDbContextFactory{TContext}"/>.
@@ -41,3 +41,4 @@ public class DbContextFactoryHealthCheck<TContext> : IHealthCheck
         return HealthCheckResult.Unhealthy();
     }
 }
+

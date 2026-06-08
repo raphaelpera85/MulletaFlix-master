@@ -1,4 +1,4 @@
-/*
+﻿/*
 The MIT License (MIT)
 
 Copyright (c) .NET Foundation and Contributors
@@ -30,7 +30,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin.Networking.HappyEyeballs;
+namespace MulletaFlix.Networking.HappyEyeballs;
 
 /// <summary>
 /// Defines the <see cref="HttpClientExtension"/> class.
@@ -117,3 +117,4 @@ public static class HttpClientExtension
         }
     }
 }
+

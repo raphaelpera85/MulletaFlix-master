@@ -1,18 +1,18 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Merges MusicArtist records that differ only by Name casing. Prior to the case-insensitive
@@ -20,14 +20,14 @@ namespace Jellyfin.Server.Migrations.Routines;
 /// MusicArtist whenever a track tagged the artist with a different casing than the
 /// resolver-created one (e.g. "Thirty Seconds To Mars" vs. "Thirty Seconds to Mars").
 /// </summary>
-[JellyfinMigration("2026-05-08T12:00:00", nameof(MergeDuplicateMusicArtists))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2026-05-08T12:00:00", nameof(MergeDuplicateMusicArtists))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 public class MergeDuplicateMusicArtists : IAsyncMigrationRoutine
 {
     private const string MusicArtistType = "MediaBrowser.Controller.Entities.Audio.MusicArtist";
 
     private readonly IStartupLogger<MergeDuplicateMusicArtists> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
     private readonly ILibraryManager _libraryManager;
     private readonly IItemPersistenceService _persistenceService;
 
@@ -40,7 +40,7 @@ public class MergeDuplicateMusicArtists : IAsyncMigrationRoutine
     /// <param name="persistenceService">The item persistence service.</param>
     public MergeDuplicateMusicArtists(
         IStartupLogger<MergeDuplicateMusicArtists> logger,
-        IDbContextFactory<JellyfinDbContext> dbContextFactory,
+        IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
         ILibraryManager libraryManager,
         IItemPersistenceService persistenceService)
     {
@@ -202,3 +202,4 @@ public class MergeDuplicateMusicArtists : IAsyncMigrationRoutine
         }
     }
 }
+

@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.ModelBinders;
+namespace MulletaFlix.Api.ModelBinders;
 
 /// <summary>
 /// Comma delimited collection model binder.
@@ -87,3 +87,4 @@ public class CommaDelimitedCollectionModelBinder : IModelBinder
         return typedValues;
     }
 }
+

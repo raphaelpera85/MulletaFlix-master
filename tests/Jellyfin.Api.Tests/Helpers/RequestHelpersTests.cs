@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Claims;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Net;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.Helpers
+namespace MulletaFlix.Api.Tests.Helpers
 {
     public static class RequestHelpersTests
     {
@@ -138,3 +138,4 @@ namespace Jellyfin.Api.Tests.Helpers
         }
     }
 }
+

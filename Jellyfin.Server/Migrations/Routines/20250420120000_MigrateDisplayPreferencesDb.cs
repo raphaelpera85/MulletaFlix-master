@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Emby.Server.Implementations.Data;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
@@ -15,13 +15,13 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines
+namespace MulletaFlix.Server.Migrations.Routines
 {
     /// <summary>
     /// The migration routine for migrating the display preferences database to EF Core.
     /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-    [JellyfinMigration("2025-04-20T12:00:00", nameof(MigrateDisplayPreferencesDb), "06387815-C3CC-421F-A888-FB5F9992BEA8")]
+    [MulletaFlixMigration("2025-04-20T12:00:00", nameof(MigrateDisplayPreferencesDb), "06387815-C3CC-421F-A888-FB5F9992BEA8")]
     public class MigrateDisplayPreferencesDb : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
     {
@@ -29,7 +29,7 @@ namespace Jellyfin.Server.Migrations.Routines
 
         private readonly ILogger<MigrateDisplayPreferencesDb> _logger;
         private readonly IServerApplicationPaths _paths;
-        private readonly IDbContextFactory<JellyfinDbContext> _provider;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly IUserManager _userManager;
 
@@ -43,7 +43,7 @@ namespace Jellyfin.Server.Migrations.Routines
         public MigrateDisplayPreferencesDb(
             ILogger<MigrateDisplayPreferencesDb> logger,
             IServerApplicationPaths paths,
-            IDbContextFactory<JellyfinDbContext> provider,
+            IDbContextFactory<MulletaFlixDbContext> provider,
             IUserManager userManager)
         {
             _logger = logger;
@@ -240,3 +240,4 @@ namespace Jellyfin.Server.Migrations.Routines
         }
     }
 }
+

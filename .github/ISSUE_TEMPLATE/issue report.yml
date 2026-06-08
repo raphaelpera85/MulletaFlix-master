@@ -1,4 +1,4 @@
-name: Issue Report
+﻿name: Issue Report
 description: File an issue report
 labels: [bug, triage]
 type: Bug
@@ -8,20 +8,20 @@ body:
     attributes:
       value: |
         ### Thank you for taking the time to report an issue!
-        Please keep in mind that Jellyfin is a [free and open-source](https://jellyfin.org/docs/general/about) project, made up entirely and exclusively of **volunteers** who donate their free time to the project.
+        Please keep in mind that MulletaFlix is a [free and open-source](https://MulletaFlix.org/docs/general/about) project, made up entirely and exclusively of **volunteers** who donate their free time to the project.
   - type: checkboxes
     id: before-posting
     attributes:
       label: "This issue respects the following points:"
       description: All conditions are **required**. Failure to comply with any of these conditions may cause your issue to be closed without comment.
       options:
-        - label: This is a **bug**, not a question or a configuration issue; Please visit our [forum or chat rooms](https://jellyfin.org/contact/) first to troubleshoot with volunteers, before creating a report.
+        - label: This is a **bug**, not a question or a configuration issue; Please visit our [forum or chat rooms](https://MulletaFlix.org/contact/) first to troubleshoot with volunteers, before creating a report.
           required: true
-        - label: This issue is **not** already reported on [GitHub](https://github.com/jellyfin/jellyfin/issues?q=is%3Aopen+is%3Aissue) _(I've searched it)_.
+        - label: This issue is **not** already reported on [GitHub](https://github.com/MulletaFlix/MulletaFlix/issues?q=is%3Aopen+is%3Aissue) _(I've searched it)_.
           required: true
-        - label: I'm using an up to date version of Jellyfin Server stable, unstable or master; We generally do not support previous older versions. If possible, please update to the latest version before opening an issue.
+        - label: I'm using an up to date version of MulletaFlix Server stable, unstable or master; We generally do not support previous older versions. If possible, please update to the latest version before opening an issue.
           required: true
-        - label: I agree to follow Jellyfin's [Code of Conduct](https://jellyfin.org/docs/general/community-standards.html#code-of-conduct).
+        - label: I agree to follow MulletaFlix's [Code of Conduct](https://MulletaFlix.org/docs/general/community-standards.html#code-of-conduct).
           required: true
         - label: This report addresses only a single issue; If you encounter multiple issues, kindly create separate reports for each one.
           required: true
@@ -45,7 +45,7 @@ body:
       label: Description of the bug
       description: Please provide a detailed description on the bug you encountered, in a readable and comprehensible way.
       placeholder: |
-        After upgrading to version x.y.z of Jellyfin, the "login disclaimer" is showing incorrect text. It appears to me that it is appending the server name to the end of the login disclaimer, and showing that to a user. It might be a regression from pull request x. I have tried rebooting my host as well as my container multiple times. I tested this functionality on different clients, and it happens to all the tested clients (client x, y, z), that support the login disclaimer functionality. This makes me believe it is a server side issue.
+        After upgrading to version x.y.z of MulletaFlix, the "login disclaimer" is showing incorrect text. It appears to me that it is appending the server name to the end of the login disclaimer, and showing that to a user. It might be a regression from pull request x. I have tried rebooting my host as well as my container multiple times. I tested this functionality on different clients, and it happens to all the tested clients (client x, y, z), that support the login disclaimer functionality. This makes me believe it is a server side issue.
     validations:
       required: true
   - type: textarea
@@ -54,7 +54,7 @@ body:
       label: Reproduction steps
       description: Reproduction steps should be complete and self-contained. Anyone can reproduce this issue by following these steps. Furthermore, the steps should be clear and easy to follow.
       placeholder: |
-        1. Sign in on the Jellyfin web client, with an admin account, using a browser of your choice.
+        1. Sign in on the MulletaFlix web client, with an admin account, using a browser of your choice.
         2. Navigate to the dashboard.
         3. Select "general".
         4. Change the login disclaimer to something like "I am a cool disclaimer!"
@@ -69,7 +69,7 @@ body:
       label: What is the current _bug_ behavior?
       description: Write down the incorrect behavior that currently happens after following the reproduction steps.
       placeholder: |
-        The login disclaimer on the sign in screen has the server name appended to the text. The text shown is: "I am a cool disclaimer!jellyfinserver".
+        The login disclaimer on the sign in screen has the server name appended to the text. The text shown is: "I am a cool disclaimer!MulletaFlixserver".
     validations:
       required: true
   - type: textarea
@@ -84,8 +84,8 @@ body:
   - type: dropdown
     id: version
     attributes:
-      label: Jellyfin Server version
-      description: What version of Jellyfin are you using?
+      label: MulletaFlix Server version
+      description: What version of MulletaFlix are you using?
       options:
         - 10.11.10
         - 10.11.9
@@ -137,7 +137,7 @@ body:
         - **Virtualization**: [e.g. Docker, KVM, LXC]
         - **Clients**: [Browser, Android, Fire Stick, etc.]
         - **Browser**: [e.g. Firefox 91, Chrome 93, Safari 13]
-        - **FFmpeg Version**: [e.g. 5.1.2-Jellyfin]
+        - **FFmpeg Version**: [e.g. 5.1.2-MulletaFlix]
         - **Playback**: [Direct Play, Remux, Direct Stream, Transcode]
         - **Hardware Acceleration**: [e.g. none, VAAPI, NVENC, etc.]
         - **CPU Model**: [e.g. AMD Ryzen 5 9600X, Intel Core i7-8565U, etc.]
@@ -146,7 +146,7 @@ body:
         - **Reverse Proxy**: [e.g. none, nginx, apache, etc.]
         - **Base URL**: [e.g. none, yes: /example]
         - **Networking**: [e.g. Host, Bridge/NAT]
-        - **Jellyfin Data Storage & Filesystem**: [e.g. local SATA SSD - ext4, local HDD - NTFS]
+        - **MulletaFlix Data Storage & Filesystem**: [e.g. local SATA SSD - ext4, local HDD - NTFS]
         - **Media Storage & Filesystem**: [e.g. Local HDD - ext4, SMB Share]
         - **External Integrations**: [e.g. Jellystat, Jellyseerr]
       value: |
@@ -164,7 +164,7 @@ body:
         - Reverse Proxy:
         - Base URL:
         - Networking:
-        - Jellyfin Data Storage & Filesystem:
+        - MulletaFlix Data Storage & Filesystem:
         - Media Storage & Filesystem:
         - External Integrations:
       render: markdown
@@ -183,9 +183,9 @@ body:
           - Do not forget to censor out personal information such as public IP addresses.
         4. Please do not include logs as screenshots, with the only exception being client logs in browsers.
   - type: textarea
-    id: jellyfin-logs
+    id: MulletaFlix-logs
     attributes:
-      label: Jellyfin logs
+      label: MulletaFlix logs
       description: Please copy and paste any relevant log output. This can be found in Dashboard > Logs.
       render: shell
     validations:
@@ -211,3 +211,4 @@ body:
     attributes:
       label: Additional information
       description: Any additional information that might be useful to this issue.
+

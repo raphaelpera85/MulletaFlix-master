@@ -1,6 +1,6 @@
-using System.IO;
+﻿using System.IO;
 
-namespace Jellyfin.Extensions;
+namespace MulletaFlix.Extensions;
 
 /// <summary>
 /// Provides helper functions for <see cref="File" />.
@@ -18,3 +18,4 @@ public static class FileHelper
         }
     }
 }
+

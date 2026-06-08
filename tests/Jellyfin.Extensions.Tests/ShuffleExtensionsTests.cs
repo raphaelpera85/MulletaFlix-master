@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests
+namespace MulletaFlix.Extensions.Tests
 {
     public static class ShuffleExtensionsTests
     {
@@ -17,3 +17,4 @@ namespace Jellyfin.Extensions.Tests
         }
     }
 }
+

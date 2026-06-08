@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Data.Events.System
+namespace MulletaFlix.Data.Events.System
 {
     /// <summary>
     /// An event that occurs when there is a pending restart.
@@ -9,3 +9,4 @@ namespace Jellyfin.Data.Events.System
     {
     }
 }
+

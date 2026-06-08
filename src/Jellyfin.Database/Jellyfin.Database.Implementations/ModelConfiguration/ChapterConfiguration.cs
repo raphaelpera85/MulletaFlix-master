@@ -1,8 +1,8 @@
-using Jellyfin.Database.Implementations.Entities;
+﻿using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Jellyfin.Database.Implementations.ModelConfiguration;
+namespace MulletaFlix.Database.Implementations.ModelConfiguration;
 
 /// <summary>
 /// Chapter configuration.
@@ -16,3 +16,4 @@ public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
         builder.HasOne(e => e.Item);
     }
 }
+

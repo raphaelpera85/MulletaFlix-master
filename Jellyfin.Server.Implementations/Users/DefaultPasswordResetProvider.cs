@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Authentication;
@@ -14,7 +14,7 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Users;
 
-namespace Jellyfin.Server.Implementations.Users
+namespace MulletaFlix.Server.Implementations.Users
 {
     /// <summary>
     /// The default password reset provider.
@@ -137,3 +137,4 @@ namespace Jellyfin.Server.Implementations.Users
         }
     }
 }
+

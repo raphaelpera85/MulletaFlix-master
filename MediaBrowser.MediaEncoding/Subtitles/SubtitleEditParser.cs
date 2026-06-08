@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
 using Nikse.SubtitleEdit.Core.Common;
@@ -136,3 +136,4 @@ namespace MediaBrowser.MediaEncoding.Subtitles
         }
     }
 }
+

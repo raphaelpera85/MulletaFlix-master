@@ -1,16 +1,16 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Mime;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers
+namespace MulletaFlix.Server.Integration.Tests.Controllers
 {
-    public sealed class ActivityLogControllerTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class ActivityLogControllerTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
         private static string? _accessToken;
 
-        public ActivityLogControllerTests(JellyfinApplicationFactory factory)
+        public ActivityLogControllerTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -28,3 +28,4 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         }
     }
 }
+

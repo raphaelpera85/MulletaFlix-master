@@ -1,16 +1,16 @@
-using System;
+﻿using System;
 using MediaBrowser.Model.SyncPlay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The time sync controller.
 /// </summary>
 [Route("")]
 [Tags("System")]
-public class TimeSyncController : BaseJellyfinApiController
+public class TimeSyncController : BaseMulletaFlixApiController
 {
     /// <summary>
     /// Gets the current UTC time.
@@ -32,3 +32,4 @@ public class TimeSyncController : BaseJellyfinApiController
         return new UtcTimeResponse(requestReceptionTime, responseTransmissionTime);
     }
 }
+

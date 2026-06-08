@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Provides information about an Attachment to an <see cref="BaseItemEntity"/>.
@@ -47,3 +47,4 @@ public class AttachmentStreamInfo
     /// </summary>
     public string? MimeType { get; set; }
 }
+

@@ -1,4 +1,4 @@
-using Jellyfin.Data.Enums;
+﻿using MulletaFlix.Data.Enums;
 
 #nullable disable
 namespace MediaBrowser.Model.Session
@@ -27,3 +27,4 @@ namespace MediaBrowser.Model.Session
         public string ItemName { get; set; }
     }
 }
+

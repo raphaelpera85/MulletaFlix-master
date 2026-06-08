@@ -1,16 +1,16 @@
-using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+﻿using System.Threading.Tasks;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 
-namespace Jellyfin.Api.Auth.DefaultAuthorizationPolicy
+namespace MulletaFlix.Api.Auth.DefaultAuthorizationPolicy
 {
     /// <summary>
     /// Default authorization handler.
@@ -94,3 +94,4 @@ namespace Jellyfin.Api.Auth.DefaultAuthorizationPolicy
         }
     }
 }
+

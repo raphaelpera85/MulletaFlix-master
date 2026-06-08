@@ -1,18 +1,18 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Playlists;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Remove duplicate playlist entries.
 /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T19:00:00", nameof(RemoveDuplicatePlaylistChildren), "96C156A2-7A13-4B3B-A8B8-FB80C94D20C0")]
+[MulletaFlixMigration("2025-04-20T19:00:00", nameof(RemoveDuplicatePlaylistChildren), "96C156A2-7A13-4B3B-A8B8-FB80C94D20C0")]
 internal class RemoveDuplicatePlaylistChildren : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -59,3 +59,4 @@ internal class RemoveDuplicatePlaylistChildren : IMigrationRoutine
         }
     }
 }
+

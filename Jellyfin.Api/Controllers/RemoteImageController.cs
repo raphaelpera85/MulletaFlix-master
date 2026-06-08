@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
@@ -19,13 +19,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Remote Images Controller.
 /// </summary>
 [Route("")]
-public class RemoteImageController : BaseJellyfinApiController
+public class RemoteImageController : BaseMulletaFlixApiController
 {
     private readonly IProviderManager _providerManager;
     private readonly IServerApplicationPaths _applicationPaths;
@@ -180,3 +180,4 @@ public class RemoteImageController : BaseJellyfinApiController
         return Path.Combine(_applicationPaths.CachePath, "remote-images", filename.Substring(0, 1), filename);
     }
 }
+

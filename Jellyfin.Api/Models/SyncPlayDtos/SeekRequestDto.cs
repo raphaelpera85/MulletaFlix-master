@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+﻿namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class SeekRequestDto.
@@ -11,3 +11,4 @@ public class SeekRequestDto
     /// <value>The position ticks.</value>
     public long PositionTicks { get; set; }
 }
+

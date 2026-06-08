@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.LiveTv.Configuration;
+using MulletaFlix.LiveTv.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Tasks;
 
-namespace Jellyfin.LiveTv.Guide;
+namespace MulletaFlix.LiveTv.Guide;
 
 /// <summary>
 /// The "Refresh Guide" scheduled task.
@@ -72,3 +72,4 @@ public class RefreshGuideScheduledTask : IScheduledTask, IConfigurableScheduledT
         };
     }
 }
+

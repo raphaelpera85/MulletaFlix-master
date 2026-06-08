@@ -1,24 +1,24 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Api.Models.StartupDtos;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Models.StartupDtos;
+using MulletaFlix.Extensions.Json;
 using Xunit;
 using Xunit.v3.Priority;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers
+namespace MulletaFlix.Server.Integration.Tests.Controllers
 {
     [TestCaseOrderer(typeof(PriorityOrderer))]
-    public sealed class StartupControllerTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class StartupControllerTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
         private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
 
-        public StartupControllerTests(JellyfinApplicationFactory factory)
+        public StartupControllerTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -114,3 +114,4 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         }
     }
 }
+

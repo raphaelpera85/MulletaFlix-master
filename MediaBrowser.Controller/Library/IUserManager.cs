@@ -1,10 +1,10 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Users;
@@ -176,3 +176,4 @@ namespace MediaBrowser.Controller.Library
         Task ClearProfileImageAsync(User user);
     }
 }
+

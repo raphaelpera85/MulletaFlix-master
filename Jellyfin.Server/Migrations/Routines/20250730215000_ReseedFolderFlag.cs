@@ -1,31 +1,31 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.Data;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
-[JellyfinMigration("2025-07-30T21:50:00", nameof(ReseedFolderFlag))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2025-07-30T21:50:00", nameof(ReseedFolderFlag))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 internal class ReseedFolderFlag : IAsyncMigrationRoutine
 {
     private const string DbFilename = "library.db.old";
 
     private readonly IStartupLogger _logger;
     private readonly IServerApplicationPaths _paths;
-    private readonly IDbContextFactory<JellyfinDbContext> _provider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
 
     public ReseedFolderFlag(
             IStartupLogger<MigrateLibraryDb> startupLogger,
-            IDbContextFactory<JellyfinDbContext> provider,
+            IDbContextFactory<MulletaFlixDbContext> provider,
             IServerApplicationPaths paths)
     {
         _logger = startupLogger;
@@ -43,7 +43,7 @@ internal class ReseedFolderFlag : IAsyncMigrationRoutine
             return;
         }
 
-        _logger.LogInformation("Migrating the IsFolder flag from library.db.old may take a while, do not stop Jellyfin.");
+        _logger.LogInformation("Migrating the IsFolder flag from library.db.old may take a while, do not stop MulletaFlix.");
 
         var dataPath = _paths.DataPath;
         var libraryDbPath = Path.Combine(dataPath, DbFilename);
@@ -72,3 +72,4 @@ internal class ReseedFolderFlag : IAsyncMigrationRoutine
         }
     }
 }
+

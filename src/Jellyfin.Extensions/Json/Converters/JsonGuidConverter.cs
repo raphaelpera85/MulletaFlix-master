@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters
+namespace MulletaFlix.Extensions.Json.Converters
 {
     /// <summary>
     /// Converts a GUID object or value to/from JSON.
@@ -28,3 +28,4 @@ namespace Jellyfin.Extensions.Json.Converters
             => writer.WriteStringValue(value.ToString("N", CultureInfo.InvariantCulture));
     }
 }
+

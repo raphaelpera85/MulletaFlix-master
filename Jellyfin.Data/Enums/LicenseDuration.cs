@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums;
+﻿namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// Predefined license duration values in hours.
@@ -40,3 +40,4 @@ public enum LicenseDuration
     /// </summary>
     Unlimited = -1
 }
+

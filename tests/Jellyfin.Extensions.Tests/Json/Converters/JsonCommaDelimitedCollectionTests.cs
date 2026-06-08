@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Jellyfin.Extensions.Tests.Json.Models;
+using MulletaFlix.Extensions.Tests.Json.Models;
 using MediaBrowser.Model.Session;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests.Json.Converters
+namespace MulletaFlix.Extensions.Tests.Json.Converters
 {
     public class JsonCommaDelimitedCollectionTests
     {
@@ -206,3 +206,4 @@ namespace Jellyfin.Extensions.Tests.Json.Converters
         }
     }
 }
+

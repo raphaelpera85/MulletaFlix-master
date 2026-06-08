@@ -1,9 +1,9 @@
-#nullable disable
+﻿#nullable disable
 #pragma warning disable CS1591
 
 using System;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Model.Querying
@@ -83,3 +83,4 @@ namespace MediaBrowser.Model.Querying
         public ImageType[] EnableImageTypes { get; set; }
     }
 }
+

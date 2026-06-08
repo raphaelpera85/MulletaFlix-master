@@ -1,18 +1,20 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Mime;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.Models.MediaInfoDtos;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.Models.MediaInfoDtos;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Devices;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,14 +22,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The media info controller.
 /// </summary>
 [Route("")]
 [Authorize]
-public class MediaInfoController : BaseJellyfinApiController
+public class MediaInfoController : BaseMulletaFlixApiController
 {
     private readonly IMediaSourceManager _mediaSourceManager;
     private readonly IDeviceManager _deviceManager;
@@ -320,6 +322,59 @@ public class MediaInfoController : BaseJellyfinApiController
     }
 
     /// <summary>
+    /// Gets the current media info for an active live stream.
+    /// </summary>
+    /// <param name="liveStreamId">The live stream identifier.</param>
+    /// <param name="liveStreamIdQuery">The live stream identifier from query string.</param>
+    /// <param name="requestBody">Optional payload used by older clients.</param>
+    /// <response code="200">Media source returned.</response>
+    /// <response code="400">Missing live stream identifier.</response>
+    /// <response code="404">Live stream not found.</response>
+    /// <returns>A <see cref="Task"/> containing the active <see cref="MediaSourceInfo"/>.</returns>
+    [HttpGet("LiveStreams/MediaInfo")]
+    [HttpPost("LiveStreams/MediaInfo")]
+    [HttpGet("LiveStreams/{liveStreamId}/MediaInfo")]
+    [HttpPost("LiveStreams/{liveStreamId}/MediaInfo")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MediaSourceInfo>> GetLiveStreamMediaInfo(
+        [FromRoute] string? liveStreamId,
+        [FromQuery] string? liveStreamIdQuery,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JsonElement? requestBody)
+    {
+        liveStreamId ??= liveStreamIdQuery;
+
+        if (string.IsNullOrWhiteSpace(liveStreamId) && requestBody.HasValue && requestBody.Value.ValueKind == JsonValueKind.Object)
+        {
+            if (requestBody.Value.TryGetProperty("liveStreamId", out var idProperty) && idProperty.ValueKind == JsonValueKind.String)
+            {
+                liveStreamId = idProperty.GetString();
+            }
+            else if (requestBody.Value.TryGetProperty("LiveStreamId", out idProperty) && idProperty.ValueKind == JsonValueKind.String)
+            {
+                liveStreamId = idProperty.GetString();
+            }
+            else if (requestBody.Value.TryGetProperty("id", out idProperty) && idProperty.ValueKind == JsonValueKind.String)
+            {
+                liveStreamId = idProperty.GetString();
+            }
+            else if (requestBody.Value.TryGetProperty("Id", out idProperty) && idProperty.ValueKind == JsonValueKind.String)
+            {
+                liveStreamId = idProperty.GetString();
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(liveStreamId))
+        {
+            return BadRequest("Missing liveStreamId.");
+        }
+
+        var mediaSource = await _mediaSourceManager.GetLiveStreamMediaInfo(liveStreamId, HttpContext.RequestAborted).ConfigureAwait(false);
+        return mediaSource;
+    }
+
+    /// <summary>
     /// Tests the network with a request with the size of the bitrate.
     /// </summary>
     /// <param name="size">The bitrate. Defaults to 102400.</param>
@@ -342,3 +397,4 @@ public class MediaInfoController : BaseJellyfinApiController
         }
     }
 }
+

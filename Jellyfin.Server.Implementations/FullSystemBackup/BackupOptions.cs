@@ -1,4 +1,4 @@
-namespace Jellyfin.Server.Implementations.FullSystemBackup;
+﻿namespace MulletaFlix.Server.Implementations.FullSystemBackup;
 
 /// <summary>
 /// Defines the optional contents of the backup archive.
@@ -13,3 +13,4 @@ internal class BackupOptions
 
     public bool Database { get; set; }
 }
+

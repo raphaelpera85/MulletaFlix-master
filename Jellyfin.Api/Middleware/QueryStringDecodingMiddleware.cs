@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 
-namespace Jellyfin.Api.Middleware;
+namespace MulletaFlix.Api.Middleware;
 
 /// <summary>
 /// URL decodes the querystring before binding.
@@ -36,3 +36,4 @@ public class QueryStringDecodingMiddleware
         await _next(httpContext).ConfigureAwait(false);
     }
 }
+

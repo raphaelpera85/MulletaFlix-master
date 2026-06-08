@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1711
 #pragma warning disable CS1591
@@ -15,7 +15,7 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.LiveTv;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.TunerHosts
+namespace MulletaFlix.LiveTv.TunerHosts
 {
     public class LiveStream : ILiveStream
     {
@@ -174,3 +174,4 @@ namespace Jellyfin.LiveTv.TunerHosts
         }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+﻿namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class IgnoreWaitRequestDto.
@@ -11,3 +11,4 @@ public class IgnoreWaitRequestDto
     /// <value>The client group-wait status.</value>
     public bool IgnoreWait { get; set; }
 }
+

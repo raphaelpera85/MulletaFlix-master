@@ -1,4 +1,4 @@
-#pragma warning disable CA1819 // Properties should not return arrays
+﻿#pragma warning disable CA1819 // Properties should not return arrays
 
 using System;
 
@@ -22,7 +22,7 @@ public class NetworkConfiguration
     private string _baseUrl = string.Empty;
 
     /// <summary>
-    /// Gets or sets a value used to specify the URL prefix that your Jellyfin instance can be accessed at.
+    /// Gets or sets a value used to specify the URL prefix that your MulletaFlix instance can be accessed at.
     /// </summary>
     public string BaseUrl
     {
@@ -134,7 +134,7 @@ public class NetworkConfiguration
     public string[] LocalNetworkSubnets { get; set; } = Array.Empty<string>();
 
     /// <summary>
-    /// Gets or sets the interface addresses which Jellyfin will bind to. If empty, all interfaces will be used.
+    /// Gets or sets the interface addresses which MulletaFlix will bind to. If empty, all interfaces will be used.
     /// </summary>
     public string[] LocalNetworkAddresses { get; set; } = Array.Empty<string>();
 
@@ -174,3 +174,4 @@ public class NetworkConfiguration
     /// </summary>
     public bool IsRemoteIPFilterBlacklist { get; set; }
 }
+

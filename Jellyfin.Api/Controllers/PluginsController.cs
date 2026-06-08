@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Common.Updates;
@@ -16,14 +16,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Plugins controller.
 /// </summary>
 [Authorize(Policy = Policies.RequiresElevation)]
 [Tags("Plugin")]
-public class PluginsController : BaseJellyfinApiController
+public class PluginsController : BaseMulletaFlixApiController
 {
     private readonly IInstallationManager _installationManager;
     private readonly IPluginManager _pluginManager;
@@ -276,3 +276,4 @@ public class PluginsController : BaseJellyfinApiController
         return NotFound();
     }
 }
+

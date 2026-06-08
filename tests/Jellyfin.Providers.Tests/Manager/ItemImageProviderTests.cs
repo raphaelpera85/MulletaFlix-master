@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -24,7 +24,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.Manager
+namespace MulletaFlix.Providers.Tests.Manager
 {
     public partial class ItemImageProviderTests
     {
@@ -656,3 +656,4 @@ namespace Jellyfin.Providers.Tests.Manager
         }
     }
 }
+

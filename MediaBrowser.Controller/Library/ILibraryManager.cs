@@ -1,12 +1,12 @@
-#pragma warning disable CA1002, CS1591
+﻿#pragma warning disable CA1002, CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -886,3 +886,4 @@ namespace MediaBrowser.Controller.Library
         IReadOnlyList<string> GetMediaStreamLanguages(MediaStreamType mediaStreamType);
     }
 }
+

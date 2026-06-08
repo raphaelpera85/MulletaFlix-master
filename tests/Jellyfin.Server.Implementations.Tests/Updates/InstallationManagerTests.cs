@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -12,7 +12,7 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Updates
+namespace MulletaFlix.Server.Implementations.Tests.Updates
 {
     public class InstallationManagerTests
     {
@@ -49,8 +49,8 @@ namespace Jellyfin.Server.Implementations.Tests.Updates
         public async Task GetPackages_Valid_Success()
         {
             PackageInfo[] packages = await _installationManager.GetPackages(
-                "Jellyfin Stable",
-                "https://repo.jellyfin.org/files/plugin/manifest.json",
+                "MulletaFlix Stable",
+                "https://repo.MulletaFlix.org/files/plugin/manifest.json",
                 false,
                 TestContext.Current.CancellationToken);
 
@@ -61,8 +61,8 @@ namespace Jellyfin.Server.Implementations.Tests.Updates
         public async Task FilterPackages_NameOnly_Success()
         {
             PackageInfo[] packages = await _installationManager.GetPackages(
-                "Jellyfin Stable",
-                "https://repo.jellyfin.org/files/plugin/manifest.json",
+                "MulletaFlix Stable",
+                "https://repo.MulletaFlix.org/files/plugin/manifest.json",
                 false,
                 TestContext.Current.CancellationToken);
 
@@ -74,8 +74,8 @@ namespace Jellyfin.Server.Implementations.Tests.Updates
         public async Task FilterPackages_GuidOnly_Success()
         {
             PackageInfo[] packages = await _installationManager.GetPackages(
-                "Jellyfin Stable",
-                "https://repo.jellyfin.org/files/plugin/manifest.json",
+                "MulletaFlix Stable",
+                "https://repo.MulletaFlix.org/files/plugin/manifest.json",
                 false,
                 TestContext.Current.CancellationToken);
 
@@ -89,7 +89,7 @@ namespace Jellyfin.Server.Implementations.Tests.Updates
             var packageInfo = new InstallationInfo()
             {
                 Name = "Test",
-                SourceUrl = "https://repo.jellyfin.org/releases/plugin/empty/empty.zip",
+                SourceUrl = "https://repo.MulletaFlix.org/releases/plugin/empty/empty.zip",
                 Checksum = "InvalidChecksum"
             };
 
@@ -102,7 +102,7 @@ namespace Jellyfin.Server.Implementations.Tests.Updates
             var packageInfo = new InstallationInfo()
             {
                 Name = "Test",
-                SourceUrl = "https://repo.jellyfin.org/releases/plugin/empty/empty.zip",
+                SourceUrl = "https://repo.MulletaFlix.org/releases/plugin/empty/empty.zip",
                 Checksum = "11b5b2f1a9ebc4f66d6ef19018543361"
             };
 
@@ -111,3 +111,4 @@ namespace Jellyfin.Server.Implementations.Tests.Updates
         }
     }
 }
+

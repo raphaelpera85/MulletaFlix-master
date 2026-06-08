@@ -1,9 +1,9 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions.Json.Converters;
 
-namespace Jellyfin.Extensions.Json
+namespace MulletaFlix.Extensions.Json
 {
     /// <summary>
     /// Helper class for having compatible JSON throughout the codebase.
@@ -22,8 +22,8 @@ namespace Jellyfin.Extensions.Json
 
         /// <summary>
         /// When changing these options, update
-        ///  Jellyfin.Server/Extensions/ApiServiceCollectionExtensions.cs
-        ///   -> AddJellyfinApi
+        ///  MulletaFlix.Server/Extensions/ApiServiceCollectionExtensions.cs
+        ///   -> AddMulletaFlixApi
         ///    -> AddJsonOptions.
         /// </summary>
         private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
@@ -91,3 +91,4 @@ namespace Jellyfin.Extensions.Json
             => _pascalCaseJsonSerializerOptions;
     }
 }
+

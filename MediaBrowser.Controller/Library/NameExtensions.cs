@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 
 namespace MediaBrowser.Controller.Library
 {
@@ -23,3 +23,4 @@ namespace MediaBrowser.Controller.Library
         }
     }
 }
+

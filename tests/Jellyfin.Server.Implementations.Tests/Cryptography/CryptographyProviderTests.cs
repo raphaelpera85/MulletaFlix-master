@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using Emby.Server.Implementations.Cryptography;
 using MediaBrowser.Model.Cryptography;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Cryptography;
+namespace MulletaFlix.Server.Implementations.Tests.Cryptography;
 
 public class CryptographyProviderTests
 {
@@ -100,3 +100,4 @@ public class CryptographyProviderTests
         Assert.Equal(length, salt.Length);
     }
 }
+

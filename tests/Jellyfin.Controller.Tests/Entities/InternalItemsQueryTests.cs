@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Querying;
 using Xunit;
 
-namespace Jellyfin.Controller.Tests.Entities;
+namespace MulletaFlix.Controller.Tests.Entities;
 
 public class InternalItemsQueryTests
 {
@@ -24,3 +24,4 @@ public class InternalItemsQueryTests
         Assert.Throws<ArgumentException>(() => query.ApplyFilters(filters));
     }
 }
+

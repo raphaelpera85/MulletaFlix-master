@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using MediaBrowser.MediaEncoding.Encoder;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Tests
+namespace MulletaFlix.MediaEncoding.Tests
 {
     public class EncoderValidatorTests
     {
@@ -46,3 +46,4 @@ namespace Jellyfin.MediaEncoding.Tests
         }
     }
 }
+

@@ -1,36 +1,36 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using LinkedChildType = Jellyfin.Database.Implementations.Entities.LinkedChildType;
+using LinkedChildType = MulletaFlix.Database.Implementations.Entities.LinkedChildType;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migrates LinkedChildren data from JSON Data column to the LinkedChildren table.
 /// </summary>
-[JellyfinMigration("2026-01-13T12:00:00", nameof(MigrateLinkedChildren))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2026-01-13T12:00:00", nameof(MigrateLinkedChildren))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
 {
     private readonly ILogger<MigrateLinkedChildren> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly ILibraryManager _libraryManager;
     private readonly IServerApplicationHost _appHost;
     private readonly IServerApplicationPaths _appPaths;
 
     public MigrateLinkedChildren(
         ILoggerFactory loggerFactory,
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         ILibraryManager libraryManager,
         IServerApplicationHost appHost,
         IServerApplicationPaths appPaths)
@@ -247,7 +247,7 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
         CleanupOrphanedLinkedChildren(context);
     }
 
-    private void CleanupWrongTypeAlternateVersions(JellyfinDbContext context)
+    private void CleanupWrongTypeAlternateVersions(MulletaFlixDbContext context)
     {
         _logger.LogInformation("Cleaning up alternate version items with wrong type...");
 
@@ -289,12 +289,12 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
         _logger.LogInformation("Removed {Count} wrong-type alternate version items. They will be recreated with the correct type on next library scan.", deleted);
     }
 
-    private void CleanupOrphanedAlternateVersionBaseItems(JellyfinDbContext context)
+    private void CleanupOrphanedAlternateVersionBaseItems(MulletaFlixDbContext context)
     {
         _logger.LogInformation("Starting cleanup of orphaned alternate version BaseItems...");
 
         // Find BaseItems that have OwnerId set (they belonged to another item) and are not extras,
-        // but no LinkedChild entry references them — meaning they're orphaned alternate versions.
+        // but no LinkedChild entry references them â€” meaning they're orphaned alternate versions.
         // This happens when a version file is renamed: the old BaseItem remains in the DB
         // with a stale OwnerId but nothing links to it anymore.
         var orphanedVersionIds = context.BaseItems
@@ -320,7 +320,7 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
         _logger.LogInformation("Removed {Count} orphaned alternate version BaseItems.", deleted);
     }
 
-    private void CleanupItemsFromDeletedLibraries(JellyfinDbContext context)
+    private void CleanupItemsFromDeletedLibraries(MulletaFlixDbContext context)
     {
         _logger.LogInformation("Starting cleanup of items from deleted libraries...");
 
@@ -349,7 +349,7 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
         _logger.LogInformation("Removed {Count} items from deleted libraries.", deleted);
     }
 
-    private void CleanupStaleFileEntries(JellyfinDbContext context)
+    private void CleanupStaleFileEntries(MulletaFlixDbContext context)
     {
         _logger.LogInformation("Starting cleanup of items with missing files...");
 
@@ -403,7 +403,7 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
 
             if (accessiblePaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
             {
-                // Item is under an accessible library location — check if it still exists
+                // Item is under an accessible library location â€” check if it still exists
                 // Directory check covers BDMV/DVD items whose Path points to a folder
                 if (!File.Exists(path) && !Directory.Exists(path))
                 {
@@ -412,12 +412,12 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
             }
             else if (!allLibraryPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
             {
-                // Item is not under ANY library location (accessible or not) —
+                // Item is not under ANY library location (accessible or not) â€”
                 // it's orphaned from all libraries (e.g. media path was removed from config)
                 staleIds.Add(item.Id);
             }
 
-            // Otherwise: item is under an inaccessible location — skip (storage may be offline)
+            // Otherwise: item is under an inaccessible location â€” skip (storage may be offline)
         }
 
         if (staleIds.Count == 0)
@@ -462,7 +462,7 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
         return deleted;
     }
 
-    private void CleanupOrphanedLinkedChildren(JellyfinDbContext context)
+    private void CleanupOrphanedLinkedChildren(MulletaFlixDbContext context)
     {
         _logger.LogInformation("Starting cleanup of orphaned LinkedChildren records...");
 
@@ -613,3 +613,4 @@ internal class MigrateLinkedChildren : IDatabaseMigrationRoutine
         }
     }
 }
+

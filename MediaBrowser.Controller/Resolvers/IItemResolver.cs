@@ -1,7 +1,7 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
@@ -50,3 +50,4 @@ namespace MediaBrowser.Controller.Resolvers
         public List<FileSystemMetadata> ExtraFiles { get; set; }
     }
 }
+

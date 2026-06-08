@@ -1,6 +1,6 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Server.Implementations.Library.Resolvers.TV;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library
+namespace MulletaFlix.Server.Implementations.Tests.Library
 {
     public class EpisodeResolverTest
     {
@@ -45,7 +45,7 @@ namespace Jellyfin.Server.Implementations.Tests.Library
             var series = new Series { Name = "Extras" };
 
             // Have to create a mock because of moq proxies not being castable to a concrete implementation
-            // https://github.com/jellyfin/jellyfin/blob/ab0cff8556403e123642dc9717ba778329554634/Emby.Server.Implementations/Library/Resolvers/BaseVideoResolver.cs#L48
+            // https://github.com/MulletaFlix/MulletaFlix/blob/ab0cff8556403e123642dc9717ba778329554634/Emby.Server.Implementations/Library/Resolvers/BaseVideoResolver.cs#L48
             var episodeResolver = new EpisodeResolverMock(Mock.Of<ILogger<EpisodeResolver>>(), _namingOptions, Mock.Of<IDirectoryService>());
             var itemResolveArgs = new ItemResolveArgs(
                 Mock.Of<IServerApplicationPaths>(),
@@ -159,3 +159,4 @@ namespace Jellyfin.Server.Implementations.Tests.Library
         }
     }
 }
+

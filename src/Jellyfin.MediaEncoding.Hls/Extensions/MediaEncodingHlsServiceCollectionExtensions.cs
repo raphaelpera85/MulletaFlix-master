@@ -1,10 +1,10 @@
-using System;
-using Jellyfin.MediaEncoding.Hls.Cache;
-using Jellyfin.MediaEncoding.Hls.Extractors;
-using Jellyfin.MediaEncoding.Hls.Playlist;
+﻿using System;
+using MulletaFlix.MediaEncoding.Hls.Cache;
+using MulletaFlix.MediaEncoding.Hls.Extractors;
+using MulletaFlix.MediaEncoding.Hls.Playlist;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Jellyfin.MediaEncoding.Hls.Extensions;
+namespace MulletaFlix.MediaEncoding.Hls.Extensions;
 
 /// <summary>
 /// Extensions for the <see cref="IServiceCollection"/> interface.
@@ -34,3 +34,4 @@ public static class MediaEncodingHlsServiceCollectionExtensions
         });
     }
 }
+

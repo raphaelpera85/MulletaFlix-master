@@ -1,8 +1,8 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Dto;
@@ -50,3 +50,4 @@ namespace Emby.Server.Implementations.Images
         }
     }
 }
+

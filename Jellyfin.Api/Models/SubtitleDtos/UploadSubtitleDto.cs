@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Api.Models.SubtitleDtos;
+namespace MulletaFlix.Api.Models.SubtitleDtos;
 
 /// <summary>
 /// Upload subtitles dto.
@@ -37,3 +37,4 @@ public class UploadSubtitleDto
     [Required]
     public string Data { get; set; } = string.Empty;
 }
+

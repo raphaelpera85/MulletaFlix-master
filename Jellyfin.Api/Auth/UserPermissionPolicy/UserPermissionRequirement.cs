@@ -1,7 +1,7 @@
-using Jellyfin.Api.Auth.DefaultAuthorizationPolicy;
-using Jellyfin.Database.Implementations.Enums;
+﻿using MulletaFlix.Api.Auth.DefaultAuthorizationPolicy;
+using MulletaFlix.Database.Implementations.Enums;
 
-namespace Jellyfin.Api.Auth.UserPermissionPolicy
+namespace MulletaFlix.Api.Auth.UserPermissionPolicy
 {
     /// <summary>
     /// The user permission requirement.
@@ -24,3 +24,4 @@ namespace Jellyfin.Api.Auth.UserPermissionPolicy
         public PermissionKind RequiredPermission { get; }
     }
 }
+

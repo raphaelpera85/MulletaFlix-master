@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Mapping table for the ItemValue BaseItem relation.
@@ -27,3 +27,4 @@ public class ItemValueMap
     /// </summary>
     public required ItemValue ItemValue { get; set; }
 }
+

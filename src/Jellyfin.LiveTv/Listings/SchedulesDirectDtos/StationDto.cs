@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos
 {
     /// <summary>
     /// Station dto.
@@ -64,3 +64,4 @@ namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
         public bool? IsCommercialFree { get; set; }
     }
 }
+

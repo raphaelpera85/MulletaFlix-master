@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
@@ -141,3 +141,4 @@ public interface IItemRepository
     /// <returns>A value indicating whether all children have been played.</returns>
     bool GetIsPlayed(User user, Guid id, bool recursive);
 }
+

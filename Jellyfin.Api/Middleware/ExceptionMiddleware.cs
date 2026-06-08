@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Net.Mime;
 using System.Net.Sockets;
@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Middleware;
+namespace MulletaFlix.Api.Middleware;
 
 /// <summary>
 /// Exception Middleware.
@@ -148,3 +148,4 @@ public class ExceptionMiddleware
                 StringComparison.OrdinalIgnoreCase);
     }
 }
+

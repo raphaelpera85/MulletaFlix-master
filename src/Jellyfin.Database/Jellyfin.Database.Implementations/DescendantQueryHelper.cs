@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.MatchCriteria;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.MatchCriteria;
 
-namespace Jellyfin.Database.Implementations;
+namespace MulletaFlix.Database.Implementations;
 
 /// <summary>
 /// Provides methods for querying item hierarchies using iterative traversal.
@@ -19,7 +19,7 @@ public static class DescendantQueryHelper
     /// <param name="context">Database context.</param>
     /// <param name="parentId">Parent item ID.</param>
     /// <returns>Queryable of descendant item IDs.</returns>
-    public static IQueryable<Guid> GetAllDescendantIds(JellyfinDbContext context, Guid parentId)
+    public static IQueryable<Guid> GetAllDescendantIds(MulletaFlixDbContext context, Guid parentId)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -38,7 +38,7 @@ public static class DescendantQueryHelper
     /// <param name="context">Database context.</param>
     /// <param name="parentId">Parent item ID.</param>
     /// <returns>Queryable of owned descendant item IDs.</returns>
-    public static IQueryable<Guid> GetOwnedDescendantIds(JellyfinDbContext context, Guid parentId)
+    public static IQueryable<Guid> GetOwnedDescendantIds(MulletaFlixDbContext context, Guid parentId)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -57,7 +57,7 @@ public static class DescendantQueryHelper
     /// <param name="context">Database context.</param>
     /// <param name="parentIds">Parent item IDs.</param>
     /// <returns>Set of all owned descendant item IDs (excluding the parent IDs themselves).</returns>
-    public static HashSet<Guid> GetOwnedDescendantIdsBatch(JellyfinDbContext context, IReadOnlyList<Guid> parentIds)
+    public static HashSet<Guid> GetOwnedDescendantIdsBatch(MulletaFlixDbContext context, IReadOnlyList<Guid> parentIds)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(parentIds);
@@ -70,7 +70,7 @@ public static class DescendantQueryHelper
         var seedSet = new HashSet<Guid>(parentIds);
         var descendants = TraverseHierarchyDownOwned(context, seedSet);
 
-        // Remove the seed IDs — callers want only descendants
+        // Remove the seed IDs â€” callers want only descendants
         descendants.ExceptWith(seedSet);
 
         return descendants;
@@ -83,7 +83,7 @@ public static class DescendantQueryHelper
     /// <param name="context">Database context.</param>
     /// <param name="criteria">The matching criteria to apply.</param>
     /// <returns>Queryable of folder IDs.</returns>
-    public static IQueryable<Guid> GetFolderIdsMatching(JellyfinDbContext context, FolderMatchCriteria criteria)
+    public static IQueryable<Guid> GetFolderIdsMatching(MulletaFlixDbContext context, FolderMatchCriteria criteria)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(criteria);
@@ -108,7 +108,7 @@ public static class DescendantQueryHelper
         return ancestors.AsQueryable();
     }
 
-    private static HashSet<Guid> GetMatchingMediaStreamItemIds(JellyfinDbContext context, HasMediaStreamType criteria)
+    private static HashSet<Guid> GetMatchingMediaStreamItemIds(MulletaFlixDbContext context, HasMediaStreamType criteria)
     {
         var query = context.MediaStreamInfos
             .Where(ms => ms.StreamType == criteria.StreamType
@@ -127,7 +127,7 @@ public static class DescendantQueryHelper
     /// <summary>
     /// Traverses DOWN the hierarchy from parent folders to find all descendants.
     /// </summary>
-    private static HashSet<Guid> TraverseHierarchyDown(JellyfinDbContext context, ICollection<Guid> startIds)
+    private static HashSet<Guid> TraverseHierarchyDown(MulletaFlixDbContext context, ICollection<Guid> startIds)
     {
         var visited = new HashSet<Guid>(startIds);
         var folderStack = new HashSet<Guid>(startIds);
@@ -175,7 +175,7 @@ public static class DescendantQueryHelper
     /// <summary>
     /// Traverses DOWN the hierarchy using only AncestorIds (ownership), not LinkedChildren.
     /// </summary>
-    private static HashSet<Guid> TraverseHierarchyDownOwned(JellyfinDbContext context, ICollection<Guid> startIds)
+    private static HashSet<Guid> TraverseHierarchyDownOwned(MulletaFlixDbContext context, ICollection<Guid> startIds)
     {
         var visited = new HashSet<Guid>(startIds);
         var folderStack = new HashSet<Guid>(startIds);
@@ -216,7 +216,7 @@ public static class DescendantQueryHelper
     /// <summary>
     /// Traverses UP the hierarchy from items to find all ancestor folders.
     /// </summary>
-    private static HashSet<Guid> TraverseHierarchyUp(JellyfinDbContext context, ICollection<Guid> startIds)
+    private static HashSet<Guid> TraverseHierarchyUp(MulletaFlixDbContext context, ICollection<Guid> startIds)
     {
         var ancestors = new HashSet<Guid>();
         var itemStack = new HashSet<Guid>(startIds);
@@ -248,3 +248,4 @@ public static class DescendantQueryHelper
         return ancestors;
     }
 }
+

@@ -1,8 +1,8 @@
-using System;
-using Jellyfin.Api.Controllers;
+﻿using System;
+using MulletaFlix.Api.Controllers;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.Controllers
+namespace MulletaFlix.Api.Tests.Controllers
 {
     public class DynamicHlsControllerTests
     {
@@ -43,3 +43,4 @@ namespace Jellyfin.Api.Tests.Controllers
         }
     }
 }
+

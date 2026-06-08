@@ -1,4 +1,4 @@
-#pragma warning disable CA1068, CS1591
+﻿#pragma warning disable CA1068, CS1591
 
 using System;
 using System.Collections.Generic;
@@ -6,8 +6,8 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -640,3 +640,4 @@ namespace MediaBrowser.Providers.MediaInfo
         }
     }
 }
+

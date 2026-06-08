@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using SkiaSharp;
 using SkiaSharp.HarfBuzz;
 
-namespace Jellyfin.Drawing.Skia;
+namespace MulletaFlix.Drawing.Skia;
 
 /// <summary>
 /// Used to build collages of multiple images arranged in vertical strips.
@@ -309,3 +309,4 @@ public partial class StripCollageBuilder
         float MoveX(float currentX, float dWidth) => isRtl ? currentX - dWidth : currentX + dWidth;
     }
 }
+

@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 
-namespace Jellyfin.Api.Models.LibraryDtos;
+namespace MulletaFlix.Api.Models.LibraryDtos;
 
 /// <summary>
 /// Library type options dto.
@@ -39,3 +39,4 @@ public class LibraryTypeOptionsDto
     /// </summary>
     public IReadOnlyList<ImageOption> DefaultImageOptions { get; set; } = [];
 }
+

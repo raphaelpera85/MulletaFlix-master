@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.EnvironmentDtos;
+﻿namespace MulletaFlix.Api.Models.EnvironmentDtos;
 
 /// <summary>
 /// Default directory browser info.
@@ -10,3 +10,4 @@ public class DefaultDirectoryBrowserInfoDto
     /// </summary>
     public string? Path { get; set; }
 }
+

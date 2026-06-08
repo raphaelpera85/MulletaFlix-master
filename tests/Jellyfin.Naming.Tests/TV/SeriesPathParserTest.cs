@@ -1,8 +1,8 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Naming.TV;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.TV
+namespace MulletaFlix.Naming.Tests.TV
 {
     public class SeriesPathParserTest
     {
@@ -27,3 +27,4 @@ namespace Jellyfin.Naming.Tests.TV
         }
     }
 }
+

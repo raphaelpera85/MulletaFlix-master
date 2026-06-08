@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Represents a Key-Value relation of an BaseItem's provider.
@@ -27,3 +27,4 @@ public class BaseItemProvider
     /// </summary>
     public required string ProviderValue { get; set; }
 }
+

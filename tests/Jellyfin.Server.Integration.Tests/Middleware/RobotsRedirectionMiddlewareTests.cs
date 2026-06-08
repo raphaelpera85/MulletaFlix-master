@@ -1,15 +1,15 @@
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Middleware
+namespace MulletaFlix.Server.Integration.Tests.Middleware
 {
-    public sealed class RobotsRedirectionMiddlewareTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class RobotsRedirectionMiddlewareTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
 
-        public RobotsRedirectionMiddlewareTests(JellyfinApplicationFactory factory)
+        public RobotsRedirectionMiddlewareTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -30,3 +30,4 @@ namespace Jellyfin.Server.Integration.Tests.Middleware
         }
     }
 }
+

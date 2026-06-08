@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Model.Entities;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Entities
+namespace MulletaFlix.Model.Tests.Entities
 {
     public class ProviderIdsExtensionsTests
     {
@@ -204,3 +204,4 @@ namespace Jellyfin.Model.Tests.Entities
         }
     }
 }
+

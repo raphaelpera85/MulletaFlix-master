@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.Models.SyncPlayDtos;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.Models.SyncPlayDtos;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
@@ -17,13 +17,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The sync play controller.
 /// </summary>
 [Authorize(Policy = Policies.SyncPlayHasAccess)]
-public class SyncPlayController : BaseJellyfinApiController
+public class SyncPlayController : BaseMulletaFlixApiController
 {
     private readonly ISessionManager _sessionManager;
     private readonly ISyncPlayManager _syncPlayManager;
@@ -438,3 +438,4 @@ public class SyncPlayController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

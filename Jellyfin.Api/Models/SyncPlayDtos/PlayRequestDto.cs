@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class PlayRequestDto.
@@ -34,3 +34,4 @@ public class PlayRequestDto
     /// <value>The start position ticks.</value>
     public long StartPositionTicks { get; set; }
 }
+

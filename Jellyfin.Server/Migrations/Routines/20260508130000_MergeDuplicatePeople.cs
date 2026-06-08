@@ -1,36 +1,36 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Merges case-only duplicate people. Two passes:
-/// 1) Person BaseItems whose Name differs only by casing — Person.GetPath hashes the name
+/// 1) Person BaseItems whose Name differs only by casing â€” Person.GetPath hashes the name
 ///    verbatim, so two casings produce two distinct Person rows in BaseItems.
-/// 2) Peoples lookup rows whose Name differs only by casing within the same PersonType —
+/// 2) Peoples lookup rows whose Name differs only by casing within the same PersonType â€”
 ///    UpdatePeople used to insert a second Peoples row when a metadata provider returned
 ///    a different casing than the row already in the table.
 /// Both bugs cause the /Persons endpoint to list the same person twice.
 /// </summary>
-[JellyfinMigration("2026-05-08T13:00:00", nameof(MergeDuplicatePeople))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2026-05-08T13:00:00", nameof(MergeDuplicatePeople))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 public class MergeDuplicatePeople : IAsyncMigrationRoutine
 {
     private const string PersonType = "MediaBrowser.Controller.Entities.Person";
 
     private readonly IStartupLogger<MergeDuplicatePeople> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
     private readonly ILibraryManager _libraryManager;
     private readonly IItemPersistenceService _persistenceService;
 
@@ -43,7 +43,7 @@ public class MergeDuplicatePeople : IAsyncMigrationRoutine
     /// <param name="persistenceService">The item persistence service.</param>
     public MergeDuplicatePeople(
         IStartupLogger<MergeDuplicatePeople> logger,
-        IDbContextFactory<JellyfinDbContext> dbContextFactory,
+        IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
         ILibraryManager libraryManager,
         IItemPersistenceService persistenceService)
     {
@@ -64,7 +64,7 @@ public class MergeDuplicatePeople : IAsyncMigrationRoutine
         }
     }
 
-    private async Task MergePersonBaseItemsAsync(JellyfinDbContext context, CancellationToken cancellationToken)
+    private async Task MergePersonBaseItemsAsync(MulletaFlixDbContext context, CancellationToken cancellationToken)
     {
         var persons = await context.BaseItems
             .Where(b => b.Type == PersonType && b.Name != null)
@@ -203,7 +203,7 @@ public class MergeDuplicatePeople : IAsyncMigrationRoutine
         _logger.LogInformation("Removed {Count} duplicate Person BaseItems.", idsToDelete.Count);
     }
 
-    private async Task MergePeoplesRowsAsync(JellyfinDbContext context, CancellationToken cancellationToken)
+    private async Task MergePeoplesRowsAsync(MulletaFlixDbContext context, CancellationToken cancellationToken)
     {
         var people = await context.Peoples
             .Select(p => new { p.Id, p.Name, p.PersonType })
@@ -298,3 +298,4 @@ public class MergeDuplicatePeople : IAsyncMigrationRoutine
         _logger.LogInformation("Removed {Count} duplicate Peoples rows.", idsToDelete.Count);
     }
 }
+

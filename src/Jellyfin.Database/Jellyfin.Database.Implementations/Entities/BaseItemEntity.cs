@@ -1,10 +1,10 @@
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 #pragma warning disable CA2227 // Collection properties should be read only
 
 using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 public class BaseItemEntity
 {
@@ -208,3 +208,4 @@ public class BaseItemEntity
     // public ICollection<BaseItemEntity>? AllChildren { get; set; }
     // public ICollection<BaseItemEntity>? SeasonEpisodes { get; set; }
 }
+

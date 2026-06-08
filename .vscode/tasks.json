@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Jellyfin.Server/Jellyfin.Server.csproj"
+                "${workspaceFolder}/MulletaFlix.Server/MulletaFlix.Server.csproj"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -17,7 +17,7 @@
             "type": "process",
             "args": [
                 "test",
-                "${workspaceFolder}/tests/Jellyfin.Api.Tests/Jellyfin.Api.Tests.csproj"
+                "${workspaceFolder}/tests/MulletaFlix.Api.Tests/MulletaFlix.Api.Tests.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
@@ -28,3 +28,4 @@
         }
     }
 }
+

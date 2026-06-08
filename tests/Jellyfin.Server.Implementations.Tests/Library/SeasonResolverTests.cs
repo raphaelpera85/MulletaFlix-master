@@ -1,4 +1,4 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Server.Implementations.Library.Resolvers.TV;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities.TV;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library
+namespace MulletaFlix.Server.Implementations.Tests.Library
 {
     public class SeasonResolverTests
     {
@@ -143,3 +143,4 @@ namespace Jellyfin.Server.Implementations.Tests.Library
         }
     }
 }
+

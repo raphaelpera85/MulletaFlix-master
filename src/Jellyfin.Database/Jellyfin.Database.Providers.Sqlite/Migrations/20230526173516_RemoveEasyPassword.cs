@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     /// <inheritdoc />
     public partial class RemoveEasyPassword : Migration
@@ -12,72 +12,72 @@ namespace Jellyfin.Server.Implementations.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "EasyPassword",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users");
 
             migrationBuilder.RenameTable(
                 name: "Users",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "Users");
 
             migrationBuilder.RenameTable(
                 name: "Preferences",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "Preferences");
 
             migrationBuilder.RenameTable(
                 name: "Permissions",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "Permissions");
 
             migrationBuilder.RenameTable(
                 name: "ItemDisplayPreferences",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "ItemDisplayPreferences");
 
             migrationBuilder.RenameTable(
                 name: "ImageInfos",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "ImageInfos");
 
             migrationBuilder.RenameTable(
                 name: "HomeSection",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "HomeSection");
 
             migrationBuilder.RenameTable(
                 name: "DisplayPreferences",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "DisplayPreferences");
 
             migrationBuilder.RenameTable(
                 name: "Devices",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "Devices");
 
             migrationBuilder.RenameTable(
                 name: "DeviceOptions",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "DeviceOptions");
 
             migrationBuilder.RenameTable(
                 name: "CustomItemDisplayPreferences",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "CustomItemDisplayPreferences");
 
             migrationBuilder.RenameTable(
                 name: "ApiKeys",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "ApiKeys");
 
             migrationBuilder.RenameTable(
                 name: "ActivityLogs",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "ActivityLogs");
 
             migrationBuilder.RenameTable(
                 name: "AccessSchedules",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 newName: "AccessSchedules");
         }
 
@@ -85,76 +85,76 @@ namespace Jellyfin.Server.Implementations.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "jellyfin");
+                name: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "Users",
                 newName: "Users",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "Preferences",
                 newName: "Preferences",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "Permissions",
                 newName: "Permissions",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "ItemDisplayPreferences",
                 newName: "ItemDisplayPreferences",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "ImageInfos",
                 newName: "ImageInfos",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "HomeSection",
                 newName: "HomeSection",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "DisplayPreferences",
                 newName: "DisplayPreferences",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "Devices",
                 newName: "Devices",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "DeviceOptions",
                 newName: "DeviceOptions",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "CustomItemDisplayPreferences",
                 newName: "CustomItemDisplayPreferences",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "ApiKeys",
                 newName: "ApiKeys",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "ActivityLogs",
                 newName: "ActivityLogs",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.RenameTable(
                 name: "AccessSchedules",
                 newName: "AccessSchedules",
-                newSchema: "jellyfin");
+                newSchema: "MulletaFlix");
 
             migrationBuilder.AddColumn<string>(
                 name: "EasyPassword",
-                schema: "jellyfin",
+                schema: "MulletaFlix",
                 table: "Users",
                 type: "TEXT",
                 maxLength: 65535,
@@ -162,3 +162,4 @@ namespace Jellyfin.Server.Implementations.Migrations
         }
     }
 }
+

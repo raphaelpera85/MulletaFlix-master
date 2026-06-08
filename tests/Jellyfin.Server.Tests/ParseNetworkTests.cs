@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Net;
-using Jellyfin.Networking.Manager;
-using Jellyfin.Server.Extensions;
+using MulletaFlix.Networking.Manager;
+using MulletaFlix.Server.Extensions;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using Microsoft.AspNetCore.Builder;
@@ -12,7 +12,7 @@ using Moq;
 using Xunit;
 using IConfigurationManager = MediaBrowser.Common.Configuration.IConfigurationManager;
 
-namespace Jellyfin.Server.Tests
+namespace MulletaFlix.Server.Tests
 {
     public class ParseNetworkTests
     {
@@ -125,3 +125,4 @@ namespace Jellyfin.Server.Tests
         }
     }
 }
+

@@ -1,8 +1,8 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Keyframes.FfProbe
+namespace MulletaFlix.MediaEncoding.Keyframes.FfProbe
 {
     public class FfProbeKeyframeExtractorTests
     {
@@ -26,3 +26,4 @@ namespace Jellyfin.MediaEncoding.Keyframes.FfProbe
         }
     }
 }
+

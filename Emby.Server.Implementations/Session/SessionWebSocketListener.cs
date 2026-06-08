@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Net;
 using MediaBrowser.Controller.Net.WebSocketMessages.Outbound;
@@ -266,3 +266,4 @@ namespace Emby.Server.Implementations.Session
         }
     }
 }
+

@@ -12,8 +12,9 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using MediaBrowser.Common.Net;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -164,6 +165,11 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             try
             {
                 Log("Iniciando sync automatico...");
+
+                var netConfig = _configurationManager.GetNetworkConfiguration();
+                var baseUrl = $"http://localhost:{netConfig.InternalHttpPort}";
+                MidiaStorageOnlineStreamProxy.LocalBaseUrl = baseUrl;
+
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 progress.Report(5);
 
@@ -183,7 +189,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 {
                     await MidiaStorageOnlineLogoLibrary.EnsureChannelLogosAsync(
                         channelEntries,
-                        "http://localhost:8096",
+                        baseUrl,
                         ct).ConfigureAwait(false);
                 }
                 catch (Exception logoEx)
@@ -198,7 +204,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     AppendEntryLinesWithInferredTvgId(canaisM3u, entry);
                 }
 
-                config.CanaisM3uContent = canaisM3u.ToString();
+                var canaisContent = MidiaStorageOnlineStreamProxy.NormalizeM3uContent(canaisM3u.ToString());
+                config.CanaisM3uContent = canaisContent;
                 config.TotalChannelCount = entries.Count(e => e.Type == "Canal");
                 config.EpgCompatibleChannelCount = entries.Count(e => e.Type == "Canal" && !string.IsNullOrWhiteSpace(GetEffectiveTvgId(e)));
                 Plugin.Instance!.UpdateConfiguration(config);
@@ -206,10 +213,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 // BG-5: save canais to dedicated file to avoid bloating config.xml
                 var canaisFilePath = GetCanaisFilePath();
                 Directory.CreateDirectory(Path.GetDirectoryName(canaisFilePath)!);
-                await System.IO.File.WriteAllTextAsync(canaisFilePath, canaisM3u.ToString(), ct).ConfigureAwait(false);
+                await System.IO.File.WriteAllTextAsync(canaisFilePath, canaisContent, ct).ConfigureAwait(false);
 
                 // Cadastrar/atualizar sintonizador imediatamente
-                var tunerUrl = "http://localhost:8096/MidiaStorageOnline/m3u/canais";
+                var tunerUrl = $"{baseUrl}/MidiaStorageOnline/m3u/canais";
                 try
                 {
                     var tuner = new TunerHostInfo
@@ -323,11 +330,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                             var name = SanitizeName(entry.Name);
                             var relPath = Path.Combine("Filmes", name, name + ".strm");
                             var filePath = Path.Combine(strmPath, relPath);
-                            var newUrl = entry.Url.Trim();
+                            var newUrl = MidiaStorageOnlineStreamProxy.BuildProxyUrl(entry.Url.Trim());
 
                             newManifest[relPath] = newUrl;
 
-                            if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl)
+                            var fileExists = System.IO.File.Exists(filePath);
+                            if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl && fileExists)
                             {
                                 Interlocked.Increment(ref skippedCount);
                             }
@@ -341,6 +349,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                                 {
                                     Directory.CreateDirectory(fileParentDir);
                                 }
+                                if (cachedUrl == newUrl && !fileExists)
+                                {
+                                    Log($"Recriando .strm ausente: {filePath}");
+                                }
                                 await System.IO.File.WriteAllTextAsync(filePath, newUrl, token).ConfigureAwait(false);
                                 Interlocked.Increment(ref totalSynced);
                                 Interlocked.Increment(ref movieCount);
@@ -353,11 +365,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                         var seasonFolder = SanitizeName(entry.Season);
                         var relPath = Path.Combine("Series", showName, seasonFolder, name + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
-                        var newUrl = entry.Url.Trim();
+                        var newUrl = MidiaStorageOnlineStreamProxy.BuildProxyUrl(entry.Url.Trim());
 
                             newManifest[relPath] = newUrl;
 
-                            if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl)
+                            var fileExists = System.IO.File.Exists(filePath);
+                            if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl && fileExists)
                             {
                                 Interlocked.Increment(ref skippedCount);
                         }
@@ -370,6 +383,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                             if (!string.IsNullOrWhiteSpace(fileParentDir))
                             {
                                 Directory.CreateDirectory(fileParentDir);
+                            }
+                            if (cachedUrl == newUrl && !fileExists)
+                            {
+                                Log($"Recriando .strm ausente: {filePath}");
                             }
                             await System.IO.File.WriteAllTextAsync(filePath, newUrl, token).ConfigureAwait(false);
                                 Interlocked.Increment(ref totalSynced);
@@ -716,6 +733,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
         private static string GetEffectiveTvgId(M3uEntry entry)
         {
+            var approvedTvgId = MidiaStorageOnlineApprovedChannelMappings.TryGetEpgId(entry.TvgName, entry.Name, entry.TvgId);
+            if (!string.IsNullOrWhiteSpace(approvedTvgId))
+            {
+                return approvedTvgId;
+            }
+
             var mappedTvgId = MidiaStorageOnlineChannelMappings.ResolveTvgId(
                 entry.TvgId,
                 entry.TvgName,
@@ -753,10 +776,16 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 }
             }
 
-            builder.Append(firstLine);
+            builder.AppendLine(firstLine);
             for (var i = 1; i < entry.RawLines.Count; i++)
             {
-                builder.Append(entry.RawLines[i]);
+                var line = entry.RawLines[i].TrimEnd('\r', '\n');
+                if (i == entry.RawLines.Count - 1 && entry.Type == "Canal")
+                {
+                    line = MidiaStorageOnlineStreamProxy.BuildProxyUrl(line);
+                }
+
+                builder.AppendLine(line);
             }
         }
 
@@ -819,6 +848,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
         private static string? ResolveChannelLogo(string? tvgName, string? name, string? tvgId, string? tvgLogo)
         {
+            var approvedLogo = MidiaStorageOnlineApprovedChannelMappings.TryGetLogoUrl(tvgName, name, tvgId);
+            if (!string.IsNullOrWhiteSpace(approvedLogo))
+            {
+                return approvedLogo;
+            }
+
             var workbookLogo = MidiaStorageOnlineWorkbookLogoMappings.TryGetLogoUrl(tvgName, name, tvgId);
             if (!string.IsNullOrWhiteSpace(workbookLogo))
             {
@@ -1348,6 +1383,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             {
                 new TaskTriggerInfo
                 {
+                    Type = TaskTriggerInfoType.StartupTrigger
+                },
+                new TaskTriggerInfo
+                {
                     Type = TaskTriggerInfoType.DailyTrigger,
                     TimeOfDayTicks = TimeSpan.FromHours(3).Ticks
                 }
@@ -1369,3 +1408,4 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
         }
     }
 }
+

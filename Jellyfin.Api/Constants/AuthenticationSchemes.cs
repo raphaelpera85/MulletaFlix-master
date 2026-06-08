@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Constants;
+﻿namespace MulletaFlix.Api.Constants;
 
 /// <summary>
 /// Authentication schemes for user authentication in the API.
@@ -10,3 +10,4 @@ public static class AuthenticationSchemes
     /// </summary>
     public const string CustomAuthentication = "CustomAuthentication";
 }
+

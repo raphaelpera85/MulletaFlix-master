@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Text;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Jellyfin.Api.Caching;
+namespace MulletaFlix.Api.Caching;
 
 /// <summary>
 /// Cache for ItemsController query results with short TTL.
@@ -254,3 +254,4 @@ public class ItemsResponseCache
         return true;
     }
 }
+

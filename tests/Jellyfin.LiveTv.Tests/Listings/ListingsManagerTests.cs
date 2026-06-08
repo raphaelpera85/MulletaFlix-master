@@ -1,6 +1,6 @@
-using System;
-using Jellyfin.LiveTv.Configuration;
-using Jellyfin.LiveTv.Listings;
+﻿using System;
+using MulletaFlix.LiveTv.Configuration;
+using MulletaFlix.LiveTv.Listings;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.LiveTv;
@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.LiveTv.Tests.Listings;
+namespace MulletaFlix.LiveTv.Tests.Listings;
 
 public class ListingsManagerTests
 {
@@ -48,3 +48,4 @@ public class ListingsManagerTests
             p => p.Id.Equals(id, StringComparison.Ordinal));
     }
 }
+

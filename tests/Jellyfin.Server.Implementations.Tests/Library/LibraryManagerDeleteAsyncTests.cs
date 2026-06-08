@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -22,7 +22,7 @@ using MediaBrowser.Model.IO;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library;
+namespace MulletaFlix.Server.Implementations.Tests.Library;
 
 public class LibraryManagerDeleteAsyncTests
 {
@@ -131,3 +131,4 @@ public class LibraryManagerDeleteAsyncTests
             Times.Once);
     }
 }
+

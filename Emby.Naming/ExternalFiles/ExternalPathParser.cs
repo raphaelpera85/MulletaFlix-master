@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using Emby.Naming.Common;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.Globalization;
 
@@ -131,3 +131,4 @@ namespace Emby.Naming.ExternalFiles
         }
     }
 }
+

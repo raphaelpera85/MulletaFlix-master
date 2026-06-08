@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// An enum representing the axis that should be scrolled.
@@ -15,3 +15,4 @@ public enum ScrollDirection
     /// </summary>
     Vertical = 1
 }
+

@@ -1,8 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions.Json.Converters;
 
-namespace Jellyfin.Extensions.Tests.Json.Models
+namespace MulletaFlix.Extensions.Tests.Json.Models
 {
     /// <summary>
     /// The generic body model.
@@ -18,3 +18,4 @@ namespace Jellyfin.Extensions.Tests.Json.Models
         public T[] Value { get; set; } = default!;
     }
 }
+

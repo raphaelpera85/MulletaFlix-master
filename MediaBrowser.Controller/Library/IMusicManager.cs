@@ -1,7 +1,7 @@
-#pragma warning disable CA1002, CS1591
+﻿#pragma warning disable CA1002, CS1591
 
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -38,3 +38,4 @@ namespace MediaBrowser.Controller.Library
         IReadOnlyList<BaseItem> GetInstantMixFromGenres(IEnumerable<string> genres, User? user, DtoOptions dtoOptions);
     }
 }
+

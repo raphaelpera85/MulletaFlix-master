@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Emby.Server.Implementations.Dto;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.Chapters;
@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Dto;
+namespace MulletaFlix.Server.Implementations.Tests.Dto;
 
 public class DtoServiceTests
 {
@@ -129,3 +129,4 @@ public class DtoServiceTests
         return (episode, season, series);
     }
 }
+

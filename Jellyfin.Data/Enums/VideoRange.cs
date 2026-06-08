@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums;
+﻿namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// An enum representing video ranges.
@@ -20,3 +20,4 @@ public enum VideoRange
     /// </summary>
     HDR
 }
+

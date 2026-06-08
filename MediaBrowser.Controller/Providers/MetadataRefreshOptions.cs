@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CA1819, CS1591
 
 using System;
 using System.Linq;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Providers;
 
@@ -75,3 +75,4 @@ namespace MediaBrowser.Controller.Providers
         }
     }
 }
+

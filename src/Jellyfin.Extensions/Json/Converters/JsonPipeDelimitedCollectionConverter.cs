@@ -1,4 +1,4 @@
-namespace Jellyfin.Extensions.Json.Converters
+﻿namespace MulletaFlix.Extensions.Json.Converters
 {
     /// <summary>
     /// Convert Pipe delimited string to array of type.
@@ -17,3 +17,4 @@ namespace Jellyfin.Extensions.Json.Converters
         protected override char Delimiter => '|';
     }
 }
+

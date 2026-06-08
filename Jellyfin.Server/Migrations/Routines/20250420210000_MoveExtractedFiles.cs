@@ -1,4 +1,4 @@
-#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms
+﻿#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms
 
 using System;
 using System.Collections.Generic;
@@ -10,10 +10,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.IO;
@@ -21,17 +21,17 @@ using MediaBrowser.Model.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to move extracted files to the new directories.
 /// </summary>
-[JellyfinMigration("2025-04-20T21:00:00", nameof(MoveExtractedFiles))]
+[MulletaFlixMigration("2025-04-20T21:00:00", nameof(MoveExtractedFiles))]
 public class MoveExtractedFiles : IAsyncMigrationRoutine
 {
     private readonly IApplicationPaths _appPaths;
     private readonly ILogger _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IPathManager _pathManager;
     private readonly IFileSystem _fileSystem;
 
@@ -43,14 +43,14 @@ public class MoveExtractedFiles : IAsyncMigrationRoutine
     /// <param name="startupLogger">The startup logger for Startup UI intigration.</param>
     /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
     /// <param name="pathManager">Instance of the <see cref="IPathManager"/> interface.</param>
-    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{JellyfinDbContext}"/> interface.</param>
+    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{MulletaFlixDbContext}"/> interface.</param>
     public MoveExtractedFiles(
         IApplicationPaths appPaths,
         ILogger<MoveExtractedFiles> logger,
         IStartupLogger<MoveExtractedFiles> startupLogger,
         IPathManager pathManager,
         IFileSystem fileSystem,
-        IDbContextFactory<JellyfinDbContext> dbProvider)
+        IDbContextFactory<MulletaFlixDbContext> dbProvider)
     {
         _appPaths = appPaths;
         _logger = startupLogger.With(logger);
@@ -122,7 +122,7 @@ public class MoveExtractedFiles : IAsyncMigrationRoutine
         _logger.LogInformation("Cleaned up left over subtitles and attachments.");
     }
 
-    private bool MoveSubtitleAndAttachmentFiles(Guid id, string? path, ICollection<MediaStreamInfo>? mediaStreams, JellyfinDbContext context)
+    private bool MoveSubtitleAndAttachmentFiles(Guid id, string? path, ICollection<MediaStreamInfo>? mediaStreams, MulletaFlixDbContext context)
     {
         var itemIdString = id.ToString("N", CultureInfo.InvariantCulture);
         var modified = false;
@@ -327,3 +327,4 @@ public class MoveExtractedFiles : IAsyncMigrationRoutine
         }
     }
 }
+

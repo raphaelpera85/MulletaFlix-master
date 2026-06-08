@@ -1,12 +1,12 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Jellyfin.Data.Queries;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Queries;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Devices;
@@ -16,24 +16,24 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
-namespace Jellyfin.Server.Implementations.Security
+namespace MulletaFlix.Server.Implementations.Security
 {
     public class AuthorizationContext : IAuthorizationContext
     {
-        private readonly IDbContextFactory<JellyfinDbContext> _jellyfinDbProvider;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _MulletaFlixDbProvider;
         private readonly IUserManager _userManager;
         private readonly IDeviceManager _deviceManager;
         private readonly IServerApplicationHost _serverApplicationHost;
         private readonly IServerConfigurationManager _configurationManager;
 
         public AuthorizationContext(
-            IDbContextFactory<JellyfinDbContext> jellyfinDb,
+            IDbContextFactory<MulletaFlixDbContext> MulletaFlixDb,
             IUserManager userManager,
             IDeviceManager deviceManager,
             IServerApplicationHost serverApplicationHost,
             IServerConfigurationManager configurationManager)
         {
-            _jellyfinDbProvider = jellyfinDb;
+            _MulletaFlixDbProvider = MulletaFlixDb;
             _userManager = userManager;
             _deviceManager = deviceManager;
             _serverApplicationHost = serverApplicationHost;
@@ -126,7 +126,7 @@ namespace Jellyfin.Server.Implementations.Security
                 return authInfo;
             }
 
-            var dbContext = await _jellyfinDbProvider.CreateDbContextAsync().ConfigureAwait(false);
+            var dbContext = await _MulletaFlixDbProvider.CreateDbContextAsync().ConfigureAwait(false);
             await using (dbContext.ConfigureAwait(false))
             {
                 var device = _deviceManager.GetDevices(
@@ -317,3 +317,4 @@ namespace Jellyfin.Server.Implementations.Security
         }
     }
 }
+

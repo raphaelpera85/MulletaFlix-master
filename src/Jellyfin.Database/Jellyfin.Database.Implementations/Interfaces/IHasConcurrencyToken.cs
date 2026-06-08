@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Interfaces;
+﻿namespace MulletaFlix.Database.Implementations.Interfaces;
 
 /// <summary>
 /// An interface abstracting an entity that has a concurrency token.
@@ -15,3 +15,4 @@ public interface IHasConcurrencyToken
     /// </summary>
     void OnSavingChanges();
 }
+

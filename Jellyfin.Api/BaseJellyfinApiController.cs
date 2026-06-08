@@ -1,10 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net.Mime;
-using Jellyfin.Api.Results;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Results;
+using MulletaFlix.Extensions.Json;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api;
+namespace MulletaFlix.Api;
 
 /// <summary>
 /// Base api controller for the API setting a default route.
@@ -15,7 +15,7 @@ namespace Jellyfin.Api;
     MediaTypeNames.Application.Json,
     JsonDefaults.CamelCaseMediaType,
     JsonDefaults.PascalCaseMediaType)]
-public class BaseJellyfinApiController : ControllerBase
+public class BaseMulletaFlixApiController : ControllerBase
 {
     /// <summary>
     /// Create a new <see cref="OkResult{T}"/>.
@@ -35,3 +35,4 @@ public class BaseJellyfinApiController : ControllerBase
     protected ActionResult<T> Ok<T>(T value)
         => new OkResult<T>(value);
 }
+

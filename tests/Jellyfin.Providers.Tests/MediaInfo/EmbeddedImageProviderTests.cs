@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.MediaInfo
+namespace MulletaFlix.Providers.Tests.MediaInfo
 {
     public class EmbeddedImageProviderTests
     {
@@ -156,3 +156,4 @@ namespace Jellyfin.Providers.Tests.MediaInfo
         }
     }
 }
+

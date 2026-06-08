@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591, SA1401
 
@@ -12,11 +12,11 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Chapters;
@@ -1174,7 +1174,7 @@ namespace MediaBrowser.Controller.Entities
                 {
                     var shortcutProtocol = MediaSourceManager.GetPathProtocol(video.ShortcutPath);
 
-                    // Only allow remote shortcut paths — local file paths in .strm files
+                    // Only allow remote shortcut paths â€” local file paths in .strm files
                     // could be used to read arbitrary files from the server.
                     if (shortcutProtocol != MediaProtocol.File)
                     {
@@ -2777,3 +2777,4 @@ namespace MediaBrowser.Controller.Entities
         public override int GetHashCode() => HashCode.Combine(Id);
     }
 }
+

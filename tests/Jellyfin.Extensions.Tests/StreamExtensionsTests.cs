@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests;
+namespace MulletaFlix.Extensions.Tests;
 
 public class StreamExtensionsTests
 {
@@ -395,3 +395,4 @@ public class StreamExtensionsTests
         }
     }
 }
+

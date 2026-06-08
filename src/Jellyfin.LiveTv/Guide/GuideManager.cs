@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
-using Jellyfin.LiveTv.Configuration;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
+using MulletaFlix.LiveTv.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -19,7 +19,7 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.LiveTv;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Guide;
+namespace MulletaFlix.LiveTv.Guide;
 
 /// <inheritdoc />
 public class GuideManager : IGuideManager
@@ -806,3 +806,4 @@ public class GuideManager : IGuideManager
             }).ConfigureAwait(false);
     }
 }
+

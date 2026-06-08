@@ -1,23 +1,23 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities.Security;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities.Security;
 using MediaBrowser.Controller.Security;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Security
+namespace MulletaFlix.Server.Implementations.Security
 {
     /// <inheritdoc />
     public class AuthenticationManager : IAuthenticationManager
     {
-        private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthenticationManager"/> class.
         /// </summary>
         /// <param name="dbProvider">The database provider.</param>
-        public AuthenticationManager(IDbContextFactory<JellyfinDbContext> dbProvider)
+        public AuthenticationManager(IDbContextFactory<MulletaFlixDbContext> dbProvider)
         {
             _dbProvider = dbProvider;
         }
@@ -67,3 +67,4 @@ namespace Jellyfin.Server.Implementations.Security
         }
     }
 }
+

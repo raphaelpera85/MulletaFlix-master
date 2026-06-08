@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using System.Text.Json;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.MediaEncoding;
@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Configuration Controller.
@@ -21,7 +21,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("System")]
 [Authorize]
 [Tags("System")]
-public class ConfigurationController : BaseJellyfinApiController
+public class ConfigurationController : BaseMulletaFlixApiController
 {
     private readonly IServerConfigurationManager _configurationManager;
     private readonly IMediaEncoder _mediaEncoder;
@@ -143,3 +143,4 @@ public class ConfigurationController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

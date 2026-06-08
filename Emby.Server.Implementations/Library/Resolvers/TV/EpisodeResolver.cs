@@ -1,11 +1,11 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.IO;
 using System.Linq;
 using Emby.Naming.Common;
 using Emby.Server.Implementations.Library;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
@@ -114,3 +114,4 @@ namespace Emby.Server.Implementations.Library.Resolvers.TV
         }
     }
 }
+

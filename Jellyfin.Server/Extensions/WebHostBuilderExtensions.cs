@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
-using Jellyfin.Server.Helpers;
+using MulletaFlix.Server.Helpers;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Extensions;
 using MediaBrowser.Model.Net;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Extensions;
+namespace MulletaFlix.Server.Extensions;
 
 /// <summary>
 /// Extensions for configuring the web host builder.
@@ -39,7 +39,7 @@ public static class WebHostBuilderExtensions
         return builder
             .UseKestrel((builderContext, options) =>
             {
-                SetupJellyfinWebServer(
+                SetupMulletaFlixWebServer(
                     appHost.NetManager.GetAllBindInterfaces(false),
                     appHost.HttpPort,
                     appHost.ListenWithHttps ? appHost.HttpsPort : null,
@@ -66,7 +66,7 @@ public static class WebHostBuilderExtensions
     /// <param name="builderContext">The kestrel build pipeline context.</param>
     /// <param name="options">The kestrel server options.</param>
     /// <exception cref="InvalidOperationException">Will be thrown when a https port is set but no or an invalid certificate is provided.</exception>
-    public static void SetupJellyfinWebServer(
+    public static void SetupMulletaFlixWebServer(
         IReadOnlyList<IPData> addresses,
         int httpPort,
         int? httpsPort,
@@ -107,7 +107,7 @@ public static class WebHostBuilderExtensions
                 {
                     if (certificate is null)
                     {
-                        throw new InvalidOperationException("Cannot run jellyfin with https without setting a valid certificate.");
+                        throw new InvalidOperationException("Cannot run MulletaFlix with https without setting a valid certificate.");
                     }
 
                     options.Listen(
@@ -134,3 +134,4 @@ public static class WebHostBuilderExtensions
         }
     }
 }
+

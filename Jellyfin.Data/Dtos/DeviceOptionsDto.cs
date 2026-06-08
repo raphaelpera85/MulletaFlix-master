@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Dtos;
+﻿namespace MulletaFlix.Data.Dtos;
 
 /// <summary>
 /// A dto representing custom options for a device.
@@ -20,3 +20,4 @@ public class DeviceOptionsDto
     /// </summary>
     public string? CustomName { get; set; }
 }
+

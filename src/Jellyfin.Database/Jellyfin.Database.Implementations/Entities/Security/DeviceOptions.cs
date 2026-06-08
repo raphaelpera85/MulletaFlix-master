@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Jellyfin.Database.Implementations.Entities.Security
+namespace MulletaFlix.Database.Implementations.Entities.Security
 {
     /// <summary>
     /// An entity representing custom options for a device.
@@ -33,3 +33,4 @@ namespace Jellyfin.Database.Implementations.Entities.Security
         public string? CustomName { get; set; }
     }
 }
+

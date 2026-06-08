@@ -1,4 +1,4 @@
-namespace Jellyfin.Extensions.Json.Converters
+﻿namespace MulletaFlix.Extensions.Json.Converters
 {
     /// <summary>
     /// Convert comma delimited string to collection of type.
@@ -17,3 +17,4 @@ namespace Jellyfin.Extensions.Json.Converters
         protected override char Delimiter => ',';
     }
 }
+

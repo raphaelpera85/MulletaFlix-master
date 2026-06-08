@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
     /// <summary>
     /// Extension methods for the <see cref="Stream"/> class.
@@ -234,3 +234,4 @@ namespace Jellyfin.Extensions
         }
     }
 }
+

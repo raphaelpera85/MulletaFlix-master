@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -10,35 +10,35 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Emby.Server.Implementations.Data;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
-using Jellyfin.Server.Implementations.Item;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
+using MulletaFlix.Server.Implementations.Item;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Entities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using BaseItemEntity = Jellyfin.Database.Implementations.Entities.BaseItemEntity;
-using Chapter = Jellyfin.Database.Implementations.Entities.Chapter;
+using BaseItemEntity = MulletaFlix.Database.Implementations.Entities.BaseItemEntity;
+using Chapter = MulletaFlix.Database.Implementations.Entities.Chapter;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// The migration routine for migrating the userdata database to EF Core.
 /// </summary>
-[JellyfinMigration("2025-04-20T20:00:00", nameof(MigrateLibraryDb))]
-[JellyfinMigrationBackup(JellyfinDb = true, LegacyLibraryDb = true)]
+[MulletaFlixMigration("2025-04-20T20:00:00", nameof(MigrateLibraryDb))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true, LegacyLibraryDb = true)]
 internal class MigrateLibraryDb : IDatabaseMigrationRoutine
 {
     private const string DbFilename = "library.db";
 
     private readonly IStartupLogger _logger;
     private readonly IServerApplicationPaths _paths;
-    private readonly IJellyfinDatabaseProvider _jellyfinDatabaseProvider;
-    private readonly IDbContextFactory<JellyfinDbContext> _provider;
+    private readonly IMulletaFlixDatabaseProvider _MulletaFlixDatabaseProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MigrateLibraryDb"/> class.
@@ -46,23 +46,23 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
     /// <param name="startupLogger">The startup logger for Startup UI intigration.</param>
     /// <param name="provider">The database provider.</param>
     /// <param name="paths">The server application paths.</param>
-    /// <param name="jellyfinDatabaseProvider">The database provider for special access.</param>
+    /// <param name="MulletaFlixDatabaseProvider">The database provider for special access.</param>
     public MigrateLibraryDb(
         IStartupLogger<MigrateLibraryDb> startupLogger,
-        IDbContextFactory<JellyfinDbContext> provider,
+        IDbContextFactory<MulletaFlixDbContext> provider,
         IServerApplicationPaths paths,
-        IJellyfinDatabaseProvider jellyfinDatabaseProvider)
+        IMulletaFlixDatabaseProvider MulletaFlixDatabaseProvider)
     {
         _logger = startupLogger;
         _provider = provider;
         _paths = paths;
-        _jellyfinDatabaseProvider = jellyfinDatabaseProvider;
+        _MulletaFlixDatabaseProvider = MulletaFlixDatabaseProvider;
     }
 
     /// <inheritdoc/>
     public void Perform()
     {
-        _logger.LogInformation("Migrating the userdata from library.db may take a while, do not stop Jellyfin.");
+        _logger.LogInformation("Migrating the userdata from library.db may take a while, do not stop MulletaFlix.");
 
         var dataPath = _paths.DataPath;
         var libraryDbPath = Path.Combine(dataPath, DbFilename);
@@ -79,15 +79,15 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
 
         using (var operation = GetPreparedDbContext("Cleanup database"))
         {
-            operation.JellyfinDbContext.AttachmentStreamInfos.ExecuteDelete();
-            operation.JellyfinDbContext.BaseItems.ExecuteDelete();
-            operation.JellyfinDbContext.ItemValues.ExecuteDelete();
-            operation.JellyfinDbContext.UserData.ExecuteDelete();
-            operation.JellyfinDbContext.MediaStreamInfos.ExecuteDelete();
-            operation.JellyfinDbContext.Peoples.ExecuteDelete();
-            operation.JellyfinDbContext.PeopleBaseItemMap.ExecuteDelete();
-            operation.JellyfinDbContext.Chapters.ExecuteDelete();
-            operation.JellyfinDbContext.AncestorIds.ExecuteDelete();
+            operation.MulletaFlixDbContext.AttachmentStreamInfos.ExecuteDelete();
+            operation.MulletaFlixDbContext.BaseItems.ExecuteDelete();
+            operation.MulletaFlixDbContext.ItemValues.ExecuteDelete();
+            operation.MulletaFlixDbContext.UserData.ExecuteDelete();
+            operation.MulletaFlixDbContext.MediaStreamInfos.ExecuteDelete();
+            operation.MulletaFlixDbContext.Peoples.ExecuteDelete();
+            operation.MulletaFlixDbContext.PeopleBaseItemMap.ExecuteDelete();
+            operation.MulletaFlixDbContext.Chapters.ExecuteDelete();
+            operation.MulletaFlixDbContext.AncestorIds.ExecuteDelete();
         }
 
         // notify the other migration to just silently abort because the fix has been applied here already.
@@ -150,7 +150,7 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                     if (DoesResolve(cachedItem.BaseItem.ParentId, checkStack))
                     {
                         checkStack.Add(cachedItem);
-                        operation.JellyfinDbContext.BaseItems.Add(cachedItem.BaseItem);
+                        operation.MulletaFlixDbContext.BaseItems.Add(cachedItem.BaseItem);
                         baseItemIds.Add(cachedItem.BaseItem.Id);
                         foreach (var dataKey in cachedItem.Keys)
                         {
@@ -162,9 +162,9 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                 }
             }
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.BaseItems.Local.Count} BaseItem entries", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.BaseItems.Local.Count} BaseItem entries", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
 
             allItemsLookup.Clear();
@@ -203,8 +203,8 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
 
                 foreach (var item in localItems)
                 {
-                    operation.JellyfinDbContext.ItemValues.Add(item.Value.ItemValue);
-                    operation.JellyfinDbContext.ItemValuesMap.AddRange(item.Value.ItemIds.Distinct().Select(f => new ItemValueMap()
+                    operation.MulletaFlixDbContext.ItemValues.Add(item.Value.ItemValue);
+                    operation.MulletaFlixDbContext.ItemValuesMap.AddRange(item.Value.ItemIds.Distinct().Select(f => new ItemValueMap()
                     {
                         Item = null!,
                         ItemValue = null!,
@@ -214,9 +214,9 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                 }
             }
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.ItemValues.Local.Count} ItemValues entries", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.ItemValues.Local.Count} ItemValues entries", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
         }
 
@@ -231,7 +231,7 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
 
             using (new TrackedMigrationStep("Loading UserData", _logger))
             {
-                var users = operation.JellyfinDbContext.Users.AsNoTracking().ToArray();
+                var users = operation.MulletaFlixDbContext.Users.AsNoTracking().ToArray();
                 var userIdBlacklist = new HashSet<int>();
 
                 foreach (var entity in queryResult)
@@ -263,15 +263,15 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                     }
 
                     userData.ItemId = refItem.Id;
-                    operation.JellyfinDbContext.UserData.Add(userData);
+                    operation.MulletaFlixDbContext.UserData.Add(userData);
                 }
             }
 
             legacyBaseItemWithUserKeys.Clear();
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.UserData.Local.Count} UserData entries", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.UserData.Local.Count} UserData entries", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
         }
 
@@ -298,13 +298,13 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                         continue;
                     }
 
-                    operation.JellyfinDbContext.MediaStreamInfos.Add(entity);
+                    operation.MulletaFlixDbContext.MediaStreamInfos.Add(entity);
                 }
             }
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.MediaStreamInfos.Local.Count} MediaStreamInfos entries", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.MediaStreamInfos.Local.Count} MediaStreamInfos entries", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
         }
 
@@ -327,13 +327,13 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                         continue;
                     }
 
-                    operation.JellyfinDbContext.AttachmentStreamInfos.Add(entity);
+                    operation.MulletaFlixDbContext.AttachmentStreamInfos.Add(entity);
                 }
             }
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.AttachmentStreamInfos.Local.Count} AttachmentStreamInfos entries", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.AttachmentStreamInfos.Local.Count} AttachmentStreamInfos entries", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
         }
 
@@ -385,16 +385,16 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
 
                 foreach (var item in peopleCache)
                 {
-                    operation.JellyfinDbContext.Peoples.Add(item.Value.Person);
-                    operation.JellyfinDbContext.PeopleBaseItemMap.AddRange(item.Value.Items.DistinctBy(e => (e.ItemId, e.PeopleId)));
+                    operation.MulletaFlixDbContext.Peoples.Add(item.Value.Person);
+                    operation.MulletaFlixDbContext.PeopleBaseItemMap.AddRange(item.Value.Items.DistinctBy(e => (e.ItemId, e.PeopleId)));
                 }
 
                 peopleCache.Clear();
             }
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.Peoples.Local.Count} People entries and {operation.JellyfinDbContext.PeopleBaseItemMap.Local.Count} maps", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.Peoples.Local.Count} People entries and {operation.MulletaFlixDbContext.PeopleBaseItemMap.Local.Count} maps", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
         }
 
@@ -416,13 +416,13 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                         continue;
                     }
 
-                    operation.JellyfinDbContext.Chapters.Add(chapter);
+                    operation.MulletaFlixDbContext.Chapters.Add(chapter);
                 }
             }
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.Chapters.Local.Count} Chapters entries", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.Chapters.Local.Count} Chapters entries", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
         }
 
@@ -447,13 +447,13 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                         continue;
                     }
 
-                    operation.JellyfinDbContext.AncestorIds.Add(ancestorId);
+                    operation.MulletaFlixDbContext.AncestorIds.Add(ancestorId);
                 }
             }
 
-            using (new TrackedMigrationStep($"Saving {operation.JellyfinDbContext.AncestorIds.Local.Count} AncestorId entries", _logger))
+            using (new TrackedMigrationStep($"Saving {operation.MulletaFlixDbContext.AncestorIds.Local.Count} AncestorId entries", _logger))
             {
-                operation.JellyfinDbContext.SaveChanges();
+                operation.MulletaFlixDbContext.SaveChanges();
             }
         }
 
@@ -1481,12 +1481,14 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
 
     private sealed class DatabaseMigrationStep : TrackedMigrationStep
     {
-        public DatabaseMigrationStep(JellyfinDbContext jellyfinDbContext, string operationName, ILogger logger) : base(operationName, logger)
+        private readonly MulletaFlixDbContext _dbContext;
+
+        public DatabaseMigrationStep(MulletaFlixDbContext dbContext, string operationName, ILogger logger) : base(operationName, logger)
         {
-            JellyfinDbContext = jellyfinDbContext;
+            _dbContext = dbContext;
         }
 
-        public JellyfinDbContext JellyfinDbContext { get; }
+        public MulletaFlixDbContext MulletaFlixDbContext => _dbContext;
 
         public override void Dispose()
         {
@@ -1495,8 +1497,9 @@ internal class MigrateLibraryDb : IDatabaseMigrationRoutine
                 return;
             }
 
-            JellyfinDbContext.Dispose();
+            MulletaFlixDbContext.Dispose();
             base.Dispose();
         }
     }
 }
+

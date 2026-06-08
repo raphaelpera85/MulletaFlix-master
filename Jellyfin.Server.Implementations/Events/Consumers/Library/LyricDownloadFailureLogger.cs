@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Events;
@@ -10,7 +10,7 @@ using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
 using Episode = MediaBrowser.Controller.Entities.TV.Episode;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Library;
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Library;
 
 /// <summary>
 /// Creates an entry in the activity log whenever a lyric download fails.
@@ -99,3 +99,4 @@ public class LyricDownloadFailureLogger : IEventConsumer<LyricDownloadFailureEve
         return name;
     }
 }
+

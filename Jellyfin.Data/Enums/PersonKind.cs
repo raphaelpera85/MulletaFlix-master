@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums;
+﻿namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// The person kind.
@@ -136,3 +136,4 @@ public enum PersonKind
     /// </summary>
     Narrator
 }
+

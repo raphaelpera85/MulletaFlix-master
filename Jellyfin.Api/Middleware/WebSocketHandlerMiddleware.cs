@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using MediaBrowser.Controller.Net;
 using Microsoft.AspNetCore.Http;
 
-namespace Jellyfin.Api.Middleware;
+namespace MulletaFlix.Api.Middleware;
 
 /// <summary>
 /// Handles WebSocket requests.
@@ -37,3 +37,4 @@ public class WebSocketHandlerMiddleware
         await webSocketManager.WebSocketRequestHandler(httpContext).ConfigureAwait(false);
     }
 }
+

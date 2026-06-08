@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -6,8 +6,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.LiveTv.Configuration;
-using Jellyfin.LiveTv.Guide;
+using MulletaFlix.LiveTv.Configuration;
+using MulletaFlix.LiveTv.Guide;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.LiveTv;
@@ -16,7 +16,7 @@ using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.TunerHosts;
+namespace MulletaFlix.LiveTv.TunerHosts;
 
 /// <inheritdoc />
 public class TunerHostManager : ITunerHostManager
@@ -200,3 +200,4 @@ public class TunerHostManager : ITunerHostManager
         }
     }
 }
+

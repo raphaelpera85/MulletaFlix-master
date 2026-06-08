@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
-using Jellyfin.Extensions;
-using Jellyfin.LiveTv.Recordings;
+using MulletaFlix.Extensions;
+using MulletaFlix.LiveTv.Recordings;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -15,12 +15,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.LiveTv.Tests.Recordings;
+namespace MulletaFlix.LiveTv.Tests.Recordings;
 
 public sealed class RecordingsMetadataManagerTests
 {
     private readonly string _tempDir =
-        Path.Combine(Path.GetTempPath(), "jellyfin-test-" + Guid.NewGuid());
+        Path.Combine(Path.GetTempPath(), "MulletaFlix-test-" + Guid.NewGuid());
 
     [Fact]
     public async Task SaveRecordingMetadata_DateAddedIsUtc()
@@ -62,3 +62,4 @@ public sealed class RecordingsMetadataManagerTests
         Assert.InRange(parsed, beforeUtc, afterUtc);
     }
 }
+

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
+using MulletaFlix.Database.Implementations;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Tasks;
@@ -19,7 +19,7 @@ public class PeopleValidationTask : IScheduledTask, IConfigurableScheduledTask
 {
     private readonly ILibraryManager _libraryManager;
     private readonly ILocalizationManager _localization;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PeopleValidationTask" /> class.
@@ -27,7 +27,7 @@ public class PeopleValidationTask : IScheduledTask, IConfigurableScheduledTask
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
     /// <param name="localization">Instance of the <see cref="ILocalizationManager"/> interface.</param>
     /// <param name="dbContextFactory">Instance of the <see cref="IDbContextFactory{TContext}"/> interface.</param>
-    public PeopleValidationTask(ILibraryManager libraryManager, ILocalizationManager localization, IDbContextFactory<JellyfinDbContext> dbContextFactory)
+    public PeopleValidationTask(ILibraryManager libraryManager, ILocalizationManager localization, IDbContextFactory<MulletaFlixDbContext> dbContextFactory)
     {
         _libraryManager = libraryManager;
         _localization = localization;
@@ -127,3 +127,4 @@ public class PeopleValidationTask : IScheduledTask, IConfigurableScheduledTask
         }
     }
 }
+

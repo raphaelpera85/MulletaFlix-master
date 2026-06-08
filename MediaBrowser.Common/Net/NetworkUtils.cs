@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Net;
 using Microsoft.Extensions.Logging;
 
@@ -400,3 +400,4 @@ public static partial class NetworkUtils
         return network.Contains(address);
     }
 }
+

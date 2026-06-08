@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MediaBrowser.Controller.Net
 {
@@ -67,3 +67,4 @@ namespace MediaBrowser.Controller.Net
         public bool HasToken => !string.IsNullOrWhiteSpace(Token);
     }
 }
+

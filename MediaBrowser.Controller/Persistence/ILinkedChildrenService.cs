@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities.Audio;
 using LinkedChildType = MediaBrowser.Controller.Entities.LinkedChildType;
 
@@ -50,3 +50,4 @@ public interface ILinkedChildrenService
     /// <param name="childType">The type of linked child relationship.</param>
     void UpsertLinkedChild(Guid parentId, Guid childId, LinkedChildType childType);
 }
+

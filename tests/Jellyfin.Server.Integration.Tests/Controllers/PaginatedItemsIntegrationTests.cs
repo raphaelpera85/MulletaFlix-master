@@ -1,22 +1,22 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers;
+namespace MulletaFlix.Server.Integration.Tests.Controllers;
 
-public sealed class PaginatedItemsIntegrationTests : IClassFixture<JellyfinApplicationFactory>
+public sealed class PaginatedItemsIntegrationTests : IClassFixture<MulletaFlixApplicationFactory>
 {
-    private readonly JellyfinApplicationFactory _factory;
+    private readonly MulletaFlixApplicationFactory _factory;
     private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
     private static string? _accessToken;
 
-    public PaginatedItemsIntegrationTests(JellyfinApplicationFactory factory)
+    public PaginatedItemsIntegrationTests(MulletaFlixApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -54,3 +54,4 @@ public sealed class PaginatedItemsIntegrationTests : IClassFixture<JellyfinAppli
         Assert.True(result.TotalRecordCount >= 0);
     }
 }
+

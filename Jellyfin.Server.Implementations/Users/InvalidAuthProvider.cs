@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+﻿using System.Threading.Tasks;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Authentication;
 
-namespace Jellyfin.Server.Implementations.Users
+namespace MulletaFlix.Server.Implementations.Users
 {
     /// <summary>
     /// An invalid authentication provider.
@@ -28,3 +28,4 @@ namespace Jellyfin.Server.Implementations.Users
         }
     }
 }
+

@@ -1,15 +1,15 @@
-using MediaBrowser.Common.Configuration;
+﻿using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Model.Branding;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Branding controller.
 /// </summary>
-public class BrandingController : BaseJellyfinApiController
+public class BrandingController : BaseMulletaFlixApiController
 {
     private readonly IServerConfigurationManager _serverConfigurationManager;
 
@@ -63,3 +63,4 @@ public class BrandingController : BaseJellyfinApiController
         return options.CustomCss ?? string.Empty;
     }
 }
+

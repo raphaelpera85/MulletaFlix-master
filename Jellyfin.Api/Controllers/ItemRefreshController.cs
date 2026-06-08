@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Item Refresh Controller.
@@ -21,7 +21,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("Items")]
 [Authorize(Policy = Policies.RequiresElevation)]
 [Tags("Library")]
-public class ItemRefreshController : BaseJellyfinApiController
+public class ItemRefreshController : BaseMulletaFlixApiController
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IProviderManager _providerManager;
@@ -92,3 +92,4 @@ public class ItemRefreshController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

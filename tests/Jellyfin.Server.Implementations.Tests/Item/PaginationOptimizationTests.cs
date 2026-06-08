@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Item;
+namespace MulletaFlix.Server.Implementations.Tests.Item;
 
 #pragma warning disable SA1402, SA1649
 public static class PaginationOptimizer
@@ -98,3 +98,4 @@ public class PaginationOptimizationTests
         Assert.Empty(result);
     }
 }
+

@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -6,8 +6,8 @@ using System;
 using System.IO;
 using System.Linq;
 using Emby.Naming.Book;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Resolvers;
@@ -84,3 +84,4 @@ namespace Emby.Server.Implementations.Library.Resolvers.Books
         }
     }
 }
+

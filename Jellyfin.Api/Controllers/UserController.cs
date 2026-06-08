@@ -1,16 +1,16 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.Models.UserDtos;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.Models.UserDtos;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
@@ -30,13 +30,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// User controller.
 /// </summary>
 [Route("Users")]
-public class UserController : BaseJellyfinApiController
+public class UserController : BaseMulletaFlixApiController
 {
     private readonly IUserManager _userManager;
     private readonly ISessionManager _sessionManager;
@@ -47,6 +47,7 @@ public class UserController : BaseJellyfinApiController
     private readonly ILogger _logger;
     private readonly IQuickConnect _quickConnectManager;
     private readonly IPlaylistManager _playlistManager;
+    private readonly IUserLicenseManager _userLicenseManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserController"/> class.
@@ -60,6 +61,7 @@ public class UserController : BaseJellyfinApiController
     /// <param name="logger">Instance of the <see cref="ILogger"/> interface.</param>
     /// <param name="quickConnectManager">Instance of the <see cref="IQuickConnect"/> interface.</param>
     /// <param name="playlistManager">Instance of the <see cref="IPlaylistManager"/> interface.</param>
+    /// <param name="userLicenseManager">Instance of the <see cref="IUserLicenseManager"/> interface.</param>
     public UserController(
         IUserManager userManager,
         ISessionManager sessionManager,
@@ -69,7 +71,8 @@ public class UserController : BaseJellyfinApiController
         IServerConfigurationManager config,
         ILogger<UserController> logger,
         IQuickConnect quickConnectManager,
-        IPlaylistManager playlistManager)
+        IPlaylistManager playlistManager,
+        IUserLicenseManager userLicenseManager)
     {
         _userManager = userManager;
         _sessionManager = sessionManager;
@@ -80,6 +83,7 @@ public class UserController : BaseJellyfinApiController
         _logger = logger;
         _quickConnectManager = quickConnectManager;
         _playlistManager = playlistManager;
+        _userLicenseManager = userLicenseManager;
     }
 
     /// <summary>
@@ -213,7 +217,7 @@ public class UserController : BaseJellyfinApiController
     public async Task<ActionResult<AuthenticationResult>> AuthenticateUserByName([FromBody, Required] AuthenticateUserByName request)
     {
         var auth = await _authContext.GetAuthorizationInfo(Request).ConfigureAwait(false);
-        var appName = string.IsNullOrWhiteSpace(auth.Client) ? "Jellyfin Web" : auth.Client;
+        var appName = string.IsNullOrWhiteSpace(auth.Client) ? "MulletaFlix Web" : auth.Client;
         var appVersion = string.IsNullOrWhiteSpace(auth.Version) ? string.Empty : auth.Version;
         var deviceId = string.IsNullOrWhiteSpace(auth.DeviceId) ? HttpContext.GetNormalizedRemoteIP().ToString() : auth.DeviceId;
         var deviceName = string.IsNullOrWhiteSpace(auth.Device) ? "Browser" : auth.Device;
@@ -532,6 +536,12 @@ public class UserController : BaseJellyfinApiController
             await _userManager.ChangePassword(newUser.Id, request.Password).ConfigureAwait(false);
         }
 
+        await _userLicenseManager.SetLicenseAsync(
+            newUser.Id,
+            0,
+            "UsuÃ¡rio criado automaticamente com 30 minutos de teste.",
+            User.GetUserId()).ConfigureAwait(false);
+
         var result = _userManager.GetUserDto(newUser, HttpContext.GetNormalizedRemoteIP().ToString());
 
         return result;
@@ -568,15 +578,24 @@ public class UserController : BaseJellyfinApiController
             newUser = await _userManager.CreateUserAsync(request.Name).ConfigureAwait(false);
             await _userManager.ChangePassword(newUser.Id, request.Password).ConfigureAwait(false);
 
+            await _userLicenseManager.SetLicenseAsync(
+                newUser.Id,
+                0,
+                "UsuÃ¡rio criado pelo cadastro com 30 minutos de teste.",
+                Guid.Empty).ConfigureAwait(false);
+
             var policy = _userManager.GetUserDto(newUser).Policy;
+            policy.EnableRemoteAccess = true;
+            policy.IsAdministrator = false;
+            policy.IsDisabled = false;
             policy.IsHidden = false;
-            policy.IsDisabled = true;
             await _userManager.UpdatePolicyAsync(newUser.Id, policy).ConfigureAwait(false);
 
             registrationSucceeded = true;
             return Ok(new RegisterUserResult
             {
-                Success = true
+                Success = true,
+                Message = "Cadastro realizado com sucesso. Sua conta recebeu 30 minutos de teste."
             });
         }
         catch (ArgumentException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
@@ -726,3 +745,4 @@ public class UserController : BaseJellyfinApiController
         return result;
     }
 }
+

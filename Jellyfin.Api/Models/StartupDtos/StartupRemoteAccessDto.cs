@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Api.Models.StartupDtos;
+namespace MulletaFlix.Api.Models.StartupDtos;
 
 /// <summary>
 /// Startup remote access dto.
@@ -13,3 +13,4 @@ public class StartupRemoteAccessDto
     [Required]
     public bool EnableRemoteAccess { get; set; }
 }
+

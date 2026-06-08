@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.IO;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.TV;
+namespace MulletaFlix.Providers.Tests.TV;
 
 public class EpisodeMetadataServiceTests
 {
@@ -108,3 +108,4 @@ public class EpisodeMetadataServiceTests
         }
     }
 }
+

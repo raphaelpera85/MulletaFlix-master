@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Represents an ItemValue for a BaseItem.
@@ -35,3 +35,4 @@ public class ItemValue
     public ICollection<ItemValueMap>? BaseItemsMap { get; set; }
 #pragma warning restore CA2227 // Collection properties should be read only
 }
+

@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using BlurHashSharp.SkiaSharp;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Drawing;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using Svg.Skia;
 
-namespace Jellyfin.Drawing.Skia;
+namespace MulletaFlix.Drawing.Skia;
 
 /// <summary>
 /// Image encoder that uses <see cref="SkiaSharp"/> to manipulate images.
@@ -123,19 +123,19 @@ public class SkiaEncoder : IImageEncoder
     /// <summary>
     /// Initialize the list of typefaces
     /// We have to statically build a list of typefaces because MatchCharacter only accepts a single character or code point
-    /// But in reality a human-readable character (grapheme cluster) could be multiple code points. For example, 🚵🏻‍♀️ is a single emoji but 5 code points (U+1F6B5 + U+1F3FB + U+200D + U+2640 + U+FE0F).
+    /// But in reality a human-readable character (grapheme cluster) could be multiple code points. For example, ðŸšµðŸ»â€â™€ï¸ is a single emoji but 5 code points (U+1F6B5 + U+1F3FB + U+200D + U+2640 + U+FE0F).
     /// </summary>
     /// <returns>The list of typefaces.</returns>
     private static SKTypeface?[] InitializeTypefaces()
     {
         int[] chars = [
-            '鸡', // CJK Simplified Chinese
-            '雞', // CJK Traditional Chinese
-            'ノ', // CJK Japanese
-            '각', // CJK Korean
-            128169, // Emojis, 128169 is the Pile of Poo (💩) emoji
-            'ז', // Hebrew
-            'ي' // Arabic
+            '\u9E21', // CJK Simplified Chinese
+            '\u96DE', // CJK Traditional Chinese
+            '\u30CE', // CJK Japanese
+            '\uAC01', // CJK Korean
+            128169, // Emojis, 128169 is the Pile of Poo (ðŸ’©) emoji
+            '\u05D6', // Hebrew
+            '\u064A' // Arabic
         ];
         var fonts = new List<SKTypeface>(chars.Length + 1);
         foreach (var ch in chars)
@@ -207,7 +207,7 @@ public class SkiaEncoder : IImageEncoder
         var safePath = NormalizePath(path);
         if (new FileInfo(safePath).Length == 0)
         {
-            _logger.LogDebug("Skip zero‑byte image {FilePath}", path);
+            _logger.LogDebug("Skip zeroâ€‘byte image {FilePath}", path);
             return default;
         }
 
@@ -219,11 +219,11 @@ public class SkiaEncoder : IImageEncoder
             switch (result)
             {
                 case SKCodecResult.Success:
-                // Skia/SkiaSharp edge‑case: when the image header is parsed but the actual pixel
-                // decode fails (truncated JPEG/PNG, exotic ICC/EXIF, CMYK without color‑transform, etc.)
-                // `SKCodec.Create` returns a *non‑null* codec together with
+                // Skia/SkiaSharp edgeâ€‘case: when the image header is parsed but the actual pixel
+                // decode fails (truncated JPEG/PNG, exotic ICC/EXIF, CMYK without colorâ€‘transform, etc.)
+                // `SKCodec.Create` returns a *nonâ€‘null* codec together with
                 // SKCodecResult.InternalError.  The header still contains valid dimensions,
-                // which is all we need here – so we fall back to them instead of aborting.
+                // which is all we need here â€“ so we fall back to them instead of aborting.
                 // See e.g. Skia bugs #4139, #6092.
                 case SKCodecResult.InternalError when codec is not null:
                     var info = codec.Info;
@@ -820,3 +820,4 @@ public class SkiaEncoder : IImageEncoder
         return null;
     }
 }
+

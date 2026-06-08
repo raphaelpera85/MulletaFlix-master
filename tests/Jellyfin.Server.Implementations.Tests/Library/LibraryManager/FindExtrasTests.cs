@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,7 +21,7 @@ using MediaBrowser.Model.IO;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library.LibraryManager;
+namespace MulletaFlix.Server.Implementations.Tests.Library.LibraryManager;
 
 public class FindExtrasTests
 {
@@ -332,3 +332,4 @@ public class FindExtrasTests
         Assert.Equal("/series/Dexter/trailers/trailer2.mkv", extras[1].Path);
     }
 }
+

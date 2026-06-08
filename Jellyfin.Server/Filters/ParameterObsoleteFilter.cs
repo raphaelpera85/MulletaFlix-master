@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Linq;
-using Jellyfin.Api.Attributes;
+using MulletaFlix.Api.Attributes;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters
+namespace MulletaFlix.Server.Filters
 {
     /// <summary>
     /// Mark parameter as deprecated if it has the <see cref="ParameterObsoleteAttribute"/>.
@@ -40,3 +40,4 @@ namespace Jellyfin.Server.Filters
         }
     }
 }
+

@@ -1,9 +1,9 @@
-using System;
-using Jellyfin.Database.Providers.Sqlite.ValueConverters;
+﻿using System;
+using MulletaFlix.Database.Providers.Sqlite.ValueConverters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Jellyfin.Database.Providers.Sqlite;
+namespace MulletaFlix.Database.Providers.Sqlite;
 
 /// <summary>
 /// Model builder extensions.
@@ -45,3 +45,4 @@ public static class ModelBuilderExtensions
         modelBuilder.UseValueConverterForType<DateTime?>(new DateTimeKindValueConverter(kind));
     }
 }
+

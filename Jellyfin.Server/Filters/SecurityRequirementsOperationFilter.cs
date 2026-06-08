@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Api.Auth.DefaultAuthorizationPolicy;
-using Jellyfin.Api.Constants;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Auth.DefaultAuthorizationPolicy;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Extensions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters;
+namespace MulletaFlix.Server.Filters;
 
 /// <summary>
 /// Security requirement operation filter.
@@ -18,15 +19,15 @@ public class SecurityRequirementsOperationFilter : IOperationFilter
     private const string DefaultAuthPolicy = "DefaultAuthorization";
     private static readonly Type _attributeType = typeof(AuthorizeAttribute);
 
-    private readonly IAuthorizationPolicyProvider _authorizationPolicyProvider;
+    private readonly AuthorizationOptions _authorizationOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SecurityRequirementsOperationFilter"/> class.
     /// </summary>
-    /// <param name="authorizationPolicyProvider">The authorization policy provider.</param>
-    public SecurityRequirementsOperationFilter(IAuthorizationPolicyProvider authorizationPolicyProvider)
+    /// <param name="authorizationOptions">The authorization options.</param>
+    public SecurityRequirementsOperationFilter(IOptions<AuthorizationOptions> authorizationOptions)
     {
-        _authorizationPolicyProvider = authorizationPolicyProvider;
+        _authorizationOptions = authorizationOptions.Value;
     }
 
     /// <inheritdoc />
@@ -76,7 +77,7 @@ public class SecurityRequirementsOperationFilter : IOperationFilter
         {
             foreach (var scope in requiredScopes)
             {
-                var authorizationPolicy = _authorizationPolicyProvider.GetPolicyAsync(scope).GetAwaiter().GetResult();
+                var authorizationPolicy = _authorizationOptions.GetPolicy(scope);
                 if (authorizationPolicy is not null
                     && authorizationPolicy.Requirements.Any(r => r is DefaultAuthorizationRequirement))
                 {
@@ -89,3 +90,4 @@ public class SecurityRequirementsOperationFilter : IOperationFilter
         operation.Security = [new OpenApiSecurityRequirement { [scheme] = requiredScopes }];
     }
 }
+

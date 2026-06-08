@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace Jellyfin.Server.ServerSetupApp;
+namespace MulletaFlix.Server.ServerSetupApp;
 
 /// <summary>
 /// Defines the Startup Logger. This logger acts an an aggregate logger that will push though all log messages to both the attached logger as well as the startup UI.
@@ -64,3 +64,4 @@ public interface IStartupLogger<TCategory> : IStartupLogger
     /// <returns>A new logger that can write to the group.</returns>
     new IStartupLogger<TCategory> BeginGroup(FormattableString logEntry);
 }
+

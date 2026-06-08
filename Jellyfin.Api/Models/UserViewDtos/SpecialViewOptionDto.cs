@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.UserViewDtos;
+﻿namespace MulletaFlix.Api.Models.UserViewDtos;
 
 /// <summary>
 /// Special view option dto.
@@ -15,3 +15,4 @@ public class SpecialViewOptionDto
     /// </summary>
     public string? Id { get; set; }
 }
+

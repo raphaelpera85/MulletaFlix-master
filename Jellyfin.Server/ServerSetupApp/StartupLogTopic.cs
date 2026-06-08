@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.ServerSetupApp;
+namespace MulletaFlix.Server.ServerSetupApp;
 
 /// <summary>
 /// Defines a topic for the Startup UI.
@@ -29,3 +29,4 @@ public class StartupLogTopic
     /// </summary>
     public Collection<StartupLogTopic> Children { get; } = [];
 }
+

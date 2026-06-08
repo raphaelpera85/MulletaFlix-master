@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Jellyfin.Server.ServerSetupApp;
+namespace MulletaFlix.Server.ServerSetupApp;
 
 internal static class StartupLoggerExtensions
 {
@@ -16,3 +16,4 @@ internal static class StartupLoggerExtensions
             .AddTransient(typeof(IStartupLogger<>), typeof(StartupLogger<>));
     }
 }
+

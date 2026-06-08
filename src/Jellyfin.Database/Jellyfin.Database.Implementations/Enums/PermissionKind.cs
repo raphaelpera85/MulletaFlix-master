@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// The types of user permissions.
@@ -125,3 +125,4 @@ public enum PermissionKind
     /// </summary>
     EnableLyricManagement = 23,
 }
+

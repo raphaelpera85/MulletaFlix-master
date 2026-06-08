@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Text;
 using MediaBrowser.Controller.LiveTv;
 
-namespace Jellyfin.LiveTv.Recordings
+namespace MulletaFlix.LiveTv.Recordings
 {
     internal static class RecordingHelper
     {
@@ -74,3 +74,4 @@ namespace Jellyfin.LiveTv.Recordings
         }
     }
 }
+

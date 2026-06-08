@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Api.Models.LibraryDtos;
+namespace MulletaFlix.Api.Models.LibraryDtos;
 
 /// <summary>
 /// Library options result dto.
@@ -38,3 +38,4 @@ public class LibraryOptionsResultDto
     /// </summary>
     public IReadOnlyList<LibraryTypeOptionsDto> TypeOptions { get; set; } = Array.Empty<LibraryTypeOptionsDto>();
 }
+

@@ -1,8 +1,8 @@
-using Emby.Naming.Audio;
+﻿using Emby.Naming.Audio;
 using Emby.Naming.Common;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Music
+namespace MulletaFlix.Naming.Tests.Music
 {
     public class MultiDiscAlbumTests
     {
@@ -24,7 +24,7 @@ namespace Jellyfin.Naming.Tests.Music
         [InlineData("disc 1", true)]
         [InlineData("disk 1", true)]
         [InlineData("disk", false)]
-        [InlineData("disk ·", false)]
+        [InlineData("disk Â·", false)]
         [InlineData("disk a", false)]
         [InlineData("disk volume", false)]
         [InlineData("disc disc", false)]
@@ -32,7 +32,7 @@ namespace Jellyfin.Naming.Tests.Music
         [InlineData("cd  - 1", true)]
         [InlineData("disc- 1", true)]
         [InlineData("disk - 1", true)]
-        [InlineData("Disc 01 (Hugo Wolf · 24 Lieder)", true)]
+        [InlineData("Disc 01 (Hugo Wolf Â· 24 Lieder)", true)]
         [InlineData("Disc 04 (Encores and Folk Songs)", true)]
         [InlineData("Disc04 (Encores and Folk Songs)", true)]
         [InlineData("Disc 04(Encores and Folk Songs)", true)]
@@ -48,3 +48,4 @@ namespace Jellyfin.Naming.Tests.Music
         }
     }
 }
+

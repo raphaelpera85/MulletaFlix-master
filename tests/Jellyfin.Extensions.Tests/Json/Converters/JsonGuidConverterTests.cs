@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Text.Json;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions.Json.Converters;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests.Json.Converters
+namespace MulletaFlix.Extensions.Tests.Json.Converters
 {
     public class JsonGuidConverterTests
     {
@@ -66,3 +66,4 @@ namespace Jellyfin.Extensions.Tests.Json.Converters
         }
     }
 }
+

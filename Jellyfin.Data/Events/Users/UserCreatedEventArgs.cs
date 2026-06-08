@@ -1,6 +1,6 @@
-using Jellyfin.Database.Implementations.Entities;
+﻿using MulletaFlix.Database.Implementations.Entities;
 
-namespace Jellyfin.Data.Events.Users
+namespace MulletaFlix.Data.Events.Users
 {
     /// <summary>
     /// An event that occurs when a user is created.
@@ -16,3 +16,4 @@ namespace Jellyfin.Data.Events.Users
         }
     }
 }
+

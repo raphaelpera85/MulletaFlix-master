@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Linq;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using Castle.Components.DictionaryAdapter;
 using Emby.Server.Implementations.IO;
 using Emby.Server.Implementations.Library;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
@@ -16,7 +16,7 @@ using MediaBrowser.Model.MediaInfo;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library
+namespace MulletaFlix.Server.Implementations.Tests.Library
 {
     public class MediaSourceManagerTests
     {
@@ -153,3 +153,4 @@ namespace Jellyfin.Server.Implementations.Tests.Library
         }
     }
 }
+

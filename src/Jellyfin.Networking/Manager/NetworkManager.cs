@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 using static MediaBrowser.Controller.Extensions.ConfigurationExtensions;
 using IConfigurationManager = MediaBrowser.Common.Configuration.IConfigurationManager;
 
-namespace Jellyfin.Networking.Manager;
+namespace MulletaFlix.Networking.Manager;
 
 /// <summary>
 /// Class to take care of network interface management.
@@ -751,7 +751,7 @@ public class NetworkManager : INetworkManager, IDisposable
     }
 
     /// <summary>
-    /// Reads the jellyfin configuration of the configuration manager and produces a list of interfaces that should be bound.
+    /// Reads the MulletaFlix configuration of the configuration manager and produces a list of interfaces that should be bound.
     /// </summary>
     /// <param name="logger">Logger to use for messages.</param>
     /// <param name="individualInterfaces">Defines that only known interfaces should be used.</param>
@@ -759,7 +759,7 @@ public class NetworkManager : INetworkManager, IDisposable
     /// <param name="knownInterfaces">The known interfaces that gets returned if possible or instructed.</param>
     /// <param name="readIpv4">Include IPV4 type interfaces.</param>
     /// <param name="readIpv6">Include IPV6 type interfaces.</param>
-    /// <returns>A list of ip address of which jellyfin should bind to.</returns>
+    /// <returns>A list of ip address of which MulletaFlix should bind to.</returns>
     public static IReadOnlyList<IPData> GetAllBindInterfaces(
         ILogger<NetworkManager> logger,
         bool individualInterfaces,
@@ -840,12 +840,12 @@ public class NetworkManager : INetworkManager, IDisposable
         {
             if (IsIPv4Enabled && !IsIPv6Enabled && source.AddressFamily == AddressFamily.InterNetworkV6)
             {
-                _logger.LogWarning("IPv6 is disabled in Jellyfin, but enabled in the OS. This may affect how the interface is selected.");
+                _logger.LogWarning("IPv6 is disabled in MulletaFlix, but enabled in the OS. This may affect how the interface is selected.");
             }
 
             if (!IsIPv4Enabled && IsIPv6Enabled && source.AddressFamily == AddressFamily.InterNetwork)
             {
-                _logger.LogWarning("IPv4 is disabled in Jellyfin, but enabled in the OS. This may affect how the interface is selected.");
+                _logger.LogWarning("IPv4 is disabled in MulletaFlix, but enabled in the OS. This may affect how the interface is selected.");
             }
 
             bool isExternal = !IsInLocalNetwork(source);
@@ -1207,3 +1207,4 @@ public class NetworkManager : INetworkManager, IDisposable
         }
     }
 }
+

@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
     /// <summary>
     /// Extension methods for the <see cref="StringBuilder"/> class.
@@ -33,3 +33,4 @@ namespace Jellyfin.Extensions
         }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Enums;
+﻿namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// An enum that represents a day of the week, weekdays, weekends, or all days.
@@ -55,3 +55,4 @@ public enum DynamicDayOfWeek
     /// </summary>
     Weekend = 9
 }
+

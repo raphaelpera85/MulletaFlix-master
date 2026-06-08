@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters
+namespace MulletaFlix.Extensions.Json.Converters
 {
     /// <summary>
     /// Json Pipe delimited collection converter factory.
@@ -29,3 +29,4 @@ namespace Jellyfin.Extensions.Json.Converters
         }
     }
 }
+

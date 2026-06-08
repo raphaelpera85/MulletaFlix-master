@@ -1,34 +1,34 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Extensions;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Extensions;
+using MulletaFlix.Server.ServerSetupApp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to refresh CleanName values for all library items.
 /// </summary>
-[JellyfinMigration("2025-10-08T12:00:00", nameof(RefreshCleanNames))]
-[JellyfinMigrationBackup(JellyfinDb = true)]
+[MulletaFlixMigration("2025-10-08T12:00:00", nameof(RefreshCleanNames))]
+[MulletaFlixMigrationBackup(MulletaFlixDb = true)]
 public class RefreshCleanNames : IAsyncMigrationRoutine
 {
     private readonly IStartupLogger<RefreshCleanNames> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RefreshCleanNames"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
-    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{JellyfinDbContext}"/> interface.</param>
+    /// <param name="dbProvider">Instance of the <see cref="IDbContextFactory{MulletaFlixDbContext}"/> interface.</param>
     public RefreshCleanNames(
         IStartupLogger<RefreshCleanNames> logger,
-        IDbContextFactory<JellyfinDbContext> dbProvider)
+        IDbContextFactory<MulletaFlixDbContext> dbProvider)
     {
         _logger = logger;
         _dbProvider = dbProvider;
@@ -100,3 +100,4 @@ public class RefreshCleanNames : IAsyncMigrationRoutine
             sw.Elapsed);
     }
 }
+

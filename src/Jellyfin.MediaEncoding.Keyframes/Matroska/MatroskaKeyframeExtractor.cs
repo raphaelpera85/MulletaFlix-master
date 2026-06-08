@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Jellyfin.MediaEncoding.Keyframes.Matroska.Extensions;
-using Jellyfin.MediaEncoding.Keyframes.Matroska.Models;
+using MulletaFlix.MediaEncoding.Keyframes.Matroska.Extensions;
+using MulletaFlix.MediaEncoding.Keyframes.Matroska.Models;
 using NEbml.Core;
 
-namespace Jellyfin.MediaEncoding.Keyframes.Matroska;
+namespace MulletaFlix.MediaEncoding.Keyframes.Matroska;
 
 /// <summary>
 /// The keyframe extractor for the matroska container.
@@ -85,3 +85,4 @@ public static class MatroskaKeyframeExtractor
         return Convert.ToInt64(unscaledValue * timestampScale / 100);
     }
 }
+

@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Jellyfin.Extensions
+namespace MulletaFlix.Extensions
 {
     /// <summary>
     /// Provides <c>CopyTo</c> extensions methods for <see cref="IReadOnlyList{T}" />.
@@ -24,3 +24,4 @@ namespace Jellyfin.Extensions
         }
     }
 }
+

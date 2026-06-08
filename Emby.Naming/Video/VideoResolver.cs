@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Emby.Naming.Common;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 
 namespace Emby.Naming.Video
 {
@@ -94,6 +94,8 @@ namespace Emby.Naming.Video
                 {
                     name = newName;
                 }
+
+                name = TitleNormalization.RemoveTrailingReleaseTags(name);
             }
 
             return new VideoFileInfo(
@@ -158,3 +160,4 @@ namespace Emby.Naming.Video
         }
     }
 }
+

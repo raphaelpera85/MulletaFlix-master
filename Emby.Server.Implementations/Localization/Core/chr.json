@@ -27,7 +27,7 @@
     "Latest": "Uwodoli",
     "Music": "Danodisgisgi",
     "NameSeasonUnknown": "Tsunita anidvdisgi",
-    "NewVersionIsAvailable": "Danodigwe anigadi Jellyfin Server tsadanidigwe adisdi uwodvdi diganidinonvhi.",
+    "NewVersionIsAvailable": "Danodigwe anigadi MulletaFlix Server tsadanidigwe adisdi uwodvdi diganidinonvhi.",
     "NotificationOptionApplicationUpdateAvailable": "Disisdi tsadanidigwe udvdi",
     "NotificationOptionApplicationUpdateInstalled": "Disisdi tsadanidigwe digawvdi",
     "NotificationOptionAudioPlaybackStopped": "Didanidigwe diganuyisgisgi digawvdi",
@@ -36,3 +36,4 @@
     "NotificationOptionPluginError": "Ditsigvhnidv anadvnatisgisgi",
     "NotificationOptionPluginInstalled": "Ditsigvhnidv digawvdi"
 }
+

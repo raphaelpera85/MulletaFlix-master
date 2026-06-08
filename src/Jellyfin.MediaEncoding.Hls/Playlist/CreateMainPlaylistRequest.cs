@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.MediaEncoding.Hls.Playlist;
+namespace MulletaFlix.MediaEncoding.Hls.Playlist;
 
 /// <summary>
 /// Request class for the <see cref="IDynamicHlsPlaylistGenerator.CreateMainPlaylist(CreateMainPlaylistRequest)"/> method.
@@ -70,3 +70,4 @@ public class CreateMainPlaylistRequest
     /// </summary>
     public bool IsRemuxingVideo { get; }
 }
+

@@ -1,17 +1,17 @@
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using MediaBrowser.Model.IO;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests
+namespace MulletaFlix.Server.Integration.Tests
 {
-    public sealed class OpenApiSpecTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class OpenApiSpecTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
         private readonly ITestOutputHelper _outputHelper;
 
-        public OpenApiSpecTests(JellyfinApplicationFactory factory, ITestOutputHelper outputHelper)
+        public OpenApiSpecTests(MulletaFlixApplicationFactory factory, ITestOutputHelper outputHelper)
         {
             _factory = factory;
             _outputHelper = outputHelper;
@@ -38,3 +38,4 @@ namespace Jellyfin.Server.Integration.Tests
         }
     }
 }
+

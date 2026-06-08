@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Server.Migrations;
+namespace MulletaFlix.Server.Migrations;
 
 /// <summary>
-/// Marks an <see cref="JellyfinMigrationAttribute"/> migration and instructs the <see cref="JellyfinMigrationService"/> to perform a backup.
+/// Marks an <see cref="MulletaFlixMigrationAttribute"/> migration and instructs the <see cref="MulletaFlixMigrationService"/> to perform a backup.
 /// </summary>
 [AttributeUsage(System.AttributeTargets.Class, Inherited = true, AllowMultiple = true)]
-public sealed class JellyfinMigrationBackupAttribute : System.Attribute
+public sealed class MulletaFlixMigrationBackupAttribute : System.Attribute
 {
     /// <summary>
     /// Gets or Sets a value indicating whether a backup of the old library.db should be performed.
@@ -16,7 +16,7 @@ public sealed class JellyfinMigrationBackupAttribute : System.Attribute
     /// <summary>
     /// Gets or Sets a value indicating whether a backup of the Database should be performed.
     /// </summary>
-    public bool JellyfinDb { get; set; }
+    public bool MulletaFlixDb { get; set; }
 
     /// <summary>
     /// Gets or Sets a value indicating whether a backup of the metadata folder should be performed.
@@ -33,3 +33,4 @@ public sealed class JellyfinMigrationBackupAttribute : System.Attribute
     /// </summary>
     public bool Subtitles { get; set; }
 }
+

@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Xml.Serialization;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Database.Implementations.Enums;
 
-namespace Jellyfin.Database.Implementations.Entities
+namespace MulletaFlix.Database.Implementations.Entities
 {
     /// <summary>
     /// An entity representing a user's access schedule.
@@ -60,3 +60,4 @@ namespace Jellyfin.Database.Implementations.Entities
         public double EndHour { get; set; }
     }
 }
+

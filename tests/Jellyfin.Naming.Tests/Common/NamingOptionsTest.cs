@@ -1,7 +1,7 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Common
+namespace MulletaFlix.Naming.Tests.Common
 {
     public class NamingOptionsTest
     {
@@ -31,3 +31,4 @@ namespace Jellyfin.Naming.Tests.Common
         }
     }
 }
+

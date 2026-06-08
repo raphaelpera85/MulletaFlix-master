@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable CA1309 // Use ordinal string comparison
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
@@ -10,18 +10,18 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.MatchCriteria;
-using Jellyfin.Extensions;
-using Jellyfin.Server.Implementations.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.MatchCriteria;
+using MulletaFlix.Extensions;
+using MulletaFlix.Server.Implementations.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Entities;
 using Microsoft.EntityFrameworkCore;
-using BaseItemEntity = Jellyfin.Database.Implementations.Entities.BaseItemEntity;
+using BaseItemEntity = MulletaFlix.Database.Implementations.Entities.BaseItemEntity;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 public sealed partial class BaseItemRepository
 {
@@ -34,7 +34,7 @@ public sealed partial class BaseItemRepository
     /// <inheritdoc />
     public IQueryable<BaseItemEntity> TranslateQuery(
         IQueryable<BaseItemEntity> baseQuery,
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         InternalItemsQuery filter)
     {
         const int HDWidth = 1200;
@@ -1230,3 +1230,4 @@ public sealed partial class BaseItemRepository
         return baseQuery;
     }
 }
+

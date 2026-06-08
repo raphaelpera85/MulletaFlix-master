@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Enums;
+﻿using System.Collections.Generic;
+using MulletaFlix.Database.Implementations.Enums;
 
 namespace MediaBrowser.Model.Dto
 {
@@ -104,3 +104,4 @@ namespace MediaBrowser.Model.Dto
         public string? Client { get; set; }
     }
 }
+

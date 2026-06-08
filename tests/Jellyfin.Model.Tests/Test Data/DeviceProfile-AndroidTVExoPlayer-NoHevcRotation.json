@@ -1,5 +1,5 @@
 {
-    "Name": "Jellyfin AndroidTV-ExoPlayer",
+    "Name": "MulletaFlix AndroidTV-ExoPlayer",
     "EnableAlbumArtInDidl": false,
     "EnableSingleAlbumArtLimit": false,
     "EnableSingleSubtitleLimit": false,
@@ -160,3 +160,4 @@
     ],
     "$type": "DeviceProfile"
 }
+

@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.IO;
 using Emby.Server.Implementations.Library;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library
+namespace MulletaFlix.Server.Implementations.Tests.Library
 {
     public class PathExtensionsTests
     {
@@ -135,3 +135,4 @@ namespace Jellyfin.Server.Implementations.Tests.Library
         }
     }
 }
+

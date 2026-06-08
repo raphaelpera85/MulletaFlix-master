@@ -1,9 +1,9 @@
-using System.Linq;
+﻿using System.Linq;
 using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.Providers;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Extensions;
+namespace MulletaFlix.Model.Tests.Extensions;
 
 public class EnumerableExtensionsTests
 {
@@ -114,3 +114,4 @@ public class EnumerableExtensionsTests
         Assert.Equal("fr", result[3].Language);
     }
 }
+

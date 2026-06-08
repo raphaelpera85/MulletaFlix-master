@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.MediaInfo;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Controller.Tests.Entities;
+namespace MulletaFlix.Controller.Tests.Entities;
 
 public class BaseItemTests
 {
@@ -47,3 +47,4 @@ public class BaseItemTests
         Assert.Equal(altName, video.GetMediaSourceName(videoAlt));
     }
 }
+

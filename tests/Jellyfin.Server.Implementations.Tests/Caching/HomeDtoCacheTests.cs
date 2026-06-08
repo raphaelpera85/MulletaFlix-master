@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Linq;
-using Jellyfin.Api.Caching;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Api.Caching;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
@@ -9,7 +9,7 @@ using MediaBrowser.Model.Querying;
 using Microsoft.Extensions.Caching.Memory;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Caching;
+namespace MulletaFlix.Server.Implementations.Tests.Caching;
 
 public class HomeDtoCacheTests
 {
@@ -104,3 +104,4 @@ public class HomeDtoCacheTests
         Assert.Equal(expected.Items[0].Name, actual.Items[0].Name);
     }
 }
+

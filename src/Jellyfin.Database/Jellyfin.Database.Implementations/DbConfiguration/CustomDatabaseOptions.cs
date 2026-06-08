@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Jellyfin.Database.Implementations.DbConfiguration;
+namespace MulletaFlix.Database.Implementations.DbConfiguration;
 
 /// <summary>
 /// Defines the options for a custom database connector.
@@ -30,3 +30,4 @@ public class CustomDatabaseOptions
     public Collection<CustomDatabaseOption> Options { get; set; } = [];
 #pragma warning restore CA2227 // Collection properties should be read only
 }
+

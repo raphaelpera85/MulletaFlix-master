@@ -1,13 +1,13 @@
-#pragma warning disable CA1044, CA1819, CA2227, CS1591
+﻿#pragma warning disable CA1044, CA1819, CA2227, CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Diacritics.Extensions;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
@@ -497,3 +497,4 @@ namespace MediaBrowser.Controller.Entities
         }
     }
 }
+

@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using MediaBrowser.Model.Dlna;
 
-namespace Jellyfin.Api.Models.MediaInfoDtos;
+namespace MulletaFlix.Api.Models.MediaInfoDtos;
 
 /// <summary>
 /// Playback info dto.
@@ -88,3 +88,4 @@ public class PlaybackInfoDto
     /// </summary>
     public bool? AlwaysBurnInSubtitleWhenTranscoding { get; set; }
 }
+

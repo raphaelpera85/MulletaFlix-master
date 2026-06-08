@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Database.Implementations.Entities.Libraries
+namespace MulletaFlix.Database.Implementations.Entities.Libraries
 {
     /// <summary>
     /// An entity containing metadata for an <see cref="Episode"/>.
@@ -47,3 +47,4 @@ namespace Jellyfin.Database.Implementations.Entities.Libraries
         public string? Tagline { get; set; }
     }
 }
+

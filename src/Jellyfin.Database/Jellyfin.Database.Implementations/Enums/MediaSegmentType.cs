@@ -1,6 +1,6 @@
-using Jellyfin.Database.Implementations.Entities;
+﻿using MulletaFlix.Database.Implementations.Entities;
 
-namespace Jellyfin.Database.Implementations.Enums;
+namespace MulletaFlix.Database.Implementations.Enums;
 
 /// <summary>
 /// Defines the types of content an individual <see cref="MediaSegment"/> represents.
@@ -37,3 +37,4 @@ public enum MediaSegmentType
     /// </summary>
     Intro = 5
 }
+

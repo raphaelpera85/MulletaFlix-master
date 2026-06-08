@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -8,9 +8,9 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Controller.TV;
 using MediaBrowser.Model.Querying;
@@ -21,19 +21,19 @@ namespace MediaBrowser.Controller.Entities
     {
         private static readonly CollectionType?[] _viewTypesEligibleForGrouping =
         {
-            Jellyfin.Data.Enums.CollectionType.movies,
-            Jellyfin.Data.Enums.CollectionType.tvshows,
+            MulletaFlix.Data.Enums.CollectionType.movies,
+            MulletaFlix.Data.Enums.CollectionType.tvshows,
             null
         };
 
         private static readonly CollectionType?[] _originalFolderViewTypes =
         {
-            Jellyfin.Data.Enums.CollectionType.books,
-            Jellyfin.Data.Enums.CollectionType.musicvideos,
-            Jellyfin.Data.Enums.CollectionType.homevideos,
-            Jellyfin.Data.Enums.CollectionType.photos,
-            Jellyfin.Data.Enums.CollectionType.music,
-            Jellyfin.Data.Enums.CollectionType.boxsets
+            MulletaFlix.Data.Enums.CollectionType.books,
+            MulletaFlix.Data.Enums.CollectionType.musicvideos,
+            MulletaFlix.Data.Enums.CollectionType.homevideos,
+            MulletaFlix.Data.Enums.CollectionType.photos,
+            MulletaFlix.Data.Enums.CollectionType.music,
+            MulletaFlix.Data.Enums.CollectionType.boxsets
         };
 
         public static ITVSeriesManager TVSeriesManager { get; set; }
@@ -165,7 +165,7 @@ namespace MediaBrowser.Controller.Entities
                 return true;
             }
 
-            return collectionFolder.CollectionType == Jellyfin.Data.Enums.CollectionType.playlists;
+            return collectionFolder.CollectionType == MulletaFlix.Data.Enums.CollectionType.playlists;
         }
 
         public static bool IsEligibleForGrouping(Folder folder)
@@ -190,3 +190,4 @@ namespace MediaBrowser.Controller.Entities
         }
     }
 }
+

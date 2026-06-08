@@ -1,4 +1,4 @@
-namespace Jellyfin.MediaEncoding.Keyframes.Matroska.Models;
+﻿namespace MulletaFlix.MediaEncoding.Keyframes.Matroska.Models;
 
 /// <summary>
 /// The matroska Info segment.
@@ -26,3 +26,4 @@ internal class Info
     /// </summary>
     public double? Duration { get; }
 }
+

@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.ModelBinders;
+namespace MulletaFlix.Api.ModelBinders;
 
 /// <summary>
 /// DateTime model binder.
@@ -46,3 +46,4 @@ public class LegacyDateTimeModelBinder : IModelBinder
         return Task.CompletedTask;
     }
 }
+

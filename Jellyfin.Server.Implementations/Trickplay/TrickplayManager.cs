@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -8,8 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
 using J2N.Collections.Generic.Extensions;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Drawing;
@@ -23,7 +23,7 @@ using MediaBrowser.Model.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.Trickplay;
+namespace MulletaFlix.Server.Implementations.Trickplay;
 
 /// <summary>
 /// ITrickplayManager implementation.
@@ -36,7 +36,7 @@ public class TrickplayManager : ITrickplayManager
     private readonly EncodingHelper _encodingHelper;
     private readonly IServerConfigurationManager _config;
     private readonly IImageEncoder _imageEncoder;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IApplicationPaths _appPaths;
     private readonly IPathManager _pathManager;
 
@@ -62,7 +62,7 @@ public class TrickplayManager : ITrickplayManager
         EncodingHelper encodingHelper,
         IServerConfigurationManager config,
         IImageEncoder imageEncoder,
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         IApplicationPaths appPaths,
         IPathManager pathManager)
     {
@@ -701,3 +701,4 @@ public class TrickplayManager : ITrickplayManager
         }
     }
 }
+

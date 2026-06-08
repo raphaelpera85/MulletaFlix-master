@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -7,10 +7,10 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.Serialization;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.Implementations.SystemBackupService;
-using Jellyfin.Server.Migrations.Stages;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.Implementations.SystemBackupService;
+using MulletaFlix.Server.Migrations.Stages;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.SystemBackupService;
 using MediaBrowser.Model.Configuration;
@@ -20,48 +20,48 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations;
+namespace MulletaFlix.Server.Migrations;
 
 /// <summary>
-/// Handles Migration of the Jellyfin data structure.
+/// Handles Migration of the MulletaFlix data structure.
 /// </summary>
-internal class JellyfinMigrationService
+internal class MulletaFlixMigrationService
 {
     private const string DbFilename = "library.db";
-    private readonly IDbContextFactory<JellyfinDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStartupLogger _startupLogger;
     private readonly IBackupService? _backupService;
-    private readonly IJellyfinDatabaseProvider? _jellyfinDatabaseProvider;
+    private readonly IMulletaFlixDatabaseProvider? _MulletaFlixDatabaseProvider;
     private readonly IApplicationPaths _applicationPaths;
-    private (string? LibraryDb, string? JellyfinDb, BackupManifestDto? FullBackup) _backupKey;
+    private (string? LibraryDb, string? MulletaFlixDb, BackupManifestDto? FullBackup) _backupKey;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="JellyfinMigrationService"/> class.
+    /// Initializes a new instance of the <see cref="MulletaFlixMigrationService"/> class.
     /// </summary>
-    /// <param name="dbContextFactory">Provides access to the jellyfin database.</param>
+    /// <param name="dbContextFactory">Provides access to the MulletaFlix database.</param>
     /// <param name="loggerFactory">The logger factory.</param>
     /// <param name="startupLogger">The startup logger for Startup UI intigration.</param>
     /// <param name="applicationPaths">Application paths for library.db backup.</param>
-    /// <param name="backupService">The jellyfin backup service.</param>
-    /// <param name="jellyfinDatabaseProvider">The jellyfin database provider.</param>
-    public JellyfinMigrationService(
-        IDbContextFactory<JellyfinDbContext> dbContextFactory,
+    /// <param name="backupService">The MulletaFlix backup service.</param>
+    /// <param name="MulletaFlixDatabaseProvider">The MulletaFlix database provider.</param>
+    public MulletaFlixMigrationService(
+        IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
         ILoggerFactory loggerFactory,
-        IStartupLogger<JellyfinMigrationService> startupLogger,
+        IStartupLogger<MulletaFlixMigrationService> startupLogger,
         IApplicationPaths applicationPaths,
         IBackupService? backupService = null,
-        IJellyfinDatabaseProvider? jellyfinDatabaseProvider = null)
+        IMulletaFlixDatabaseProvider? MulletaFlixDatabaseProvider = null)
     {
         _dbContextFactory = dbContextFactory;
         _loggerFactory = loggerFactory;
         _startupLogger = startupLogger;
         _backupService = backupService;
-        _jellyfinDatabaseProvider = jellyfinDatabaseProvider;
+        _MulletaFlixDatabaseProvider = MulletaFlixDatabaseProvider;
         _applicationPaths = applicationPaths;
 #pragma warning disable CS0618 // Type or member is obsolete
         Migrations = [.. typeof(IMigrationRoutine).Assembly.GetTypes().Where(e => typeof(IMigrationRoutine).IsAssignableFrom(e) || typeof(IAsyncMigrationRoutine).IsAssignableFrom(e))
-            .Select(e => (Type: e, Metadata: e.GetCustomAttribute<JellyfinMigrationAttribute>(), Backup: e.GetCustomAttributes<JellyfinMigrationBackupAttribute>()))
+            .Select(e => (Type: e, Metadata: e.GetCustomAttribute<MulletaFlixMigrationAttribute>(), Backup: e.GetCustomAttributes<MulletaFlixMigrationBackupAttribute>()))
             .Where(e => e.Metadata is not null)
             .GroupBy(e => e.Metadata!.Stage)
             .Select(f =>
@@ -69,7 +69,7 @@ internal class JellyfinMigrationService
                 var stage = new MigrationStage(f.Key);
                 foreach (var item in f)
                 {
-                    JellyfinMigrationBackupAttribute? backupMetadata = null;
+                    MulletaFlixMigrationBackupAttribute? backupMetadata = null;
                     if (item.Backup?.Any() == true)
                     {
                         backupMetadata = item.Backup.Aggregate(MergeBackupAttributes);
@@ -92,7 +92,7 @@ internal class JellyfinMigrationService
 
     public async Task CheckFirstTimeRunOrMigration(IApplicationPaths appPaths, StartupOptions startupOptions)
     {
-        var logger = _startupLogger.With(_loggerFactory.CreateLogger<JellyfinMigrationService>()).BeginGroup($"Migration Startup");
+        var logger = _startupLogger.With(_loggerFactory.CreateLogger<MulletaFlixMigrationService>()).BeginGroup($"Migration Startup");
         logger.LogInformation("Initialise Migration service.");
         var xmlSerializer = new MyXmlSerializer();
         var serverConfig = File.Exists(appPaths.SystemConfigurationFilePath)
@@ -107,7 +107,7 @@ internal class JellyfinMigrationService
             await using (dbContext.ConfigureAwait(false))
             {
                 var databaseCreator = dbContext.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator
-                    ?? throw new InvalidOperationException("Jellyfin does only support relational databases.");
+                    ?? throw new InvalidOperationException("MulletaFlix does only support relational databases.");
                 if (!await databaseCreator.ExistsAsync().ConfigureAwait(false))
                 {
                     await databaseCreator.CreateAsync().ConfigureAwait(false);
@@ -119,7 +119,7 @@ internal class JellyfinMigrationService
                 var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync().ConfigureAwait(false);
                 var startupScripts = flatApplyMigrations
                     .Where(e => !appliedMigrations.Any(f => f != e.BuildCodeMigrationId()))
-                    .Select(e => (Migration: e.Metadata, Script: historyRepository.GetInsertScript(new HistoryRow(e.BuildCodeMigrationId(), GetJellyfinVersion()))))
+                    .Select(e => (Migration: e.Metadata, Script: historyRepository.GetInsertScript(new HistoryRow(e.BuildCodeMigrationId(), GetMulletaFlixVersion()))))
                     .ToArray();
                 foreach (var item in startupScripts)
                 {
@@ -163,7 +163,7 @@ internal class JellyfinMigrationService
                         ];
                         // those are all migrations that had to run in the old migration system, even if not noted in the migration.xml file.
 
-                        var startupScripts = oldMigrations.Select(e => (Migration: e.Metadata, Script: historyRepository.GetInsertScript(new HistoryRow(e.BuildCodeMigrationId(), GetJellyfinVersion()))));
+                        var startupScripts = oldMigrations.Select(e => (Migration: e.Metadata, Script: historyRepository.GetInsertScript(new HistoryRow(e.BuildCodeMigrationId(), GetMulletaFlixVersion()))));
                         foreach (var item in startupScripts)
                         {
                             logger.LogInformation("Migrate migration {Key}-{Name}.", item.Migration.Key, item.Migration.Name);
@@ -183,9 +183,9 @@ internal class JellyfinMigrationService
         }
     }
 
-    public async Task MigrateStepAsync(JellyfinMigrationStageTypes stage, IServiceProvider? serviceProvider)
+    public async Task MigrateStepAsync(MulletaFlixMigrationStageTypes stage, IServiceProvider? serviceProvider)
     {
-        var logger = _startupLogger.With(_loggerFactory.CreateLogger<JellyfinMigrationService>()).BeginGroup($"Migrate stage {stage}.");
+        var logger = _startupLogger.With(_loggerFactory.CreateLogger<MulletaFlixMigrationService>()).BeginGroup($"Migrate stage {stage}.");
         ICollection<CodeMigration> migrationStage = (Migrations.FirstOrDefault(e => e.Stage == stage) as ICollection<CodeMigration>) ?? [];
 
         var dbContext = await _dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
@@ -204,7 +204,7 @@ internal class JellyfinMigrationService
                     .ToArray();
 
                 (string Key, InternalDatabaseMigration Migration)[] pendingDatabaseMigrations = [];
-                if (stage is JellyfinMigrationStageTypes.CoreInitialisation)
+                if (stage is MulletaFlixMigrationStageTypes.CoreInitialisation)
                 {
                     pendingDatabaseMigrations = migrationsAssembly.Migrations.Where(f => appliedMigrations.All(e => e.MigrationId != f.Key))
                        .Select(e => (Key: e.Key, Migration: new InternalDatabaseMigration(e, dbContext)))
@@ -229,7 +229,7 @@ internal class JellyfinMigrationService
                         migrationLogger.LogCritical("Error: {Error}", ex.Message);
                         migrationLogger.LogError(ex, "Migration {Name} failed", item.Key);
 
-                        if (_backupKey != default && _backupService is not null && _jellyfinDatabaseProvider is not null)
+                        if (_backupKey != default && _backupService is not null && _MulletaFlixDatabaseProvider is not null)
                         {
                             if (_backupKey.LibraryDb is not null)
                             {
@@ -245,16 +245,16 @@ internal class JellyfinMigrationService
                                 }
                             }
 
-                            if (_backupKey.JellyfinDb is not null)
+                            if (_backupKey.MulletaFlixDb is not null)
                             {
-                                migrationLogger.LogInformation("Attempt to rollback JellyfinDb.");
+                                migrationLogger.LogInformation("Attempt to rollback MulletaFlixDb.");
                                 try
                                 {
-                                    await _jellyfinDatabaseProvider.RestoreBackupFast(_backupKey.JellyfinDb, CancellationToken.None).ConfigureAwait(false);
+                                    await _MulletaFlixDatabaseProvider.RestoreBackupFast(_backupKey.MulletaFlixDb, CancellationToken.None).ConfigureAwait(false);
                                 }
                                 catch (Exception inner)
                                 {
-                                    migrationLogger.LogCritical(inner, "Could not rollback {LibraryPath}. Manual intervention might be required to restore a operational state.", _backupKey.JellyfinDb);
+                                    migrationLogger.LogCritical(inner, "Could not rollback {LibraryPath}. Manual intervention might be required to restore a operational state.", _backupKey.MulletaFlixDb);
                                 }
                             }
 
@@ -279,7 +279,7 @@ internal class JellyfinMigrationService
         }
     }
 
-    private static string GetJellyfinVersion()
+    private static string GetMulletaFlixVersion()
     {
         return Assembly.GetEntryAssembly()!.GetName().Version!.ToString();
     }
@@ -301,16 +301,16 @@ internal class JellyfinMigrationService
                 }
             }
 
-            if (_backupKey.JellyfinDb is not null && _jellyfinDatabaseProvider is not null)
+            if (_backupKey.MulletaFlixDb is not null && _MulletaFlixDatabaseProvider is not null)
             {
-                logger.LogInformation("Attempt to cleanup JellyfinDb backup.");
+                logger.LogInformation("Attempt to cleanup MulletaFlixDb backup.");
                 try
                 {
-                    await _jellyfinDatabaseProvider.DeleteBackup(_backupKey.JellyfinDb).ConfigureAwait(false);
+                    await _MulletaFlixDatabaseProvider.DeleteBackup(_backupKey.MulletaFlixDb).ConfigureAwait(false);
                 }
                 catch (Exception inner)
                 {
-                    logger.LogCritical(inner, "Could not cleanup {LibraryPath}.", _backupKey.JellyfinDb);
+                    logger.LogCritical(inner, "Could not cleanup {LibraryPath}.", _backupKey.MulletaFlixDb);
                 }
             }
 
@@ -332,7 +332,7 @@ internal class JellyfinMigrationService
     public async Task PrepareSystemForMigration(ILogger logger)
     {
         logger.LogInformation("Prepare system for possible migrations");
-        JellyfinMigrationBackupAttribute backupInstruction;
+        MulletaFlixMigrationBackupAttribute backupInstruction;
         IReadOnlyList<HistoryRow> appliedMigrations;
         var dbContext = await _dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
         await using (dbContext.ConfigureAwait(false))
@@ -340,9 +340,9 @@ internal class JellyfinMigrationService
             var historyRepository = dbContext.GetService<IHistoryRepository>();
             var migrationsAssembly = dbContext.GetService<IMigrationsAssembly>();
             appliedMigrations = await historyRepository.GetAppliedMigrationsAsync().ConfigureAwait(false);
-            backupInstruction = new JellyfinMigrationBackupAttribute()
+            backupInstruction = new MulletaFlixMigrationBackupAttribute()
             {
-                JellyfinDb = migrationsAssembly.Migrations.Any(f => appliedMigrations.All(e => e.MigrationId != f.Key))
+                MulletaFlixDb = migrationsAssembly.Migrations.Any(f => appliedMigrations.All(e => e.MigrationId != f.Key))
             };
         }
 
@@ -368,7 +368,7 @@ internal class JellyfinMigrationService
                         {
                             logger.LogInformation("Backing up {Library} to {BackupPath}", DbFilename, bakPath);
                             File.Copy(libraryDbPath, bakPath);
-                            _backupKey = (bakPath, _backupKey.JellyfinDb, _backupKey.FullBackup);
+                            _backupKey = (bakPath, _backupKey.MulletaFlixDb, _backupKey.FullBackup);
                             logger.LogInformation("{Library} backed up to {BackupPath}", DbFilename, bakPath);
                             break;
                         }
@@ -388,17 +388,17 @@ internal class JellyfinMigrationService
             }
         }
 
-        if (backupInstruction.JellyfinDb && _jellyfinDatabaseProvider is not null)
+        if (backupInstruction.MulletaFlixDb && _MulletaFlixDatabaseProvider is not null)
         {
-            logger.LogInformation("A migration will attempt to modify the jellyfin.db, will attempt to backup the file now.");
-            _backupKey = (_backupKey.LibraryDb, await _jellyfinDatabaseProvider.MigrationBackupFast(CancellationToken.None).ConfigureAwait(false), _backupKey.FullBackup);
-            logger.LogInformation("Jellyfin database has been backed up as {BackupPath}", _backupKey.JellyfinDb);
+            logger.LogInformation("A migration will attempt to modify the MulletaFlix.db, will attempt to backup the file now.");
+            _backupKey = (_backupKey.LibraryDb, await _MulletaFlixDatabaseProvider.MigrationBackupFast(CancellationToken.None).ConfigureAwait(false), _backupKey.FullBackup);
+            logger.LogInformation("MulletaFlix database has been backed up as {BackupPath}", _backupKey.MulletaFlixDb);
         }
 
         if (_backupService is not null && (backupInstruction.Metadata || backupInstruction.Subtitles || backupInstruction.Trickplay))
         {
             logger.LogInformation("A migration will attempt to modify system resources. Will attempt to create backup now.");
-            _backupKey = (_backupKey.LibraryDb, _backupKey.JellyfinDb, await _backupService.CreateBackupAsync(new BackupOptionsDto()
+            _backupKey = (_backupKey.LibraryDb, _backupKey.MulletaFlixDb, await _backupService.CreateBackupAsync(new BackupOptionsDto()
             {
                 Metadata = backupInstruction.Metadata,
                 Subtitles = backupInstruction.Subtitles,
@@ -409,11 +409,11 @@ internal class JellyfinMigrationService
         }
     }
 
-    private static JellyfinMigrationBackupAttribute MergeBackupAttributes(JellyfinMigrationBackupAttribute left, JellyfinMigrationBackupAttribute right)
+    private static MulletaFlixMigrationBackupAttribute MergeBackupAttributes(MulletaFlixMigrationBackupAttribute left, MulletaFlixMigrationBackupAttribute right)
     {
-        return new JellyfinMigrationBackupAttribute()
+        return new MulletaFlixMigrationBackupAttribute()
         {
-            JellyfinDb = left!.JellyfinDb || right!.JellyfinDb,
+            MulletaFlixDb = left!.MulletaFlixDb || right!.MulletaFlixDb,
             LegacyLibraryDb = left.LegacyLibraryDb || right!.LegacyLibraryDb,
             Metadata = left.Metadata || right!.Metadata,
             Subtitles = left.Subtitles || right!.Subtitles,
@@ -425,9 +425,9 @@ internal class JellyfinMigrationService
     {
         private readonly CodeMigration _codeMigration;
         private readonly IServiceProvider? _serviceProvider;
-        private JellyfinDbContext _dbContext;
+        private MulletaFlixDbContext _dbContext;
 
-        public InternalCodeMigration(CodeMigration codeMigration, IServiceProvider? serviceProvider, JellyfinDbContext dbContext)
+        public InternalCodeMigration(CodeMigration codeMigration, IServiceProvider? serviceProvider, MulletaFlixDbContext dbContext)
         {
             _codeMigration = codeMigration;
             _serviceProvider = serviceProvider;
@@ -439,26 +439,27 @@ internal class JellyfinMigrationService
             await _codeMigration.Perform(_serviceProvider, logger, CancellationToken.None).ConfigureAwait(false);
 
             var historyRepository = _dbContext.GetService<IHistoryRepository>();
-            var createScript = historyRepository.GetInsertScript(new HistoryRow(_codeMigration.BuildCodeMigrationId(), GetJellyfinVersion()));
+            var createScript = historyRepository.GetInsertScript(new HistoryRow(_codeMigration.BuildCodeMigrationId(), GetMulletaFlixVersion()));
             await _dbContext.Database.ExecuteSqlRawAsync(createScript).ConfigureAwait(false);
         }
     }
 
     private class InternalDatabaseMigration : IInternalMigration
     {
-        private readonly JellyfinDbContext _jellyfinDbContext;
+        private readonly MulletaFlixDbContext _MulletaFlixDbContext;
         private KeyValuePair<string, TypeInfo> _databaseMigrationInfo;
 
-        public InternalDatabaseMigration(KeyValuePair<string, TypeInfo> databaseMigrationInfo, JellyfinDbContext jellyfinDbContext)
+        public InternalDatabaseMigration(KeyValuePair<string, TypeInfo> databaseMigrationInfo, MulletaFlixDbContext MulletaFlixDbContext)
         {
             _databaseMigrationInfo = databaseMigrationInfo;
-            _jellyfinDbContext = jellyfinDbContext;
+            _MulletaFlixDbContext = MulletaFlixDbContext;
         }
 
         public async Task PerformAsync(IStartupLogger logger)
         {
-            var migrator = _jellyfinDbContext.GetService<IMigrator>();
+            var migrator = _MulletaFlixDbContext.GetService<IMigrator>();
             await migrator.MigrateAsync(_databaseMigrationInfo.Key).ConfigureAwait(false);
         }
     }
 }
+

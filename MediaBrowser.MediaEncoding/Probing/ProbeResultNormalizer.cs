@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.Collections.Generic;
@@ -8,8 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Extensions;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
@@ -59,7 +59,7 @@ namespace MediaBrowser.MediaEncoding.Probing
             "As/Hi Soundworks",
             "Au/Ra",
             "Bremer/McCoy",
-            "b/bqスタヂオ",
+            "b/bqã‚¹ã‚¿ãƒ‚ã‚ª",
             "DOV/S",
             "DJ'TEKINA//SOMETHING",
             "IX/ON",
@@ -68,14 +68,14 @@ namespace MediaBrowser.MediaEncoding.Probing
             "Kaoru/Brilliance",
             "signum/ii",
             "Richiter(LORB/DUGEM DI BARAT)",
-            "이달의 소녀 1/3",
+            "ì´ë‹¬ì˜ ì†Œë…€ 1/3",
             "R!N / Gemie",
             "LOONA 1/3",
             "LOONA / yyxy",
             "LOONA / ODD EYE CIRCLE",
             "K/DA",
             "22/7",
-            "諭吉佳作/men",
+            "è«­å‰ä½³ä½œ/men",
             "//dARTH nULL",
             "Phantom/Ghost",
             "She/Her/Hers",
@@ -1766,3 +1766,4 @@ namespace MediaBrowser.MediaEncoding.Probing
         private static partial Regex PerformerRegex();
     }
 }
+

@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -8,7 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.LiveTv.IO;
+using MulletaFlix.LiveTv.IO;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
@@ -20,7 +20,7 @@ using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv
+namespace MulletaFlix.LiveTv
 {
     public class LiveTvMediaSourceProvider : IMediaSourceProvider
     {
@@ -330,3 +330,4 @@ namespace Jellyfin.LiveTv
             => _services.First(service => string.Equals(service.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 }
+

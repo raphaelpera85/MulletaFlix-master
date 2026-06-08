@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Api.Models.LibraryDtos;
+namespace MulletaFlix.Api.Models.LibraryDtos;
 
 /// <summary>
 /// Media Update Info Dto.
@@ -13,3 +13,4 @@ public class MediaUpdateInfoDto
     /// </summary>
     public IReadOnlyList<MediaUpdateInfoPathDto> Updates { get; set; } = Array.Empty<MediaUpdateInfoPathDto>();
 }
+

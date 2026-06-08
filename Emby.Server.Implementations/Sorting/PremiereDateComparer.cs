@@ -1,5 +1,5 @@
-using System;
-using Jellyfin.Data.Enums;
+﻿using System;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Sorting;
 using MediaBrowser.Model.Querying;
@@ -61,3 +61,4 @@ namespace Emby.Server.Implementations.Sorting
         }
     }
 }
+

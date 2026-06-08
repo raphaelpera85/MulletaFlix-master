@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Model.Dto;
@@ -14,14 +14,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Display Preferences Controller.
 /// </summary>
 [Authorize]
 [Tags("DisplayPreference")]
-public class DisplayPreferencesController : BaseJellyfinApiController
+public class DisplayPreferencesController : BaseMulletaFlixApiController
 {
     private readonly IDisplayPreferencesManager _displayPreferencesManager;
     private readonly ILogger<DisplayPreferencesController> _logger;
@@ -221,3 +221,4 @@ public class DisplayPreferencesController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

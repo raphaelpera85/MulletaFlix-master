@@ -1,15 +1,15 @@
-#pragma warning disable CA1826 // Do not use Enumerable methods on indexable collections
+﻿#pragma warning disable CA1826 // Do not use Enumerable methods on indexable collections
 
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
-using Jellyfin.MediaEncoding.Hls.Extractors;
-using Jellyfin.MediaEncoding.Keyframes;
+using MulletaFlix.MediaEncoding.Hls.Extractors;
+using MulletaFlix.MediaEncoding.Keyframes;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.MediaEncoding.Hls.Cache;
+namespace MulletaFlix.MediaEncoding.Hls.Cache;
 
 /// <inheritdoc />
 public class CacheDecorator : IKeyframeExtractor
@@ -59,3 +59,4 @@ public class CacheDecorator : IKeyframeExtractor
         return true;
     }
 }
+

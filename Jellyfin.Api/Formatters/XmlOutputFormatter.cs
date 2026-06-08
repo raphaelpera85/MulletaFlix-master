@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 
-namespace Jellyfin.Api.Formatters;
+namespace MulletaFlix.Api.Formatters;
 
 /// <summary>
 /// Xml output formatter.
@@ -40,3 +40,4 @@ public sealed class XmlOutputFormatter : TextOutputFormatter
         await response.WriteAsync(valueAsString, selectedEncoding).ConfigureAwait(false);
     }
 }
+

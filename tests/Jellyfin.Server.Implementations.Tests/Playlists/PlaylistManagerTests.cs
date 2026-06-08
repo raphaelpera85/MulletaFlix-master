@@ -1,7 +1,7 @@
-using Emby.Server.Implementations.Playlists;
+﻿using Emby.Server.Implementations.Playlists;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Playlists;
+namespace MulletaFlix.Server.Implementations.Tests.Playlists;
 
 public class PlaylistManagerTests
 {
@@ -38,3 +38,4 @@ public class PlaylistManagerTests
         Assert.Equal(3, adjustedIndex);
     }
 }
+

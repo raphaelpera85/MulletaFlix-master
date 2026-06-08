@@ -1,8 +1,8 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Naming.TV;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.TV
+namespace MulletaFlix.Naming.Tests.TV
 {
     public class EpisodeNumberTests
     {
@@ -70,7 +70,7 @@ namespace Jellyfin.Naming.Tests.TV
         [InlineData("Season 2/[HorribleSubs] Hunter X Hunter - 136 [720p].mkv", 136)] // triple digit episode number
         [InlineData("Log Horizon 2/[HorribleSubs] Log Horizon 2 - 03 [720p].mkv", 3)] // digit in series name
         [InlineData("Season 1/seriesname 05.mkv", 5)] // no hyphen between series name and episode number
-        [InlineData("[BBT-RMX] Ranma ½ - 154 [50AC421A].mkv", 154)] // hyphens in the pre-name info, triple digit episode number
+        [InlineData("[BBT-RMX] Ranma Â½ - 154 [50AC421A].mkv", 154)] // hyphens in the pre-name info, triple digit episode number
         [InlineData("Season 2/Episode 21 - 94 Meetings.mp4", 21)] // Title starts with a number
         [InlineData("/The.Legend.of.Condor.Heroes.2017.V2.web-dl.1080p.h264.aac-hdctv/The.Legend.of.Condor.Heroes.2017.E07.V2.web-dl.1080p.h264.aac-hdctv.mkv", 7)]
         [InlineData("Season 3/The Series Season 3 Episode 9 - The title.avi", 9)]
@@ -96,3 +96,4 @@ namespace Jellyfin.Naming.Tests.TV
         }
     }
 }
+

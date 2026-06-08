@@ -1,13 +1,13 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Configuration;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to disable legacy authorization in the system config.
 /// </summary>
-[JellyfinMigration("2026-05-31T16:00:00", nameof(DisableLegacyAuthorization), Stage = Stages.JellyfinMigrationStageTypes.CoreInitialisation)]
+[MulletaFlixMigration("2026-05-31T16:00:00", nameof(DisableLegacyAuthorization), Stage = Stages.MulletaFlixMigrationStageTypes.CoreInitialisation)]
 public class DisableLegacyAuthorization : IAsyncMigrationRoutine
 {
     private readonly IServerConfigurationManager _serverConfigurationManager;
@@ -30,3 +30,4 @@ public class DisableLegacyAuthorization : IAsyncMigrationRoutine
         return Task.CompletedTask;
     }
 }
+

@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Jellyfin.Server")]
+[assembly: AssemblyTitle("MulletaFlix.Server")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Jellyfin Project")]
-[assembly: AssemblyProduct("Jellyfin Server")]
-[assembly: AssemblyCopyright("Copyright ©  2019 Jellyfin Contributors. Code released under the GNU General Public License")]
+[assembly: AssemblyCompany("MulletaFlix")]
+[assembly: AssemblyProduct("MulletaFlix Server")]
+[assembly: AssemblyCopyright("Copyright (c) 2019 MulletaFlix Contributors. Code released under the GNU General Public License")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en")]
@@ -21,4 +21,5 @@ using System.Runtime.InteropServices;
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
-[assembly: InternalsVisibleTo("Jellyfin.Server.Tests")]
+[assembly: InternalsVisibleTo("MulletaFlix.Server.Tests")]
+

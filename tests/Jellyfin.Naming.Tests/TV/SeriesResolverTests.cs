@@ -1,8 +1,8 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Naming.TV;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.TV
+namespace MulletaFlix.Naming.Tests.TV
 {
     public class SeriesResolverTests
     {
@@ -20,6 +20,7 @@ namespace Jellyfin.Naming.Tests.TV
         [InlineData("/some/path/The Show s02e10 720p hdtv", "The Show")]
         [InlineData("/some/path/The Show s02e10 the episode 720p hdtv", "The Show")]
         [InlineData("/some/path/1923 (2022)", "1923")]
+        [InlineData("/some/path/The Accursed (LEG)", "The Accursed")]
         public void SeriesResolverResolveTest(string path, string name)
         {
             var res = SeriesResolver.Resolve(_namingOptions, path);
@@ -28,3 +29,4 @@ namespace Jellyfin.Naming.Tests.TV
         }
     }
 }
+

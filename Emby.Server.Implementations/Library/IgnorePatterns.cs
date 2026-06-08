@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using DotNet.Globbing;
 
 namespace Emby.Server.Implementations.Library
@@ -32,7 +32,7 @@ namespace Emby.Server.Implementations.Library
             "**/sample/*",
 
             // Avoid adding Hungarian sample files
-            // https://github.com/jellyfin/jellyfin/issues/16237
+            // https://github.com/MulletaFlix/MulletaFlix/issues/16237
             "**/minta.?",
             "**/minta.??",
             "**/minta.???", // Matches minta.mkv
@@ -148,3 +148,4 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
+

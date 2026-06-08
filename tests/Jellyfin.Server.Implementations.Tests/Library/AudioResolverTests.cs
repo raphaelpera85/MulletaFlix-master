@@ -1,14 +1,14 @@
-using System.Linq;
+﻿using System.Linq;
 using Emby.Naming.Common;
 using Emby.Server.Implementations.Library.Resolvers.Audio;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.IO;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library;
+namespace MulletaFlix.Server.Implementations.Tests.Library;
 
 public class AudioResolverTests
 {
@@ -75,3 +75,4 @@ public class AudioResolverTests
         return resolver.Resolve(itemResolveArgs);
     }
 }
+

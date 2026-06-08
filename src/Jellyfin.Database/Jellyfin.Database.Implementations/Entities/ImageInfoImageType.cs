@@ -1,4 +1,4 @@
-namespace Jellyfin.Database.Implementations.Entities;
+﻿namespace MulletaFlix.Database.Implementations.Entities;
 
 /// <summary>
 /// Enum ImageType.
@@ -74,3 +74,4 @@ public enum ImageInfoImageType
     /// </summary>
     Profile = 12
 }
+

@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -20,14 +20,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Item lookup controller.
 /// </summary>
 [Route("")]
 [Authorize]
-public class ItemLookupController : BaseJellyfinApiController
+public class ItemLookupController : BaseMulletaFlixApiController
 {
     private readonly IProviderManager _providerManager;
     private readonly IFileSystem _fileSystem;
@@ -280,3 +280,4 @@ public class ItemLookupController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

@@ -8,14 +8,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Extensions;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.ModelBinders;
-using Jellyfin.Api.Models.LiveTvDtos;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.ModelBinders;
+using MulletaFlix.Api.Models.LiveTvDtos;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -33,12 +33,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Live tv controller.
 /// </summary>
-public class LiveTvController : BaseJellyfinApiController
+public class LiveTvController : BaseMulletaFlixApiController
 {
     private readonly ILiveTvManager _liveTvManager;
     private readonly IGuideManager _guideManager;
@@ -219,7 +219,7 @@ public class LiveTvController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize(Policy = Policies.LiveTvAccess)]
-    public ActionResult<BaseItemDto> GetChannel([FromRoute, Required] Guid channelId, [FromQuery] Guid? userId)
+    public async Task<ActionResult<BaseItemDto>> GetChannel([FromRoute, Required] Guid channelId, [FromQuery] Guid? userId)
     {
         userId = RequestHelpers.GetUserId(User, userId);
         var user = userId.IsNullOrEmpty()
@@ -235,7 +235,7 @@ public class LiveTvController : BaseJellyfinApiController
         }
 
         var dtoOptions = new DtoOptions();
-        return _dtoService.GetBaseItemDto(item, dtoOptions, user);
+        return await _dtoService.GetBaseItemDtoAsync(item, dtoOptions, user).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -390,7 +390,7 @@ public class LiveTvController : BaseJellyfinApiController
             : _userManager.GetUserById(userId.Value);
         var folders = await _liveTvManager.GetRecordingFoldersAsync(user).ConfigureAwait(false);
 
-        var returnArray = _dtoService.GetBaseItemDtos(folders, new DtoOptions(), user);
+        var returnArray = await _dtoService.GetBaseItemDtosAsync(folders, new DtoOptions(), user).ConfigureAwait(false);
 
         return new QueryResult<BaseItemDto>(returnArray);
     }
@@ -407,7 +407,7 @@ public class LiveTvController : BaseJellyfinApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Authorize(Policy = Policies.LiveTvAccess)]
-    public ActionResult<BaseItemDto> GetRecording([FromRoute, Required] Guid recordingId, [FromQuery] Guid? userId)
+    public async Task<ActionResult<BaseItemDto>> GetRecording([FromRoute, Required] Guid recordingId, [FromQuery] Guid? userId)
     {
         userId = RequestHelpers.GetUserId(User, userId);
         var user = userId.IsNullOrEmpty()
@@ -423,7 +423,7 @@ public class LiveTvController : BaseJellyfinApiController
 
         var dtoOptions = new DtoOptions();
 
-        return _dtoService.GetBaseItemDto(item, dtoOptions, user);
+        return await _dtoService.GetBaseItemDtoAsync(item, dtoOptions, user).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -1162,3 +1162,4 @@ public class LiveTvController : BaseJellyfinApiController
         return new FileStreamResult(liveStream, MimeTypes.GetMimeType("file." + container));
     }
 }
+

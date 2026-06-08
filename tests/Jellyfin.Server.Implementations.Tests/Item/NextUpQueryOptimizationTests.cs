@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Locking;
-using Jellyfin.Database.Providers.Sqlite;
-using Jellyfin.Server.Implementations.Item;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Locking;
+using MulletaFlix.Database.Providers.Sqlite;
+using MulletaFlix.Server.Implementations.Item;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.Data.Sqlite;
@@ -17,13 +17,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Item;
+namespace MulletaFlix.Server.Implementations.Tests.Item;
 
 public sealed class NextUpQueryOptimizationTests : IDisposable
 {
     private readonly SqliteConnection _connection;
-    private readonly JellyfinDbContext _context;
-    private readonly Mock<IDbContextFactory<JellyfinDbContext>> _dbProviderMock;
+    private readonly MulletaFlixDbContext _context;
+    private readonly Mock<IDbContextFactory<MulletaFlixDbContext>> _dbProviderMock;
     private readonly Mock<IItemTypeLookup> _itemTypeLookupMock;
     private readonly Mock<IItemQueryHelpers> _queryHelpersMock;
     private readonly NextUpService _service;
@@ -33,29 +33,29 @@ public sealed class NextUpQueryOptimizationTests : IDisposable
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
-        var options = new DbContextOptionsBuilder<JellyfinDbContext>()
+        var options = new DbContextOptionsBuilder<MulletaFlixDbContext>()
             .UseSqlite(_connection)
             .Options;
 
-        var dbProvider = new Mock<IJellyfinDatabaseProvider>();
+        var dbProvider = new Mock<IMulletaFlixDatabaseProvider>();
         dbProvider.Setup(p => p.OnModelCreating(It.IsAny<ModelBuilder>()))
             .Callback<ModelBuilder>(static mb => mb.SetDefaultDateTimeKind(DateTimeKind.Utc));
 
         var lockingBehavior = new Mock<IEntityFrameworkCoreLockingBehavior>();
-        lockingBehavior.Setup(l => l.OnSaveChanges(It.IsAny<JellyfinDbContext>(), It.IsAny<Action>()))
-            .Callback<JellyfinDbContext, Action>(static (_, action) => action());
-        lockingBehavior.Setup(l => l.OnSaveChangesAsync(It.IsAny<JellyfinDbContext>(), It.IsAny<Func<Task>>()))
-            .Callback<JellyfinDbContext, Func<Task>>(static (_, func) => func());
+        lockingBehavior.Setup(l => l.OnSaveChanges(It.IsAny<MulletaFlixDbContext>(), It.IsAny<Action>()))
+            .Callback<MulletaFlixDbContext, Action>(static (_, action) => action());
+        lockingBehavior.Setup(l => l.OnSaveChangesAsync(It.IsAny<MulletaFlixDbContext>(), It.IsAny<Func<Task>>()))
+            .Callback<MulletaFlixDbContext, Func<Task>>(static (_, func) => func());
 
-        _context = new JellyfinDbContext(
+        _context = new MulletaFlixDbContext(
             options,
-            NullLogger<JellyfinDbContext>.Instance,
+            NullLogger<MulletaFlixDbContext>.Instance,
             dbProvider.Object,
             lockingBehavior.Object);
 
         _context.Database.EnsureCreated();
 
-        _dbProviderMock = new Mock<IDbContextFactory<JellyfinDbContext>>();
+        _dbProviderMock = new Mock<IDbContextFactory<MulletaFlixDbContext>>();
         _dbProviderMock.Setup(f => f.CreateDbContext()).Returns(_context);
 
         _itemTypeLookupMock = new Mock<IItemTypeLookup>();
@@ -103,7 +103,7 @@ public sealed class NextUpQueryOptimizationTests : IDisposable
             IndexNumber = 1
         };
 
-        var userEntity = new Jellyfin.Database.Implementations.Entities.User("testuser", "auth", "auth")
+        var userEntity = new MulletaFlix.Database.Implementations.Entities.User("testuser", "auth", "auth")
         {
             Id = userId
         };
@@ -174,7 +174,7 @@ public sealed class NextUpQueryOptimizationTests : IDisposable
             IndexNumber = 1
         };
 
-        var userEntity = new Jellyfin.Database.Implementations.Entities.User("testuser", "auth", "auth")
+        var userEntity = new MulletaFlix.Database.Implementations.Entities.User("testuser", "auth", "auth")
         {
             Id = userId
         };
@@ -218,3 +218,4 @@ public sealed class NextUpQueryOptimizationTests : IDisposable
         Assert.Equal(seriesAKey, result[0]);
     }
 }
+

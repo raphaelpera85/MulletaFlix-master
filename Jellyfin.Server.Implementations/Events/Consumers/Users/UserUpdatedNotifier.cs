@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events.Users;
+using MulletaFlix.Data.Events.Users;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Session;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Users
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Users
 {
     /// <summary>
     /// Notifies a user when their account has been updated.
@@ -40,3 +40,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.Users
         }
     }
 }
+

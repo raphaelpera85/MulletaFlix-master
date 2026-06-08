@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.MediaSegments;
 
 namespace MediaBrowser.Model;
@@ -20,3 +20,4 @@ public record MediaSegmentGenerationRequest
     /// </summary>
     public required IReadOnlyList<MediaSegmentDto> ExistingSegments { get; init; }
 }
+

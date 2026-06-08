@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Jellyfin.Server.Implementations.Migrations
+namespace MulletaFlix.Server.Implementations.Migrations
 {
     /// <inheritdoc />
     public partial class FixAttachmentMigration : Migration
@@ -34,3 +34,4 @@ namespace Jellyfin.Server.Implementations.Migrations
         }
     }
 }
+

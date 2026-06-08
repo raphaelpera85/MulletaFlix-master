@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.ModelBinders;
+namespace MulletaFlix.Api.ModelBinders;
 
 /// <summary>
 /// Nullable enum model binder.
@@ -45,3 +45,4 @@ public class NullableEnumModelBinder : IModelBinder
         return Task.CompletedTask;
     }
 }
+

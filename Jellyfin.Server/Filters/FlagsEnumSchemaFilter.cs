@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters;
+namespace MulletaFlix.Server.Filters;
 
 /// <summary>
 /// Schema filter to ensure flags enums are represented correctly in OpenAPI.
@@ -56,3 +56,4 @@ public class FlagsEnumSchemaFilter : ISchemaFilter
         }
     }
 }
+

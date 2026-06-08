@@ -1,5 +1,5 @@
 {
-    "name": "Development Jellyfin Server",
+    "name": "Development MulletaFlix Server",
     "image": "mcr.microsoft.com/devcontainers/dotnet:10.0-noble",
     "service": "app",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
@@ -44,3 +44,4 @@
         "cpus": 4
     }
 }
+

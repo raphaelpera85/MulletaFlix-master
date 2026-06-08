@@ -1,9 +1,9 @@
-using System.Text.Json;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions.Json.Converters;
+﻿using System.Text.Json;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions.Json.Converters;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests.Json.Converters;
+namespace MulletaFlix.Extensions.Tests.Json.Converters;
 
 public class JsonDefaultStringEnumConverterTests
 {
@@ -110,3 +110,4 @@ public class JsonDefaultStringEnumConverterTests
         public MediaStreamProtocol? EnumValue { get; set; }
     }
 }
+

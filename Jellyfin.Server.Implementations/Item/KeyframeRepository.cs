@@ -1,27 +1,27 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Repository for obtaining Keyframe data.
 /// </summary>
 public class KeyframeRepository : IKeyframeRepository
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="KeyframeRepository"/> class.
     /// </summary>
     /// <param name="dbProvider">The EFCore db factory.</param>
-    public KeyframeRepository(IDbContextFactory<JellyfinDbContext> dbProvider)
+    public KeyframeRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider)
     {
         _dbProvider = dbProvider;
     }
@@ -73,3 +73,4 @@ public class KeyframeRepository : IKeyframeRepository
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }
+

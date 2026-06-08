@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MediaBrowser.Common.Configuration;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
-namespace Jellyfin.Server.Migrations.Routines
+namespace MulletaFlix.Server.Migrations.Routines
 {
     /// <summary>
     /// Migration to initialize the user logging configuration file "logging.user.json".
@@ -13,7 +13,7 @@ namespace Jellyfin.Server.Migrations.Routines
     /// otherwise a blank file will be created.
     /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-    [JellyfinMigration("2025-04-20T06:00:00", nameof(CreateUserLoggingConfigFile), "EF103419-8451-40D8-9F34-D1A8E93A1679")]
+    [MulletaFlixMigration("2025-04-20T06:00:00", nameof(CreateUserLoggingConfigFile), "EF103419-8451-40D8-9F34-D1A8E93A1679")]
     internal class CreateUserLoggingConfigFile : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
     {
@@ -23,19 +23,19 @@ namespace Jellyfin.Server.Migrations.Routines
         private readonly List<string> _defaultConfigHistory = new List<string>
         {
             // 9a6c27947353585391e211aa88b925f81e8cd7b9
-            @"{""Serilog"":{""MinimumLevel"":{""Default"":""Information"",""Override"":{""Microsoft"":""Warning"",""System"":""Warning""}},""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%JELLYFIN_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message}{NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
+            @"{""Serilog"":{""MinimumLevel"":{""Default"":""Information"",""Override"":{""Microsoft"":""Warning"",""System"":""Warning""}},""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%MulletaFlix_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message}{NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
             // 71bdcd730705a714ee208eaad7290b7c68df3885
-            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%JELLYFIN_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message}{NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
+            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%MulletaFlix_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message}{NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
             // a44936f97f8afc2817d3491615a7cfe1e31c251c
-            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}""}},{""Name"":""File"",""Args"":{""path"":""%JELLYFIN_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message}{NewLine}{Exception}""}}]}}",
+            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}""}},{""Name"":""File"",""Args"":{""path"":""%MulletaFlix_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message}{NewLine}{Exception}""}}]}}",
             // 7af3754a11ad5a4284f107997fb5419a010ce6f3
-            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%JELLYFIN_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message}{NewLine}{Exception}""}}]}}]}}",
+            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%MulletaFlix_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message}{NewLine}{Exception}""}}]}}]}}",
             // 60691349a11f541958e0b2247c9abc13cb40c9fb
-            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%JELLYFIN_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message}{NewLine}{Exception}""}}]}}]}}",
+            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%MulletaFlix_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message}{NewLine}{Exception}""}}]}}]}}",
             // 65fe243afbcc4b596cf8726708c1965cd34b5f68
-            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {ThreadId} {SourceContext}: {Message:lj} {NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%JELLYFIN_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {ThreadId} {SourceContext}:{Message} {NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
+            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] {ThreadId} {SourceContext}: {Message:lj} {NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%MulletaFlix_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {ThreadId} {SourceContext}:{Message} {NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
             // 96c9af590494aa8137d5a061aaf1e68feee60b67
-            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%JELLYFIN_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{ThreadId}] {SourceContext}:{Message}{NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
+            @"{""Serilog"":{""MinimumLevel"":""Information"",""WriteTo"":[{""Name"":""Console"",""Args"":{""outputTemplate"":""[{Timestamp:HH:mm:ss}] [{Level:u3}] [{ThreadId}] {SourceContext}: {Message:lj}{NewLine}{Exception}""}},{""Name"":""Async"",""Args"":{""configure"":[{""Name"":""File"",""Args"":{""path"":""%MulletaFlix_LOG_DIR%//log_.log"",""rollingInterval"":""Day"",""retainedFileCountLimit"":3,""rollOnFileSizeLimit"":true,""fileSizeLimitBytes"":100000000,""outputTemplate"":""[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{ThreadId}] {SourceContext}:{Message}{NewLine}{Exception}""}}]}}],""Enrich"":[""FromLogContext"",""WithThreadId""]}}",
         };
 
         private readonly IApplicationPaths _appPaths;
@@ -67,10 +67,11 @@ namespace Jellyfin.Server.Migrations.Routines
         /// <exception cref="IOException"><paramref name="oldConfigPath"/> does not exist or could not be read.</exception>
         private bool ExistingConfigUnmodified(string oldConfigPath)
         {
-            var existingConfigJson = JToken.Parse(File.ReadAllText(oldConfigPath));
+            var existingConfigJson = JsonNode.Parse(File.ReadAllText(oldConfigPath));
             return _defaultConfigHistory
-                .Select(JToken.Parse)
-                .Any(historicalConfigJson => JToken.DeepEquals(existingConfigJson, historicalConfigJson));
+                .Select(x => JsonNode.Parse(x))
+                .Any(historicalConfigJson => JsonNode.DeepEquals(existingConfigJson, historicalConfigJson));
         }
     }
 }
+

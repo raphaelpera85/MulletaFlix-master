@@ -1,4 +1,4 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
@@ -7,23 +7,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
 using Microsoft.EntityFrameworkCore;
-using BaseItemEntity = Jellyfin.Database.Implementations.Entities.BaseItemEntity;
+using BaseItemEntity = MulletaFlix.Database.Implementations.Entities.BaseItemEntity;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 public sealed partial class BaseItemRepository
 {
     /// <inheritdoc />
-    public IQueryable<BaseItemEntity> PrepareItemQuery(JellyfinDbContext context, InternalItemsQuery filter)
+    public IQueryable<BaseItemEntity> PrepareItemQuery(MulletaFlixDbContext context, InternalItemsQuery filter)
     {
         IQueryable<BaseItemEntity> dbQuery = context.BaseItems.AsNoTracking();
         dbQuery = dbQuery.AsSingleQuery();
@@ -31,7 +31,7 @@ public sealed partial class BaseItemRepository
         return dbQuery;
     }
 
-    private IQueryable<BaseItemEntity> ApplyQueryFilter(IQueryable<BaseItemEntity> dbQuery, JellyfinDbContext context, InternalItemsQuery filter)
+    private IQueryable<BaseItemEntity> ApplyQueryFilter(IQueryable<BaseItemEntity> dbQuery, MulletaFlixDbContext context, InternalItemsQuery filter)
     {
         dbQuery = TranslateQuery(dbQuery, context, filter);
         dbQuery = ApplyGroupingFilter(context, dbQuery, filter);
@@ -60,7 +60,7 @@ public sealed partial class BaseItemRepository
         return dbQuery;
     }
 
-    private IQueryable<BaseItemEntity> ApplyGroupingFilter(JellyfinDbContext context, IQueryable<BaseItemEntity> dbQuery, InternalItemsQuery filter)
+    private IQueryable<BaseItemEntity> ApplyGroupingFilter(MulletaFlixDbContext context, IQueryable<BaseItemEntity> dbQuery, InternalItemsQuery filter)
     {
         // Collapse duplicates sharing a presentation key (e.g. alternate versions) by picking
         // the min Id per group. Keep the grouped ids as an IQueryable sub-select; materializing
@@ -100,7 +100,7 @@ public sealed partial class BaseItemRepository
     }
 
     private IQueryable<BaseItemEntity> ApplyBoxSetCollapsing(
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         IQueryable<BaseItemEntity> dbQuery,
         BaseItemKind[] collapsibleTypes)
     {
@@ -162,7 +162,7 @@ public sealed partial class BaseItemRepository
     }
 
     private static IQueryable<BaseItemEntity> ApplyBoxSetCollapsingAll(
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         IQueryable<Guid> currentIds,
         string boxSetTypeName)
     {
@@ -267,7 +267,7 @@ public sealed partial class BaseItemRepository
     }
 
     /// <inheritdoc />
-    public IQueryable<BaseItemEntity> ApplyOrder(IQueryable<BaseItemEntity> query, InternalItemsQuery filter, JellyfinDbContext context)
+    public IQueryable<BaseItemEntity> ApplyOrder(IQueryable<BaseItemEntity> query, InternalItemsQuery filter, MulletaFlixDbContext context)
     {
         var orderBy = filter.OrderBy.Where(e => e.OrderBy != ItemSortBy.Default).ToArray();
         var hasSearch = !string.IsNullOrEmpty(filter.SearchTerm);
@@ -339,7 +339,7 @@ public sealed partial class BaseItemRepository
     private IQueryable<BaseItemEntity> ApplySeriesDatePlayedOrder(
         IQueryable<BaseItemEntity> query,
         InternalItemsQuery filter,
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         (ItemSortBy OrderBy, SortOrder SortOrder)[] orderBy)
     {
         // Pre-aggregate max played date per series key in ONE query.
@@ -378,7 +378,7 @@ public sealed partial class BaseItemRepository
     /// </summary>
     /// <inheritdoc />
     public IQueryable<BaseItemEntity> BuildAccessFilteredDescendantsQuery(
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         InternalItemsQuery filter,
         Guid ancestorId)
     {
@@ -398,7 +398,7 @@ public sealed partial class BaseItemRepository
     /// </summary>
     /// <inheritdoc />
     public IQueryable<BaseItemEntity> ApplyAccessFiltering(
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         IQueryable<BaseItemEntity> baseQuery,
         InternalItemsQuery filter)
     {
@@ -456,7 +456,7 @@ public sealed partial class BaseItemRepository
         }
 
         // Exclude alternate versions (have PrimaryVersionId set) and owned non-extra items.
-        // Extras (trailers, etc.) have OwnerId set but also have ExtraType set — keep those.
+        // Extras (trailers, etc.) have OwnerId set but also have ExtraType set â€” keep those.
         if (!filter.IncludeOwnedItems)
         {
             baseQuery = baseQuery.Where(e => e.PrimaryVersionId == null && (e.OwnerId == null || e.ExtraType != null));
@@ -470,7 +470,7 @@ public sealed partial class BaseItemRepository
     /// and unrated BoxSets/Playlists (which check linked children's ratings).
     /// </summary>
     private static Expression<Func<BaseItemEntity, bool>> BuildMaxParentalRatingFilter(
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         ParentalRatingScore maxRating)
     {
         var maxScore = maxRating.Score;
@@ -496,7 +496,7 @@ public sealed partial class BaseItemRepository
     }
 
     /// <inheritdoc />
-    public IQueryable<Guid> GetFullyPlayedFolderIdsQuery(JellyfinDbContext context, IQueryable<Guid> folderIds, User user)
+    public IQueryable<Guid> GetFullyPlayedFolderIdsQuery(MulletaFlixDbContext context, IQueryable<Guid> folderIds, User user)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(folderIds);
@@ -555,3 +555,4 @@ public sealed partial class BaseItemRepository
             .Select(g => g.Key);
     }
 }
+

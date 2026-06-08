@@ -20,7 +20,6 @@
     <PackageReference Include="MetaBrainz.MusicBrainz" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="PlaylistsNET" />
     <PackageReference Include="z440.atl.core" />
     <PackageReference Include="TMDbLib" />
@@ -104,5 +103,8 @@
     <EmbeddedResource Include="Plugins\MidiaStorageOnline\Configuration\config.html" />
     <None Remove="Plugins\MidiaStorageOnline\Configuration\config.js" />
     <EmbeddedResource Include="Plugins\MidiaStorageOnline\Configuration\config.js" />
+    <None Remove="Plugins\MidiaStorageOnline\Data\approved_channels.json" />
+    <EmbeddedResource Include="Plugins\MidiaStorageOnline\Data\approved_channels.json" />
   </ItemGroup>
 </Project>
+

@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.IO;
 using Emby.Server.Implementations.Data;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Server.Implementations.Users;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions.Json;
+using MulletaFlix.Server.Implementations.Users;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Configuration;
@@ -17,13 +17,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// The migration routine for migrating the user database to EF Core.
 /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T10:00:00", nameof(MigrateUserDb), "5C4B82A2-F053-4009-BD05-B6FCAD82F14C")]
+[MulletaFlixMigration("2025-04-20T10:00:00", nameof(MigrateUserDb), "5C4B82A2-F053-4009-BD05-B6FCAD82F14C")]
 public class MigrateUserDb : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -31,7 +31,7 @@ public class MigrateUserDb : IMigrationRoutine
 
     private readonly ILogger<MigrateUserDb> _logger;
     private readonly IServerApplicationPaths _paths;
-    private readonly IDbContextFactory<JellyfinDbContext> _provider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _provider;
     private readonly IXmlSerializer _xmlSerializer;
 
     /// <summary>
@@ -44,7 +44,7 @@ public class MigrateUserDb : IMigrationRoutine
     public MigrateUserDb(
         ILogger<MigrateUserDb> logger,
         IServerApplicationPaths paths,
-        IDbContextFactory<JellyfinDbContext> provider,
+        IDbContextFactory<MulletaFlixDbContext> provider,
         IXmlSerializer xmlSerializer)
     {
         _logger = logger;
@@ -64,7 +64,7 @@ public class MigrateUserDb : IMigrationRoutine
             return;
         }
 
-        _logger.LogInformation("Migrating the user database may take a while, do not stop Jellyfin.");
+        _logger.LogInformation("Migrating the user database may take a while, do not stop MulletaFlix.");
 
         using (var connection = new SqliteConnection($"Filename={userDbPath}"))
         {
@@ -107,7 +107,7 @@ public class MigrateUserDb : IMigrationRoutine
                     : new UserPolicy();
                 policy.AuthenticationProviderId = policy.AuthenticationProviderId?.Replace(
                     "Emby.Server.Implementations.Library",
-                    "Jellyfin.Server.Implementations.Users",
+                    "MulletaFlix.Server.Implementations.Users",
                     StringComparison.Ordinal)
                     ?? typeof(DefaultAuthenticationProvider).FullName;
 
@@ -231,3 +231,4 @@ public class MigrateUserDb : IMigrationRoutine
         public ItemImageInfo[] ImageInfos { get; set; }
     }
 }
+

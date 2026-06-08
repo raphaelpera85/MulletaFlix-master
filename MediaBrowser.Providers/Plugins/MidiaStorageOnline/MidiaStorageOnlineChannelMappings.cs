@@ -336,6 +336,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 
         public static string? ResolveTvgId(string? currentTvgId, string? tvgName, string? groupTitle, string? name)
         {
+            var approvedTvgId = MidiaStorageOnlineApprovedChannelMappings.TryGetEpgId(tvgName, name, currentTvgId);
+            if (!string.IsNullOrWhiteSpace(approvedTvgId))
+            {
+                return approvedTvgId;
+            }
+
             var mapped = TryResolveMappedTvgId(tvgName, groupTitle, name);
             if (!string.IsNullOrWhiteSpace(mapped))
             {

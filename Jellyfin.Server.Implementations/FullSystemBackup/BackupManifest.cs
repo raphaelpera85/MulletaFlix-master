@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Server.Implementations.FullSystemBackup;
+namespace MulletaFlix.Server.Implementations.FullSystemBackup;
 
 /// <summary>
 /// Manifest type for backups internal structure.
@@ -17,3 +17,4 @@ internal class BackupManifest
 
     public required BackupOptions Options { get; set; }
 }
+

@@ -1,11 +1,11 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Updates;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Session;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Updates
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Updates
 {
     /// <summary>
     /// Notifies admin users when a plugin installation fails.
@@ -30,3 +30,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.Updates
         }
     }
 }
+

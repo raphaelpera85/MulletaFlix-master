@@ -1,23 +1,23 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Api.Models.LibraryStructureDto;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Models.LibraryStructureDto;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Model.Configuration;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers
+namespace MulletaFlix.Server.Integration.Tests.Controllers
 {
-    public sealed class MediaStructureControllerTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class MediaStructureControllerTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
         private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
         private static string? _accessToken;
 
-        public MediaStructureControllerTests(JellyfinApplicationFactory factory)
+        public MediaStructureControllerTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -115,3 +115,4 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         }
     }
 }
+

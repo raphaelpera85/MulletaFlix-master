@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Jellyfin.Extensions;
+namespace MulletaFlix.Extensions;
 
 /// <summary>
 /// Guid specific extensions.
@@ -24,3 +24,4 @@ public static class GuidExtensions
     public static bool IsNullOrEmpty([NotNullWhen(false)] this Guid? guid)
         => guid is null || guid.Value.IsEmpty();
 }
+

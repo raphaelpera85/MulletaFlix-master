@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Model.Playlists;
@@ -40,3 +40,4 @@ public class PlaylistCreationRequest
     /// </summary>
     public bool? Public { get; set; } = false;
 }
+

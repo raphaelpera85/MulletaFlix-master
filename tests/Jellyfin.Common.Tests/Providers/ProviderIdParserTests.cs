@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using MediaBrowser.Common.Providers;
 using Xunit;
 
-namespace Jellyfin.Common.Tests.Providers
+namespace MulletaFlix.Common.Tests.Providers
 {
     public class ProviderIdParserTests
     {
@@ -25,7 +25,7 @@ namespace Jellyfin.Common.Tests.Providers
         [Theory]
         [InlineData("tt123456")]
         [InlineData("https://www.imdb.com/title/tt123456")]
-        [InlineData("Jellyfin")]
+        [InlineData("MulletaFlix")]
         public void FindImdbId_Invalid_Success(string text)
         {
             Assert.False(ProviderIdParsers.TryFindImdbId(text, out _));
@@ -75,7 +75,7 @@ namespace Jellyfin.Common.Tests.Providers
         }
 
         [Theory]
-        [InlineData("thetvdb.com/?tab=series&id=Jellyfin121361")]
+        [InlineData("thetvdb.com/?tab=series&id=MulletaFlix121361")]
         [InlineData("https://www.themoviedb.org/tv/1668-friends")]
         public void FindTvdbId_Invalid_Success(string text)
         {
@@ -83,3 +83,4 @@ namespace Jellyfin.Common.Tests.Providers
         }
     }
 }
+

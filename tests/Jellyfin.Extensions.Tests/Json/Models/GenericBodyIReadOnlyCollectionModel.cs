@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Extensions.Json.Converters;
 
-namespace Jellyfin.Extensions.Tests.Json.Models
+namespace MulletaFlix.Extensions.Tests.Json.Models
 {
     /// <summary>
     /// The generic body <c>IReadOnlyCollection</c> model.
@@ -17,3 +17,4 @@ namespace Jellyfin.Extensions.Tests.Json.Models
         public IReadOnlyCollection<T> Value { get; set; } = default!;
     }
 }
+

@@ -1,9 +1,9 @@
-using System.Collections.Generic;
-using Jellyfin.Api.Attributes;
+﻿using System.Collections.Generic;
+using MulletaFlix.Api.Attributes;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters
+namespace MulletaFlix.Server.Filters
 {
     /// <inheritdoc />
     public class FileRequestFilter : IOperationFilter
@@ -42,3 +42,4 @@ namespace Jellyfin.Server.Filters
         }
     }
 }
+

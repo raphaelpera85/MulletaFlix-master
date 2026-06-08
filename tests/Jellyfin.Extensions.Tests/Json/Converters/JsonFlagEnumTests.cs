@@ -1,9 +1,9 @@
-using System.Text.Json;
-using Jellyfin.Extensions.Json.Converters;
+﻿using System.Text.Json;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.Model.Session;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests.Json.Converters;
+namespace MulletaFlix.Extensions.Tests.Json.Converters;
 
 public class JsonFlagEnumTests
 {
@@ -26,3 +26,4 @@ public class JsonFlagEnumTests
         Assert.Equal(output, result);
     }
 }
+

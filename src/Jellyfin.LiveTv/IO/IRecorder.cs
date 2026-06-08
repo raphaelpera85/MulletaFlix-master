@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Threading;
@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
 
-namespace Jellyfin.LiveTv.IO
+namespace MulletaFlix.LiveTv.IO
 {
     public interface IRecorder : IDisposable
     {
@@ -25,3 +25,4 @@ namespace Jellyfin.LiveTv.IO
         string GetOutputPath(MediaSourceInfo mediaSource, string targetFile);
     }
 }
+

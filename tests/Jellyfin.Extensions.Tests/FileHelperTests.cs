@@ -1,7 +1,7 @@
-using System.IO;
+﻿using System.IO;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests;
+namespace MulletaFlix.Extensions.Tests;
 
 public static class FileHelperTests
 {
@@ -21,3 +21,4 @@ public static class FileHelperTests
         File.Delete(path);
     }
 }
+

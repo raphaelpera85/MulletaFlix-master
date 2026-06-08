@@ -1,14 +1,14 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Threading.Tasks;
-using Jellyfin.Data.Events.Users;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Events.Users;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Notifications;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.Users
+namespace MulletaFlix.Server.Implementations.Events.Consumers.Users
 {
     /// <summary>
     /// Creates an entry in the activity log when a user is locked out.
@@ -45,3 +45,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.Users
         }
     }
 }
+

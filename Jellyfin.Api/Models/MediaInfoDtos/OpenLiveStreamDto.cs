@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.MediaInfo;
 
-namespace Jellyfin.Api.Models.MediaInfoDtos;
+namespace MulletaFlix.Api.Models.MediaInfoDtos;
 
 /// <summary>
 /// Open live stream dto.
@@ -80,3 +80,4 @@ public class OpenLiveStreamDto
     /// </summary>
     public IReadOnlyList<MediaProtocol> DirectPlayProtocols { get; set; } = Array.Empty<MediaProtocol>();
 }
+

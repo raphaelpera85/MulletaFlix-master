@@ -1,9 +1,9 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 
@@ -73,3 +73,4 @@ namespace MediaBrowser.Controller.Collections
         Task<Folder?> GetCollectionsFolder(bool createIfNeeded);
     }
 }
+

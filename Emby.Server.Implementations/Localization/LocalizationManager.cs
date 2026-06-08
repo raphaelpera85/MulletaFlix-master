@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Collections.Generic;
@@ -9,8 +9,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Extensions;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Extensions;
+using MulletaFlix.Extensions.Json;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
@@ -43,13 +43,14 @@ namespace Emby.Server.Implementations.Localization
         private readonly ConcurrentDictionary<string, CultureDto?> _cultureCache = new(StringComparer.OrdinalIgnoreCase);
         private List<CultureDto> _cultures = [];
 
-        private static readonly (IReadOnlyList<LocalizationOption> Options, FrozenDictionary<string, string> Bcp47ToJellyfinMap) _localizationData = BuildLocalizationData();
+        private static readonly (IReadOnlyList<LocalizationOption> Options, FrozenDictionary<string, string> Bcp47ToMulletaFlixMap) _localizationData = BuildLocalizationData();
         private static readonly IReadOnlyList<LocalizationOption> _localizationOptions = _localizationData.Options;
 
         // Maps BCP-47 hyphenated culture codes (set by ASP.NET Core's RequestLocalizationMiddleware
-        // and used as CurrentUICulture.Name) to Jellyfin's underscore-based resource file codes.
+        // and used as CurrentUICulture.Name) to MulletaFlix's underscore-based resource file codes.
         // Built reflexively from the resource file scan so both directions stay in sync.
-        private static readonly FrozenDictionary<string, string> _bcp47ToJellyfinMap = _localizationData.Bcp47ToJellyfinMap;
+        private static readonly FrozenDictionary<string, string> _bcp47ToMulletaFlixMap = _localizationData.Bcp47ToMulletaFlixMap;
+        private static readonly Lazy<IReadOnlyDictionary<string, string>> _countryToLanguageMap = new(BuildCountryLanguageMap);
 
         private FrozenDictionary<string, string> _iso6392BtoT = null!;
 
@@ -87,8 +88,31 @@ namespace Emby.Server.Implementations.Localization
             return cultures;
         }
 
+        private static IReadOnlyDictionary<string, string> BuildCountryLanguageMap()
+        {
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures).OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var regionInfo = new RegionInfo(culture.Name);
+                    if (!map.ContainsKey(regionInfo.TwoLetterISORegionName))
+                    {
+                        map[regionInfo.TwoLetterISORegionName] = culture.TwoLetterISOLanguageName;
+                    }
+                }
+                catch (ArgumentException)
+                {
+                    // Ignore cultures that cannot be converted into a region.
+                }
+            }
+
+            return map;
+        }
+
         /// <summary>
-        /// Resolves a Jellyfin resource culture code (which may use underscores, e.g. <c>es_419</c>)
+        /// Resolves a MulletaFlix resource culture code (which may use underscores, e.g. <c>es_419</c>)
         /// to a <see cref="CultureInfo"/>. Returns <see langword="false"/> for codes .NET cannot resolve.
         /// </summary>
         private static bool TryGetCultureInfo(string cultureCode, [NotNullWhen(true)] out CultureInfo? cultureInfo)
@@ -164,6 +188,38 @@ namespace Emby.Server.Implementations.Localization
         /// <returns><see cref="IEnumerable{CultureDto}" />.</returns>
         public IEnumerable<CultureDto> GetCultures()
             => _cultures;
+
+        /// <inheritdoc />
+        public string GetDefaultMetadataLanguage(string? countryCode = null)
+        {
+            if (!string.IsNullOrWhiteSpace(countryCode)
+                && _countryToLanguageMap.Value.TryGetValue(countryCode, out var mappedLanguage)
+                && !string.IsNullOrWhiteSpace(mappedLanguage))
+            {
+                return mappedLanguage;
+            }
+
+            var configuredLanguage = _configurationManager.Configuration.PreferredMetadataLanguage;
+            if (!string.IsNullOrWhiteSpace(configuredLanguage))
+            {
+                return configuredLanguage;
+            }
+
+            var uiCulture = _configurationManager.Configuration.UICulture;
+            if (!string.IsNullOrWhiteSpace(uiCulture))
+            {
+                try
+                {
+                    return CultureInfo.GetCultureInfo(uiCulture).TwoLetterISOLanguageName;
+                }
+                catch (CultureNotFoundException)
+                {
+                    // Ignore invalid configured UI culture values.
+                }
+            }
+
+            return "en";
+        }
 
         private async Task LoadCultures()
         {
@@ -505,8 +561,8 @@ namespace Emby.Server.Implementations.Localization
                 culture = DefaultCulture;
             }
 
-            // Normalize BCP-47 hyphenated codes to Jellyfin's underscore-based codes
-            if (_bcp47ToJellyfinMap.TryGetValue(culture, out var mapped))
+            // Normalize BCP-47 hyphenated codes to MulletaFlix's underscore-based codes
+            if (_bcp47ToMulletaFlixMap.TryGetValue(culture, out var mapped))
             {
                 culture = mapped;
             }
@@ -586,7 +642,7 @@ namespace Emby.Server.Implementations.Localization
             return _localizationOptions;
         }
 
-        private static (IReadOnlyList<LocalizationOption> Options, FrozenDictionary<string, string> Bcp47ToJellyfinMap) BuildLocalizationData()
+        private static (IReadOnlyList<LocalizationOption> Options, FrozenDictionary<string, string> Bcp47ToMulletaFlixMap) BuildLocalizationData()
         {
             var options = new List<LocalizationOption>();
             var bcp47Map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -603,13 +659,13 @@ namespace Emby.Server.Implementations.Localization
                 // Extract culture code from resource name: "...Core.de.json" -> "de", "...Core.pt-BR.json" -> "pt-BR"
                 var code = resource[prefix.Length..^5];
 
-                // Record the BCP-47 → Jellyfin mapping for any resource file using underscores.
+                // Record the BCP-47 â†’ MulletaFlix mapping for any resource file using underscores.
                 if (code.Contains('_', StringComparison.Ordinal))
                 {
                     bcp47Map[code.Replace('_', '-')] = code;
                 }
 
-                // Skip the base language file — en-US is added explicitly below
+                // Skip the base language file â€” en-US is added explicitly below
                 if (code.Equals(DefaultCulture, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
@@ -628,7 +684,7 @@ namespace Emby.Server.Implementations.Localization
 
         private static string GetDisplayName(string cultureCode)
         {
-            // Custom/novelty codes like "pr" (Pirate) — fall back to code itself
+            // Custom/novelty codes like "pr" (Pirate) â€” fall back to code itself
             return TryGetCultureInfo(cultureCode, out var cultureInfo)
                 ? cultureInfo.NativeName
                 : cultureCode;
@@ -656,3 +712,4 @@ namespace Emby.Server.Implementations.Localization
         }
     }
 }
+

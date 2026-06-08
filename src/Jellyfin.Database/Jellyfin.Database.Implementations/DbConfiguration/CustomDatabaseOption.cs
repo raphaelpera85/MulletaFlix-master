@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Jellyfin.Database.Implementations.DbConfiguration;
+namespace MulletaFlix.Database.Implementations.DbConfiguration;
 
 /// <summary>
 /// The custom value option for custom database providers.
@@ -17,3 +17,4 @@ public class CustomDatabaseOption
     /// </summary>
     public required string Value { get; set; }
 }
+

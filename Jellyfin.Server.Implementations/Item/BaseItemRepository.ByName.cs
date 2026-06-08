@@ -1,17 +1,17 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
 using Microsoft.EntityFrameworkCore;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 public sealed partial class BaseItemRepository
 {
@@ -245,7 +245,7 @@ public sealed partial class BaseItemRepository
     }
 
     private Dictionary<string, ItemCounts> BuildItemCountsByCleanName(
-        Database.Implementations.JellyfinDbContext context,
+        Database.Implementations.MulletaFlixDbContext context,
         InternalItemsQuery filter,
         IReadOnlyList<ItemValueType> itemValueTypes)
     {
@@ -301,3 +301,4 @@ public sealed partial class BaseItemRepository
                 });
     }
 }
+

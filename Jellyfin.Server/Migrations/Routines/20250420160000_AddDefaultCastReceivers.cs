@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Model.System;
 
-namespace Jellyfin.Server.Migrations.Routines;
+namespace MulletaFlix.Server.Migrations.Routines;
 
 /// <summary>
 /// Migration to add the default cast receivers to the system config.
 /// </summary>
 #pragma warning disable CS0618 // Type or member is obsolete
-[JellyfinMigration("2025-04-20T16:00:00", nameof(AddDefaultCastReceivers), "34A1A1C4-5572-418E-A2F8-32CDFE2668E8", RunMigrationOnSetup = true)]
+[MulletaFlixMigration("2025-04-20T16:00:00", nameof(AddDefaultCastReceivers), "34A1A1C4-5572-418E-A2F8-32CDFE2668E8", RunMigrationOnSetup = true)]
 public class AddDefaultCastReceivers : IMigrationRoutine
 #pragma warning restore CS0618 // Type or member is obsolete
 {
@@ -43,3 +43,4 @@ public class AddDefaultCastReceivers : IMigrationRoutine
         _serverConfigurationManager.SaveConfiguration();
     }
 }
+

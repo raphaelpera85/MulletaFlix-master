@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Constants;
+﻿namespace MulletaFlix.Api.Constants;
 
 /// <summary>
 /// Constants for user roles used in the authentication and authorization for the API.
@@ -20,3 +20,4 @@ public static class UserRoles
     /// </summary>
     public const string Administrator = "Administrator";
 }
+

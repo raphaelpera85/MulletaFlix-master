@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -37,15 +37,15 @@ using Emby.Server.Implementations.Session;
 using Emby.Server.Implementations.SyncPlay;
 using Emby.Server.Implementations.TV;
 using Emby.Server.Implementations.Updates;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Drawing;
-using Jellyfin.MediaEncoding.Hls.Playlist;
-using Jellyfin.Networking.Manager;
-using Jellyfin.Networking.Udp;
-using Jellyfin.Server.Implementations.FullSystemBackup;
-using Jellyfin.Server.Implementations.Item;
-using Jellyfin.Server.Implementations.MediaSegments;
-using Jellyfin.Server.Implementations.SystemBackupService;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Drawing;
+using MulletaFlix.MediaEncoding.Hls.Playlist;
+using MulletaFlix.Networking.Manager;
+using MulletaFlix.Networking.Udp;
+using MulletaFlix.Server.Implementations.FullSystemBackup;
+using MulletaFlix.Server.Implementations.Item;
+using MulletaFlix.Server.Implementations.MediaSegments;
+using MulletaFlix.Server.Implementations.SystemBackupService;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Events;
@@ -250,7 +250,7 @@ namespace Emby.Server.Implementations
         /// Gets the email address for use within a comment section of a user agent field.
         /// Presently used to provide contact information to MusicBrainz service.
         /// </summary>
-        public string ApplicationUserAgentAddress => "team@jellyfin.org";
+        public string ApplicationUserAgentAddress => "team@MulletaFlix.org";
 
         /// <summary>
         /// Gets the current application name.
@@ -272,7 +272,7 @@ namespace Emby.Server.Implementations
 
         public string FriendlyName =>
             string.IsNullOrEmpty(ConfigurationManager.Configuration.ServerName)
-                ? Environment.MachineName
+                ? "Mulletaflix"
                 : ConfigurationManager.Configuration.ServerName;
 
         public string RestoreBackupPath { get; set; }
@@ -1033,3 +1033,4 @@ namespace Emby.Server.Implementations
         }
     }
 }
+

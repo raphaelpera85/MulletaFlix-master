@@ -1,6 +1,6 @@
-using MediaBrowser.Model.SyncPlay;
+﻿using MediaBrowser.Model.SyncPlay;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class SetRepeatModeRequestDto.
@@ -13,3 +13,4 @@ public class SetRepeatModeRequestDto
     /// <value>The repeat mode.</value>
     public GroupRepeatMode Mode { get; set; }
 }
+

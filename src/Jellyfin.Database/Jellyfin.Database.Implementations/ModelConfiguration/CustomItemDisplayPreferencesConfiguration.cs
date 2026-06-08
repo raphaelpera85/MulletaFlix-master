@@ -1,8 +1,8 @@
-using Jellyfin.Database.Implementations.Entities;
+﻿using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Jellyfin.Database.Implementations.ModelConfiguration
+namespace MulletaFlix.Database.Implementations.ModelConfiguration
 {
     /// <summary>
     /// FluentAPI configuration for the CustomItemDisplayPreferences entity.
@@ -18,3 +18,4 @@ namespace Jellyfin.Database.Implementations.ModelConfiguration
         }
     }
 }
+

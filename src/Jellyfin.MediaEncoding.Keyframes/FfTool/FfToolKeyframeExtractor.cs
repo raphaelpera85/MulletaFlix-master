@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.MediaEncoding.Keyframes.FfTool;
+namespace MulletaFlix.MediaEncoding.Keyframes.FfTool;
 
 /// <summary>
 /// FfTool based keyframe extractor.
@@ -15,3 +15,4 @@ public static class FfToolKeyframeExtractor
     /// <returns>An instance of <see cref="KeyframeData"/>.</returns>
     public static KeyframeData GetKeyframeData(string ffToolPath, string filePath) => throw new NotImplementedException();
 }
+

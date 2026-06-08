@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Jellyfin.Database.Providers.Sqlite.Migrations
+namespace MulletaFlix.Database.Providers.Sqlite.Migrations
 {
     /// <inheritdoc />
     public partial class ChangeOwnerIdToGuid : Migration
@@ -154,3 +154,4 @@ namespace Jellyfin.Database.Providers.Sqlite.Migrations
         }
     }
 }
+

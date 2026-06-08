@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -8,7 +8,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
 
-namespace Jellyfin.LiveTv.Channels
+namespace MulletaFlix.LiveTv.Channels
 {
     /// <summary>
     /// A media source provider for channels.
@@ -41,3 +41,4 @@ namespace Jellyfin.LiveTv.Channels
         }
     }
 }
+

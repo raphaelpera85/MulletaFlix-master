@@ -1,11 +1,11 @@
-using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
+﻿using System.Threading.Tasks;
+using MulletaFlix.Api.Constants;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 
-namespace Jellyfin.Api.Auth.LocalAccessOrRequiresElevationPolicy
+namespace MulletaFlix.Api.Auth.LocalAccessOrRequiresElevationPolicy
 {
     /// <summary>
     /// Local access or require elevated privileges handler.
@@ -54,3 +54,4 @@ namespace Jellyfin.Api.Auth.LocalAccessOrRequiresElevationPolicy
         }
     }
 }
+

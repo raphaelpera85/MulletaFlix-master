@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // obsolete
+﻿#pragma warning disable CS0618 // obsolete
 
 using System;
 using System.IO;
@@ -8,10 +8,10 @@ using Emby.Server.Implementations;
 using MediaBrowser.Common.Net;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Migrations.PreStartupRoutines;
+namespace MulletaFlix.Server.Migrations.PreStartupRoutines;
 
 /// <inheritdoc />
-[JellyfinMigration("2025-04-20T01:00:00", nameof(MigrateNetworkConfiguration), "4FB5C950-1991-11EE-9B4B-0800200C9A66", Stage = Stages.JellyfinMigrationStageTypes.PreInitialisation)]
+[MulletaFlixMigration("2025-04-20T01:00:00", nameof(MigrateNetworkConfiguration), "4FB5C950-1991-11EE-9B4B-0800200C9A66", Stage = Stages.MulletaFlixMigrationStageTypes.PreInitialisation)]
 public class MigrateNetworkConfiguration : IMigrationRoutine
 {
     private readonly ServerApplicationPaths _applicationPaths;
@@ -203,3 +203,4 @@ public class MigrateNetworkConfiguration : IMigrationRoutine
         public bool EnablePublishedServerUriByRequest { get; set; } = false;
     }
 }
+

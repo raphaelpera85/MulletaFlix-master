@@ -1,6 +1,6 @@
-using MediaBrowser.Model.Configuration;
+﻿using MediaBrowser.Model.Configuration;
 
-namespace Jellyfin.Server.Configuration;
+namespace MulletaFlix.Server.Configuration;
 
 /// <summary>
 /// Defines types for usage with the <see cref="StartupOptions.StartupMode"/>.
@@ -8,7 +8,7 @@ namespace Jellyfin.Server.Configuration;
 public enum StartupMode
 {
     /// <summary>
-    /// Default startup mode, runs the jellyfin server in normal operation.
+    /// Default startup mode, runs the MulletaFlix server in normal operation.
     /// </summary>
     MediaServer = 0,
 
@@ -22,3 +22,4 @@ public enum StartupMode
     /// </summary>
     SeedSystem = 2
 }
+

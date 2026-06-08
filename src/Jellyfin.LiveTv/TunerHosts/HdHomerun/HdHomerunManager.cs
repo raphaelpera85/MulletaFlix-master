@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.LiveTv;
 
-namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
+namespace MulletaFlix.LiveTv.TunerHosts.HdHomerun
 {
     public sealed class HdHomerunManager : IDisposable
     {
@@ -349,3 +349,4 @@ namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
         }
     }
 }
+

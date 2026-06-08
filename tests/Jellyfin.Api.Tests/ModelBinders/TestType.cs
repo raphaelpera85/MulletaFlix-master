@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Tests.ModelBinders
+﻿namespace MulletaFlix.Api.Tests.ModelBinders
 {
     public enum TestType
     {
@@ -9,3 +9,4 @@ namespace Jellyfin.Api.Tests.ModelBinders
         Fish
     }
 }
+

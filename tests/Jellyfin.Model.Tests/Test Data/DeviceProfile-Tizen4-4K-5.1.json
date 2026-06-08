@@ -1,5 +1,5 @@
 {
-    "Name": "Jellyfin Tizen 4 4K 5.1",
+    "Name": "MulletaFlix Tizen 4 4K 5.1",
     "EnableAlbumArtInDidl": false,
     "EnableSingleAlbumArtLimit": false,
     "EnableSingleSubtitleLimit": false,
@@ -526,3 +526,4 @@
     ],
     "$type": "DeviceProfile"
 }
+

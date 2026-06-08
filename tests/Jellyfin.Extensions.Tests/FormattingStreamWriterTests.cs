@@ -1,10 +1,10 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
 using Xunit;
 
-namespace Jellyfin.Extensions.Tests;
+namespace MulletaFlix.Extensions.Tests;
 
 public static class FormattingStreamWriterTests
 {
@@ -21,3 +21,4 @@ public static class FormattingStreamWriterTests
         }
     }
 }
+

@@ -1,10 +1,10 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.IO;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Playlists;
 using MediaBrowser.Controller.Resolvers;
@@ -80,3 +80,4 @@ namespace Emby.Server.Implementations.Library.Resolvers
         }
     }
 }
+

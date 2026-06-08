@@ -1,11 +1,11 @@
-using Jellyfin.Data.Events.System;
-using Jellyfin.Data.Events.Users;
-using Jellyfin.Server.Implementations.Events.Consumers.Library;
-using Jellyfin.Server.Implementations.Events.Consumers.Security;
-using Jellyfin.Server.Implementations.Events.Consumers.Session;
-using Jellyfin.Server.Implementations.Events.Consumers.System;
-using Jellyfin.Server.Implementations.Events.Consumers.Updates;
-using Jellyfin.Server.Implementations.Events.Consumers.Users;
+﻿using MulletaFlix.Data.Events.System;
+using MulletaFlix.Data.Events.Users;
+using MulletaFlix.Server.Implementations.Events.Consumers.Library;
+using MulletaFlix.Server.Implementations.Events.Consumers.Security;
+using MulletaFlix.Server.Implementations.Events.Consumers.Session;
+using MulletaFlix.Server.Implementations.Events.Consumers.System;
+using MulletaFlix.Server.Implementations.Events.Consumers.Updates;
+using MulletaFlix.Server.Implementations.Events.Consumers.Users;
 using MediaBrowser.Common.Updates;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Events.Authentication;
@@ -17,7 +17,7 @@ using MediaBrowser.Controller.Subtitles;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Jellyfin.Server.Implementations.Events
+namespace MulletaFlix.Server.Implementations.Events
 {
     /// <summary>
     /// A class containing extensions to <see cref="IServiceCollection"/> for eventing.
@@ -70,3 +70,4 @@ namespace Jellyfin.Server.Implementations.Events
         }
     }
 }
+

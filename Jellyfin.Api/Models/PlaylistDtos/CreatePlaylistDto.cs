@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions.Json.Converters;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions.Json.Converters;
 using MediaBrowser.Model.Entities;
 
-namespace Jellyfin.Api.Models.PlaylistDtos;
+namespace MulletaFlix.Api.Models.PlaylistDtos;
 
 /// <summary>
 /// Create new playlist dto.
@@ -43,3 +43,4 @@ public class CreatePlaylistDto
     /// </summary>
     public bool IsPublic { get; set; } = true;
 }
+

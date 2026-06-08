@@ -1,9 +1,9 @@
-using System;
-using Jellyfin.LiveTv.Recordings;
+﻿using System;
+using MulletaFlix.LiveTv.Recordings;
 using MediaBrowser.Controller.LiveTv;
 using Xunit;
 
-namespace Jellyfin.LiveTv.Tests
+namespace MulletaFlix.LiveTv.Tests
 {
     public static class RecordingHelperTests
     {
@@ -107,3 +107,4 @@ namespace Jellyfin.LiveTv.Tests
         }
     }
 }
+

@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Jellyfin.Api.Auth;
-using Jellyfin.Api.Constants;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Api.Auth;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Authentication;
 using MediaBrowser.Controller.Net;
 using Microsoft.AspNetCore.Authentication;
@@ -19,13 +19,13 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Api.Tests.Auth
+namespace MulletaFlix.Api.Tests.Auth
 {
     public class CustomAuthenticationHandlerTests
     {
         private readonly IFixture _fixture;
 
-        private readonly Mock<IAuthService> _jellyfinAuthServiceMock;
+        private readonly Mock<IAuthService> _MulletaFlixAuthServiceMock;
 
         private readonly CustomAuthenticationHandler _sut;
         private readonly AuthenticationScheme _scheme;
@@ -40,7 +40,7 @@ namespace Jellyfin.Api.Tests.Auth
             _fixture = new Fixture().Customize(fixtureCustomizations);
             AllowFixtureCircularDependencies();
 
-            _jellyfinAuthServiceMock = _fixture.Freeze<Mock<IAuthService>>();
+            _MulletaFlixAuthServiceMock = _fixture.Freeze<Mock<IAuthService>>();
             var optionsMonitorMock = _fixture.Freeze<Mock<IOptionsMonitor<AuthenticationSchemeOptions>>>();
             var serviceProviderMock = _fixture.Freeze<Mock<IServiceProvider>>();
             var authenticationServiceMock = _fixture.Freeze<Mock<IAuthenticationService>>();
@@ -74,7 +74,7 @@ namespace Jellyfin.Api.Tests.Auth
         {
             var errorMessage = _fixture.Create<string>();
 
-            _jellyfinAuthServiceMock.Setup(
+            _MulletaFlixAuthServiceMock.Setup(
                     a => a.Authenticate(
                         It.IsAny<HttpRequest>()))
                 .Throws(new AuthenticationException(errorMessage));
@@ -137,7 +137,7 @@ namespace Jellyfin.Api.Tests.Auth
             authorizationInfo.IsApiKey = false;
             authorizationInfo.Token = "fake-token";
 
-            _jellyfinAuthServiceMock.Setup(
+            _MulletaFlixAuthServiceMock.Setup(
                     a => a.Authenticate(
                         It.IsAny<HttpRequest>()))
                 .Returns(Task.FromResult(authorizationInfo));
@@ -156,3 +156,4 @@ namespace Jellyfin.Api.Tests.Auth
         }
     }
 }
+

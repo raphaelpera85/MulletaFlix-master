@@ -1,5 +1,5 @@
-#pragma warning disable CS1591
-namespace Jellyfin.Database.Implementations.Entities;
+﻿#pragma warning disable CS1591
+namespace MulletaFlix.Database.Implementations.Entities;
 
 public enum BaseItemExtraType
 {
@@ -16,3 +16,4 @@ public enum BaseItemExtraType
     Featurette = 10,
     Short = 11
 }
+

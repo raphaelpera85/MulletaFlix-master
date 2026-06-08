@@ -1,8 +1,8 @@
-#nullable disable
+﻿#nullable disable
 
 using System;
 
-namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
+namespace MulletaFlix.LiveTv.TunerHosts.HdHomerun
 {
     internal class DiscoverResponse
     {
@@ -40,3 +40,4 @@ namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
         }
     }
 }
+

@@ -1,12 +1,12 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Server.Implementations.Item;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.Implementations.Item;
 using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,7 @@ namespace Emby.Server.Implementations.ScheduledTasks.Tasks;
 public class CleanupUserDataTask : IScheduledTask
 {
     private readonly ILocalizationManager _localization;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly ILogger<CleanupUserDataTask> _logger;
 
     /// <summary>
@@ -29,7 +29,7 @@ public class CleanupUserDataTask : IScheduledTask
     /// <param name="localization">The localisation Provider.</param>
     /// <param name="dbProvider">The DB context factory.</param>
     /// <param name="logger">A logger.</param>
-    public CleanupUserDataTask(ILocalizationManager localization, IDbContextFactory<JellyfinDbContext> dbProvider, ILogger<CleanupUserDataTask> logger)
+    public CleanupUserDataTask(ILocalizationManager localization, IDbContextFactory<MulletaFlixDbContext> dbProvider, ILogger<CleanupUserDataTask> logger)
     {
         _localization = localization;
         _dbProvider = dbProvider;
@@ -75,3 +75,4 @@ public class CleanupUserDataTask : IScheduledTask
         yield break;
     }
 }
+

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class BufferRequestDto.
@@ -39,3 +39,4 @@ public class BufferRequestDto
     /// <value>The playlist item identifier.</value>
     public Guid PlaylistItemId { get; set; }
 }
+

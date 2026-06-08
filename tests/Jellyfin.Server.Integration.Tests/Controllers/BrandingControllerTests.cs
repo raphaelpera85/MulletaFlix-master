@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 using MediaBrowser.Model.Branding;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests
+namespace MulletaFlix.Server.Integration.Tests
 {
-    public sealed class BrandingControllerTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class BrandingControllerTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
 
-        public BrandingControllerTests(JellyfinApplicationFactory factory)
+        public BrandingControllerTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -52,3 +52,4 @@ namespace Jellyfin.Server.Integration.Tests
         }
     }
 }
+

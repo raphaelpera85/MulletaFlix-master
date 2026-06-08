@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Api.ModelBinders;
+namespace MulletaFlix.Api.ModelBinders;
 
 /// <summary>
 /// Nullable enum model binder provider.
@@ -24,3 +24,4 @@ public class NullableEnumModelBinderProvider : IModelBinderProvider
         return new NullableEnumModelBinder(logger);
     }
 }
+

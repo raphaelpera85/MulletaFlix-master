@@ -1,23 +1,23 @@
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Api.Models;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Api.Models;
+using MulletaFlix.Extensions.Json;
 using Xunit;
 
-namespace Jellyfin.Server.Integration.Tests.Controllers
+namespace MulletaFlix.Server.Integration.Tests.Controllers
 {
-    public sealed class DashboardControllerTests : IClassFixture<JellyfinApplicationFactory>
+    public sealed class DashboardControllerTests : IClassFixture<MulletaFlixApplicationFactory>
     {
-        private readonly JellyfinApplicationFactory _factory;
+        private readonly MulletaFlixApplicationFactory _factory;
         private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
         private static string? _accessToken;
 
-        public DashboardControllerTests(JellyfinApplicationFactory factory)
+        public DashboardControllerTests(MulletaFlixApplicationFactory factory)
         {
             _factory = factory;
         }
@@ -41,7 +41,7 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal(MediaTypeNames.Text.Html, response.Content.Headers.ContentType?.MediaType);
-            StreamReader reader = new StreamReader(typeof(TestPlugin).Assembly.GetManifestResourceStream("Jellyfin.Server.Integration.Tests.TestPage.html")!);
+            StreamReader reader = new StreamReader(typeof(TestPlugin).Assembly.GetManifestResourceStream("MulletaFlix.Server.Integration.Tests.TestPage.html")!);
             Assert.Equal(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), await reader.ReadToEndAsync(TestContext.Current.CancellationToken));
         }
 
@@ -87,3 +87,4 @@ namespace Jellyfin.Server.Integration.Tests.Controllers
         }
     }
 }
+

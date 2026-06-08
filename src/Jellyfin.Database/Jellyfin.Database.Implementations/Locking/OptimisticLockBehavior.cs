@@ -1,4 +1,4 @@
-#pragma warning disable CA1873
+﻿#pragma warning disable CA1873
 
 using System;
 using System.Data.Common;
@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Polly;
 
-namespace Jellyfin.Database.Implementations.Locking;
+namespace MulletaFlix.Database.Implementations.Locking;
 
 /// <summary>
 /// Defines a locking mechanism that will retry any write operation for a few times.
@@ -86,13 +86,13 @@ public class OptimisticLockBehavior : IEntityFrameworkCoreLockingBehavior
     }
 
     /// <inheritdoc/>
-    public void OnSaveChanges(JellyfinDbContext context, Action saveChanges)
+    public void OnSaveChanges(MulletaFlixDbContext context, Action saveChanges)
     {
         _writePolicy.ExecuteAndCapture(saveChanges);
     }
 
     /// <inheritdoc/>
-    public async Task OnSaveChangesAsync(JellyfinDbContext context, Func<Task> saveChanges)
+    public async Task OnSaveChangesAsync(MulletaFlixDbContext context, Func<Task> saveChanges)
     {
         await _writeAsyncPolicy.ExecuteAndCaptureAsync(saveChanges).ConfigureAwait(false);
     }
@@ -161,3 +161,4 @@ public class OptimisticLockBehavior : IEntityFrameworkCoreLockingBehavior
         }
     }
 }
+

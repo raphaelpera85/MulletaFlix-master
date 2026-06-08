@@ -5,21 +5,21 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.DbConfiguration;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.DbConfiguration;
 using MediaBrowser.Common.Configuration;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Database.Providers.Sqlite;
+namespace MulletaFlix.Database.Providers.Sqlite;
 
 /// <summary>
-/// Configures jellyfin to use an SQLite database.
+/// Configures MulletaFlix to use an SQLite database.
 /// </summary>
-[JellyfinDatabaseProviderKey("Jellyfin-SQLite")]
-public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
+[MulletaFlixDatabaseProviderKey("MulletaFlix-SQLite")]
+public sealed class SqliteDatabaseProvider : IMulletaFlixDatabaseProvider
 {
     private const string BackupFolderName = "SQLiteBackups";
     private readonly IApplicationPaths _applicationPaths;
@@ -37,7 +37,7 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
     }
 
     /// <inheritdoc/>
-    public IDbContextFactory<JellyfinDbContext>? DbContextFactory { get; set; }
+    public IDbContextFactory<MulletaFlixDbContext>? DbContextFactory { get; set; }
 
     /// <inheritdoc/>
     public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration)
@@ -62,7 +62,7 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
 
         var sqliteConnectionBuilder = new SqliteConnectionStringBuilder
         {
-            DataSource = GetOption(customOptions, "path", e => e, () => Path.Combine(_applicationPaths.DataPath, "jellyfin.db")),
+            DataSource = GetOption(customOptions, "path", e => e, () => Path.Combine(_applicationPaths.DataPath, "MulletaFlix.db")),
             Cache = GetOption(customOptions, "cache", Enum.Parse<SqliteCacheMode>, () => SqliteCacheMode.Default),
             Pooling = GetOption(customOptions, "pooling", e => e.Equals(bool.TrueString, StringComparison.OrdinalIgnoreCase), () => true),
             DefaultTimeout = GetOption(customOptions, "command-timeout", int.Parse, () => 60)
@@ -83,7 +83,7 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
                     .Ignore(RelationalEventId.MultipleCollectionIncludeWarning))
             .AddInterceptors(new PragmaConnectionInterceptor(
                 _logger,
-                GetOption<int?>(customOptions, "cacheSize", e => int.Parse(e, CultureInfo.InvariantCulture)),
+                GetOption<int?>(customOptions, "cacheSize", e => int.Parse(e, CultureInfo.InvariantCulture), () => -20000),
                 GetOption(customOptions, "lockingmode", e => e, () => "NORMAL")!,
                 GetOption(customOptions, "journalsizelimit", int.Parse, () => 134_217_728),
                 GetOption(customOptions, "tempstoremode", int.Parse, () => 2),
@@ -108,7 +108,7 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
             await context.Database.ExecuteSqlRawAsync("PRAGMA optimize", cancellationToken).ConfigureAwait(false);
             await context.Database.ExecuteSqlRawAsync("VACUUM", cancellationToken).ConfigureAwait(false);
             await context.Database.ExecuteSqlRawAsync("PRAGMA wal_checkpoint(TRUNCATE)", cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("jellyfin.db optimized successfully!");
+            _logger.LogInformation("MulletaFlix.db optimized successfully!");
         }
     }
 
@@ -146,11 +146,11 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
     public Task<string> MigrationBackupFast(CancellationToken cancellationToken)
     {
         var key = DateTime.UtcNow.ToString("yyyyMMddhhmmss", CultureInfo.InvariantCulture);
-        var path = Path.Combine(_applicationPaths.DataPath, "jellyfin.db");
+        var path = Path.Combine(_applicationPaths.DataPath, "MulletaFlix.db");
         var backupFile = Path.Combine(_applicationPaths.DataPath, BackupFolderName);
         Directory.CreateDirectory(backupFile);
 
-        backupFile = Path.Combine(backupFile, $"{key}_jellyfin.db");
+        backupFile = Path.Combine(backupFile, $"{key}_MulletaFlix.db");
         File.Copy(path, backupFile);
         return Task.FromResult(key);
     }
@@ -160,8 +160,8 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
     {
         // ensure there are absolutely no dangling Sqlite connections.
         SqliteConnection.ClearAllPools();
-        var path = Path.Combine(_applicationPaths.DataPath, "jellyfin.db");
-        var backupFile = Path.Combine(_applicationPaths.DataPath, BackupFolderName, $"{key}_jellyfin.db");
+        var path = Path.Combine(_applicationPaths.DataPath, "MulletaFlix.db");
+        var backupFile = Path.Combine(_applicationPaths.DataPath, BackupFolderName, $"{key}_MulletaFlix.db");
 
         if (!File.Exists(backupFile))
         {
@@ -176,7 +176,7 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
     /// <inheritdoc />
     public Task DeleteBackup(string key)
     {
-        var backupFile = Path.Combine(_applicationPaths.DataPath, BackupFolderName, $"{key}_jellyfin.db");
+        var backupFile = Path.Combine(_applicationPaths.DataPath, BackupFolderName, $"{key}_MulletaFlix.db");
 
         if (!File.Exists(backupFile))
         {
@@ -189,7 +189,7 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
     }
 
     /// <inheritdoc/>
-    public async Task PurgeDatabase(JellyfinDbContext dbContext, IEnumerable<string>? tableNames)
+    public async Task PurgeDatabase(MulletaFlixDbContext dbContext, IEnumerable<string>? tableNames)
     {
         ArgumentNullException.ThrowIfNull(tableNames);
 
@@ -209,3 +209,4 @@ public sealed class SqliteDatabaseProvider : IJellyfinDatabaseProvider
         await dbContext.Database.ExecuteSqlRawAsync(deleteAllQuery).ConfigureAwait(false);
     }
 }
+

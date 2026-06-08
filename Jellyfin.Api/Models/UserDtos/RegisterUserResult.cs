@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Models.UserDtos;
+﻿namespace MulletaFlix.Api.Models.UserDtos;
 
 /// <summary>
 /// The register user response body.
@@ -15,3 +15,4 @@ public class RegisterUserResult
     /// </summary>
     public string? Message { get; set; }
 }
+

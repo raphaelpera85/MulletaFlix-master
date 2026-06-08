@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.Library;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Dto;
@@ -22,7 +22,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Library;
+namespace MulletaFlix.Server.Implementations.Tests.Library;
 
 public class UserViewManagerAsyncTests
 {
@@ -203,8 +203,9 @@ public class UserViewManagerAsyncTests
 
         public bool EnableUserSpecificView => true;
 
-        public CollectionType? CollectionType => Jellyfin.Data.Enums.CollectionType.music;
+        public CollectionType? CollectionType => MulletaFlix.Data.Enums.CollectionType.music;
 
         string[] ICollectionFolder.PhysicalLocations => Array.Empty<string>();
     }
 }
+

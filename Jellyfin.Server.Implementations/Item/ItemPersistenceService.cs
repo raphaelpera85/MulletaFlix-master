@@ -1,13 +1,13 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -16,17 +16,17 @@ using MediaBrowser.Controller.Playlists;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
-using DbLinkedChildType = Jellyfin.Database.Implementations.Entities.LinkedChildType;
+using DbLinkedChildType = MulletaFlix.Database.Implementations.Entities.LinkedChildType;
 using LinkedChildType = MediaBrowser.Controller.Entities.LinkedChildType;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 /// <summary>
 /// Handles item persistence operations (save, delete, update).
 /// </summary>
 public class ItemPersistenceService : IItemPersistenceService
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IServerApplicationHost _appHost;
     private readonly ILogger<ItemPersistenceService> _logger;
 
@@ -37,7 +37,7 @@ public class ItemPersistenceService : IItemPersistenceService
     /// <param name="appHost">The application host.</param>
     /// <param name="logger">The logger.</param>
     public ItemPersistenceService(
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         IServerApplicationHost appHost,
         ILogger<ItemPersistenceService> logger)
     {
@@ -662,3 +662,4 @@ public class ItemPersistenceService : IItemPersistenceService
         return list;
     }
 }
+

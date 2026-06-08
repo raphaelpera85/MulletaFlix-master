@@ -1,10 +1,10 @@
-using System.Linq;
+﻿using System.Linq;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.IO;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Controller.Tests
+namespace MulletaFlix.Controller.Tests
 {
     public class DirectoryServiceTests
     {
@@ -250,3 +250,4 @@ namespace Jellyfin.Controller.Tests
         }
     }
 }
+

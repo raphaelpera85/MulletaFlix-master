@@ -1,5 +1,5 @@
-using System;
-using Jellyfin.Data.Enums;
+﻿using System;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Sorting;
 using MediaBrowser.Model.Entities;
@@ -52,3 +52,4 @@ public class OfficialRatingComparer : IBaseItemComparer
         return scoreCompare;
     }
 }
+

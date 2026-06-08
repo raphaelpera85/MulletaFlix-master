@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// Package Controller.
@@ -19,7 +19,7 @@ namespace Jellyfin.Api.Controllers;
 [Route("")]
 [Authorize(Policy = Policies.RequiresElevation)]
 [Tags("Plugin")]
-public class PackageController : BaseJellyfinApiController
+public class PackageController : BaseMulletaFlixApiController
 {
     private readonly IInstallationManager _installationManager;
     private readonly IServerConfigurationManager _serverConfigurationManager;
@@ -162,3 +162,4 @@ public class PackageController : BaseJellyfinApiController
         return NoContent();
     }
 }
+

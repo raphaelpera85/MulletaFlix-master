@@ -1,13 +1,13 @@
-#nullable disable
+﻿#nullable disable
 #pragma warning disable CS1591, CA1819
 
 using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Xml.Serialization;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
-using AccessSchedule = Jellyfin.Database.Implementations.Entities.AccessSchedule;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
+using AccessSchedule = MulletaFlix.Database.Implementations.Entities.AccessSchedule;
 
 namespace MediaBrowser.Model.Users
 {
@@ -197,3 +197,4 @@ namespace MediaBrowser.Model.Users
         public SyncPlayUserAccessType SyncPlayAccess { get; set; }
     }
 }
+

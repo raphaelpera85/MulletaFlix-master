@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.XbmcMetadata.Tests.Parsers
+namespace MulletaFlix.XbmcMetadata.Tests.Parsers
 {
     public class SeriesNfoParserTests
     {
@@ -115,3 +115,4 @@ namespace Jellyfin.XbmcMetadata.Tests.Parsers
         }
     }
 }
+

@@ -1,8 +1,8 @@
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 using System;
 
-namespace Jellyfin.Database.Implementations.Entities;
+namespace MulletaFlix.Database.Implementations.Entities;
 
 public class MediaStreamInfo
 {
@@ -104,3 +104,4 @@ public class MediaStreamInfo
 
     public bool? Hdr10PlusPresentFlag { get; set; }
 }
+

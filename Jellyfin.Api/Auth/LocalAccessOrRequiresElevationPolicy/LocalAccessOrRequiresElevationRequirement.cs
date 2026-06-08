@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 
-namespace Jellyfin.Api.Auth.LocalAccessOrRequiresElevationPolicy
+namespace MulletaFlix.Api.Auth.LocalAccessOrRequiresElevationPolicy
 {
     /// <summary>
     /// The local access or elevated privileges authorization requirement.
@@ -9,3 +9,4 @@ namespace Jellyfin.Api.Auth.LocalAccessOrRequiresElevationPolicy
     {
     }
 }
+

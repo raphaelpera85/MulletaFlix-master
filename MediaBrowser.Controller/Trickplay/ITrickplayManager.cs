@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Configuration;
 
@@ -112,3 +112,4 @@ public interface ITrickplayManager
     /// <returns>The text content of the .m3u8 playlist.</returns>
     Task<string?> GetHlsPlaylist(Guid itemId, int width, string? apiKey);
 }
+

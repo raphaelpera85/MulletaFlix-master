@@ -1,6 +1,6 @@
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
-using Jellyfin.Server.Implementations.SystemBackupService;
+using MulletaFlix.Server.Implementations.SystemBackupService;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.SystemBackupService;
@@ -10,13 +10,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The backup controller.
 /// </summary>
 [Authorize(Policy = Policies.RequiresElevation)]
-public class BackupController : BaseJellyfinApiController
+public class BackupController : BaseMulletaFlixApiController
 {
     private readonly IBackupService _backupService;
     private readonly IApplicationPaths _applicationPaths;
@@ -89,7 +89,7 @@ public class BackupController : BaseJellyfinApiController
     /// </summary>
     /// <param name="path">The data to start a restore process.</param>
     /// <response code="200">Backup archive manifest.</response>
-    /// <response code="204">Not a valid jellyfin Archive.</response>
+    /// <response code="204">Not a valid MulletaFlix Archive.</response>
     /// <response code="404">Not a valid path.</response>
     /// <response code="403">User does not have permission to retrieve information.</response>
     /// <returns>The backup manifest.</returns>
@@ -125,3 +125,4 @@ public class BackupController : BaseJellyfinApiController
         return archivePath;
     }
 }
+

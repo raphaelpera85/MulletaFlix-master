@@ -1,11 +1,11 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Session;
 using MediaBrowser.Model.Tasks;
 
-namespace Jellyfin.Server.Implementations.Events.Consumers.System
+namespace MulletaFlix.Server.Implementations.Events.Consumers.System
 {
     /// <summary>
     /// Notifies admin users when a task is completed.
@@ -30,3 +30,4 @@ namespace Jellyfin.Server.Implementations.Events.Consumers.System
         }
     }
 }
+

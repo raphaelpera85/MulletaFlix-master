@@ -1,5 +1,5 @@
-using System;
-using Jellyfin.Extensions;
+﻿using System;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -71,3 +71,4 @@ namespace MediaBrowser.Controller.BaseItemManager
         }
     }
 }
+

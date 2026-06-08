@@ -1,4 +1,4 @@
-namespace Jellyfin.Data.Enums;
+﻿namespace MulletaFlix.Data.Enums;
 
 /// <summary>
 /// These represent sort orders.
@@ -155,3 +155,4 @@ public enum ItemSortBy
     /// </summary>
     IndexNumber = 29,
 }
+

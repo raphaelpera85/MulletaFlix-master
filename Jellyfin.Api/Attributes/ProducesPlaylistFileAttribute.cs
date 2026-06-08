@@ -1,4 +1,4 @@
-namespace Jellyfin.Api.Attributes;
+﻿namespace MulletaFlix.Api.Attributes;
 
 /// <summary>
 /// Produces file attribute of "image/*".
@@ -15,3 +15,4 @@ public sealed class ProducesPlaylistFileAttribute : ProducesFileAttribute
     {
     }
 }
+

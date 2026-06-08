@@ -1,5 +1,5 @@
 {
-    "Name": "Jellyfin Android",
+    "Name": "MulletaFlix Android",
     "EnableAlbumArtInDidl": false,
     "EnableSingleAlbumArtLimit": false,
     "EnableSingleSubtitleLimit": false,
@@ -327,3 +327,4 @@
     ],
     "$type": "DeviceProfile"
 }
+

@@ -1,4 +1,4 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
@@ -8,7 +8,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Subtitles.Tests
+namespace MulletaFlix.MediaEncoding.Subtitles.Tests
 {
     public class SubtitleEncoderTests
     {
@@ -105,3 +105,4 @@ namespace Jellyfin.MediaEncoding.Subtitles.Tests
         }
     }
 }
+

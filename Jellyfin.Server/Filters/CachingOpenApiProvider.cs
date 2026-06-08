@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using AsyncKeyedLock;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Caching.Memory;
@@ -8,7 +8,7 @@ using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Jellyfin.Server.Filters;
+namespace MulletaFlix.Server.Filters;
 
 /// <summary>
 /// OpenApi provider with caching.
@@ -91,3 +91,4 @@ internal sealed class CachingOpenApiProvider : ISwaggerProvider
         return document;
     }
 }
+

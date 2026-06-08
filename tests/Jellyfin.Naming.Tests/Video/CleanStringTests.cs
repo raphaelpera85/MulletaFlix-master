@@ -1,8 +1,8 @@
-using Emby.Naming.Common;
+﻿using Emby.Naming.Common;
 using Emby.Naming.Video;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Video
+namespace MulletaFlix.Naming.Tests.Video
 {
     public sealed class CleanStringTests
     {
@@ -26,10 +26,10 @@ namespace Jellyfin.Naming.Tests.Video
         [InlineData("[HorribleSubs] Made in Abyss - 13 [720p].mkv", "Made in Abyss")]
         [InlineData("[Tsundere] Kore wa Zombie Desu ka of the Dead [BDRip h264 1920x1080 FLAC]", "Kore wa Zombie Desu ka of the Dead")]
         [InlineData("[Erai-raws] Jujutsu Kaisen - 03 [720p][Multiple Subtitle].mkv", "Jujutsu Kaisen")]
-        [InlineData("[OCN] 애타는 로맨스 720p-NEXT", "애타는 로맨스")]
-        [InlineData("[tvN] 혼술남녀.E01-E16.720p-NEXT", "혼술남녀")]
-        [InlineData("[tvN] 연애말고 결혼 E01~E16 END HDTV.H264.720p-WITH", "연애말고 결혼")]
-        [InlineData("2026年01月10日23時00分00秒-[新]TRIGUN　STARGAZE[字].mp4", "2026年01月10日23時00分00秒-[新]TRIGUN　STARGAZE")]
+        [InlineData("[OCN] ì• íƒ€ëŠ” ë¡œë§¨ìŠ¤ 720p-NEXT", "ì• íƒ€ëŠ” ë¡œë§¨ìŠ¤")]
+        [InlineData("[tvN] í˜¼ìˆ ë‚¨ë…€.E01-E16.720p-NEXT", "í˜¼ìˆ ë‚¨ë…€")]
+        [InlineData("[tvN] ì—°ì• ë§ê³  ê²°í˜¼ E01~E16 END HDTV.H264.720p-WITH", "ì—°ì• ë§ê³  ê²°í˜¼")]
+        [InlineData("2026å¹´01æœˆ10æ—¥23æ™‚00åˆ†00ç§’-[æ–°]TRIGUNã€€STARGAZE[å­—].mp4", "2026å¹´01æœˆ10æ—¥23æ™‚00åˆ†00ç§’-[æ–°]TRIGUNã€€STARGAZE")]
         // FIXME: [InlineData("After The Sunset - [0004].mkv", "After The Sunset")]
         public void CleanStringTest_NeedsCleaning_Success(string input, string expectedName)
         {
@@ -45,7 +45,7 @@ namespace Jellyfin.Naming.Tests.Video
         [InlineData("American.Psycho.mkv")]
         [InlineData("American Psycho.mkv")]
         [InlineData("Run lola run (lola rennt) (2009).mp4")]
-        [InlineData("2026年01月05日00時55分00秒-[新]違国日記【ＡＮｉＭｉＤＮｉＧＨＴ！！！】＃１.mp4")]
+        [InlineData("2026å¹´01æœˆ05æ—¥00æ™‚55åˆ†00ç§’-[æ–°]é•å›½æ—¥è¨˜ã€ï¼¡ï¼®ï½‰ï¼­ï½‰ï¼¤ï¼®ï½‰ï¼§ï¼¨ï¼´ï¼ï¼ï¼ã€‘ï¼ƒï¼‘.mp4")]
         public void CleanStringTest_DoesntNeedCleaning_False(string? input)
         {
             Assert.False(VideoResolver.TryCleanString(input, _namingOptions, out var newName));
@@ -53,3 +53,4 @@ namespace Jellyfin.Naming.Tests.Video
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,11 +9,11 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.LiveTv.Configuration;
-using Jellyfin.LiveTv.IO;
-using Jellyfin.LiveTv.Timers;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.LiveTv.Configuration;
+using MulletaFlix.LiveTv.IO;
+using MulletaFlix.LiveTv.Timers;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Dto;
@@ -32,7 +32,7 @@ using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Recordings;
+namespace MulletaFlix.LiveTv.Recordings;
 
 /// <inheritdoc cref="IRecordingsManager" />
 public sealed class RecordingsManager : IRecordingsManager, IDisposable
@@ -836,3 +836,4 @@ public sealed class RecordingsManager : IRecordingsManager, IDisposable
         }
     }
 }
+

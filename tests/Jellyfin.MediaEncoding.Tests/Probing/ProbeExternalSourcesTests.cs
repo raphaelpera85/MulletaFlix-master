@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.MediaEncoding.Encoder;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.MediaEncoding.Tests.Probing
+namespace MulletaFlix.MediaEncoding.Tests.Probing
 {
     public class ProbeExternalSourcesTests
     {
@@ -48,3 +48,4 @@ namespace Jellyfin.MediaEncoding.Tests.Probing
         }
     }
 }
+

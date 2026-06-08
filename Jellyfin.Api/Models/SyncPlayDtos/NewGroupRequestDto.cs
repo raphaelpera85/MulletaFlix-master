@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class NewGroupRequestDto.
@@ -22,3 +22,4 @@ public class NewGroupRequestDto
     [StringLength(200, ErrorMessage = "Group name must not exceed 200 characters.")]
     public string GroupName { get; set; }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
-using Jellyfin.LiveTv.Configuration;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
+using MulletaFlix.LiveTv.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Dto;
@@ -18,7 +18,7 @@ using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Recordings;
+namespace MulletaFlix.LiveTv.Recordings;
 
 /// <summary>
 /// A service responsible for saving recording metadata.
@@ -494,3 +494,4 @@ public class RecordingsMetadataManager
         File.Copy(image.Path, imageSavePath, true);
     }
 }
+

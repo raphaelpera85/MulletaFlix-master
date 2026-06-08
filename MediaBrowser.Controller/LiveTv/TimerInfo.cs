@@ -1,11 +1,11 @@
-#nullable disable
+﻿#nullable disable
 
 #pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jellyfin.Extensions;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.LiveTv;
 
 namespace MediaBrowser.Controller.LiveTv
@@ -164,3 +164,4 @@ namespace MediaBrowser.Controller.LiveTv
         public KeepUntil KeepUntil { get; set; }
     }
 }
+

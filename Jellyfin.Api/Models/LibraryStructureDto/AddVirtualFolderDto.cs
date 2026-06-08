@@ -1,6 +1,6 @@
-using MediaBrowser.Model.Configuration;
+﻿using MediaBrowser.Model.Configuration;
 
-namespace Jellyfin.Api.Models.LibraryStructureDto;
+namespace MulletaFlix.Api.Models.LibraryStructureDto;
 
 /// <summary>
 /// Add virtual folder dto.
@@ -12,3 +12,4 @@ public class AddVirtualFolderDto
     /// </summary>
     public LibraryOptions? LibraryOptions { get; set; }
 }
+

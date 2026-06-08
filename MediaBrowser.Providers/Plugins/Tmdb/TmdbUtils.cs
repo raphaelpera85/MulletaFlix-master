@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using Jellyfin.Data.Enums;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Model.Entities;
 using TMDbLib.Objects.General;
 
@@ -48,7 +48,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             PersonKind.Producer
         };
 
-        [GeneratedRegex(@"[\W_-[·]]+")]
+        [GeneratedRegex(@"[\W_-[Â·]]+")]
         private static partial Regex NonWordRegex();
 
         /// <summary>
@@ -63,10 +63,10 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         }
 
         /// <summary>
-        /// Maps the TMDb provided roles for crew members to Jellyfin roles.
+        /// Maps the TMDb provided roles for crew members to MulletaFlix roles.
         /// </summary>
-        /// <param name="crew">Crew member to map against the Jellyfin person types.</param>
-        /// <returns>The Jellyfin person type.</returns>
+        /// <param name="crew">Crew member to map against the MulletaFlix person types.</param>
+        /// <returns>The MulletaFlix person type.</returns>
         public static PersonKind MapCrewToPersonType(Crew crew)
         {
             if (string.Equals(crew.Department, "directing", StringComparison.OrdinalIgnoreCase)
@@ -214,3 +214,4 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         }
     }
 }
+

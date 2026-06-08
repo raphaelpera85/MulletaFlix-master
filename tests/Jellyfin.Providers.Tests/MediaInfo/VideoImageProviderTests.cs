@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.MediaInfo
+namespace MulletaFlix.Providers.Tests.MediaInfo
 {
     public class VideoImageProviderTests
     {
@@ -124,3 +124,4 @@ namespace Jellyfin.Providers.Tests.MediaInfo
         }
     }
 }
+

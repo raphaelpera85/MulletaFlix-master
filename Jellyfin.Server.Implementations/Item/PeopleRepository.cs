@@ -1,16 +1,16 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Querying;
 using Microsoft.EntityFrameworkCore;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 #pragma warning disable RS0030 // Do not use banned APIs
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
@@ -24,9 +24,9 @@ namespace Jellyfin.Server.Implementations.Item;
 /// <remarks>
 /// Initializes a new instance of the <see cref="PeopleRepository"/> class.
 /// </remarks>
-public class PeopleRepository(IDbContextFactory<JellyfinDbContext> dbProvider, IItemTypeLookup itemTypeLookup) : IPeopleRepository
+public class PeopleRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider, IItemTypeLookup itemTypeLookup) : IPeopleRepository
 {
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider = dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider = dbProvider;
 
     /// <inheritdoc/>
     public QueryResult<PersonInfo> GetPeople(InternalPeopleQuery filter)
@@ -231,7 +231,7 @@ public class PeopleRepository(IDbContextFactory<JellyfinDbContext> dbProvider, I
         return personInfo;
     }
 
-    private IQueryable<People> TranslateQuery(IQueryable<People> query, JellyfinDbContext context, InternalPeopleQuery filter)
+    private IQueryable<People> TranslateQuery(IQueryable<People> query, MulletaFlixDbContext context, InternalPeopleQuery filter)
     {
         if (filter.User is not null && filter.IsFavorite.HasValue)
         {
@@ -325,3 +325,4 @@ public class PeopleRepository(IDbContextFactory<JellyfinDbContext> dbProvider, I
         return IsAlphaNumeric(value);
     }
 }
+

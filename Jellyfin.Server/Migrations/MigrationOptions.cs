@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Server.Migrations
+namespace MulletaFlix.Server.Migrations
 {
     /// <summary>
     /// Configuration part that holds all migrations that were applied.
@@ -25,3 +25,4 @@ namespace Jellyfin.Server.Migrations
 #pragma warning restore CA1002
     }
 }
+

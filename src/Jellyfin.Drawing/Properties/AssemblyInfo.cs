@@ -1,15 +1,15 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Jellyfin.Drawing")]
+[assembly: AssemblyTitle("MulletaFlix.Drawing")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Jellyfin Project")]
-[assembly: AssemblyProduct("Jellyfin Server")]
-[assembly: AssemblyCopyright("Copyright ©  2019 Jellyfin Contributors. Code released under the GNU General Public License")]
+[assembly: AssemblyCompany("MulletaFlix Project")]
+[assembly: AssemblyProduct("MulletaFlix Server")]
+[assembly: AssemblyCopyright("Copyright Â©  2019 MulletaFlix Contributors. Code released under the GNU General Public License")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -28,3 +28,4 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
+

@@ -1,4 +1,4 @@
-name: Project Automation
+﻿name: Project Automation
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
   project:
     name: Project board
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'jellyfin/jellyfin' }}
+    if: ${{ github.repository == 'MulletaFlix/MulletaFlix' }}
     steps:
       - name: Remove from 'Current Release' project
         uses: alex-page/github-project-automation-plus@303f24a24c67ce7adf565a07e96720faf126fe36 # v0.9.0
@@ -64,3 +64,4 @@ jobs:
           project: Issue Triage for Main Repo
           column: Pending response
           repo-token: ${{ secrets.JF_BOT_TOKEN }}
+

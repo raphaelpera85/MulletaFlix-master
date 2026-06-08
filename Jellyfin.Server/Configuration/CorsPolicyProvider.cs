@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Configuration;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http;
 
-namespace Jellyfin.Server.Configuration
+namespace MulletaFlix.Server.Configuration
 {
     /// <summary>
     /// Cors policy provider.
@@ -47,3 +47,4 @@ namespace Jellyfin.Server.Configuration
         }
     }
 }
+

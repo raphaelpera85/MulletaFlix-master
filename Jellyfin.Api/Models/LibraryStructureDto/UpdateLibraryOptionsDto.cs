@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using MediaBrowser.Model.Configuration;
 
-namespace Jellyfin.Api.Models.LibraryStructureDto;
+namespace MulletaFlix.Api.Models.LibraryStructureDto;
 
 /// <summary>
 /// Update library options dto.
@@ -18,3 +18,4 @@ public class UpdateLibraryOptionsDto
     /// </summary>
     public LibraryOptions? LibraryOptions { get; set; }
 }
+

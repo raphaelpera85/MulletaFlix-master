@@ -1,6 +1,6 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
-namespace Jellyfin.Extensions.Json;
+namespace MulletaFlix.Extensions.Json;
 
 /// <summary>
 /// Extensions for Utf8JsonReader and Utf8JsonWriter.
@@ -25,3 +25,4 @@ public static class Utf8JsonExtensions
     public static bool IsNull(this Utf8JsonReader reader)
         => reader.TokenType == JsonTokenType.Null;
 }
+

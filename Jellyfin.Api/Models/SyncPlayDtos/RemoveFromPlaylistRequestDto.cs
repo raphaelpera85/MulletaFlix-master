@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Jellyfin.Api.Models.SyncPlayDtos;
+namespace MulletaFlix.Api.Models.SyncPlayDtos;
 
 /// <summary>
 /// Class RemoveFromPlaylistRequestDto.
@@ -34,3 +34,4 @@ public class RemoveFromPlaylistRequestDto
     /// <value>Whether the playing item should be removed as well.</value>
     public bool ClearPlayingItem { get; set; }
 }
+

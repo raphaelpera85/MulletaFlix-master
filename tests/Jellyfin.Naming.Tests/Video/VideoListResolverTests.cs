@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Linq;
 using Emby.Naming.Common;
 using Emby.Naming.Video;
 using MediaBrowser.Model.Entities;
 using Xunit;
 
-namespace Jellyfin.Naming.Tests.Video
+namespace MulletaFlix.Naming.Tests.Video
 {
     public class VideoListResolverTests
     {
@@ -401,3 +401,4 @@ namespace Jellyfin.Naming.Tests.Video
         }
     }
 }
+

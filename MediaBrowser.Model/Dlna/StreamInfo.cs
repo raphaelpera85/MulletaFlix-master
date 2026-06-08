@@ -1,4 +1,4 @@
-#pragma warning disable CA1819 // Properties should not return arrays
+﻿#pragma warning disable CA1819 // Properties should not return arrays
 
 using System;
 using System.Collections.Generic;
@@ -6,8 +6,8 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using Jellyfin.Data.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Drawing;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
@@ -1393,3 +1393,4 @@ public class StreamInfo
         return count;
     }
 }
+

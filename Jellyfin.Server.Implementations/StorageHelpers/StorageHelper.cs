@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Model.System;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.StorageHelpers;
+namespace MulletaFlix.Server.Implementations.StorageHelpers;
 
 /// <summary>
-/// Contains methods to help with checking for storage and returning storage data for jellyfin folders.
+/// Contains methods to help with checking for storage and returning storage data for MulletaFlix folders.
 /// </summary>
 public static class StorageHelper
 {
@@ -16,7 +16,7 @@ public static class StorageHelper
     private static readonly string[] _byteHumanizedSuffixes = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
 
     /// <summary>
-    /// Tests the available storage capacity on the jellyfin paths with estimated minimum values.
+    /// Tests the available storage capacity on the MulletaFlix paths with estimated minimum values.
     /// </summary>
     /// <param name="applicationPaths">The application paths.</param>
     /// <param name="logger">Logger.</param>
@@ -149,3 +149,4 @@ public static class StorageHelper
         return (Math.Sign(byteCount) * num).ToString(CultureInfo.InvariantCulture) + _byteHumanizedSuffixes[place];
     }
 }
+

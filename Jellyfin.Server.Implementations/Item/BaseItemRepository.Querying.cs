@@ -1,19 +1,19 @@
-#pragma warning disable RS0030 // Do not use banned APIs
+﻿#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Data.Enums;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Extensions;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Querying;
 using Microsoft.EntityFrameworkCore;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 
-namespace Jellyfin.Server.Implementations.Item;
+namespace MulletaFlix.Server.Implementations.Item;
 
 public sealed partial class BaseItemRepository
 {
@@ -164,7 +164,7 @@ public sealed partial class BaseItemRepository
 
     // Keeping idsQuery deferred lets EF emit `WHERE Id IN (<subquery>)`.
     private IReadOnlyList<BaseItemDto> LoadLatestByIds(
-        JellyfinDbContext context,
+        MulletaFlixDbContext context,
         IQueryable<Guid> idsQuery,
         InternalItemsQuery filter)
     {
@@ -193,10 +193,10 @@ public sealed partial class BaseItemRepository
     /// <para>
     /// The selection logic is:
     /// <list type="bullet">
-    ///     <item>If recent episodes span multiple seasons → return the Series</item>
-    ///     <item>If multiple recent episodes are from one season AND the series has multiple seasons → return the Season</item>
-    ///     <item>If multiple recent episodes are from one season AND the series has only one season → return the Series</item>
-    ///     <item>Otherwise → return the most recent Episode</item>
+    ///     <item>If recent episodes span multiple seasons â†’ return the Series</item>
+    ///     <item>If multiple recent episodes are from one season AND the series has multiple seasons â†’ return the Season</item>
+    ///     <item>If multiple recent episodes are from one season AND the series has only one season â†’ return the Series</item>
+    ///     <item>Otherwise â†’ return the most recent Episode</item>
     /// </list>
     /// </para>
     /// </remarks>
@@ -205,7 +205,7 @@ public sealed partial class BaseItemRepository
     /// <param name="filter">The query filter options.</param>
     /// <param name="limit">Maximum number of items to return.</param>
     /// <returns>A list of BaseItemDto representing the latest TV content.</returns>
-    private IReadOnlyList<BaseItemDto> GetLatestTvShowItems(JellyfinDbContext context, IQueryable<BaseItemEntity> baseQuery, InternalItemsQuery filter, int? limit)
+    private IReadOnlyList<BaseItemDto> GetLatestTvShowItems(MulletaFlixDbContext context, IQueryable<BaseItemEntity> baseQuery, InternalItemsQuery filter, int? limit)
     {
         // Episodes added within this window are considered "recently added together"
         const double RecentAdditionWindowHours = 24.0;
@@ -327,10 +327,10 @@ public sealed partial class BaseItemRepository
 
         // Step 5: Apply the container selection logic for each series.
         // For each series, decide which entity best represents the recent additions:
-        //   - 1 episode added → show the Episode itself
-        //   - Multiple episodes in 1 season (multi-season series) → show the Season
-        //   - Multiple episodes in 1 season (single-season series) → show the Series
-        //   - Episodes across multiple seasons → show the Series
+        //   - 1 episode added â†’ show the Episode itself
+        //   - Multiple episodes in 1 season (multi-season series) â†’ show the Season
+        //   - Multiple episodes in 1 season (single-season series) â†’ show the Series
+        //   - Episodes across multiple seasons â†’ show the Series
         var entitiesToFetch = new HashSet<Guid>();
         var seriesResults = new List<(Guid? SeasonId, Guid? SeriesId, DateTime MaxDate, Guid MostRecentEpisodeId)>(analysisData.Count);
 
@@ -544,3 +544,4 @@ public sealed partial class BaseItemRepository
         };
     }
 }
+

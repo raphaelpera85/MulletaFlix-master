@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
+namespace MulletaFlix.LiveTv.Listings.SchedulesDirectDtos
 {
     /// <summary>
     /// The token dto.
@@ -45,3 +45,4 @@ namespace Jellyfin.LiveTv.Listings.SchedulesDirectDtos
         public string? Response { get; set; }
     }
 }
+

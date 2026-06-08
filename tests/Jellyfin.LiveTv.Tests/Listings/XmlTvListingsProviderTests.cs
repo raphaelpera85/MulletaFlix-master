@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -6,13 +6,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Jellyfin.LiveTv.Listings;
+using MulletaFlix.LiveTv.Listings;
 using MediaBrowser.Model.LiveTv;
 using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace Jellyfin.LiveTv.Tests.Listings;
+namespace MulletaFlix.LiveTv.Tests.Listings;
 
 public class XmlTvListingsProviderTests
 {
@@ -87,3 +87,4 @@ public class XmlTvListingsProviderTests
         Assert.Equal("3297", program.ChannelId);
     }
 }
+

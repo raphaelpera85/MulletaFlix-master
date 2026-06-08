@@ -1,17 +1,17 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using Jellyfin.Api.Constants;
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Enums;
+using MulletaFlix.Api.Constants;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Authentication;
 using MediaBrowser.Controller.Net;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Jellyfin.Api.Auth
+namespace MulletaFlix.Api.Auth
 {
     /// <summary>
     /// Custom authentication handler wrapping the legacy authentication.
@@ -24,7 +24,7 @@ namespace Jellyfin.Api.Auth
         /// <summary>
         /// Initializes a new instance of the <see cref="CustomAuthenticationHandler" /> class.
         /// </summary>
-        /// <param name="authService">The jellyfin authentication service.</param>
+        /// <param name="authService">The MulletaFlix authentication service.</param>
         /// <param name="options">Options monitor.</param>
         /// <param name="logger">The logger.</param>
         /// <param name="encoder">The url encoder.</param>
@@ -88,3 +88,4 @@ namespace Jellyfin.Api.Auth
         }
     }
 }
+

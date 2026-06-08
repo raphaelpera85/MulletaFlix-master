@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters
+namespace MulletaFlix.Extensions.Json.Converters
 {
     /// <summary>
     /// Convert delimited string to array of type.
@@ -74,3 +74,4 @@ namespace Jellyfin.Extensions.Json.Converters
         }
     }
 }
+

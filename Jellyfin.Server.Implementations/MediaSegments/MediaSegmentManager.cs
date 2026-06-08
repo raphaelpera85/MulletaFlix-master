@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.Extensions;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -20,7 +20,7 @@ using MediaBrowser.Model.MediaSegments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Server.Implementations.MediaSegments;
+namespace MulletaFlix.Server.Implementations.MediaSegments;
 
 /// <summary>
 /// Manages media segments retrieval and storage.
@@ -28,7 +28,7 @@ namespace Jellyfin.Server.Implementations.MediaSegments;
 public class MediaSegmentManager : IMediaSegmentManager
 {
     private readonly ILogger<MediaSegmentManager> _logger;
-    private readonly IDbContextFactory<JellyfinDbContext> _dbProvider;
+    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IMediaSegmentProvider[] _segmentProviders;
 
     /// <summary>
@@ -39,7 +39,7 @@ public class MediaSegmentManager : IMediaSegmentManager
     /// <param name="segmentProviders">List of all media segment providers.</param>
     public MediaSegmentManager(
         ILogger<MediaSegmentManager> logger,
-        IDbContextFactory<JellyfinDbContext> dbProvider,
+        IDbContextFactory<MulletaFlixDbContext> dbProvider,
         IEnumerable<IMediaSegmentProvider> segmentProviders)
     {
         _logger = logger;
@@ -310,3 +310,4 @@ public class MediaSegmentManager : IMediaSegmentManager
             .GetMD5()
             .ToString("N", CultureInfo.InvariantCulture);
 }
+

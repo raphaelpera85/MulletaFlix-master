@@ -1,8 +1,8 @@
-#nullable disable
+﻿#nullable disable
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 
 namespace MediaBrowser.Controller.Library
@@ -27,3 +27,4 @@ namespace MediaBrowser.Controller.Library
         Task<IEnumerable<IntroInfo>> GetIntros(BaseItem item, User user);
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoFixture;
@@ -12,7 +12,7 @@ using MediaBrowser.Model.Configuration;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.QuickConnect
+namespace MulletaFlix.Server.Implementations.Tests.QuickConnect
 {
     public class QuickConnectManagerTests
     {
@@ -137,3 +137,4 @@ namespace Jellyfin.Server.Implementations.Tests.QuickConnect
         }
     }
 }
+

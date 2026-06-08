@@ -1,13 +1,13 @@
 using System;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Jellyfin.Server.Implementations.Item;
+using MulletaFlix.Server.Implementations.Item;
 using MediaBrowser.Controller.Entities.TV;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Server.Implementations.Tests.Data
+namespace MulletaFlix.Server.Implementations.Tests.Data
 {
     public class SearchPunctuationTests
     {
@@ -59,12 +59,12 @@ namespace Jellyfin.Server.Implementations.Tests.Data
 
         [Theory]
         [InlineData("Spider-Man: Homecoming", "spider man homecoming")]
-        [InlineData("Beyoncé — Live!", "beyonce live")]
+        [InlineData("Beyonc\u00E9 \u2014 Live!", "beyonce live")]
         [InlineData("Hello, World!", "hello world")]
         [InlineData("(The) Good, the Bad & the Ugly", "the good the bad the ugly")]
         [InlineData("Wall-E", "wall e")]
         [InlineData("No. 1: The Beginning", "no 1 the beginning")]
-        [InlineData("Café-au-lait", "cafe au lait")]
+        [InlineData("Caf\u00E9-au-lait", "cafe au lait")]
         public void CleanName_normalizes_various_punctuation(string title, string expectedClean)
         {
             var series = new Series
@@ -107,3 +107,4 @@ namespace Jellyfin.Server.Implementations.Tests.Data
         }
     }
 }
+

@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.Extensions;
 using Xunit;
 
-namespace Jellyfin.Model.Tests.Dlna;
+namespace MulletaFlix.Model.Tests.Dlna;
 
 public class ContainerHelperTests
 {
@@ -81,3 +81,4 @@ public class ContainerHelperTests
         Assert.False(ContainerHelper.ContainsContainer(containers, isNegativeList, inputContainer));
     }
 }
+

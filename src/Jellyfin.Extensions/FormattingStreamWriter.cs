@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.IO;
 
-namespace Jellyfin.Extensions;
+namespace MulletaFlix.Extensions;
 
 /// <summary>
 /// A custom StreamWriter which supports setting a IFormatProvider.
@@ -36,3 +36,4 @@ public class FormattingStreamWriter : StreamWriter
     public override IFormatProvider FormatProvider
         => _formatProvider;
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Configuration;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace Jellyfin.Providers.Tests.ExternalId
+namespace MulletaFlix.Providers.Tests.ExternalId
 {
     public sealed class MusicBrainzExternalUrlProviderTests : IDisposable
     {
@@ -38,7 +38,7 @@ namespace Jellyfin.Providers.Tests.ExternalId
                 .Returns(new PluginConfiguration());
 
             var appHostMock = new Mock<IApplicationHost>();
-            appHostMock.Setup(h => h.Name).Returns("Jellyfin");
+            appHostMock.Setup(h => h.Name).Returns("MulletaFlix");
             appHostMock.Setup(h => h.ApplicationVersionString).Returns("1.0.0");
             appHostMock.Setup(h => h.ApplicationUserAgentAddress).Returns("localhost");
 
@@ -200,3 +200,4 @@ namespace Jellyfin.Providers.Tests.ExternalId
         }
     }
 }
+

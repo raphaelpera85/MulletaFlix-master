@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Extensions.Json.Converters;
+namespace MulletaFlix.Extensions.Json.Converters;
 
 /// <summary>
 /// Utilizes the JsonStringEnumConverter and sets a default value if not provided.
@@ -29,3 +29,4 @@ public class JsonDefaultStringEnumConverterFactory : JsonConverterFactory
         return (JsonConverter?)Activator.CreateInstance(converterType, baseConverter);
     }
 }
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>Midia Storage Online</title>
@@ -17,18 +17,18 @@
                     </div>
                     <div class="inputContainer">
                         <input is="emby-input" type="text" id="epgUrl" label="URL do XMLTV/EPG" />
-                        <div class="fieldDescription">URL de um guide.xml gerado pelo iptv-org/epg ou outro XMLTV. Os canais precisam ter <code>tvg-id</code> compatível com o XMLTV.</div>
+                        <div class="fieldDescription">URL de um guide.xml gerado pelo iptv-org/epg ou outro XMLTV. Os canais precisam ter <code>tvg-id</code> compatÃ­vel com o XMLTV.</div>
                     </div>
                     <div class="inputContainer" style="margin-bottom:0">
                         <label class="checkboxContainer">
                             <input is="emby-checkbox" type="checkbox" id="enableAutoEpg" />
                             <span>Buscar EPG automaticamente (Auto EPG)</span>
                         </label>
-                        <div class="fieldDescription">Quando ativado, baixa o guia de programação automaticamente durante a sincronização usando os <code>tvg-id</code> da lista M3U. Ignorado se uma URL manual de EPG for fornecida acima.</div>
+                        <div class="fieldDescription">Quando ativado, baixa o guia de programaÃ§Ã£o automaticamente durante a sincronizaÃ§Ã£o usando os <code>tvg-id</code> da lista M3U. Ignorado se uma URL manual de EPG for fornecida acima.</div>
                     </div>
                     <div class="inputContainer">
                         <input is="emby-input" type="text" id="autoEpgLanguage" label="Idioma do EPG (ex: pt, en, es)" />
-                        <div class="fieldDescription">Filtra as fontes de EPG pelo idioma informado. Padrão: pt.</div>
+                        <div class="fieldDescription">Filtra as fontes de EPG pelo idioma informado. PadrÃ£o: pt.</div>
                     </div>
                     <div class="inputContainer">
                         <input is="emby-input" type="text" id="strmPath" label="Pasta de saida dos .strm" />
@@ -54,7 +54,7 @@
                 <div id="epgResult" style="display:none">
                     <p><strong>XMLTV/EPG:</strong></p>
                     <input is="emby-input" type="text" id="epgGuideUrl" readonly label="URL do XMLTV" />
-                    <p class="fieldDescription">Esse XMLTV pode ser usado no Live TV > XMLTV do Jellyfin ou deixado para registro automatico do plugin.</p>
+                    <p class="fieldDescription">Esse XMLTV pode ser usado no Live TV > XMLTV do MulletaFlix ou deixado para registro automatico do plugin.</p>
                 </div>
                 <p id="lastError" style="color:red"></p>
             </div>
@@ -168,3 +168,4 @@
     </div>
 </body>
 </html>
+

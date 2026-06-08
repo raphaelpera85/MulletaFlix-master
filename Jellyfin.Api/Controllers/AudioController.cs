@@ -1,22 +1,22 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Jellyfin.Api.Attributes;
-using Jellyfin.Api.Helpers;
-using Jellyfin.Api.Models.StreamingDtos;
+using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.Models.StreamingDtos;
 using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Controller.Streaming;
 using MediaBrowser.Model.Dlna;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Jellyfin.Api.Controllers;
+namespace MulletaFlix.Api.Controllers;
 
 /// <summary>
 /// The audio controller.
 /// </summary>
-public class AudioController : BaseJellyfinApiController
+public class AudioController : BaseMulletaFlixApiController
 {
     private readonly AudioHelper _audioHelper;
 
@@ -359,3 +359,4 @@ public class AudioController : BaseJellyfinApiController
         return await _audioHelper.GetAudioStream(_transcodingJobType, streamingRequest).ConfigureAwait(false);
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 using Emby.Server.Implementations;
-using Jellyfin.Server.ServerSetupApp;
+using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Extensions;
 using MediaBrowser.Model.IO;
@@ -18,14 +18,14 @@ using Serilog;
 using Serilog.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace Jellyfin.Server.Helpers;
+namespace MulletaFlix.Server.Helpers;
 
 /// <summary>
 /// A class containing helper methods for server startup.
 /// </summary>
 public static class StartupHelpers
 {
-    private static readonly string[] _relevantEnvVarPrefixes = { "JELLYFIN_", "DOTNET_", "ASPNETCORE_" };
+    private static readonly string[] _relevantEnvVarPrefixes = { "MulletaFlix_", "DOTNET_", "ASPNETCORE_" };
 
     /// <summary>
     /// Logs relevant environment variables and information about the host.
@@ -82,12 +82,12 @@ public static class StartupHelpers
         // macOS: NSApplicationSupportDirectory
         // UNIX: $XDG_DATA_HOME
         var dataDir = options.DataDir
-            ?? Environment.GetEnvironmentVariable("JELLYFIN_DATA_DIR")
+            ?? Environment.GetEnvironmentVariable("MulletaFlix_DATA_DIR")
             ?? Path.Join(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-                "jellyfin");
+                "MulletaFlix");
 
-        var configDir = options.ConfigDir ?? Environment.GetEnvironmentVariable("JELLYFIN_CONFIG_DIR");
+        var configDir = options.ConfigDir ?? Environment.GetEnvironmentVariable("MulletaFlix_CONFIG_DIR");
         if (configDir is null)
         {
             configDir = Path.Join(dataDir, "config");
@@ -99,11 +99,11 @@ public static class StartupHelpers
                 // UNIX: $XDG_CONFIG_HOME
                 configDir = Path.Join(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-                    "jellyfin");
+                    "MulletaFlix");
             }
         }
 
-        var cacheDir = options.CacheDir ?? Environment.GetEnvironmentVariable("JELLYFIN_CACHE_DIR");
+        var cacheDir = options.CacheDir ?? Environment.GetEnvironmentVariable("MulletaFlix_CACHE_DIR");
         if (cacheDir is null)
         {
             if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
@@ -112,17 +112,17 @@ public static class StartupHelpers
             }
             else
             {
-                cacheDir = Path.Join(GetXdgCacheHome(), "jellyfin");
+                cacheDir = Path.Join(GetXdgCacheHome(), "MulletaFlix");
             }
         }
 
-        var webDir = options.WebDir ?? Environment.GetEnvironmentVariable("JELLYFIN_WEB_DIR");
+        var webDir = options.WebDir ?? Environment.GetEnvironmentVariable("MulletaFlix_WEB_DIR");
         if (webDir is null)
         {
-            webDir = Path.Join(AppContext.BaseDirectory, "jellyfin-web");
+            webDir = Path.Join(AppContext.BaseDirectory, "MulletaFlix-web");
         }
 
-        var logDir = options.LogDir ?? Environment.GetEnvironmentVariable("JELLYFIN_LOG_DIR");
+        var logDir = options.LogDir ?? Environment.GetEnvironmentVariable("MulletaFlix_LOG_DIR");
         if (logDir is null)
         {
             logDir = Path.Join(dataDir, "log");
@@ -183,7 +183,7 @@ public static class StartupHelpers
 
         if (string.IsNullOrEmpty(socketPath))
         {
-            const string SocketFile = "jellyfin.sock";
+            const string SocketFile = "MulletaFlix.sock";
 
             var xdgRuntimeDir = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
             if (xdgRuntimeDir is null)
@@ -298,3 +298,4 @@ public static class StartupHelpers
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
 }
+

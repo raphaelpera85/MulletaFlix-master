@@ -8,12 +8,12 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data;
-using Jellyfin.Data.Enums;
-using Jellyfin.Data.Events;
-using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Database.Implementations.Enums;
-using Jellyfin.LiveTv.Configuration;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.LiveTv.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Configuration;
@@ -29,7 +29,7 @@ using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.Querying;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv
+namespace MulletaFlix.LiveTv
 {
     /// <summary>
     /// Class LiveTvManager.
@@ -956,10 +956,7 @@ namespace Jellyfin.LiveTv
             return new QueryResult<SeriesTimerInfoDto>(returnArray);
         }
 
-        public void AddChannelInfo(IReadOnlyCollection<(BaseItemDto ItemDto, LiveTvChannel Channel)> items, DtoOptions options, User user)
-        {
-            AddChannelInfoAsync(items, options, user).GetAwaiter().GetResult();
-        }
+
 
         public async Task AddChannelInfoAsync(IReadOnlyCollection<(BaseItemDto ItemDto, LiveTvChannel Channel)> items, DtoOptions options, User user)
         {
@@ -1300,3 +1297,4 @@ namespace Jellyfin.LiveTv
         }
     }
 }
+

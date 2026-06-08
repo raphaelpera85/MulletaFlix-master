@@ -1,8 +1,8 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Threading.Tasks;
-using Jellyfin.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.Users;
 
 namespace MediaBrowser.Controller.Authentication
@@ -26,3 +26,4 @@ namespace MediaBrowser.Controller.Authentication
         public DateTime ExpirationDate { get; set; }
     }
 }
+

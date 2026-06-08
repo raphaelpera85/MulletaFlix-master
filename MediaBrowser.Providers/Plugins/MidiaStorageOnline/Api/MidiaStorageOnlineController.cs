@@ -13,10 +13,13 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using MediaBrowser.Common.Net;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Data.Enums;
+using Microsoft.Net.Http.Headers;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -165,6 +168,69 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             }
 
             return PhysicalFile(guideFile, "application/xml");
+        }
+
+        [AllowAnonymous]
+        [HttpGet("stream")]
+        [HttpHead("stream")]
+        public async Task<IActionResult> ProxyStream([FromQuery(Name = "u")] string encodedUrl, CancellationToken cancellationToken)
+        {
+            if (!MidiaStorageOnlineStreamProxy.TryGetUpstreamUri(encodedUrl, out var upstreamUri))
+            {
+                return BadRequest("URL de mídia inválida.");
+            }
+
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Get, upstreamUri);
+            requestMessage.Headers.TryAddWithoutValidation(HeaderNames.UserAgent, MidiaStorageOnlineStreamProxy.GetBrowserUserAgent());
+            requestMessage.Headers.TryAddWithoutValidation(HeaderNames.Accept, "*/*");
+            requestMessage.Headers.TryAddWithoutValidation(HeaderNames.Referer, $"{upstreamUri.Scheme}://{upstreamUri.Host}/");
+            requestMessage.Headers.TryAddWithoutValidation(HeaderNames.Origin, $"{upstreamUri.Scheme}://{upstreamUri.Host}");
+
+            var rangeValue = Request.Headers[HeaderNames.Range].ToString();
+            if (!string.IsNullOrWhiteSpace(rangeValue))
+            {
+                requestMessage.Headers.TryAddWithoutValidation(HeaderNames.Range, rangeValue);
+            }
+
+            using var client = _httpClientFactory.CreateClient(NamedClient.Default);
+            using var upstreamResponse = await client
+                .SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            Response.StatusCode = (int)upstreamResponse.StatusCode;
+
+            if (upstreamResponse.Content.Headers.ContentType is not null)
+            {
+                Response.ContentType = upstreamResponse.Content.Headers.ContentType.ToString();
+            }
+            else
+            {
+                Response.ContentType = "application/octet-stream";
+            }
+
+            if (upstreamResponse.Headers.TryGetValues(HeaderNames.AcceptRanges, out var acceptRanges))
+            {
+                Response.Headers[HeaderNames.AcceptRanges] = string.Join(", ", acceptRanges);
+            }
+
+            if (upstreamResponse.Content.Headers.ContentRange is not null)
+            {
+                Response.Headers[HeaderNames.ContentRange] = upstreamResponse.Content.Headers.ContentRange.ToString();
+            }
+
+            if (upstreamResponse.Content.Headers.ContentLength.HasValue)
+            {
+                Response.ContentLength = upstreamResponse.Content.Headers.ContentLength.Value;
+            }
+
+            if (HttpMethods.IsHead(Request.Method))
+            {
+                return new EmptyResult();
+            }
+
+            await using var upstreamStream = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            await upstreamStream.CopyToAsync(Response.Body, cancellationToken).ConfigureAwait(false);
+            return new EmptyResult();
         }
 
         private static string GetCanaisFilePath()
@@ -782,7 +848,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
 
                 // BG-5: save canais to dedicated file, do NOT serialize into config.xml
-                var canaisContent = canaisM3u.ToString();
+                var canaisContent = MidiaStorageOnlineStreamProxy.NormalizeM3uContent(canaisM3u.ToString());
                 var canaisFilePath = GetCanaisFilePath();
                 Directory.CreateDirectory(Path.GetDirectoryName(canaisFilePath)!);
                 await System.IO.File.WriteAllTextAsync(canaisFilePath, canaisContent).ConfigureAwait(false);
@@ -895,11 +961,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         var name = SanitizeName(entry.Name);
                         var relPath = Path.Combine("Filmes", name, name + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
-                        var newUrl = entry.Url.Trim();
+                        var newUrl = MidiaStorageOnlineStreamProxy.BuildProxyUrl(entry.Url.Trim());
 
                         newManifest.TryAdd(relPath, newUrl);
 
-                        if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl)
+                        var fileExists = System.IO.File.Exists(filePath);
+                        if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl && fileExists)
                         {
                             Interlocked.Increment(ref skippedCount);
                         }
@@ -915,6 +982,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                             {
                                 Directory.CreateDirectory(fileParentDir);
                             }
+                            if (cachedUrl == newUrl && !fileExists)
+                            {
+                                Log($"Recriando .strm ausente: {filePath}");
+                            }
                             await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
                             Interlocked.Increment(ref totalSynced);
                             Interlocked.Increment(ref movieCount);
@@ -927,11 +998,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         var seasonFolder = SanitizeName(entry.Season);
                         var relPath = Path.Combine("Series", showName, seasonFolder, name + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
-                        var newUrl = entry.Url.Trim();
+                        var newUrl = MidiaStorageOnlineStreamProxy.BuildProxyUrl(entry.Url.Trim());
 
                         newManifest.TryAdd(relPath, newUrl);
 
-                        if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl)
+                        var fileExists = System.IO.File.Exists(filePath);
+                        if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl && fileExists)
                         {
                             Interlocked.Increment(ref skippedCount);
                         }
@@ -946,6 +1018,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                             if (!string.IsNullOrWhiteSpace(fileParentDir))
                             {
                                 Directory.CreateDirectory(fileParentDir);
+                            }
+                            if (cachedUrl == newUrl && !fileExists)
+                            {
+                                Log($"Recriando .strm ausente: {filePath}");
                             }
                             await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
                             Interlocked.Increment(ref totalSynced);
@@ -1213,6 +1289,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private static string GetEffectiveTvgId(M3uEntry entry)
         {
+            var approvedTvgId = MidiaStorageOnlineApprovedChannelMappings.TryGetEpgId(entry.TvgName, entry.Name, entry.TvgId);
+            if (!string.IsNullOrWhiteSpace(approvedTvgId))
+            {
+                return approvedTvgId;
+            }
+
             var mappedTvgId = MidiaStorageOnlineChannelMappings.ResolveTvgId(
                 entry.TvgId,
                 entry.TvgName,
@@ -1250,10 +1332,16 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
             }
 
-            builder.Append(firstLine);
+            builder.AppendLine(firstLine);
             for (var i = 1; i < entry.RawLines.Count; i++)
             {
-                builder.Append(entry.RawLines[i]);
+                var line = entry.RawLines[i].TrimEnd('\r', '\n');
+                if (i == entry.RawLines.Count - 1 && entry.Type == "Canal")
+                {
+                    line = MidiaStorageOnlineStreamProxy.BuildProxyUrl(line);
+                }
+
+                builder.AppendLine(line);
             }
         }
 
@@ -1295,6 +1383,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private static string? ResolveChannelLogo(string? tvgName, string? name, string? tvgId, string? tvgLogo)
         {
+            var approvedLogo = MidiaStorageOnlineApprovedChannelMappings.TryGetLogoUrl(tvgName, name, tvgId);
+            if (!string.IsNullOrWhiteSpace(approvedLogo))
+            {
+                return approvedLogo;
+            }
+
             var workbookLogo = MidiaStorageOnlineWorkbookLogoMappings.TryGetLogoUrl(tvgName, name, tvgId);
             if (!string.IsNullOrWhiteSpace(workbookLogo))
             {
@@ -1497,3 +1591,4 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
         }
     }
 }
+

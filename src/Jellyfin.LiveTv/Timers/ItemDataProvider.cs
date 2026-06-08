@@ -1,4 +1,4 @@
-#pragma warning disable CS1591
+﻿#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
@@ -7,10 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
-using Jellyfin.Extensions.Json;
+using MulletaFlix.Extensions.Json;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.LiveTv.Timers
+namespace MulletaFlix.LiveTv.Timers
 {
     public class ItemDataProvider<T>
         where T : class
@@ -154,3 +154,4 @@ namespace Jellyfin.LiveTv.Timers
         }
     }
 }
+

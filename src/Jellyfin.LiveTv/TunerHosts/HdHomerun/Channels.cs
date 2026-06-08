@@ -1,6 +1,6 @@
-#nullable disable
+﻿#nullable disable
 
-namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
+namespace MulletaFlix.LiveTv.TunerHosts.HdHomerun
 {
     internal class Channels
     {
@@ -21,3 +21,4 @@ namespace Jellyfin.LiveTv.TunerHosts.HdHomerun
         public bool HD { get; set; }
     }
 }
+
