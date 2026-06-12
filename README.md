@@ -8,12 +8,12 @@
 <br/>
 <br/>
 <a href="https://github.com/MulletaFlix/MulletaFlix">
-<img alt="GPL 2.0 License" src="https://img.shields.io/github/license/MulletaFlix/MulletaFlix.svg"/>
+<img alt="GPL 2.0 License" src="https://img.shields.io/github/license/raphaelpera85/MulletaFlix.svg"/>
 </a>
 <a href="https://github.com/MulletaFlix/MulletaFlix/releases">
-<img alt="Current Release" src="https://img.shields.io/github/release/MulletaFlix/MulletaFlix.svg"/>
+<img alt="Current Release" src="https://img.shields.io/github/release/raphaelpera85/MulletaFlix.svg"/>
 </a>
-<a href="https://translate.MulletaFlix.org/projects/MulletaFlix/MulletaFlix-core/?utm_source=widget">
+<a href="https://translate.MulletaFlix.org/projects/raphaelpera85/MulletaFlix-core/?utm_source=widget">
 <img alt="Translation Status" src="https://translate.MulletaFlix.org/widgets/MulletaFlix/-/MulletaFlix-core/svg-badge.svg"/>
 </a>
 <a href="https://hub.docker.com/r/MulletaFlix/MulletaFlix">
@@ -29,10 +29,10 @@
 <a href="https://matrix.to/#/#MulletaFlixorg:matrix.org">
 <img alt="Chat on Matrix" src="https://img.shields.io/matrix/MulletaFlixorg:matrix.org.svg?logo=matrix"/>
 </a>
-<a href="https://github.com/MulletaFlix/MulletaFlix/releases.atom">
+<a href="https://github.com/raphaelpera85/MulletaFlix/releases.atom">
 <img alt="Release RSS Feed" src="https://img.shields.io/badge/rss-releases-ffa500?logo=rss" />
 </a>
-<a href="https://github.com/MulletaFlix/MulletaFlix/commits/master.atom">
+<a href="https://github.com/raphaelpera85/MulletaFlix/commits/master.atom">
 <img alt="Master Commits RSS Feed" src="https://img.shields.io/badge/rss-commits-ffa500?logo=rss" />
 </a>
 </p>
