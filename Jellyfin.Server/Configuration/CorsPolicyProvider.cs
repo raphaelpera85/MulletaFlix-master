@@ -30,12 +30,12 @@ namespace MulletaFlix.Server.Configuration
                 .AllowAnyMethod()
                 .AllowAnyHeader();
 
-            // No hosts configured or only default configured.
+            // No hosts configured or only default configured: restrict to same-origin.
             if (corsHosts.Length == 0
                 || (corsHosts.Length == 1
                     && string.Equals(corsHosts[0], CorsConstants.AnyOrigin, StringComparison.Ordinal)))
             {
-                builder.AllowAnyOrigin();
+                builder.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback);
             }
             else
             {

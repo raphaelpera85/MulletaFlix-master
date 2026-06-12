@@ -44,6 +44,11 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
                 Name = Name,
                 EmbeddedResourcePath = GetType().Namespace + ".Configuration.config.html"
             };
+            yield return new PluginPageInfo
+            {
+                Name = Name + "-config",
+                EmbeddedResourcePath = GetType().Namespace + ".Configuration.config.js"
+            };
         }
     }
 }

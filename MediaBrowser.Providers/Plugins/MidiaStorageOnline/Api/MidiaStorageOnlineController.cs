@@ -24,6 +24,8 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.LiveTv;
+using MediaBrowser.Model.Activity;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.LiveTv;
@@ -53,6 +55,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
         private readonly IConfigurationManager _configurationManager;
         private readonly ITunerHostManager _tunerHostManager;
         private readonly ILibraryManager _libraryManager;
+        private readonly IActivityManager _activityManager;
         private readonly ILogger<MidiaStorageOnlineController> _logger;
 
         public MidiaStorageOnlineController(
@@ -60,12 +63,14 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             IConfigurationManager configurationManager,
             ITunerHostManager tunerHostManager,
             ILibraryManager libraryManager,
+            IActivityManager activityManager,
             ILogger<MidiaStorageOnlineController> logger)
         {
             _httpClientFactory = httpClientFactory;
             _configurationManager = configurationManager;
             _tunerHostManager = tunerHostManager;
             _libraryManager = libraryManager;
+            _activityManager = activityManager;
             _logger = logger;
         }
 
@@ -77,6 +82,20 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private PluginConfiguration GetConfig() => Plugin.Instance!.Configuration;
         private void SaveConfig(PluginConfiguration config) => Plugin.Instance!.UpdateConfiguration(config);
+
+        [HttpPost("config")]
+        public IActionResult SavePluginConfig([FromBody] PluginConfiguration body)
+        {
+            var config = GetConfig();
+            config.M3uUrl = body.M3uUrl;
+            config.EpgUrl = body.EpgUrl;
+            config.EnableAutoEpg = body.EnableAutoEpg;
+            config.AutoEpgLanguage = body.AutoEpgLanguage;
+            config.StrmOutputPath = body.StrmOutputPath;
+            SaveConfig(config);
+            Log("Configuracao salva via MidiaStorageOnline/config.");
+            return NoContent();
+        }
 
         [HttpGet("status")]
         public IActionResult GetStatus()
@@ -847,12 +866,11 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     AppendEntryLinesWithInferredTvgId(canaisM3u, entry);
                 }
 
-                // BG-5: save canais to dedicated file, do NOT serialize into config.xml
+                // BG-5: save canais to dedicated file ONLY, do NOT serialize into config.xml
                 var canaisContent = MidiaStorageOnlineStreamProxy.NormalizeM3uContent(canaisM3u.ToString());
                 var canaisFilePath = GetCanaisFilePath();
                 Directory.CreateDirectory(Path.GetDirectoryName(canaisFilePath)!);
                 await System.IO.File.WriteAllTextAsync(canaisFilePath, canaisContent).ConfigureAwait(false);
-                config.CanaisM3uContent = canaisContent;
 
                 config.TotalChannelCount = entries.Count(e => e.Type == "Canal");
                 config.EpgCompatibleChannelCount = entries.Count(e => e.Type == "Canal" && !string.IsNullOrWhiteSpace(GetEffectiveTvgId(e)));
@@ -1070,6 +1088,14 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
                 Log($"Sync OK em {sw.Elapsed.TotalSeconds:F1}s: {totalSynced} salvos, {skippedCount} ignorados, {deletedCount} deletados, canais M3U {canaisM3u.Length / 1024}KB");
 
+                await _activityManager.CreateAsync(new ActivityLog(
+                    $"{totalSynced} .strm criados ({movieCount} filmes, {seriesCount} series)",
+                    "MidiaStorageOnlineSync",
+                    Guid.Empty)
+                {
+                    Overview = $"{skippedCount} ignorados, {deletedCount} deletados. Canais M3U: {canaisM3u.Length / 1024}KB"
+                }).ConfigureAwait(false);
+
                 return Ok(new
                 {
                     fileCount = totalSynced,
@@ -1200,7 +1226,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private static string SanitizeName(string name)
         {
-            // BG-2: use cached static array instead of allocating per call
+            name = name.Replace(":", " - ", StringComparison.Ordinal);
+            name = name.Replace("_", " - ", StringComparison.Ordinal);
+            name = name.Replace("&", "e", StringComparison.Ordinal);
+
             var sb = new StringBuilder(name.Length);
             foreach (var c in name)
             {
@@ -1213,7 +1242,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     sb.Append(c);
                 }
             }
-            return sb.ToString().TrimEnd('.', ' ');
+            return Regex.Replace(sb.ToString().TrimEnd('.', ' '), @"\s+", " ").Trim();
         }
 
         private static string ExtractDisplayName(string extinfLine)
@@ -1347,12 +1376,19 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private static string NormalizeChannelExtinfLine(string extinfLine, M3uEntry entry)
         {
+            var line = extinfLine;
+            line = ReplaceExtinfAttribute(line, "tvg-name", entry.TvgName ?? entry.Name);
+            line = ReplaceExtinfAttribute(line, "group-title", entry.GroupTitle);
             if (string.IsNullOrWhiteSpace(entry.TvgLogo))
             {
-                return extinfLine;
+                line = RemoveExtinfAttribute(line, "tvg-logo");
             }
-
-            return ReplaceExtinfAttribute(extinfLine, "tvg-logo", entry.TvgLogo);
+            else
+            {
+                line = ReplaceExtinfAttribute(line, "tvg-logo", entry.TvgLogo);
+            }
+            line = ReplaceExtinfDisplayName(line, entry.Name);
+            return line;
         }
 
         private static string? NormalizeChannelLogo(string? logo)

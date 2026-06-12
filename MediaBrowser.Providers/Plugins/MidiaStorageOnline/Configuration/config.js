@@ -5,72 +5,75 @@ export default function(view, params) {
     function render(config) {
         view.querySelector('#m3uUrl').value = config.M3uUrl || '';
         view.querySelector('#epgUrl').value = config.EpgUrl || '';
+        view.querySelector('#enableAutoEpg').checked = !!config.EnableAutoEpg;
+        view.querySelector('#autoEpgLanguage').value = config.AutoEpgLanguage || 'pt';
         view.querySelector('#strmPath').value = config.StrmOutputPath || '';
-
-        if (config.CanaisM3uContent) {
-            view.querySelector('#syncResult').style.display = 'block';
-            view.querySelector('#canaisUrl').value = baseUrl + '/MidiaStorageOnline/m3u/canais';
-        } else {
-            view.querySelector('#syncResult').style.display = 'none';
-        }
-
-        if (config.EpgUrl || config.EpgLastSyncTime) {
-            view.querySelector('#epgResult').style.display = 'block';
-            view.querySelector('#epgGuideUrl').value = baseUrl + '/MidiaStorageOnline/epg/guide.xml';
-        } else {
-            view.querySelector('#epgResult').style.display = 'none';
-        }
+        view.querySelector('#syncResult').style.display = config.LastSyncTime ? 'block' : 'none';
+        view.querySelector('#canaisUrl').value = baseUrl + '/MidiaStorageOnline/m3u/canais';
+        view.querySelector('#epgResult').style.display = (config.EpgUrl || config.EnableAutoEpg || config.EpgLastSyncTime) ? 'block' : 'none';
+        view.querySelector('#epgGuideUrl').value = baseUrl + '/MidiaStorageOnline/epg/guide.xml';
 
         var lastSync = config.LastSyncTime ? new Date(config.LastSyncTime).toLocaleString() : 'nunca';
         var duration = config.LastSyncDurationSeconds ? ' | Duracao: ' + config.LastSyncDurationSeconds.toFixed(1) + 's' : '';
         var epgCoverage = (config.EpgCompatibleChannelCount || 0) + '/' + (config.TotalChannelCount || 0);
-        var epgStatus = config.EpgUrl ? (' | EPG: ' + epgCoverage + ' canais com tvg-id') : '';
+        var epgStatus = config.EpgUrl ? (' | EPG: ' + epgCoverage + ' canais com tvg-id') : (config.EnableAutoEpg ? (' | Auto EPG: ' + epgCoverage + ' canais') : '');
         view.querySelector('#syncStatus').textContent = 'Ultima sincronizacao: ' + lastSync + duration + ' | Arquivos: ' + (config.SyncedFileCount || 0) + epgStatus;
         view.querySelector('#epgStatus').textContent = config.EpgLastSyncTime ? ('Ultimo EPG: ' + new Date(config.EpgLastSyncTime).toLocaleString() + (config.EpgLastError ? ' | Erro: ' + config.EpgLastError : '')) : (config.EpgLastError || '');
         view.querySelector('#lastError').textContent = config.LastSyncError || '';
     }
 
-    function browseStrmPath() {
-        var picker = new Dashboard.DirectoryBrowser();
-
-        picker.show({
-            path: view.querySelector('#strmPath').value,
-            validateWriteable: true,
-            header: 'Selecionar pasta de saida',
-            instruction: 'Escolha a pasta onde os arquivos .strm serao salvos.',
-            callback: function (path) {
-                if (path) {
-                    view.querySelector('#strmPath').value = path;
-                }
-
-                picker.close();
-            }
-        });
-    }
-
-    view.addEventListener('pageshow', function () {
+    function loadConfig() {
         Dashboard.showLoadingMsg();
         ApiClient.getPluginConfiguration(pluginId).then(function (config) {
             render(config);
             Dashboard.hideLoadingMsg();
+        }, function (err) {
+            Dashboard.hideLoadingMsg();
+            Dashboard.alert((err && (err.message || err.statusText)) || 'Erro ao carregar configuracao.');
         });
-    });
+    }
+
+    loadConfig();
 
     view.querySelector('.configForm').addEventListener('submit', function (e) {
         e.preventDefault();
-        ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-            config.M3uUrl = view.querySelector('#m3uUrl').value;
-            config.EpgUrl = view.querySelector('#epgUrl').value;
-            config.StrmOutputPath = view.querySelector('#strmPath').value;
-            ApiClient.updatePluginConfiguration(pluginId, config).then(function () {
-                Dashboard.processPluginConfigurationUpdateResult();
-            });
+        Dashboard.showLoadingMsg();
+        var config = {
+            M3uUrl: view.querySelector('#m3uUrl').value,
+            EpgUrl: view.querySelector('#epgUrl').value,
+            EnableAutoEpg: view.querySelector('#enableAutoEpg').checked,
+            AutoEpgLanguage: view.querySelector('#autoEpgLanguage').value,
+            StrmOutputPath: view.querySelector('#strmPath').value
+        };
+        ApiClient.ajax({
+            type: 'POST',
+            url: ApiClient.getUrl('MidiaStorageOnline/config'),
+            data: JSON.stringify(config),
+            contentType: 'application/json'
+        }).then(function () {
+            Dashboard.hideLoadingMsg();
+            loadConfig();
+        }).catch(function (err) {
+            Dashboard.alert('Erro ao salvar: ' + (err && (err.message || err.statusText || JSON.stringify(err))));
+            Dashboard.hideLoadingMsg();
         });
     });
 
     var browseButton = view.querySelector('#btnBrowseStrmPath');
     if (browseButton) {
-        browseButton.addEventListener('click', browseStrmPath);
+        browseButton.addEventListener('click', function () {
+            var picker = new Dashboard.DirectoryBrowser();
+            picker.show({
+                path: view.querySelector('#strmPath').value,
+                validateWriteable: true,
+                header: 'Selecionar pasta de saida',
+                instruction: 'Escolha a pasta onde os arquivos .strm serao salvos.',
+                callback: function (path) {
+                    if (path) view.querySelector('#strmPath').value = path;
+                    picker.close();
+                }
+            });
+        });
     }
 
     view.querySelector('#btnSyncNow').addEventListener('click', function () {
@@ -78,18 +81,19 @@ export default function(view, params) {
         view.querySelector('#btnSyncNow').disabled = true;
         view.querySelector('#lastError').textContent = '';
         ApiClient.ajax({
-            type: 'POST', url: ApiClient.getUrl('MidiaStorageOnline/sync')
+            type: 'POST',
+            url: ApiClient.getUrl('MidiaStorageOnline/sync')
         }).then(function (r) {
             Dashboard.hideLoadingMsg();
             view.querySelector('#btnSyncNow').disabled = false;
             Dashboard.alert(r.message || 'Sincronizacao concluida!');
-            Dashboard.processPluginConfigurationUpdateResult();
+            loadConfig();
         }).catch(function (err) {
             Dashboard.hideLoadingMsg();
             view.querySelector('#btnSyncNow').disabled = false;
             var msg = err && (err.message || err.statusText || JSON.stringify(err)) || 'Erro na sincronizacao.';
             Dashboard.alert(msg);
-            Dashboard.processPluginConfigurationUpdateResult();
+            loadConfig();
         });
     });
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -50,7 +50,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Updates
         {
             PackageInfo[] packages = await _installationManager.GetPackages(
                 "MulletaFlix Stable",
-                "https://repo.MulletaFlix.org/files/plugin/manifest.json",
+                "https://repo.jellyfin.org/files/plugin/manifest.json",
                 false,
                 TestContext.Current.CancellationToken);
 
@@ -62,7 +62,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Updates
         {
             PackageInfo[] packages = await _installationManager.GetPackages(
                 "MulletaFlix Stable",
-                "https://repo.MulletaFlix.org/files/plugin/manifest.json",
+                "https://repo.jellyfin.org/files/plugin/manifest.json",
                 false,
                 TestContext.Current.CancellationToken);
 
@@ -75,7 +75,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Updates
         {
             PackageInfo[] packages = await _installationManager.GetPackages(
                 "MulletaFlix Stable",
-                "https://repo.MulletaFlix.org/files/plugin/manifest.json",
+                "https://repo.jellyfin.org/files/plugin/manifest.json",
                 false,
                 TestContext.Current.CancellationToken);
 
@@ -89,7 +89,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Updates
             var packageInfo = new InstallationInfo()
             {
                 Name = "Test",
-                SourceUrl = "https://repo.MulletaFlix.org/releases/plugin/empty/empty.zip",
+                SourceUrl = "https://repo.jellyfin.org/releases/plugin/empty/empty.zip",
                 Checksum = "InvalidChecksum"
             };
 
@@ -102,7 +102,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Updates
             var packageInfo = new InstallationInfo()
             {
                 Name = "Test",
-                SourceUrl = "https://repo.MulletaFlix.org/releases/plugin/empty/empty.zip",
+                SourceUrl = "https://repo.jellyfin.org/releases/plugin/empty/empty.zip",
                 Checksum = "11b5b2f1a9ebc4f66d6ef19018543361"
             };
 

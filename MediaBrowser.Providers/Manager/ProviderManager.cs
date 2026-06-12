@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Mime;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
@@ -956,47 +957,151 @@ namespace MediaBrowser.Providers.Manager
                 searchInfo.SearchInfo.MetadataCountryCode = _configurationManager.Configuration.MetadataCountryCode;
             }
 
-            var resultList = new List<RemoteSearchResult>();
-
-            foreach (var provider in providers)
+            var searchName = searchInfo.SearchInfo.Name;
+            if (!string.IsNullOrWhiteSpace(searchName))
             {
-                try
+                searchName = Regex.Replace(searchName, @"\s*[\(\[]?\d{4}[\)\]]?\s*", " ");
+                searchName = searchName.Replace(":", " - ", StringComparison.Ordinal);
+                searchName = Regex.Replace(searchName, @"[^\p{L}\p{N}\s\-]", " ");
+                searchName = Regex.Replace(searchName, @"\s+", " ").Trim().Trim('-');
+                searchInfo.SearchInfo.Name = searchName;
+            }
+
+            var providerTasks = providers.Select(provider => RunProviderSearchAsync(provider, searchInfo, cancellationToken));
+            var providerResults = await Task.WhenAll(providerTasks).ConfigureAwait(false);
+
+            var resultList = new List<RemoteSearchResult>();
+            foreach (var results in providerResults)
+            {
+                if (results is null)
                 {
-                    var results = await provider.GetSearchResults(searchInfo.SearchInfo, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
 
-                    foreach (var result in results)
+                foreach (var result in results)
+                {
+                    var existingMatch = resultList.FirstOrDefault(i => i.ProviderIds.Any(p => string.Equals(result.GetProviderId(p.Key), p.Value, StringComparison.OrdinalIgnoreCase)));
+                    if (existingMatch is null)
                     {
-                        result.SearchProviderName = provider.Name;
-
-                        var existingMatch = resultList.FirstOrDefault(i => i.ProviderIds.Any(p => string.Equals(result.GetProviderId(p.Key), p.Value, StringComparison.OrdinalIgnoreCase)));
-
-                        if (existingMatch is null)
+                        resultList.Add(result);
+                    }
+                    else
+                    {
+                        foreach (var providerId in result.ProviderIds)
                         {
-                            resultList.Add(result);
+                            existingMatch.ProviderIds.TryAdd(providerId.Key, providerId.Value);
                         }
-                        else
-                        {
-                            foreach (var providerId in result.ProviderIds)
-                            {
-                                existingMatch.ProviderIds.TryAdd(providerId.Key, providerId.Value);
-                            }
 
-                            if (string.IsNullOrWhiteSpace(existingMatch.ImageUrl))
-                            {
-                                existingMatch.ImageUrl = result.ImageUrl;
-                            }
+                        if (string.IsNullOrWhiteSpace(existingMatch.ImageUrl))
+                        {
+                            existingMatch.ImageUrl = result.ImageUrl;
                         }
                     }
                 }
-#pragma warning disable CA1031 // do not catch general exception types
-                catch (Exception ex)
-#pragma warning restore CA1031 // do not catch general exception types
+            }
+
+            if (resultList.Count > 0)
+            {
+                var queryName = searchInfo.SearchInfo.Name;
+                var queryYear = searchInfo.SearchInfo.Year;
+                foreach (var result in resultList)
                 {
-                    _logger.LogError(ex, "Provider {ProviderName} failed to retrieve search results", provider.Name);
+                    result.Score = ComputeSearchScore(result, queryName, queryYear);
                 }
+
+                resultList = resultList.OrderByDescending(r => r.Score).ToList();
             }
 
             return resultList;
+        }
+
+        private static double ComputeSearchScore(RemoteSearchResult result, string? queryName, int? queryYear)
+        {
+            double score = 0;
+
+            if (!string.IsNullOrWhiteSpace(queryName) && !string.IsNullOrWhiteSpace(result.Name))
+            {
+                var q = queryName.Trim().ToLowerInvariant();
+                var r = result.Name.Trim().ToLowerInvariant();
+
+                if (string.Equals(q, r, StringComparison.OrdinalIgnoreCase))
+                {
+                    score += 50;
+                }
+                else if (q.Contains(r, StringComparison.OrdinalIgnoreCase) || r.Contains(q, StringComparison.OrdinalIgnoreCase))
+                {
+                    score += 35;
+                }
+                else
+                {
+                    var qWords = q.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var rWords = r.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var matchCount = qWords.Count(w => rWords.Contains(w));
+                    score += matchCount * 15.0 / Math.Max(qWords.Length, 1);
+                }
+            }
+
+            if (queryYear.HasValue && result.ProductionYear.HasValue)
+            {
+                if (queryYear.Value == result.ProductionYear.Value)
+                {
+                    score += 30;
+                }
+                else
+                {
+                    var diff = Math.Abs(queryYear.Value - result.ProductionYear.Value);
+                    score += Math.Max(0, 30 - diff * 5);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(result.SearchProviderName))
+            {
+                var provider = result.SearchProviderName;
+                if (provider.Contains("TMDB", StringComparison.OrdinalIgnoreCase) || provider.Contains("TheMovieDb", StringComparison.OrdinalIgnoreCase))
+                {
+                    score += 10;
+                }
+                else if (provider.Contains("OMDB", StringComparison.OrdinalIgnoreCase))
+                {
+                    score += 7;
+                }
+                else
+                {
+                    score += 5;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(result.ImageUrl))
+            {
+                score += 5;
+            }
+
+            return score;
+        }
+
+        private async Task<IEnumerable<RemoteSearchResult>?> RunProviderSearchAsync<TLookupType>(
+            IRemoteSearchProvider<TLookupType> provider,
+            RemoteSearchQuery<TLookupType> searchInfo,
+            CancellationToken cancellationToken)
+            where TLookupType : ItemLookupInfo
+        {
+            try
+            {
+                var results = await provider.GetSearchResults(searchInfo.SearchInfo, cancellationToken).ConfigureAwait(false);
+                foreach (var result in results)
+                {
+                    result.SearchProviderName = provider.Name;
+                }
+
+                return results;
+            }
+#pragma warning disable CA1031 // do not catch general exception types
+            catch (Exception ex)
+#pragma warning restore CA1031 // do not catch general exception types
+            {
+                _logger.LogError(ex, "Provider {ProviderName} failed to retrieve search results", provider.Name);
+                return null;
+            }
         }
 
         private IEnumerable<IExternalId> GetExternalIds(IHasProviderIds item)

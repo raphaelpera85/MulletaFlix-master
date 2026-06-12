@@ -205,12 +205,11 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 }
 
                 var canaisContent = MidiaStorageOnlineStreamProxy.NormalizeM3uContent(canaisM3u.ToString());
-                config.CanaisM3uContent = canaisContent;
                 config.TotalChannelCount = entries.Count(e => e.Type == "Canal");
                 config.EpgCompatibleChannelCount = entries.Count(e => e.Type == "Canal" && !string.IsNullOrWhiteSpace(GetEffectiveTvgId(e)));
                 Plugin.Instance!.UpdateConfiguration(config);
 
-                // BG-5: save canais to dedicated file to avoid bloating config.xml
+                // BG-5: save canais to dedicated file ONLY, do NOT serialize into config.xml
                 var canaisFilePath = GetCanaisFilePath();
                 Directory.CreateDirectory(Path.GetDirectoryName(canaisFilePath)!);
                 await System.IO.File.WriteAllTextAsync(canaisFilePath, canaisContent, ct).ConfigureAwait(false);
@@ -1257,7 +1256,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
         private static string SanitizeName(string name)
         {
-            // BG-2: use cached static array
+            name = name.Replace(":", " - ", StringComparison.Ordinal);
+            name = name.Replace("_", " - ", StringComparison.Ordinal);
+            name = name.Replace("&", "e", StringComparison.Ordinal);
+
             var sb = new StringBuilder(name.Length);
             foreach (var c in name)
             {
@@ -1270,7 +1272,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     sb.Append(c);
                 }
             }
-            return sb.ToString().TrimEnd('.', ' ');
+            return Regex.Replace(sb.ToString().TrimEnd('.', ' '), @"\s+", " ").Trim();
         }
 
         private static string ExtractDisplayName(string extinfLine)

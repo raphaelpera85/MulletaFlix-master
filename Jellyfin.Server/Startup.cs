@@ -125,6 +125,13 @@ namespace MulletaFlix.Server
                 })
                 .ConfigurePrimaryHttpMessageHandler(defaultHttpClientHandlerDelegate);
 
+            services.AddHsts(options =>
+            {
+                options.MaxAge = TimeSpan.FromDays(365);
+                options.IncludeSubDomains = true;
+                options.Preload = false;
+            });
+
             services.AddHealthChecks()
                 .AddCheck<DbContextFactoryHealthCheck<MulletaFlixDbContext>>(nameof(MulletaFlixDbContext));
 
@@ -183,7 +190,15 @@ namespace MulletaFlix.Server
                 mainApp.UseForwardedHeaders();
                 mainApp.UseMiddleware<ExceptionMiddleware>();
 
+                mainApp.UseMiddleware<SecurityHeadersMiddleware>();
                 mainApp.UseMiddleware<ResponseTimeMiddleware>();
+
+                if (config.RequireHttps && _serverApplicationHost.ListenWithHttps)
+                {
+                    mainApp.UseHsts();
+                }
+
+                mainApp.UseMiddleware<RateLimitMiddleware>();
 
                 mainApp.UseWebSockets();
 

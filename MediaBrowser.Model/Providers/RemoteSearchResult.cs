@@ -49,5 +49,10 @@ namespace MediaBrowser.Model.Providers
         public RemoteSearchResult? AlbumArtist { get; set; }
 
         public RemoteSearchResult[] Artists { get; set; }
+
+        /// <summary>
+        /// Gets or sets the match confidence score (0-100), computed from title similarity, year match, and provider priority.
+        /// </summary>
+        public double Score { get; set; }
     }
 }

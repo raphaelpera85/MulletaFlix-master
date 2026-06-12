@@ -385,7 +385,10 @@ public class LibraryStructureController : BaseMulletaFlixApiController
 
         if (string.IsNullOrWhiteSpace(options.PreferredMetadataLanguage))
         {
-            options.PreferredMetadataLanguage = _localizationManager.GetDefaultMetadataLanguage(options.MetadataCountryCode);
+            var serverLang = _serverConfigurationManager.Configuration.PreferredMetadataLanguage;
+            options.PreferredMetadataLanguage = !string.IsNullOrWhiteSpace(serverLang)
+                ? serverLang
+                : _localizationManager.GetDefaultMetadataLanguage(options.MetadataCountryCode);
         }
     }
 }

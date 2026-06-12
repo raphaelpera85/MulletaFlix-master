@@ -1104,5 +1104,60 @@ public class LibraryController : BaseMulletaFlixApiController
         var metadataOptions = _serverConfigurationManager.GetMetadataOptionsForType(type);
         return metadataOptions is null || !metadataOptions.DisabledImageFetchers.Contains(name, StringComparison.OrdinalIgnoreCase);
     }
+
+    [HttpGet("Items/Unidentified")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult<List<UnidentifiedItemDto>> GetUnidentifiedItems(
+        [FromQuery] string? mediaType,
+        [FromQuery] int? limit)
+    {
+        var types = mediaType switch
+        {
+            "Series" => new[] { BaseItemKind.Series },
+            "Episodes" => new[] { BaseItemKind.Episode },
+            _ => new[] { BaseItemKind.Movie }
+        };
+
+        var items = _libraryManager.GetItemList(new InternalItemsQuery
+        {
+            IncludeItemTypes = types,
+            Recursive = true,
+            IsVirtualItem = false,
+            DtoOptions = new DtoOptions
+            {
+                EnableImages = false,
+                Fields = new[] { ItemFields.ProviderIds }
+            }
+        });
+
+        var unidentified = items
+            .Where(i => i.ProviderIds is null || i.ProviderIds.Count == 0)
+            .OrderBy(i => i.Name)
+            .Select(i => new UnidentifiedItemDto
+            {
+                Id = i.Id,
+                Name = i.Name,
+                Path = i.Path,
+                Type = i.GetType().Name,
+                DateCreated = i.DateCreated
+            });
+
+        if (limit.HasValue)
+        {
+            unidentified = unidentified.Take(limit.Value);
+        }
+
+        return Ok(unidentified.ToList());
+    }
+}
+
+public class UnidentifiedItemDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Path { get; set; }
+    public string? Type { get; set; }
+    public DateTime DateCreated { get; set; }
 }
 

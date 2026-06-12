@@ -131,7 +131,7 @@ public class UserControllerTests
         Assert.True(payload.Success);
 
         Assert.NotNull(capturedPolicy);
-        Assert.False(capturedPolicy!.IsHidden);
+        Assert.True(capturedPolicy!.IsHidden);
         Assert.False(capturedPolicy.IsDisabled);
 
         _mockUserManager.Verify(m => m.CreateUserAsync(username), Times.Once);

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MulletaFlix.CodeAnalysis</name>
+    </assembly>
+    <members>
+        <member name="T:MulletaFlix.CodeAnalysis.AsyncDisposalPatternAnalyzer">
+            <summary>
+            Analyzer to detect sync disposal of async-created IAsyncDisposable objects.
+            </summary>
+        </member>
+        <member name="F:MulletaFlix.CodeAnalysis.AsyncDisposalPatternAnalyzer.AsyncDisposableSyncDisposal">
+            <summary>
+            Diagnostic descriptor for sync disposal of async-created IAsyncDisposable objects.
+            </summary>
+        </member>
+        <member name="P:MulletaFlix.CodeAnalysis.AsyncDisposalPatternAnalyzer.SupportedDiagnostics">
+            <inheritdoc/>
+        </member>
+        <member name="M:MulletaFlix.CodeAnalysis.AsyncDisposalPatternAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext)">
+            <inheritdoc/>
+        </member>
+    </members>
+</doc>

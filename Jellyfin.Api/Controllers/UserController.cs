@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -539,8 +539,12 @@ public class UserController : BaseMulletaFlixApiController
         await _userLicenseManager.SetLicenseAsync(
             newUser.Id,
             0,
-            "UsuÃ¡rio criado automaticamente com 30 minutos de teste.",
+            "Usuário criado automaticamente com 30 minutos de teste.",
             User.GetUserId()).ConfigureAwait(false);
+
+        var policy = _userManager.GetUserDto(newUser).Policy;
+        policy.IsHidden = true;
+        await _userManager.UpdatePolicyAsync(newUser.Id, policy).ConfigureAwait(false);
 
         var result = _userManager.GetUserDto(newUser, HttpContext.GetNormalizedRemoteIP().ToString());
 
@@ -581,14 +585,14 @@ public class UserController : BaseMulletaFlixApiController
             await _userLicenseManager.SetLicenseAsync(
                 newUser.Id,
                 0,
-                "UsuÃ¡rio criado pelo cadastro com 30 minutos de teste.",
+                "Usuário criado pelo cadastro com 30 minutos de teste.",
                 Guid.Empty).ConfigureAwait(false);
 
             var policy = _userManager.GetUserDto(newUser).Policy;
             policy.EnableRemoteAccess = true;
             policy.IsAdministrator = false;
             policy.IsDisabled = false;
-            policy.IsHidden = false;
+            policy.IsHidden = true;
             await _userManager.UpdatePolicyAsync(newUser.Id, policy).ConfigureAwait(false);
 
             registrationSucceeded = true;

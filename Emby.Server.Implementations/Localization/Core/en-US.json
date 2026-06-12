@@ -108,6 +108,8 @@
     "TaskMoveTrickplayImages": "Migrate Trickplay Image Location",
     "TaskMoveTrickplayImagesDescription": "Moves existing trickplay files according to the library settings.",
     "CleanupUserDataTask": "User data cleanup task",
-    "CleanupUserDataTaskDescription": "Cleans all user data (Watch state, favorite status etc) from media that is no longer present for at least 90 days."
+    "CleanupUserDataTaskDescription": "Cleans all user data (Watch state, favorite status etc) from media that is no longer present for at least 90 days.",
+    "TaskUnidentifiedMediaCleanup": "Clean Unidentified Media",
+    "TaskUnidentifiedMediaCleanupDescription": "Attempts to identify media files that are missing metadata by triggering a metadata refresh."
 }
 

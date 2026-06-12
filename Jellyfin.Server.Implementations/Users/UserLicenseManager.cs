@@ -89,6 +89,21 @@ public class UserLicenseManager : IUserLicenseManager
                 || durationHours.Value == -1
                 || user.HasPermission(PermissionKind.IsAdministrator);
 
+            // Re-enable user when a license is applied
+            if (!user.HasPermission(PermissionKind.IsAdministrator))
+            {
+                var permission = user.Permissions.FirstOrDefault(p => p.Kind == PermissionKind.IsDisabled);
+                if (permission is null)
+                {
+                    user.Permissions.Add(new Permission(PermissionKind.IsDisabled, false));
+                }
+                else
+                {
+                    permission.Value = false;
+                    dbContext.Entry(permission).Property(x => x.Value).IsModified = true;
+                }
+            }
+
             if (license is null)
             {
                 // Create new license
@@ -143,14 +158,25 @@ public class UserLicenseManager : IUserLicenseManager
         await using (dbContext.ConfigureAwait(false))
         {
             var license = await dbContext.UserLicenses
+                .Include(l => l.User)
+                    .ThenInclude(u => u.Permissions)
                 .FirstOrDefaultAsync(l => l.UserId.Equals(userId))
                 .ConfigureAwait(false);
 
             if (license is not null)
             {
                 dbContext.UserLicenses.Remove(license);
+
+                if (license.User is not null && !license.User.HasPermission(PermissionKind.IsAdministrator))
+                {
+                    license.User.SetPermission(PermissionKind.IsDisabled, true);
+                }
+
                 await dbContext.SaveChangesAsync().ConfigureAwait(false);
-                _logger.LogInformation("License revoked for user {UserId}.", userId);
+
+                _logger.LogInformation(
+                    "License revoked for user {UserId}. User disabled.",
+                    userId);
             }
         }
     }
@@ -183,19 +209,27 @@ public class UserLicenseManager : IUserLicenseManager
                     continue;
                 }
 
-                // Skip users already disabled
-                // Skip admin users â€” admins cannot be disabled by license expiration
+                // Skip admin users — admins cannot be disabled by license expiration
                 if (license.User.HasPermission(PermissionKind.IsAdministrator))
                 {
-                    _logger.LogWarning(
-                        "Skipping license expiration for admin user {UserName} (Id: {UserId}).",
+                    continue;
+                }
+
+                // Skip users already disabled
+                if (license.User.HasPermission(PermissionKind.IsDisabled))
+                {
+                    _logger.LogDebug(
+                        "Skipping license expiration for user {UserName} (Id: {UserId}) — already disabled.",
                         license.User.Username,
                         license.User.Id);
                     continue;
                 }
 
+                license.User.SetPermission(PermissionKind.IsDisabled, true);
+                disabledCount++;
+
                 _logger.LogInformation(
-                    "User {UserName} (Id: {UserId}) has an expired license at {ExpirationDate}, but playback is not blocked by license expiration.",
+                    "User {UserName} (Id: {UserId}) has an expired license at {ExpirationDate}. User disabled.",
                     license.User.Username,
                     license.User.Id,
                     license.ExpirationDate);
@@ -306,7 +340,7 @@ public class UserLicenseManager : IUserLicenseManager
     {
         if (license.IsUnlimited)
         {
-            return null;
+            return DateTime.MaxValue;
         }
 
         if (license.ExpirationDate.HasValue)

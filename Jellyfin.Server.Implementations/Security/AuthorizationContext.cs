@@ -134,6 +134,13 @@ namespace MulletaFlix.Server.Implementations.Security
 
                 if (device is not null)
                 {
+                    // Token expiration: reject tokens inactive for more than 90 days
+                    var maxTokenAge = TimeSpan.FromDays(90);
+                    if (device.DateLastActivity != default && (DateTime.UtcNow - device.DateLastActivity) > maxTokenAge)
+                    {
+                        return authInfo; // IsAuthenticated = false
+                    }
+
                     authInfo.IsAuthenticated = true;
                     var updateToken = false;
 

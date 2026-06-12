@@ -1,0 +1,903 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "MulletaFlix.Drawing.Skia/1.0.0": {
+        "dependencies": {
+          "BlurHashSharp": "1.4.0-pre.1",
+          "BlurHashSharp.SkiaSharp": "1.4.0-pre.1",
+          "HarfBuzzSharp.NativeAssets.Linux": "8.3.1.5",
+          "MulletaFlix.Common": "12.0.0",
+          "MulletaFlix.Controller": "12.0.0",
+          "MulletaFlix.Model": "12.0.0",
+          "SkiaSharp": "3.119.4",
+          "SkiaSharp.HarfBuzz": "3.119.4",
+          "SkiaSharp.NativeAssets.Linux": "3.119.4",
+          "Svg.Skia": "3.7.0",
+          "Emby.Naming": "12.0.0.0",
+          "MediaBrowser.Common": "12.0.0.0",
+          "MediaBrowser.Controller": "12.0.0.0",
+          "MediaBrowser.Model": "12.0.0.0",
+          "MulletaFlix.Data.Reference": "12.0.0.0",
+          "MulletaFlix.Database.Implementations.Reference": "12.0.0.0",
+          "MulletaFlix.Extensions.Reference": "12.0.0.0",
+          "MulletaFlix.MediaEncoding.Keyframes.Reference": "10.11.0.0"
+        },
+        "runtime": {
+          "MulletaFlix.Drawing.Skia.dll": {}
+        }
+      },
+      "BitFaster.Caching/2.6.0": {
+        "runtime": {
+          "lib/net10.0/BitFaster.Caching.dll": {
+            "assemblyVersion": "2.6.0.0",
+            "fileVersion": "2.6.0.0"
+          }
+        }
+      },
+      "BlurHashSharp/1.4.0-pre.1": {
+        "runtime": {
+          "lib/net8.0/BlurHashSharp.dll": {
+            "assemblyVersion": "1.3.4.0",
+            "fileVersion": "1.3.4.0"
+          }
+        }
+      },
+      "BlurHashSharp.SkiaSharp/1.4.0-pre.1": {
+        "dependencies": {
+          "BlurHashSharp": "1.4.0-pre.1",
+          "SkiaSharp": "3.119.4"
+        },
+        "runtime": {
+          "lib/net8.0/BlurHashSharp.SkiaSharp.dll": {
+            "assemblyVersion": "1.3.4.0",
+            "fileVersion": "1.3.4.0"
+          }
+        }
+      },
+      "Diacritics/4.1.8": {
+        "runtime": {
+          "lib/net9.0/Diacritics.dll": {
+            "assemblyVersion": "4.1.8.0",
+            "fileVersion": "4.1.8.0"
+          }
+        }
+      },
+      "ExCSS/4.3.1": {
+        "runtime": {
+          "lib/net8.0/ExCSS.dll": {
+            "assemblyVersion": "4.3.1.0",
+            "fileVersion": "4.3.1.0"
+          }
+        }
+      },
+      "HarfBuzzSharp/8.3.1.5": {
+        "dependencies": {
+          "HarfBuzzSharp.NativeAssets.Win32": "8.3.1.5",
+          "HarfBuzzSharp.NativeAssets.macOS": "8.3.1.5"
+        },
+        "runtime": {
+          "lib/net10.0/HarfBuzzSharp.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "8.3.1.5"
+          }
+        }
+      },
+      "HarfBuzzSharp.NativeAssets.Linux/8.3.1.5": {
+        "runtimeTargets": {
+          "runtimes/linux-arm/native/libHarfBuzzSharp.so": {
+            "rid": "linux-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-bionic-arm64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-bionic-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-bionic-x64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-bionic-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-loongarch64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-loongarch64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-arm/native/libHarfBuzzSharp.so": {
+            "rid": "linux-musl-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-arm64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-musl-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-loongarch64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-musl-loongarch64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-riscv64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-musl-riscv64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-x64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-musl-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-riscv64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-riscv64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libHarfBuzzSharp.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x86/native/libHarfBuzzSharp.so": {
+            "rid": "linux-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "HarfBuzzSharp.NativeAssets.macOS/8.3.1.5": {
+        "runtimeTargets": {
+          "runtimes/osx/native/libHarfBuzzSharp.dylib": {
+            "rid": "osx",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "HarfBuzzSharp.NativeAssets.Win32/8.3.1.5": {
+        "runtimeTargets": {
+          "runtimes/win-arm64/native/libHarfBuzzSharp.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-arm64/native/libHarfBuzzSharp.pdb": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/libHarfBuzzSharp.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/libHarfBuzzSharp.pdb": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/libHarfBuzzSharp.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/libHarfBuzzSharp.pdb": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "ICU4N/60.1.0-alpha.356": {
+        "dependencies": {
+          "J2N": "2.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/ICU4N.dll": {
+            "assemblyVersion": "60.0.0.0",
+            "fileVersion": "60.1.0.0"
+          }
+        }
+      },
+      "ICU4N.Transliterator/60.1.0-alpha.356": {
+        "dependencies": {
+          "ICU4N": "60.1.0-alpha.356"
+        },
+        "runtime": {
+          "lib/netstandard2.0/ICU4N.Transliterator.dll": {
+            "assemblyVersion": "60.0.0.0",
+            "fileVersion": "60.1.0.0"
+          }
+        }
+      },
+      "J2N/2.0.0": {
+        "runtime": {
+          "lib/net6.0/J2N.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.0.0"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore/10.0.8": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore.Abstractions": "10.0.8"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.dll": {
+            "assemblyVersion": "10.0.8.0",
+            "fileVersion": "10.0.826.23019"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.Abstractions/10.0.8": {
+        "runtime": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll": {
+            "assemblyVersion": "10.0.8.0",
+            "fileVersion": "10.0.826.23019"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.Relational/10.0.8": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "10.0.8"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll": {
+            "assemblyVersion": "10.0.8.0",
+            "fileVersion": "10.0.826.23019"
+          }
+        }
+      },
+      "NEbml/1.1.0.5": {
+        "runtime": {
+          "lib/netstandard2.0/NEbml.Core.dll": {
+            "assemblyVersion": "1.1.0.5",
+            "fileVersion": "1.1.0.5"
+          }
+        }
+      },
+      "Polly/8.6.6": {
+        "dependencies": {
+          "Polly.Core": "8.6.6"
+        },
+        "runtime": {
+          "lib/net6.0/Polly.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.6.6.5454"
+          }
+        }
+      },
+      "Polly.Core/8.6.6": {
+        "runtime": {
+          "lib/net8.0/Polly.Core.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.6.6.5454"
+          }
+        }
+      },
+      "ShimSkiaSharp/3.7.0": {
+        "runtime": {
+          "lib/net10.0/ShimSkiaSharp.dll": {
+            "assemblyVersion": "3.7.0.0",
+            "fileVersion": "3.7.0.0"
+          }
+        }
+      },
+      "SkiaSharp/3.119.4": {
+        "dependencies": {
+          "SkiaSharp.NativeAssets.Win32": "3.119.4",
+          "SkiaSharp.NativeAssets.macOS": "3.119.4"
+        },
+        "runtime": {
+          "lib/net10.0/SkiaSharp.dll": {
+            "assemblyVersion": "3.119.0.0",
+            "fileVersion": "3.119.4.0"
+          }
+        }
+      },
+      "SkiaSharp.HarfBuzz/3.119.4": {
+        "dependencies": {
+          "HarfBuzzSharp": "8.3.1.5",
+          "SkiaSharp": "3.119.4"
+        },
+        "runtime": {
+          "lib/net10.0/SkiaSharp.HarfBuzz.dll": {
+            "assemblyVersion": "3.119.0.0",
+            "fileVersion": "3.119.4.0"
+          }
+        }
+      },
+      "SkiaSharp.NativeAssets.Linux/3.119.4": {
+        "runtimeTargets": {
+          "runtimes/linux-arm/native/libSkiaSharp.so": {
+            "rid": "linux-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libSkiaSharp.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-bionic-arm64/native/libSkiaSharp.so": {
+            "rid": "linux-bionic-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-bionic-x64/native/libSkiaSharp.so": {
+            "rid": "linux-bionic-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-loongarch64/native/libSkiaSharp.so": {
+            "rid": "linux-loongarch64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-arm/native/libSkiaSharp.so": {
+            "rid": "linux-musl-arm",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-arm64/native/libSkiaSharp.so": {
+            "rid": "linux-musl-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-loongarch64/native/libSkiaSharp.so": {
+            "rid": "linux-musl-loongarch64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-riscv64/native/libSkiaSharp.so": {
+            "rid": "linux-musl-riscv64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-musl-x64/native/libSkiaSharp.so": {
+            "rid": "linux-musl-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-riscv64/native/libSkiaSharp.so": {
+            "rid": "linux-riscv64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libSkiaSharp.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x86/native/libSkiaSharp.so": {
+            "rid": "linux-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "SkiaSharp.NativeAssets.macOS/3.119.4": {
+        "runtimeTargets": {
+          "runtimes/osx/native/libSkiaSharp.dylib": {
+            "rid": "osx",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "SkiaSharp.NativeAssets.Win32/3.119.4": {
+        "runtimeTargets": {
+          "runtimes/win-arm64/native/libSkiaSharp.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-arm64/native/libSkiaSharp.pdb": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/libSkiaSharp.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/libSkiaSharp.pdb": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/libSkiaSharp.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/libSkiaSharp.pdb": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Svg.Custom/3.7.0": {
+        "dependencies": {
+          "ExCSS": "4.3.1"
+        },
+        "runtime": {
+          "lib/net10.0/Svg.Custom.dll": {
+            "assemblyVersion": "3.7.0.0",
+            "fileVersion": "3.7.0.0"
+          }
+        }
+      },
+      "Svg.Model/3.7.0": {
+        "dependencies": {
+          "ShimSkiaSharp": "3.7.0",
+          "Svg.Custom": "3.7.0"
+        },
+        "runtime": {
+          "lib/net10.0/Svg.Model.dll": {
+            "assemblyVersion": "3.7.0.0",
+            "fileVersion": "3.7.0.0"
+          }
+        }
+      },
+      "Svg.Skia/3.7.0": {
+        "dependencies": {
+          "SkiaSharp": "3.119.4",
+          "Svg.Custom": "3.7.0",
+          "Svg.Model": "3.7.0"
+        },
+        "runtime": {
+          "lib/net10.0/Svg.Skia.dll": {
+            "assemblyVersion": "3.7.0.0",
+            "fileVersion": "3.7.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Common/12.0.0": {
+        "dependencies": {
+          "MulletaFlix.Model": "12.0.0"
+        },
+        "runtime": {
+          "MediaBrowser.Common.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Controller/12.0.0": {
+        "dependencies": {
+          "BitFaster.Caching": "2.6.0",
+          "MulletaFlix.Common": "12.0.0",
+          "MulletaFlix.MediaEncoding.Keyframes": "10.11.0",
+          "MulletaFlix.Model": "12.0.0",
+          "MulletaFlix.Naming": "12.0.0"
+        },
+        "runtime": {
+          "MediaBrowser.Controller.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Data/12.0.0": {
+        "dependencies": {
+          "MulletaFlix.Database.Implementations": "10.11.0"
+        },
+        "runtime": {
+          "MulletaFlix.Data.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Database.Implementations/10.11.0": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.8",
+          "Polly": "8.6.6"
+        },
+        "runtime": {
+          "MulletaFlix.Database.Implementations.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Extensions/12.0.0": {
+        "dependencies": {
+          "Diacritics": "4.1.8",
+          "ICU4N.Transliterator": "60.1.0-alpha.356"
+        },
+        "runtime": {
+          "MulletaFlix.Extensions.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.MediaEncoding.Keyframes/10.11.0": {
+        "dependencies": {
+          "NEbml": "1.1.0.5"
+        },
+        "runtime": {
+          "MulletaFlix.MediaEncoding.Keyframes.dll": {
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Model/12.0.0": {
+        "dependencies": {
+          "MulletaFlix.Data": "12.0.0",
+          "MulletaFlix.Extensions": "12.0.0"
+        },
+        "runtime": {
+          "MediaBrowser.Model.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Naming/12.0.0": {
+        "dependencies": {
+          "MulletaFlix.Common": "12.0.0",
+          "MulletaFlix.Model": "12.0.0"
+        },
+        "runtime": {
+          "Emby.Naming.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "Emby.Naming/12.0.0.0": {
+        "runtime": {
+          "Emby.Naming.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MediaBrowser.Common/12.0.0.0": {
+        "runtime": {
+          "MediaBrowser.Common.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MediaBrowser.Controller/12.0.0.0": {
+        "runtime": {
+          "MediaBrowser.Controller.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MediaBrowser.Model/12.0.0.0": {
+        "runtime": {
+          "MediaBrowser.Model.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Data.Reference/12.0.0.0": {
+        "runtime": {
+          "MulletaFlix.Data.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Database.Implementations.Reference/12.0.0.0": {
+        "runtime": {
+          "MulletaFlix.Database.Implementations.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.Extensions.Reference/12.0.0.0": {
+        "runtime": {
+          "MulletaFlix.Extensions.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        }
+      },
+      "MulletaFlix.MediaEncoding.Keyframes.Reference/10.11.0.0": {
+        "runtime": {
+          "MulletaFlix.MediaEncoding.Keyframes.dll": {
+            "assemblyVersion": "10.11.0.0",
+            "fileVersion": "10.11.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "MulletaFlix.Drawing.Skia/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "BitFaster.Caching/2.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-iF2dMiGpaya8Umwi0OfsGKtq3aMVgHVsBChwQL+NhShEsRorcoTinGf9FFNBnBMwJW2Vm0FqhtOaEBY0+74p6g==",
+      "path": "bitfaster.caching/2.6.0",
+      "hashPath": "bitfaster.caching.2.6.0.nupkg.sha512"
+    },
+    "BlurHashSharp/1.4.0-pre.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-f+nvz5shCnn+Y9St2u6ps/iDD3x6HKRKDDMyO/Kb2Qa04aLV00MIObOi40hkuWfeNdh7fsvjJGWFHjcvm2P8Dg==",
+      "path": "blurhashsharp/1.4.0-pre.1",
+      "hashPath": "blurhashsharp.1.4.0-pre.1.nupkg.sha512"
+    },
+    "BlurHashSharp.SkiaSharp/1.4.0-pre.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-r5ux6Wj0hwPMed6neAxg90X+R8IQBPgbuZL2daUhN/SJWLbp9ghkgs0X50aABY9P4HKq6AwKJhKUso/tQ5oOAQ==",
+      "path": "blurhashsharp.skiasharp/1.4.0-pre.1",
+      "hashPath": "blurhashsharp.skiasharp.1.4.0-pre.1.nupkg.sha512"
+    },
+    "Diacritics/4.1.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6+I0/ui1GvFS3SFSs+92b7yNqq6t32iaBQcO9RnepCiEViD2XmvsSIh4r1VTJe94gDxtkDo9fOSbRK1FjSSpGg==",
+      "path": "diacritics/4.1.8",
+      "hashPath": "diacritics.4.1.8.nupkg.sha512"
+    },
+    "ExCSS/4.3.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-A8UtcghHQlWxPJhJF5bsfEYO7068JHGTuJ7tzyyMjd5fE/N/xY1cVOUhzuLLFwMOCJVnM4mqSQc93W9fGfZ1kA==",
+      "path": "excss/4.3.1",
+      "hashPath": "excss.4.3.1.nupkg.sha512"
+    },
+    "HarfBuzzSharp/8.3.1.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-K0+U7592Ne10BCuHZrZYIbaYUQy20CsYM9A3+Xjz3UpLPjs6nosbQtDYp2PueWJ7AQ5/htbyO8WqnUe+uf8AAQ==",
+      "path": "harfbuzzsharp/8.3.1.5",
+      "hashPath": "harfbuzzsharp.8.3.1.5.nupkg.sha512"
+    },
+    "HarfBuzzSharp.NativeAssets.Linux/8.3.1.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Rvm05tL7QTNEGrhcrfvN/J5j7SGjGclp8J70JTQW4498U4+4cPC5yovn5V1l6ngSGufK6Ck47JVp6alYwhkGKg==",
+      "path": "harfbuzzsharp.nativeassets.linux/8.3.1.5",
+      "hashPath": "harfbuzzsharp.nativeassets.linux.8.3.1.5.nupkg.sha512"
+    },
+    "HarfBuzzSharp.NativeAssets.macOS/8.3.1.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-TWSbMOIBiGvCTnR2MUlmhnP92L7qwYmpDXSNOkYQUh6Iuc7W7Y3z/Q+X3N6scvbZbDmfbZjqbNUqDEz/JzpwBg==",
+      "path": "harfbuzzsharp.nativeassets.macos/8.3.1.5",
+      "hashPath": "harfbuzzsharp.nativeassets.macos.8.3.1.5.nupkg.sha512"
+    },
+    "HarfBuzzSharp.NativeAssets.Win32/8.3.1.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-p95FW4SwP50qD4cq6e2/P5DP7As6c6aQU5qHvsdCKorX5GFLHUMIx/zQgiLvB871xQrhdN24sZyMbCufnTHvsQ==",
+      "path": "harfbuzzsharp.nativeassets.win32/8.3.1.5",
+      "hashPath": "harfbuzzsharp.nativeassets.win32.8.3.1.5.nupkg.sha512"
+    },
+    "ICU4N/60.1.0-alpha.356": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-YMZtDnjcqWzziOKiE7w6Ma7Rl5vuFDxzOsUlHh1QyfghbNEIZQOLRs9MMfwCWAjX6n9UitrF6vLXy55Z5q+4Fg==",
+      "path": "icu4n/60.1.0-alpha.356",
+      "hashPath": "icu4n.60.1.0-alpha.356.nupkg.sha512"
+    },
+    "ICU4N.Transliterator/60.1.0-alpha.356": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lFOSO6bbEtB6HkWMNDJAq+rFwVyi9g6xVc5O/2xHa6iZnV7wLVDqCbaQ4W4vIeBSQZAafqhxciaEkmAvSdzlCg==",
+      "path": "icu4n.transliterator/60.1.0-alpha.356",
+      "hashPath": "icu4n.transliterator.60.1.0-alpha.356.nupkg.sha512"
+    },
+    "J2N/2.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-M5bwDajAARZiyqupU+rHQJnsVLxNBOHJ8vKYHd8LcLIb1FgLfzzcJvc31Qo5Xz/GEHFjDF9ScjKL/ks/zRTXuA==",
+      "path": "j2n/2.0.0",
+      "hashPath": "j2n.2.0.0.nupkg.sha512"
+    },
+    "Microsoft.EntityFrameworkCore/10.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EJx+fIBMgBlgD+ublKCn+GTOJkw3UqV7xOjYWBRVdUYyIm8UfvAsmSOPFiIInsWTHyMEYUJ9gCJY1jwX+6UB7w==",
+      "path": "microsoft.entityframeworkcore/10.0.8",
+      "hashPath": "microsoft.entityframeworkcore.10.0.8.nupkg.sha512"
+    },
+    "Microsoft.EntityFrameworkCore.Abstractions/10.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jbKDXWPZQhuPHygMnwzNOqxBADVcpRVytcKYZsA++QqhPkpF93Ta8o5mbJQGrARSjlkr9WtOaADV97EDMOZ7DA==",
+      "path": "microsoft.entityframeworkcore.abstractions/10.0.8",
+      "hashPath": "microsoft.entityframeworkcore.abstractions.10.0.8.nupkg.sha512"
+    },
+    "Microsoft.EntityFrameworkCore.Relational/10.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UU3diAD2wwZveye2rnrwaF/wvJ9tm5iL2fuY9TTap6/iGQK1OO29M1BzXZRlRPVH/dByt5w/pISBSFtyR7hTqw==",
+      "path": "microsoft.entityframeworkcore.relational/10.0.8",
+      "hashPath": "microsoft.entityframeworkcore.relational.10.0.8.nupkg.sha512"
+    },
+    "NEbml/1.1.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-svtqDc+hue9kbnqNN2KkK4om/hDrc7K127cNb5FIYfgKgzo+JNDPXNLp8NioCchHhBO3lxWd4Cp/iiZZ3aoUqg==",
+      "path": "nebml/1.1.0.5",
+      "hashPath": "nebml.1.1.0.5.nupkg.sha512"
+    },
+    "Polly/8.6.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-czKHYJ6uGowPijuZt4kgF4njfGvWxVZ8mKBcrZ9iEtwDe9HKdF0ug6p6TwUG8EHuuufgbDU//rSBFebt5/0Fyw==",
+      "path": "polly/8.6.6",
+      "hashPath": "polly.8.6.6.nupkg.sha512"
+    },
+    "Polly.Core/8.6.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lCBL9mmhF9TZxHG3beVRkyjlLohkIC464xIAq7J7Y59C+z42hmsdUaeCKl2SIAYertOUU5TeBXyQDLDQGIKePQ==",
+      "path": "polly.core/8.6.6",
+      "hashPath": "polly.core.8.6.6.nupkg.sha512"
+    },
+    "ShimSkiaSharp/3.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fA1ZdJFYVbagZ7AtX8eYxsbtpn78piooO23mFc+tfJbuhHDUPTMCNa/5QzTOGG0ZDXPMVNdjA/qc3bkDlbpLpQ==",
+      "path": "shimskiasharp/3.7.0",
+      "hashPath": "shimskiasharp.3.7.0.nupkg.sha512"
+    },
+    "SkiaSharp/3.119.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-53NOSUZ1Us+91Sm0uCkIivh/k7jOowRErZT2sIWwPFN9mLUvdxnE6rS4sWo4255+Rd2MWUSF+j0NMZHD6Cke+Q==",
+      "path": "skiasharp/3.119.4",
+      "hashPath": "skiasharp.3.119.4.nupkg.sha512"
+    },
+    "SkiaSharp.HarfBuzz/3.119.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-YkN+X5fW9hXFlkoYaxDfYHuSE7SzIHlYMdWarmk03WOad1Rur8zJqGp1dkYp69FGpFxBVgnd/euiJnDPfr3WZQ==",
+      "path": "skiasharp.harfbuzz/3.119.4",
+      "hashPath": "skiasharp.harfbuzz.3.119.4.nupkg.sha512"
+    },
+    "SkiaSharp.NativeAssets.Linux/3.119.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UAyVzbqNfZsZbKbzj68zXLyUyF/SbTKmzTfOO6qDu++dtIUMMTzPBe8oOuzU/DiewpfKoUUlOSsJmqWc6blxBw==",
+      "path": "skiasharp.nativeassets.linux/3.119.4",
+      "hashPath": "skiasharp.nativeassets.linux.3.119.4.nupkg.sha512"
+    },
+    "SkiaSharp.NativeAssets.macOS/3.119.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fgBOWEqbY012x7gMfJU4ezgz6dfhJb30Z6YdW35h85Zoe39+a8YNbAAwL29ihPfWoppg5AjvyKNzD1oCvlqWwA==",
+      "path": "skiasharp.nativeassets.macos/3.119.4",
+      "hashPath": "skiasharp.nativeassets.macos.3.119.4.nupkg.sha512"
+    },
+    "SkiaSharp.NativeAssets.Win32/3.119.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XOpbx/4CReO2wYsq2s6rbvdauc6dntG4Zv499sHGTJ87bwZaFXszFkwql3+FIZMc8kUPeaj3Mx2ezIJmo8a1Kg==",
+      "path": "skiasharp.nativeassets.win32/3.119.4",
+      "hashPath": "skiasharp.nativeassets.win32.3.119.4.nupkg.sha512"
+    },
+    "Svg.Custom/3.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zt41SlMSJ8TB99U7LBP/Lhx5knIynh/4XvVrBP13BSWJQ3RyvcFRR1DezSbJh/bAEwBwyt1QROsD+60XWgmIAA==",
+      "path": "svg.custom/3.7.0",
+      "hashPath": "svg.custom.3.7.0.nupkg.sha512"
+    },
+    "Svg.Model/3.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uZrkDdka09n+anIiNI6b8iS40ov36MXTS9e9gODMbDKztwmxi52FXnStwGX88mmUwWKonCrnD28wX9/xmk56Jg==",
+      "path": "svg.model/3.7.0",
+      "hashPath": "svg.model.3.7.0.nupkg.sha512"
+    },
+    "Svg.Skia/3.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pJa5mLdtSz1bYbGZPDlnSVRcboEzgHvfs615DALe3hbbPlylRbNhA3R1GNYHX4lT8YhluorRjvqimzhCw7nfng==",
+      "path": "svg.skia/3.7.0",
+      "hashPath": "svg.skia.3.7.0.nupkg.sha512"
+    },
+    "MulletaFlix.Common/12.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Controller/12.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Data/12.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Database.Implementations/10.11.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Extensions/12.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.MediaEncoding.Keyframes/10.11.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Model/12.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Naming/12.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Emby.Naming/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MediaBrowser.Common/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MediaBrowser.Controller/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MediaBrowser.Model/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Data.Reference/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Database.Implementations.Reference/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.Extensions.Reference/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MulletaFlix.MediaEncoding.Keyframes.Reference/10.11.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

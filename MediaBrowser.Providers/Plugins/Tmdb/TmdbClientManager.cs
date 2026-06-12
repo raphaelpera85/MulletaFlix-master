@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +28,8 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
 
         private readonly IMemoryCache _memoryCache;
         private readonly TMDbClient _tmDbClient;
+        private readonly SemaphoreSlim _rateLimiter = new(1, 1);
+        private long _lastRequestTicks;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TmdbClientManager"/> class.
@@ -42,6 +45,32 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
 
             // Not really interested in NotFoundException
             _tmDbClient.ThrowApiExceptions = false;
+        }
+
+        private async Task ThrottleAsync(CancellationToken cancellationToken)
+        {
+            var delay = Plugin.Instance.Configuration.RateLimitDelayMs;
+            if (delay <= 0)
+            {
+                return;
+            }
+
+            await _rateLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var elapsed = Stopwatch.GetTimestamp() - _lastRequestTicks;
+                var elapsedMs = elapsed * 1000 / Stopwatch.Frequency;
+                var waitMs = delay - (int)elapsedMs;
+                if (waitMs > 0)
+                {
+                    await Task.Delay(waitMs, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                _lastRequestTicks = Stopwatch.GetTimestamp();
+                _rateLimiter.Release();
+            }
         }
 
         /// <summary>
@@ -62,6 +91,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var extraMethods = MovieMethods.Credits | MovieMethods.Releases | MovieMethods.Images | MovieMethods.Videos;
             if (!(Plugin.Instance?.Configuration.ExcludeTagsMovies).GetValueOrDefault())
@@ -102,6 +132,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             collection = await _tmDbClient.GetCollectionAsync(
                 tmdbId,
@@ -136,6 +167,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var extraMethods = TvShowMethods.Credits | TvShowMethods.Images | TvShowMethods.ExternalIds | TvShowMethods.Videos | TvShowMethods.ContentRatings | TvShowMethods.EpisodeGroups;
             if (!(Plugin.Instance?.Configuration.ExcludeTagsSeries).GetValueOrDefault())
@@ -192,6 +224,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var series = await GetSeriesAsync(tvShowId, language, imageLanguages, countryCode, cancellationToken).ConfigureAwait(false);
             var episodeGroupId = series?.EpisodeGroups?.Results?.Find(g => g.Type == groupType)?.Id;
@@ -233,6 +266,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             season = await _tmDbClient.GetTvSeasonAsync(
                 tvShowId,
@@ -271,6 +305,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var group = await GetSeriesGroupAsync(tvShowId, displayOrder, language, imageLanguages, countryCode, cancellationToken).ConfigureAwait(false);
             if (group is not null)
@@ -319,6 +354,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             person = await _tmDbClient.GetPersonAsync(
                 personTmdbId,
@@ -357,6 +393,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             result = await _tmDbClient.FindAsync(
                 source,
@@ -390,6 +427,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var searchResults = await _tmDbClient
                 .SearchTvShowAsync(name, TmdbUtils.NormalizeLanguage(language, countryCode), includeAdult: Plugin.Instance.Configuration.IncludeAdult, firstAirDateYear: year, cancellationToken: cancellationToken)
@@ -418,6 +456,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var searchResults = await _tmDbClient
                 .SearchPersonAsync(name, includeAdult: Plugin.Instance.Configuration.IncludeAdult, cancellationToken: cancellationToken)
@@ -461,6 +500,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var searchResults = await _tmDbClient
                 .SearchMovieAsync(name, TmdbUtils.NormalizeLanguage(language, countryCode), includeAdult: Plugin.Instance.Configuration.IncludeAdult, year: year, cancellationToken: cancellationToken)
@@ -491,6 +531,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
             }
 
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var searchResults = await _tmDbClient
                 .SearchCollectionAsync(name, TmdbUtils.NormalizeLanguage(language, countryCode), cancellationToken: cancellationToken)
@@ -515,6 +556,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         public async Task<(IReadOnlyList<SearchMovie> Results, int TotalPages)> GetMovieSimilarPageAsync(int tmdbId, int page, string? language, CancellationToken cancellationToken)
         {
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var searchResults = await _tmDbClient
                 .GetMovieSimilarAsync(tmdbId, language, page, cancellationToken)
@@ -539,6 +581,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         public async Task<(IReadOnlyList<SearchTv> Results, int TotalPages)> GetSeriesSimilarPageAsync(int tmdbId, int page, string? language, CancellationToken cancellationToken)
         {
             await EnsureClientConfigAsync().ConfigureAwait(false);
+            await ThrottleAsync(cancellationToken).ConfigureAwait(false);
 
             var searchResults = await _tmDbClient
                 .GetTvShowSimilarAsync(tmdbId, language, page, cancellationToken)

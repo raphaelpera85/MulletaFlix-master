@@ -48,6 +48,8 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         /// </summary>
         public bool HideMissingCastMembers { get; set; }
 
+        public int RateLimitDelayMs { get; set; } = 250;
+
         /// <summary>
         /// Gets or sets a value indicating whether to hide crew members without profile images.
         /// </summary>
