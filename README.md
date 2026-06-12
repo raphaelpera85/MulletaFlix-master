@@ -4,7 +4,7 @@
 ---
 
 <p align="center">
-<img alt="Logo Banner" src="https://raw.githubusercontent.com/MulletaFlix/MulletaFlix-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
+<img alt="Logo Banner" src="https://raw.githubusercontent.com/raphaelpera85/MulletaFlix-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
 <br/>
 <br/>
 <a href="https://github.com/raphaelpera85/MulletaFlix">
