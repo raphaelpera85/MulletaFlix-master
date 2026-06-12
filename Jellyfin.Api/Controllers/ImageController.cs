@@ -2060,6 +2060,8 @@ public class ImageController : BaseMulletaFlixApiController
             }
         }
 
+        imagePath = PathFallbackHelper.ResolveExistingFilePath(imagePath);
+
         return PhysicalFile(imagePath, imageContentType ?? MediaTypeNames.Text.Plain);
     }
 

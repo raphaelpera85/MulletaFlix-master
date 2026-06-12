@@ -24,6 +24,8 @@ public class SecurityHeadersMiddleware
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
         headers["Content-Security-Policy"] =
             "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
+            + "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; "
+            + "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; "
             + "img-src 'self' data: blob: https:; "
             + "media-src 'self' data: blob: https:; "
             + "font-src 'self' data:; "

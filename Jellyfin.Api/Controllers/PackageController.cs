@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Api;
+using MediaBrowser.Common.Plugins;
 using MediaBrowser.Common.Updates;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Model.Updates;
@@ -22,16 +23,22 @@ namespace MulletaFlix.Api.Controllers;
 public class PackageController : BaseMulletaFlixApiController
 {
     private readonly IInstallationManager _installationManager;
+    private readonly IPluginManager _pluginManager;
     private readonly IServerConfigurationManager _serverConfigurationManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PackageController"/> class.
     /// </summary>
     /// <param name="installationManager">Instance of the <see cref="IInstallationManager"/> interface.</param>
+    /// <param name="pluginManager">Instance of the <see cref="IPluginManager"/> interface.</param>
     /// <param name="serverConfigurationManager">Instance of the <see cref="IServerConfigurationManager"/> interface.</param>
-    public PackageController(IInstallationManager installationManager, IServerConfigurationManager serverConfigurationManager)
+    public PackageController(
+        IInstallationManager installationManager,
+        IPluginManager pluginManager,
+        IServerConfigurationManager serverConfigurationManager)
     {
         _installationManager = installationManager;
+        _pluginManager = pluginManager;
         _serverConfigurationManager = serverConfigurationManager;
     }
 
@@ -57,7 +64,34 @@ public class PackageController : BaseMulletaFlixApiController
 
         if (result is null)
         {
-            return NotFound();
+            var installedPlugin = _pluginManager.Plugins.FirstOrDefault(plugin =>
+                (assemblyGuid.HasValue && plugin.Id.Equals(assemblyGuid.Value))
+                || plugin.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+            if (installedPlugin is null)
+            {
+                return NotFound();
+            }
+
+            return new PackageInfo
+            {
+                Name = installedPlugin.Name,
+                Id = installedPlugin.Id,
+                Overview = installedPlugin.Manifest.Overview ?? installedPlugin.Manifest.Description,
+                Description = installedPlugin.Manifest.Description,
+                Category = installedPlugin.Manifest.Category,
+                Owner = installedPlugin.Manifest.Owner,
+                ImageUrl = installedPlugin.Manifest.ImagePath,
+                Versions =
+                [
+                    new VersionInfo
+                    {
+                        Version = installedPlugin.Version.ToString(),
+                        RepositoryName = "Installed",
+                        RepositoryUrl = string.Empty
+                    }
+                ]
+            };
         }
 
         return result;

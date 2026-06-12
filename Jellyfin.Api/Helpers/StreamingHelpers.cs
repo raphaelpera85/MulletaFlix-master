@@ -17,6 +17,7 @@ using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Controller.Streaming;
 using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.Dto;
+using MediaBrowser.Model.MediaInfo;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
@@ -153,7 +154,18 @@ public static class StreamingHelpers
 
         var encodingOptions = serverConfigurationManager.GetEncodingOptions();
 
+        if (mediaSource is not null && mediaSource.Protocol == MediaProtocol.File)
+        {
+            mediaSource.Path = PathFallbackHelper.ResolveExistingFilePath(mediaSource.Path);
+        }
+
         encodingHelper.AttachMediaSourceInfo(state, encodingOptions, mediaSource, url);
+
+        if (state.InputProtocol == MediaProtocol.File)
+        {
+            state.MediaPath = PathFallbackHelper.ResolveExistingFilePath(state.MediaPath);
+            state.MediaSource.Path = state.MediaPath;
+        }
 
         string? containerInternal = Path.GetExtension(state.RequestedUrl);
 

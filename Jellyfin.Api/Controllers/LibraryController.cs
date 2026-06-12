@@ -130,6 +130,8 @@ public class LibraryController : BaseMulletaFlixApiController
             }
         }
 
+        filePath = PathFallbackHelper.ResolveExistingFilePath(filePath);
+
         return PhysicalFile(filePath, MimeTypes.GetMimeType(filePath), true);
     }
 
@@ -733,6 +735,22 @@ public class LibraryController : BaseMulletaFlixApiController
             if (resolved is not null && resolved.Exists)
             {
                 filePath = resolved.FullName;
+            }
+        }
+
+        filePath = PathFallbackHelper.ResolveExistingFilePath(filePath);
+
+        if (filePath.EndsWith(".strm", StringComparison.OrdinalIgnoreCase))
+        {
+            var shortcutUrl = System.IO.File.ReadLines(filePath)
+                .Select(line => line.Trim())
+                .FirstOrDefault(line => line.Length > 0 && !line.StartsWith('#'));
+
+            if (Uri.TryCreate(shortcutUrl, UriKind.Absolute, out var uri)
+                && (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                    || uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+            {
+                return Redirect(uri.ToString());
             }
         }
 
