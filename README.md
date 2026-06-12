@@ -4,7 +4,7 @@
 ---
 
 <p align="center">
-<img alt="Logo Banner" src="https://raw.githubusercontent.com/raphaelpera85/MulletaFlix-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
+<img alt="Logo Banner" src="branding/NSIS/logo.png"/>
 <br/>
 <br/>
 <a href="https://github.com/raphaelpera85/MulletaFlix">
@@ -197,4 +197,3 @@ This project is supported by:
 <br/>
 <a href="https://www.jetbrains.com"><img src="https://gist.githubusercontent.com/anthonylavado/e8b2403deee9581e0b4cb8cd675af7db/raw/199ae22980ef5da64882ec2de3e8e5c03fe535b8/jetbrains.svg" height="50px" alt="JetBrains logo"></a>
 </p>
-
