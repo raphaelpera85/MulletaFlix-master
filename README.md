@@ -7,10 +7,10 @@
 <img alt="Logo Banner" src="https://raw.githubusercontent.com/MulletaFlix/MulletaFlix-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
 <br/>
 <br/>
-<a href="https://github.com/MulletaFlix/MulletaFlix">
+<a href="https://github.com/raphaelpera85/MulletaFlix">
 <img alt="GPL 2.0 License" src="https://img.shields.io/github/license/raphaelpera85/MulletaFlix.svg"/>
 </a>
-<a href="https://github.com/MulletaFlix/MulletaFlix/releases">
+<a href="https://github.com/raphaelpera85/MulletaFlix/releases">
 <img alt="Current Release" src="https://img.shields.io/github/release/raphaelpera85/MulletaFlix.svg"/>
 </a>
 <a href="https://translate.MulletaFlix.org/projects/raphaelpera85/MulletaFlix-core/?utm_source=widget">
