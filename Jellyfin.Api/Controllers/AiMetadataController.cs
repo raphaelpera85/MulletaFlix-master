@@ -2,23 +2,38 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Api.Attributes;
 using MulletaFlix.Api.Models.AiMetadata;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Controller.Dto;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Movies;
+using MediaBrowser.Controller.Entities.TV;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.LiveTv;
+using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MediaBrowser.Model.Providers;
+using MediaBrowser.Model.Dto;
+using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.LiveTv;
+using MulletaFlix.Data.Enums;
 
 namespace MulletaFlix.Api.Controllers;
 
@@ -33,8 +48,16 @@ public class AiMetadataController : BaseMulletaFlixApiController
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly object ActivityLock = new();
     private static readonly List<AiMetadataActivityItemDto> Activity = [];
+    private static readonly Regex NoisePattern = new(
+        @"(?i)(\s*\[(LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\]|\s*\((LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\)|\b1080p\b|\b720p\b|\b480p\b|\bWEB[- ]?DL\b|\bBluRay\b|\bBRRip\b|\bHDR\b|\bX264\b|\bX265\b|\bHEVC\b)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private readonly IServerConfigurationManager _configurationManager;
+    private readonly IProviderManager _providerManager;
+    private readonly ILibraryManager _libraryManager;
+    private readonly ILiveTvManager _liveTvManager;
+    private readonly IUserManager _userManager;
+    private readonly IFileSystem _fileSystem;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IDataProtector _dataProtector;
 
@@ -42,14 +65,29 @@ public class AiMetadataController : BaseMulletaFlixApiController
     /// Initializes a new instance of the <see cref="AiMetadataController"/> class.
     /// </summary>
     /// <param name="configurationManager">The server configuration manager.</param>
+    /// <param name="providerManager">The provider manager.</param>
+    /// <param name="libraryManager">The library manager.</param>
+    /// <param name="liveTvManager">The live TV manager.</param>
+    /// <param name="userManager">The user manager.</param>
+    /// <param name="fileSystem">The file system.</param>
     /// <param name="httpClientFactory">The HTTP client factory.</param>
     /// <param name="dataProtectionProvider">The data protection provider.</param>
     public AiMetadataController(
         IServerConfigurationManager configurationManager,
+        IProviderManager providerManager,
+        ILibraryManager libraryManager,
+        ILiveTvManager liveTvManager,
+        IUserManager userManager,
+        IFileSystem fileSystem,
         IHttpClientFactory httpClientFactory,
         IDataProtectionProvider dataProtectionProvider)
     {
         _configurationManager = configurationManager;
+        _providerManager = providerManager;
+        _libraryManager = libraryManager;
+        _liveTvManager = liveTvManager;
+        _userManager = userManager;
+        _fileSystem = fileSystem;
         _httpClientFactory = httpClientFactory;
         _dataProtector = dataProtectionProvider.CreateProtector("MulletaFlix.AiMetadata.ApiKeys.v1");
     }
@@ -207,88 +245,605 @@ public class AiMetadataController : BaseMulletaFlixApiController
             return;
         }
 
-        if (providers.Count == 0)
-        {
-            UpdateActivity(activityId, activity =>
-            {
-                activity.Status = "Failed";
-                activity.CurrentStep = "Nenhum provedor ativo";
-                activity.Progress = 100;
-                activity.Summary = "Adicione e ative pelo menos uma IA.";
-            }, "Nenhum provedor ativo foi encontrado.");
-            return;
-        }
-
-        if (mediaTypes.Count == 0)
-        {
-            UpdateActivity(activityId, activity =>
-            {
-                activity.Status = "Failed";
-                activity.CurrentStep = "Nenhum tipo de midia ativo";
-                activity.Progress = 100;
-                activity.Summary = "Selecione pelo menos um tipo de midia para processar.";
-            }, "Nenhum tipo de midia foi selecionado.");
-            return;
-        }
-
+        var items = await CollectCandidateItemsAsync(configuration, mediaTypes, cancellationToken).ConfigureAwait(false);
         UpdateActivity(activityId, activity =>
         {
             activity.Status = "Running";
-            activity.CurrentStep = "Validando provedores";
-            activity.Progress = 5;
-            activity.Summary = "IAs em execucao. Validando conectividade e preparando consenso.";
-        }, $"Modo de decisao: {configuration.DecisionMode}. Provedores ativos: {providers.Count}.");
+            activity.CurrentStep = "Fila carregada";
+            activity.Progress = 3;
+            activity.Summary = $"{items.Count} itens elegiveis localizados para processamento.";
+        }, $"{items.Count} itens foram localizados para analise.");
 
-        var providerResults = new List<AiMetadataProviderTestResult>();
-        for (var index = 0; index < providers.Count; index++)
-        {
-            var provider = providers[index];
-            UpdateActivity(activityId, activity =>
-            {
-                activity.CurrentStep = $"Testando {provider.DisplayName}";
-                activity.Progress = 10 + (index * 40 / Math.Max(providers.Count, 1));
-            }, $"Testando provedor {provider.DisplayName} ({provider.Provider}/{provider.Model}).");
-
-            var result = IsLocalProvider(provider.Provider)
-                ? await TestOllamaCompatibleProvider(provider, cancellationToken).ConfigureAwait(false)
-                : await TestOpenAiCompatibleProvider(provider, cancellationToken).ConfigureAwait(false);
-            providerResults.Add(result);
-
-            UpdateActivity(activityId, _ => { }, $"{provider.DisplayName}: {result.Message}");
-        }
-
-        var successfulProviders = providerResults.Count(result => result.Success);
-        if (successfulProviders == 0)
+        if (items.Count == 0)
         {
             UpdateActivity(activityId, activity =>
             {
-                activity.Status = "Failed";
-                activity.CurrentStep = "Nenhuma IA respondeu";
+                activity.Status = "Completed";
+                activity.CurrentStep = "Sem itens";
                 activity.Progress = 100;
-                activity.Summary = "Nenhum provedor ativo respondeu com sucesso. Verifique API keys, URL base e modelo.";
-            }, "A execucao foi interrompida porque nenhum provedor respondeu com sucesso.");
+                activity.Summary = "Nenhum item elegivel foi encontrado para processar.";
+            }, "Nenhum item precisou de analise.");
             return;
         }
 
-        for (var index = 0; index < mediaTypes.Count; index++)
+        var applied = 0;
+        var skipped = 0;
+        var failed = 0;
+
+        for (var index = 0; index < items.Count; index++)
         {
-            var mediaType = mediaTypes[index];
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var item = items[index];
             UpdateActivity(activityId, activity =>
             {
-                activity.CurrentStep = $"Preparando analise de {mediaType}";
-                activity.Progress = 55 + (index * 35 / Math.Max(mediaTypes.Count, 1));
-            }, $"Fila preparada para {mediaType}: limpar titulo, buscar correspondencias, comparar logos/EPG e gerar sugestoes.");
+                activity.CurrentStep = $"Analisando {item.TypeName}: {item.Name}";
+                activity.Progress = 5 + (int)Math.Round((index / (double)Math.Max(items.Count, 1)) * 90);
+            }, $"[{item.TypeName}] {item.Name}");
 
-            await Task.Delay(TimeSpan.FromMilliseconds(350), cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var result = await ProcessItemAsync(item, configuration, providers, cancellationToken).ConfigureAwait(false);
+                if (result.Applied)
+                {
+                    applied++;
+                }
+                else if (result.Skipped)
+                {
+                    skipped++;
+                }
+                else
+                {
+                    failed++;
+                }
+
+                UpdateActivity(activityId, _ => { }, result.LogMessage);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UriFormatException)
+            {
+                failed++;
+                UpdateActivity(activityId, _ => { }, $"[{item.TypeName}] falhou: {ex.Message}");
+            }
         }
 
         UpdateActivity(activityId, activity =>
         {
-            activity.Status = "Completed";
+            activity.Status = failed > 0 ? "Completed" : "Completed";
             activity.CurrentStep = "Concluido";
             activity.Progress = 100;
-            activity.Summary = $"{successfulProviders}/{providers.Count} provedores responderam. Proxima etapa: ligar esta fila aos itens reais da biblioteca e aplicar sugestoes com auditoria.";
-        }, "Execucao concluida. Nenhum metadado foi alterado automaticamente nesta etapa segura.");
+            activity.Summary = $"Processados {items.Count} itens. Aplicados: {applied}. Pulados: {skipped}. Falhas: {failed}.";
+        }, $"Execucao concluida. Aplicados: {applied}; pulados: {skipped}; falhas: {failed}.");
+    }
+
+    private async Task<IReadOnlyList<AiMetadataWorkItem>> CollectCandidateItemsAsync(
+        AiMetadataConfiguration configuration,
+        IReadOnlyList<string> mediaTypes,
+        CancellationToken cancellationToken)
+    {
+        var items = new List<AiMetadataWorkItem>();
+
+        if (configuration.MediaTypes.Movies && mediaTypes.Contains("Filmes", StringComparer.OrdinalIgnoreCase))
+        {
+            items.AddRange(CollectLibraryItems(BaseItemKind.Movie, "Filme"));
+        }
+
+        if (configuration.MediaTypes.Series && mediaTypes.Contains("Series", StringComparer.OrdinalIgnoreCase))
+        {
+            items.AddRange(CollectLibraryItems(BaseItemKind.Series, "Serie"));
+        }
+
+        if (configuration.MediaTypes.Books && mediaTypes.Contains("Livros", StringComparer.OrdinalIgnoreCase))
+        {
+            items.AddRange(CollectLibraryItems(BaseItemKind.Book, "Livro"));
+        }
+
+        if (configuration.MediaTypes.Channels && mediaTypes.Contains("Canais", StringComparer.OrdinalIgnoreCase))
+        {
+            items.AddRange(CollectLiveTvChannels());
+        }
+
+        return await Task.FromResult(items);
+    }
+
+    private IEnumerable<AiMetadataWorkItem> CollectLibraryItems(BaseItemKind itemKind, string typeName)
+    {
+        var items = _libraryManager.GetItemList(new InternalItemsQuery
+        {
+            IncludeItemTypes = [itemKind],
+            Recursive = true,
+            IsVirtualItem = false,
+            DtoOptions = new DtoOptions(false)
+            {
+                EnableImages = false
+            }
+        });
+
+        foreach (var item in items)
+        {
+            if (ShouldProcessItem(item))
+            {
+                yield return new AiMetadataWorkItem(typeName, item);
+            }
+        }
+    }
+
+    private IEnumerable<AiMetadataWorkItem> CollectLiveTvChannels()
+    {
+        var user = _userManager.GetFirstUser();
+        if (user is null)
+        {
+            yield break;
+        }
+
+        var result = _liveTvManager.GetInternalChannels(
+            new LiveTvChannelQuery
+            {
+                UserId = user.Id,
+                AddCurrentProgram = false,
+                EnableUserData = false
+            },
+            new DtoOptions(false)
+            {
+                EnableImages = false
+            },
+            CancellationToken.None);
+
+        foreach (var item in result.Items.OfType<BaseItem>())
+        {
+            if (ShouldProcessItem(item))
+            {
+                yield return new AiMetadataWorkItem("Canal", item);
+            }
+        }
+    }
+
+    private bool ShouldProcessItem(BaseItem item)
+    {
+        if (item is null)
+        {
+            return false;
+        }
+
+        if (item.IsLocked && GetStoredConfiguration().Automation.ProtectManualMetadata)
+        {
+            return false;
+        }
+
+        if (item is LiveTvChannel)
+        {
+            return true;
+        }
+
+        var title = item.Name ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return true;
+        }
+
+        if (NoisePattern.IsMatch(title))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(item.Overview))
+        {
+            return true;
+        }
+
+        if (item.ProviderIds.Count == 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task<AiMetadataItemResult> ProcessItemAsync(
+        AiMetadataWorkItem workItem,
+        AiMetadataConfiguration configuration,
+        IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        CancellationToken cancellationToken)
+    {
+        return workItem.Item switch
+        {
+            Movie movie => await ProcessMovieAsync(movie, configuration, providers, cancellationToken).ConfigureAwait(false),
+            Series series => await ProcessSeriesAsync(series, configuration, providers, cancellationToken).ConfigureAwait(false),
+            Book book => await ProcessBookAsync(book, configuration, providers, cancellationToken).ConfigureAwait(false),
+            LiveTvChannel channel => await ProcessChannelAsync(channel, configuration, providers, cancellationToken).ConfigureAwait(false),
+            _ => AiMetadataItemResult.CreateSkipped(workItem.TypeName, workItem.Item.Name, "Tipo de item nao suportado.")
+        };
+    }
+
+    private async Task<AiMetadataItemResult> ProcessMovieAsync(
+        Movie item,
+        AiMetadataConfiguration configuration,
+        IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        CancellationToken cancellationToken)
+    {
+        var normalized = await BuildConsensusNormalizationAsync(item, "Filme", providers, cancellationToken).ConfigureAwait(false);
+        var lookupInfo = item.GetLookupInfo();
+        lookupInfo.Name = normalized.NormalizedTitle;
+        lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
+        lookupInfo.Year = normalized.Year ?? lookupInfo.Year;
+        lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
+        lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
+
+        var results = await _providerManager.GetRemoteSearchResults<Movie, MovieInfo>(
+            new RemoteSearchQuery<MovieInfo>
+            {
+                ItemId = item.Id,
+                SearchInfo = lookupInfo,
+                IncludeDisabledProviders = false
+            },
+            cancellationToken).ConfigureAwait(false);
+
+        var best = results
+            .OrderByDescending(r => r.Score)
+            .ThenByDescending(r => r.PremiereDate)
+            .FirstOrDefault();
+
+        if (best is null)
+        {
+            item.Name = normalized.NormalizedTitle;
+            item.SortName = null;
+            await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+            return AiMetadataItemResult.CreateApplied(
+                "Filme",
+                item.Name,
+                $"Titulo normalizado para '{normalized.NormalizedTitle}' e salvo sem correspondencia externa.",
+                $"[{item.Name}] titulo normalizado para '{normalized.NormalizedTitle}' sem correspondencia remota.");
+        }
+
+        await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
+        return AiMetadataItemResult.CreateApplied(
+            "Filme",
+            item.Name,
+            $"Atualizado com '{best.Name}' (score {best.Score:0.0}).",
+            $"[{item.Name}] atualizado para '{best.Name}' usando consenso e busca remota.");
+    }
+
+    private async Task<AiMetadataItemResult> ProcessSeriesAsync(
+        Series item,
+        AiMetadataConfiguration configuration,
+        IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        CancellationToken cancellationToken)
+    {
+        var normalized = await BuildConsensusNormalizationAsync(item, "Serie", providers, cancellationToken).ConfigureAwait(false);
+        var lookupInfo = item.GetLookupInfo();
+        lookupInfo.Name = normalized.NormalizedTitle;
+        lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
+        lookupInfo.Year = normalized.Year ?? lookupInfo.Year;
+        lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
+        lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
+
+        var results = await _providerManager.GetRemoteSearchResults<Series, SeriesInfo>(
+            new RemoteSearchQuery<SeriesInfo>
+            {
+                ItemId = item.Id,
+                SearchInfo = lookupInfo,
+                IncludeDisabledProviders = false
+            },
+            cancellationToken).ConfigureAwait(false);
+
+        var best = results
+            .OrderByDescending(r => r.Score)
+            .ThenByDescending(r => r.PremiereDate)
+            .FirstOrDefault();
+
+        if (best is null)
+        {
+            item.Name = normalized.NormalizedTitle;
+            item.SortName = null;
+            await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+            return AiMetadataItemResult.CreateApplied(
+                "Serie",
+                item.Name,
+                $"Titulo normalizado para '{normalized.NormalizedTitle}' e salvo sem correspondencia externa.",
+                $"[{item.Name}] titulo normalizado para '{normalized.NormalizedTitle}' sem correspondencia remota.");
+        }
+
+        await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
+        return AiMetadataItemResult.CreateApplied(
+            "Serie",
+            item.Name,
+            $"Atualizado com '{best.Name}' (score {best.Score:0.0}).",
+            $"[{item.Name}] atualizado para '{best.Name}' usando consenso e busca remota.");
+    }
+
+    private async Task<AiMetadataItemResult> ProcessBookAsync(
+        Book item,
+        AiMetadataConfiguration configuration,
+        IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        CancellationToken cancellationToken)
+    {
+        var normalized = await BuildConsensusNormalizationAsync(item, "Livro", providers, cancellationToken).ConfigureAwait(false);
+        var lookupInfo = item.GetLookupInfo();
+        lookupInfo.Name = normalized.NormalizedTitle;
+        lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
+        lookupInfo.Year = normalized.Year ?? lookupInfo.Year;
+        lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
+        lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
+
+        var results = await _providerManager.GetRemoteSearchResults<Book, BookInfo>(
+            new RemoteSearchQuery<BookInfo>
+            {
+                ItemId = item.Id,
+                SearchInfo = lookupInfo,
+                IncludeDisabledProviders = false
+            },
+            cancellationToken).ConfigureAwait(false);
+
+        var best = results
+            .OrderByDescending(r => r.Score)
+            .ThenByDescending(r => r.PremiereDate)
+            .FirstOrDefault();
+
+        if (best is null)
+        {
+            item.Name = normalized.NormalizedTitle;
+            item.SortName = null;
+            await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+            return AiMetadataItemResult.CreateApplied(
+                "Livro",
+                item.Name,
+                $"Titulo normalizado para '{normalized.NormalizedTitle}' e salvo sem correspondencia externa.",
+                $"[{item.Name}] titulo normalizado para '{normalized.NormalizedTitle}' sem correspondencia remota.");
+        }
+
+        await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
+        return AiMetadataItemResult.CreateApplied(
+            "Livro",
+            item.Name,
+            $"Atualizado com '{best.Name}' (score {best.Score:0.0}).",
+            $"[{item.Name}] atualizado para '{best.Name}' usando consenso e busca remota.");
+    }
+
+    private async Task<AiMetadataItemResult> ProcessChannelAsync(
+        LiveTvChannel item,
+        AiMetadataConfiguration configuration,
+        IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        CancellationToken cancellationToken)
+    {
+        var normalized = await BuildConsensusNormalizationAsync(item, "Canal", providers, cancellationToken).ConfigureAwait(false);
+        var newName = normalized.NormalizedTitle;
+
+        if (!string.IsNullOrWhiteSpace(newName) && !string.Equals(newName, item.Name, StringComparison.Ordinal))
+        {
+            item.Name = newName;
+            item.SortName = null;
+            await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+            return AiMetadataItemResult.CreateApplied(
+                "Canal",
+                item.Name,
+                $"Nome do canal normalizado para '{newName}'.",
+                $"[{item.Name}] nome normalizado para '{newName}'.");
+        }
+
+        return AiMetadataItemResult.CreateSkipped("Canal", item.Name, "Canal ja estava normalizado ou sem alteracao segura.");
+    }
+
+    private async Task ApplyRemoteSearchResultAsync(
+        BaseItem item,
+        RemoteSearchResult result,
+        AiMetadataConfiguration configuration,
+        CancellationToken cancellationToken)
+    {
+        item.ProviderIds = result.ProviderIds;
+
+        var options = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
+        {
+            MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
+            ImageRefreshMode = configuration.Automation.AllowAutomaticApply ? MetadataRefreshMode.FullRefresh : MetadataRefreshMode.Default,
+            ReplaceAllMetadata = true,
+            ReplaceAllImages = true,
+            RemoveOldMetadata = true,
+            ForceSave = true,
+            IsAutomated = true,
+            SearchResult = result
+        };
+
+        await _providerManager.RefreshFullItem(item, options, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<AiMetadataNormalization> BuildConsensusNormalizationAsync(
+        BaseItem item,
+        string itemTypeName,
+        IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        CancellationToken cancellationToken)
+    {
+        var rawTitle = item.Name ?? string.Empty;
+        var titleFromCode = NormalizeTitle(rawTitle);
+        var year = item.ProductionYear;
+        var suggestions = new List<AiMetadataNormalization>();
+
+        foreach (var provider in providers.Where(provider => provider.Enabled))
+        {
+            try
+            {
+                var suggestion = await RequestNormalizationAsync(provider, item, itemTypeName, titleFromCode, year, cancellationToken).ConfigureAwait(false);
+                if (suggestion is not null && !string.IsNullOrWhiteSpace(suggestion.NormalizedTitle))
+                {
+                    suggestions.Add(suggestion);
+                }
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or UriFormatException)
+            {
+                _ = ex;
+            }
+        }
+
+        if (suggestions.Count == 0)
+        {
+            return new AiMetadataNormalization
+            {
+                NormalizedTitle = titleFromCode,
+                OriginalTitle = item.OriginalTitle,
+                Year = year,
+                Confidence = 0
+            };
+        }
+
+        var topTitle = suggestions
+            .GroupBy(suggestion => suggestion.NormalizedTitle, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(group => group.Count())
+            .ThenByDescending(group => group.Max(entry => entry.Confidence))
+            .First()
+            .Key;
+
+        var chosen = suggestions
+            .Where(suggestion => string.Equals(suggestion.NormalizedTitle, topTitle, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(suggestion => suggestion.Confidence)
+            .First();
+
+        return chosen with
+        {
+            NormalizedTitle = topTitle,
+            Year = suggestions.Where(suggestion => suggestion.Year.HasValue).Select(suggestion => suggestion.Year).GroupBy(value => value).OrderByDescending(group => group.Count()).Select(group => group.Key).FirstOrDefault() ?? chosen.Year
+        };
+    }
+
+    private async Task<AiMetadataNormalization?> RequestNormalizationAsync(
+        AiMetadataProviderConfiguration provider,
+        BaseItem item,
+        string itemTypeName,
+        string normalizedTitle,
+        int? year,
+        CancellationToken cancellationToken)
+    {
+        var prompt = $$"""
+            You are cleaning metadata for a media library.
+            Return only valid JSON with this shape:
+            {"normalizedTitle":"string","originalTitle":"string or empty","year":2022,"confidence":0-100,"reason":"short string","skip":false}
+
+            Rules:
+            - Remove noise such as LEG, DUB, resolution, codec, release-group tags and extra brackets.
+            - Preserve the actual work title only.
+            - If unsure, keep the safest title and set confidence lower.
+            - If the item is not a real media work title, set skip=true.
+
+            Item type: {{itemTypeName}}
+            Raw title: {{item.Name}}
+            Cleaned title guess: {{normalizedTitle}}
+            Current year: {{(year?.ToString(CultureInfo.InvariantCulture) ?? string.Empty)}}
+            Path: {{item.Path}}
+            Original title: {{item.OriginalTitle}}
+            """;
+
+        var content = await CallProviderChatAsync(provider, prompt, cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return null;
+        }
+
+        var payload = ExtractJsonObject(content);
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return null;
+        }
+
+        var dto = JsonSerializer.Deserialize<AiMetadataNormalizationDto>(payload, JsonOptions);
+        if (dto is null || dto.Skip)
+        {
+            return null;
+        }
+
+        return new AiMetadataNormalization
+        {
+            NormalizedTitle = NormalizeTitle(dto.NormalizedTitle ?? normalizedTitle),
+            OriginalTitle = string.IsNullOrWhiteSpace(dto.OriginalTitle) ? item.OriginalTitle : dto.OriginalTitle,
+            Year = dto.Year ?? year,
+            Confidence = Clamp(dto.Confidence, 0, 100),
+            Reason = dto.Reason ?? string.Empty
+        };
+    }
+
+    private async Task<string?> CallProviderChatAsync(
+        AiMetadataProviderConfiguration provider,
+        string prompt,
+        CancellationToken cancellationToken)
+    {
+        var apiKey = UnprotectApiKey(provider.ProtectedApiKey);
+        var client = _httpClientFactory.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(40);
+        client.BaseAddress = new Uri(NormalizeBaseUrl(provider.BaseUrl), UriKind.Absolute);
+
+        if (!string.IsNullOrWhiteSpace(apiKey) && !IsLocalProvider(provider.Provider))
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        }
+
+        var payload = new
+        {
+            model = provider.Model,
+            messages = new object[]
+            {
+                new { role = "system", content = "You output strict JSON only." },
+                new { role = "user", content = prompt }
+            },
+            temperature = 0,
+            max_tokens = 256,
+            stream = false
+        };
+
+        var endpoint = IsLocalProvider(provider.Provider) ? "api/chat" : "chat/completions";
+        using var content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, MediaTypeNames.Application.Json);
+        using var response = await client.PostAsync(endpoint, content, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            throw new HttpRequestException($"Falha ao consultar {provider.DisplayName}: {(int)response.StatusCode} {response.ReasonPhrase}. {TrimMessage(body)}");
+        }
+
+        var bodyText = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(bodyText);
+        if (document.RootElement.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+        {
+            var message = choices[0].GetProperty("message");
+            if (message.TryGetProperty("content", out var contentElement))
+            {
+                return contentElement.GetString();
+            }
+        }
+
+        if (document.RootElement.TryGetProperty("message", out var ollamaMessage)
+            && ollamaMessage.TryGetProperty("content", out var ollamaContent))
+        {
+            return ollamaContent.GetString();
+        }
+
+        return bodyText;
+    }
+
+    private static string ExtractJsonObject(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var span = value.AsSpan();
+        var start = span.IndexOf('{');
+        var end = span.LastIndexOf('}');
+        if (start < 0 || end <= start)
+        {
+            return string.Empty;
+        }
+
+        return value.Substring(start, end - start + 1);
+    }
+
+    private static string NormalizeTitle(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var cleaned = NoisePattern.Replace(value, string.Empty);
+        cleaned = Regex.Replace(cleaned, @"[\[\]\(\)\{\}]", string.Empty, RegexOptions.CultureInvariant);
+        cleaned = Regex.Replace(cleaned, @"\s{2,}", " ", RegexOptions.CultureInvariant).Trim();
+        cleaned = cleaned.Trim('-', ' ', '.');
+        return cleaned;
     }
 
     private static void AddActivity(AiMetadataActivityItemDto activity)
@@ -635,5 +1190,62 @@ public class AiMetadataController : BaseMulletaFlixApiController
         }
 
         return value.Length <= 300 ? value : value[..300];
+    }
+}
+
+internal sealed record AiMetadataWorkItem(string TypeName, BaseItem Item)
+{
+    public string Name => Item.Name ?? string.Empty;
+}
+
+internal sealed record AiMetadataNormalization
+{
+    public string NormalizedTitle { get; init; } = string.Empty;
+
+    public string? OriginalTitle { get; init; }
+
+    public int? Year { get; init; }
+
+    public int Confidence { get; init; }
+
+    public string Reason { get; init; } = string.Empty;
+}
+
+internal sealed record AiMetadataItemResult
+{
+    public bool Applied { get; init; }
+
+    public bool Skipped { get; init; }
+
+    public string TypeName { get; init; } = string.Empty;
+
+    public string ItemName { get; init; } = string.Empty;
+
+    public string Message { get; init; } = string.Empty;
+
+    public string LogMessage { get; init; } = string.Empty;
+
+    public static AiMetadataItemResult CreateApplied(string typeName, string itemName, string message, string logMessage)
+    {
+        return new AiMetadataItemResult
+        {
+            Applied = true,
+            TypeName = typeName,
+            ItemName = itemName,
+            Message = message,
+            LogMessage = logMessage
+        };
+    }
+
+    public static AiMetadataItemResult CreateSkipped(string typeName, string itemName, string message)
+    {
+        return new AiMetadataItemResult
+        {
+            Skipped = true,
+            TypeName = typeName,
+            ItemName = itemName,
+            Message = message,
+            LogMessage = $"[{typeName}] {itemName}: {message}"
+        };
     }
 }

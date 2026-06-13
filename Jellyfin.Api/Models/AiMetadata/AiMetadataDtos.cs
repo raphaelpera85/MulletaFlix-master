@@ -218,6 +218,42 @@ public class AiMetadataRunRequest
 }
 
 /// <summary>
+/// Normalization result returned by an AI provider.
+/// </summary>
+public class AiMetadataNormalizationDto
+{
+    /// <summary>
+    /// Gets or sets the normalized title.
+    /// </summary>
+    public string? NormalizedTitle { get; set; }
+
+    /// <summary>
+    /// Gets or sets the original title.
+    /// </summary>
+    public string? OriginalTitle { get; set; }
+
+    /// <summary>
+    /// Gets or sets the year.
+    /// </summary>
+    public int? Year { get; set; }
+
+    /// <summary>
+    /// Gets or sets the confidence score.
+    /// </summary>
+    public int Confidence { get; set; }
+
+    /// <summary>
+    /// Gets or sets the explanation.
+    /// </summary>
+    public string? Reason { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the item should be skipped.
+    /// </summary>
+    public bool Skip { get; set; }
+}
+
+/// <summary>
 /// AI metadata activity status.
 /// </summary>
 public class AiMetadataActivityItemDto
