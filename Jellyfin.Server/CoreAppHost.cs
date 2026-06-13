@@ -28,6 +28,7 @@ using MediaBrowser.Controller.Security;
 using MediaBrowser.Controller.Trickplay;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Providers.Lyric;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -80,6 +81,7 @@ namespace MulletaFlix.Server
             serviceCollection.AddSingleton<IEventManager, EventManager>();
 
             serviceCollection.AddSingleton<IActivityManager, ActivityManager>();
+            serviceCollection.AddDataProtection();
             serviceCollection.AddSingleton<IUserManager, UserManager>();
             serviceCollection.AddSingleton<IUserLicenseManager, UserLicenseManager>();
             serviceCollection.AddSingleton<IAuthenticationProvider, DefaultAuthenticationProvider>();
