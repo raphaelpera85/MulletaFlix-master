@@ -324,28 +324,31 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
         if (configuration.MediaTypes.Movies && mediaTypes.Contains("Filmes", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectLibraryItems(BaseItemKind.Movie, "Filme"));
+            items.AddRange(CollectUnidentifiedItems(BaseItemKind.Movie, "Filme"));
         }
 
         if (configuration.MediaTypes.Series && mediaTypes.Contains("Series", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectLibraryItems(BaseItemKind.Series, "Serie"));
+            items.AddRange(CollectUnidentifiedItems(BaseItemKind.Series, "Serie"));
         }
 
         if (configuration.MediaTypes.Books && mediaTypes.Contains("Livros", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectLibraryItems(BaseItemKind.Book, "Livro"));
+            items.AddRange(CollectUnidentifiedItems(BaseItemKind.Book, "Livro"));
         }
 
         if (configuration.MediaTypes.Channels && mediaTypes.Contains("Canais", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectLiveTvChannels());
+            items.AddRange(CollectUnidentifiedItems(BaseItemKind.LiveTvChannel, "Canal"));
         }
 
-        return await Task.FromResult(items);
+        return await Task.FromResult(items
+            .GroupBy(item => item.Item.Id)
+            .Select(group => group.First())
+            .ToList());
     }
 
-    private IEnumerable<AiMetadataWorkItem> CollectLibraryItems(BaseItemKind itemKind, string typeName)
+    private IEnumerable<AiMetadataWorkItem> CollectUnidentifiedItems(BaseItemKind itemKind, string typeName)
     {
         var items = _libraryManager.GetItemList(new InternalItemsQuery
         {
@@ -360,39 +363,9 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
         foreach (var item in items)
         {
-            if (ShouldProcessItem(item))
+            if (item.ProviderIds is null || item.ProviderIds.Count == 0 || ShouldProcessItem(item))
             {
                 yield return new AiMetadataWorkItem(typeName, item);
-            }
-        }
-    }
-
-    private IEnumerable<AiMetadataWorkItem> CollectLiveTvChannels()
-    {
-        var user = _userManager.GetFirstUser();
-        if (user is null)
-        {
-            yield break;
-        }
-
-        var result = _liveTvManager.GetInternalChannels(
-            new LiveTvChannelQuery
-            {
-                UserId = user.Id,
-                AddCurrentProgram = false,
-                EnableUserData = false
-            },
-            new DtoOptions(false)
-            {
-                EnableImages = false
-            },
-            CancellationToken.None);
-
-        foreach (var item in result.Items.OfType<BaseItem>())
-        {
-            if (ShouldProcessItem(item))
-            {
-                yield return new AiMetadataWorkItem("Canal", item);
             }
         }
     }
