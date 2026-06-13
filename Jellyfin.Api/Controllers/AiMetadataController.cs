@@ -39,6 +39,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.Querying;
+using MulletaFlix.Extensions;
 using MulletaFlix.Data.Enums;
 
 namespace MulletaFlix.Api.Controllers;
@@ -664,6 +665,14 @@ public class AiMetadataController : BaseMulletaFlixApiController
             .ThenByDescending(r => r.PremiereDate)
             .FirstOrDefault();
 
+        if (best is not null && !HasAcceptableTitleMatch(item.Name, best.Name))
+        {
+            return AiMetadataItemResult.CreateSkipped(
+                "Filme",
+                item.Name,
+                $"Correspondencia remota rejeitada para '{best.Name}' por baixa similaridade com o titulo original.");
+        }
+
         if (best is null)
         {
             item.Name = normalized.NormalizedTitle;
@@ -744,6 +753,11 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 .ThenByDescending(r => r.PremiereDate)
                 .FirstOrDefault();
 
+            if (best is not null && !HasAcceptableTitleMatch(item.Name, best.Name))
+            {
+                continue;
+            }
+
             if (best is not null)
             {
                 return best;
@@ -810,6 +824,14 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 item.Name,
                 $"Titulo normalizado para '{normalized.NormalizedTitle}' e salvo sem correspondencia externa.",
                 $"[{item.Name}] titulo normalizado para '{normalized.NormalizedTitle}' sem correspondencia remota.");
+        }
+
+        if (!HasAcceptableTitleMatch(item.Name, best.Name))
+        {
+            return AiMetadataItemResult.CreateSkipped(
+                "Livro",
+                item.Name,
+                $"Correspondencia remota rejeitada para '{best.Name}' por baixa similaridade com o titulo original.");
         }
 
         await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
@@ -1332,6 +1354,73 @@ public class AiMetadataController : BaseMulletaFlixApiController
         }
 
         return value.Substring(start, end - start + 1);
+    }
+
+    private static bool HasAcceptableTitleMatch(string? sourceTitle, string? candidateTitle)
+    {
+        var source = NormalizeComparableTitle(sourceTitle);
+        var candidate = NormalizeComparableTitle(candidateTitle);
+
+        if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(candidate))
+        {
+            return true;
+        }
+
+        if (string.Equals(source, candidate, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var sourceTokens = source.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var candidateTokens = candidate.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (sourceTokens.Length == 0 || candidateTokens.Length == 0)
+        {
+            return false;
+        }
+
+        var sourceSet = sourceTokens.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var candidateSet = candidateTokens.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var overlap = sourceSet.Intersect(candidateSet).Count();
+        var overlapRatio = overlap / (double)Math.Max(sourceSet.Count, candidateSet.Count);
+
+        if (overlapRatio >= 0.5)
+        {
+            return true;
+        }
+
+        return GetLongestCommonTokenPrefix(sourceTokens, candidateTokens) >= 2;
+    }
+
+    private static string NormalizeComparableTitle(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var cleaned = NormalizeTitle(value).RemoveDiacritics().ToLowerInvariant();
+        cleaned = Regex.Replace(cleaned, @"(?i)\b(leg|dub|dublado|legendado|pt|br|bra(?:zil)?|the|a|o|os|as|um|uma|de|da|do|das|dos|para|por|e|et|le|la|les|el|los|las)\b", " ");
+        cleaned = Regex.Replace(cleaned, @"[^a-z0-9]+", " ", RegexOptions.CultureInvariant);
+        cleaned = Regex.Replace(cleaned, @"\s{2,}", " ", RegexOptions.CultureInvariant).Trim();
+        return cleaned;
+    }
+
+    private static int GetLongestCommonTokenPrefix(IReadOnlyList<string> sourceTokens, IReadOnlyList<string> candidateTokens)
+    {
+        var max = Math.Min(sourceTokens.Count, candidateTokens.Count);
+        var count = 0;
+
+        for (var i = 0; i < max; i++)
+        {
+            if (!string.Equals(sourceTokens[i], candidateTokens[i], StringComparison.OrdinalIgnoreCase))
+            {
+                break;
+            }
+
+            count++;
+        }
+
+        return count;
     }
 
     private static string NormalizeTitle(string value)
