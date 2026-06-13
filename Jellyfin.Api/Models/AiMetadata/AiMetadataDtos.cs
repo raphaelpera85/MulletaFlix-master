@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -203,4 +204,76 @@ public class AiMetadataProviderTestResult
     /// Gets or sets the result message.
     /// </summary>
     public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// AI metadata run request.
+/// </summary>
+public class AiMetadataRunRequest
+{
+    /// <summary>
+    /// Gets or sets the run scope.
+    /// </summary>
+    public string Scope { get; set; } = "configured";
+}
+
+/// <summary>
+/// AI metadata activity status.
+/// </summary>
+public class AiMetadataActivityItemDto
+{
+    /// <summary>
+    /// Gets or sets the activity identifier.
+    /// </summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the activity creation date.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the activity update date.
+    /// </summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current status.
+    /// </summary>
+    public string Status { get; set; } = "Queued";
+
+    /// <summary>
+    /// Gets or sets a short title.
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the current step.
+    /// </summary>
+    public string CurrentStep { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the selected providers.
+    /// </summary>
+    public IReadOnlyList<string> Providers { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the selected media types.
+    /// </summary>
+    public IReadOnlyList<string> MediaTypes { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the progress percentage.
+    /// </summary>
+    public int Progress { get; set; }
+
+    /// <summary>
+    /// Gets or sets the result summary.
+    /// </summary>
+    public string Summary { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the activity log lines.
+    /// </summary>
+    public IReadOnlyList<string> Logs { get; set; } = [];
 }
