@@ -382,33 +382,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
             return false;
         }
 
-        if (item is LiveTvChannel)
-        {
-            return true;
-        }
-
-        var title = item.Name ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return true;
-        }
-
-        if (NoisePattern.IsMatch(title))
-        {
-            return true;
-        }
-
-        if (string.IsNullOrWhiteSpace(item.Overview))
-        {
-            return true;
-        }
-
-        if (item.ProviderIds.Count == 0)
-        {
-            return true;
-        }
-
-        return false;
+        return item.ProviderIds is null || item.ProviderIds.Count == 0;
     }
 
     private async Task<AiMetadataItemResult> ProcessItemAsync(
