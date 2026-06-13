@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -13,10 +14,13 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
 using MulletaFlix.Api.Attributes;
 using MulletaFlix.Api.Models.AiMetadata;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
@@ -56,6 +60,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     private readonly IServerConfigurationManager _configurationManager;
     private readonly IProviderManager _providerManager;
     private readonly ILibraryManager _libraryManager;
+    private readonly IChapterManager _chapterManager;
     private readonly ILiveTvManager _liveTvManager;
     private readonly IUserManager _userManager;
     private readonly IFileSystem _fileSystem;
@@ -68,6 +73,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     /// <param name="configurationManager">The server configuration manager.</param>
     /// <param name="providerManager">The provider manager.</param>
     /// <param name="libraryManager">The library manager.</param>
+    /// <param name="chapterManager">The chapter manager.</param>
     /// <param name="liveTvManager">The live TV manager.</param>
     /// <param name="userManager">The user manager.</param>
     /// <param name="fileSystem">The file system.</param>
@@ -77,6 +83,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         IServerConfigurationManager configurationManager,
         IProviderManager providerManager,
         ILibraryManager libraryManager,
+        IChapterManager chapterManager,
         ILiveTvManager liveTvManager,
         IUserManager userManager,
         IFileSystem fileSystem,
@@ -86,6 +93,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         _configurationManager = configurationManager;
         _providerManager = providerManager;
         _libraryManager = libraryManager;
+        _chapterManager = chapterManager;
         _liveTvManager = liveTvManager;
         _userManager = userManager;
         _fileSystem = fileSystem;
@@ -574,26 +582,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         CancellationToken cancellationToken)
     {
         var normalized = await BuildConsensusNormalizationAsync(item, "Serie", providers, cancellationToken).ConfigureAwait(false);
-        var lookupInfo = item.GetLookupInfo();
-        lookupInfo.Name = normalized.NormalizedTitle;
-        lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
-        lookupInfo.Year = normalized.Year ?? lookupInfo.Year;
-        lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
-        lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
-
-        var results = await _providerManager.GetRemoteSearchResults<Series, SeriesInfo>(
-            new RemoteSearchQuery<SeriesInfo>
-            {
-                ItemId = item.Id,
-                SearchInfo = lookupInfo,
-                IncludeDisabledProviders = false
-            },
-            cancellationToken).ConfigureAwait(false);
-
-        var best = results
-            .OrderByDescending(r => r.Score)
-            .ThenByDescending(r => r.PremiereDate)
-            .FirstOrDefault();
+        var best = await SearchSeriesAsync(item, normalized, cancellationToken).ConfigureAwait(false);
 
         if (best is null)
         {
@@ -615,6 +604,82 @@ public class AiMetadataController : BaseMulletaFlixApiController
             $"[{item.Name}] atualizado para '{best.Name}' usando consenso e busca remota.");
     }
 
+    private async Task<RemoteSearchResult?> SearchSeriesAsync(
+        Series item,
+        AiMetadataNormalization normalized,
+        CancellationToken cancellationToken)
+    {
+        var attempts = BuildSeriesSearchAttempts(item, normalized);
+
+        foreach (var attempt in attempts)
+        {
+            var lookupInfo = item.GetLookupInfo();
+            lookupInfo.Name = attempt.Title;
+            lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
+            lookupInfo.Year = attempt.Year;
+            lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
+            lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
+
+            var results = await _providerManager.GetRemoteSearchResults<Series, SeriesInfo>(
+                new RemoteSearchQuery<SeriesInfo>
+                {
+                    ItemId = item.Id,
+                    SearchInfo = lookupInfo,
+                    IncludeDisabledProviders = false
+                },
+                cancellationToken).ConfigureAwait(false);
+
+            var best = results
+                .OrderByDescending(r => r.Score)
+                .ThenByDescending(r => r.PremiereDate)
+                .FirstOrDefault();
+
+            if (best is not null)
+            {
+                return best;
+            }
+        }
+
+        return null;
+    }
+
+    private IEnumerable<(string Title, int? Year)> BuildSeriesSearchAttempts(Series item, AiMetadataNormalization normalized)
+    {
+        var title = string.IsNullOrWhiteSpace(normalized.NormalizedTitle)
+            ? item.Name
+            : normalized.NormalizedTitle;
+        var year = normalized.Year ?? item.ProductionYear;
+
+        yield return (title, year);
+        yield return (RemoveSeriesNoiseTokens(title), year);
+        yield return (title, null);
+        yield return (RemoveSeriesNoiseTokens(title), null);
+
+        if (!string.IsNullOrWhiteSpace(item.Path))
+        {
+            TryParseCleanTitle(item.Path, out var parsedTitle, out var parsedYear);
+            if (!string.IsNullOrWhiteSpace(parsedTitle))
+            {
+                yield return (parsedTitle, parsedYear ?? year);
+                yield return (RemoveSeriesNoiseTokens(parsedTitle), parsedYear ?? year);
+                yield return (parsedTitle, null);
+                yield return (RemoveSeriesNoiseTokens(parsedTitle), null);
+            }
+        }
+    }
+
+    private static string RemoveSeriesNoiseTokens(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var cleaned = Regex.Replace(value, @"(?i)\b(dorama|dorama|minis(?:érie|erie|eries)|miniserie|miniseries|miniss(?:érie|erie|eries)|youtube|web\s*series|webseries|webserie|episode|episodio|episódio|season|temporada|official|serie|série)\b", " ", RegexOptions.CultureInvariant);
+        cleaned = Regex.Replace(cleaned, @"\s{2,}", " ", RegexOptions.CultureInvariant).Trim();
+        return NormalizeDisplayTitle(cleaned);
+    }
+
     private async Task<AiMetadataItemResult> ProcessBookAsync(
         Book item,
         AiMetadataConfiguration configuration,
@@ -622,32 +687,14 @@ public class AiMetadataController : BaseMulletaFlixApiController
         CancellationToken cancellationToken)
     {
         var normalized = await BuildConsensusNormalizationAsync(item, "Livro", providers, cancellationToken).ConfigureAwait(false);
-        var lookupInfo = item.GetLookupInfo();
-        lookupInfo.Name = normalized.NormalizedTitle;
-        lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
-        lookupInfo.Year = normalized.Year ?? lookupInfo.Year;
-        lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
-        lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
-
-        var results = await _providerManager.GetRemoteSearchResults<Book, BookInfo>(
-            new RemoteSearchQuery<BookInfo>
-            {
-                ItemId = item.Id,
-                SearchInfo = lookupInfo,
-                IncludeDisabledProviders = false
-            },
-            cancellationToken).ConfigureAwait(false);
-
-        var best = results
-            .OrderByDescending(r => r.Score)
-            .ThenByDescending(r => r.PremiereDate)
-            .FirstOrDefault();
+        var best = await SearchBookAsync(item, normalized, cancellationToken).ConfigureAwait(false);
 
         if (best is null)
         {
             item.Name = normalized.NormalizedTitle;
             item.SortName = null;
             await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+            await RefreshBookMetadataAsync(item, cancellationToken).ConfigureAwait(false);
             return AiMetadataItemResult.CreateApplied(
                 "Livro",
                 item.Name,
@@ -656,11 +703,255 @@ public class AiMetadataController : BaseMulletaFlixApiController
         }
 
         await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
+        await EnsureBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
         return AiMetadataItemResult.CreateApplied(
             "Livro",
             item.Name,
             $"Atualizado com '{best.Name}' (score {best.Score:0.0}).",
             $"[{item.Name}] atualizado para '{best.Name}' usando consenso e busca remota.");
+    }
+
+    private async Task<RemoteSearchResult?> SearchBookAsync(
+        Book item,
+        AiMetadataNormalization normalized,
+        CancellationToken cancellationToken)
+    {
+        var lookupInfo = item.GetLookupInfo();
+
+        foreach (var attempt in BuildBookSearchAttempts(item, normalized))
+        {
+            lookupInfo.Name = attempt.Title;
+            lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
+            lookupInfo.Year = attempt.Year ?? normalized.Year ?? lookupInfo.Year;
+            lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
+            lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
+
+            var results = await _providerManager.GetRemoteSearchResults<Book, BookInfo>(
+                new RemoteSearchQuery<BookInfo>
+                {
+                    ItemId = item.Id,
+                    SearchInfo = lookupInfo,
+                    IncludeDisabledProviders = false
+                },
+                cancellationToken).ConfigureAwait(false);
+
+            var best = results
+                .OrderByDescending(r => r.Score)
+                .ThenByDescending(r => r.PremiereDate)
+                .FirstOrDefault();
+
+            if (best is not null)
+            {
+                return best;
+            }
+        }
+
+        return null;
+    }
+
+    private IEnumerable<(string Title, int? Year)> BuildBookSearchAttempts(Book item, AiMetadataNormalization normalized)
+    {
+        var title = string.IsNullOrWhiteSpace(normalized.NormalizedTitle)
+            ? item.Name
+            : normalized.NormalizedTitle;
+        var year = normalized.Year ?? item.ProductionYear;
+
+        yield return (title, year);
+        yield return (title, null);
+
+        if (!string.IsNullOrWhiteSpace(item.Path))
+        {
+            TryParseCleanTitle(item.Path, out var parsedTitle, out var parsedYear);
+            if (!string.IsNullOrWhiteSpace(parsedTitle))
+            {
+                yield return (parsedTitle, parsedYear ?? year);
+                yield return (parsedTitle, null);
+            }
+        }
+    }
+
+    private async Task RefreshBookMetadataAsync(Book item, CancellationToken cancellationToken)
+    {
+        var options = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
+        {
+            MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
+            ImageRefreshMode = MetadataRefreshMode.FullRefresh,
+            ReplaceAllMetadata = true,
+            ReplaceAllImages = true,
+            RemoveOldMetadata = true,
+            ForceSave = true,
+            IsAutomated = true
+        };
+
+        await _providerManager.RefreshFullItem(item, options, cancellationToken).ConfigureAwait(false);
+        await EnsureBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task EnsureBookChaptersAsync(Book item, CancellationToken cancellationToken)
+    {
+        var chapters = await BuildBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
+        if (chapters.Count == 0)
+        {
+            return;
+        }
+
+        var currentRuntimeTicks = item.RunTimeTicks.GetValueOrDefault();
+        var runtimeTicks = Math.Max(currentRuntimeTicks, TimeSpan.FromMinutes(chapters.Count + 1).Ticks);
+        if (currentRuntimeTicks != runtimeTicks)
+        {
+            item.RunTimeTicks = runtimeTicks;
+            await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+        }
+
+        _chapterManager.SaveChapters(item, chapters);
+    }
+
+    private async Task<IReadOnlyList<ChapterInfo>> BuildBookChaptersAsync(Book item, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(item.Path) || !string.Equals(Path.GetExtension(item.Path), ".epub", StringComparison.OrdinalIgnoreCase))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var epub = ZipFile.OpenRead(item.Path);
+            var opfFilePath = ReadEpubContentFilePath(epub);
+            if (string.IsNullOrWhiteSpace(opfFilePath))
+            {
+                return [];
+            }
+
+            var opfEntry = epub.GetEntry(opfFilePath);
+            if (opfEntry is null)
+            {
+                return [];
+            }
+
+            using var opfStream = opfEntry.Open();
+            var opfDocument = new XmlDocument();
+            opfDocument.Load(opfStream);
+
+            var namespaceManager = new XmlNamespaceManager(opfDocument.NameTable);
+            namespaceManager.AddNamespace("opf", "http://www.idpf.org/2007/opf");
+
+            var manifestItems = opfDocument
+                .SelectNodes("//opf:manifest/opf:item", namespaceManager)?
+                .Cast<XmlElement>()
+                .ToArray() ?? [];
+
+            var spineItems = opfDocument
+                .SelectNodes("//opf:spine/opf:itemref", namespaceManager)?
+                .Cast<XmlElement>()
+                .ToArray() ?? [];
+
+            var opfRootDirectory = Path.GetDirectoryName(opfFilePath) ?? string.Empty;
+            var chapters = new List<ChapterInfo>();
+
+            foreach (var spineItem in spineItems)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var idref = spineItem.GetAttribute("idref");
+                if (string.IsNullOrWhiteSpace(idref))
+                {
+                    continue;
+                }
+
+                var manifestItem = manifestItems.FirstOrDefault(itemNode =>
+                    string.Equals(itemNode.GetAttribute("id"), idref, StringComparison.OrdinalIgnoreCase));
+                if (manifestItem is null)
+                {
+                    continue;
+                }
+
+                var href = manifestItem.GetAttribute("href");
+                if (string.IsNullOrWhiteSpace(href))
+                {
+                    continue;
+                }
+
+                var chapterName = await TryReadEpubSectionTitleAsync(epub, opfRootDirectory, href, cancellationToken).ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(chapterName))
+                {
+                    chapterName = Path.GetFileNameWithoutExtension(href);
+                }
+
+                chapters.Add(new ChapterInfo
+                {
+                    StartPositionTicks = chapters.Count == 0 ? 0 : TimeSpan.FromMinutes(chapters.Count).Ticks,
+                    Name = NormalizeDisplayTitle(chapterName)
+                });
+            }
+
+            return chapters;
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private async Task<string?> TryReadEpubSectionTitleAsync(
+        ZipArchive epub,
+        string opfRootDirectory,
+        string href,
+        CancellationToken cancellationToken)
+    {
+        var entryPath = Path.Combine(opfRootDirectory, Uri.UnescapeDataString(href));
+        var entry = epub.GetEntry(entryPath);
+        if (entry is null)
+        {
+            return null;
+        }
+
+        var extension = Path.GetExtension(entry.FullName);
+        if (string.Equals(extension, ".xhtml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".html", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".htm", StringComparison.OrdinalIgnoreCase))
+        {
+            using var stream = entry.Open();
+            var sectionDocument = new XmlDocument();
+            try
+            {
+                sectionDocument.Load(stream);
+                var titleNode = sectionDocument.SelectSingleNode("//*[local-name()='title']");
+                if (!string.IsNullOrWhiteSpace(titleNode?.InnerText))
+                {
+                    return titleNode.InnerText.Trim();
+                }
+
+                var headingNode = sectionDocument.SelectSingleNode("//*[local-name()='h1' or local-name()='h2' or local-name()='h3']");
+                if (!string.IsNullOrWhiteSpace(headingNode?.InnerText))
+                {
+                    return headingNode.InnerText.Trim();
+                }
+            }
+            catch
+            {
+                // Fall back to the file name below.
+            }
+        }
+
+        return await Task.FromResult(Path.GetFileNameWithoutExtension(entry.FullName));
+    }
+
+    private static string? ReadEpubContentFilePath(ZipArchive epub)
+    {
+        var container = epub.GetEntry(Path.Combine("META-INF", "container.xml"));
+        if (container is null)
+        {
+            return null;
+        }
+
+        using var containerStream = container.Open();
+        var containerDocument = XDocument.Load(containerStream);
+        var containerNamespace = XNamespace.Get("urn:oasis:names:tc:opendocument:xmlns:container");
+        var rootFile = containerDocument
+            .Descendants(containerNamespace + "rootfile")
+            .FirstOrDefault();
+
+        return rootFile?.Attribute("full-path")?.Value;
     }
 
     private async Task<AiMetadataItemResult> ProcessChannelAsync(

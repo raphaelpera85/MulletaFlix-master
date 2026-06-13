@@ -234,7 +234,7 @@ public class ChapterManager : IChapterManager
 
     /// <inheritdoc />
     public bool Supports(BaseItem item)
-        => item is Video or Audio;
+        => item is Video or Audio or Book;
 
     /// <inheritdoc />
     public void SaveChapters(BaseItem item, IReadOnlyList<ChapterInfo> chapters)
