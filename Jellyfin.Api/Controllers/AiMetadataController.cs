@@ -38,6 +38,7 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.LiveTv;
+using MediaBrowser.Model.Querying;
 using MulletaFlix.Data.Enums;
 
 namespace MulletaFlix.Api.Controllers;
@@ -56,6 +57,9 @@ public class AiMetadataController : BaseMulletaFlixApiController
     private static readonly List<AiMetadataActivityItemDto> Activity = [];
     private static CancellationTokenSource? ActiveRunCancellation;
     private static string? ActiveRunActivityId;
+    private static readonly Regex ImdbIdPattern = new(
+        @"(?i)\btt\d{7,8}\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex NoisePattern = new(
         @"(?i)(\s*\[(LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\]|\s*\((LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\)|\b1080p\b|\b720p\b|\b480p\b|\bWEB[- ]?DL\b|\bBluRay\b|\bBRRip\b|\bHDR\b|\bX264\b|\bX265\b|\bHEVC\b)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -488,20 +492,21 @@ public class AiMetadataController : BaseMulletaFlixApiController
             IsVirtualItem = false,
             DtoOptions = new DtoOptions(false)
             {
-                EnableImages = false
+                EnableImages = false,
+                Fields = new[] { ItemFields.ProviderIds }
             }
         });
 
         foreach (var item in items)
         {
-            if (ShouldProcessItem(item))
+            if (ShouldProcessUnidentifiedItem(item))
             {
                 yield return new AiMetadataWorkItem(typeName, item);
             }
         }
     }
 
-    private bool ShouldProcessItem(BaseItem item)
+    private bool ShouldProcessUnidentifiedItem(BaseItem item)
     {
         if (item is null)
         {
@@ -513,12 +518,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
             return false;
         }
 
-        if (item.ProviderIds is not null && item.ProviderIds.Count > 0)
-        {
-            return false;
-        }
-
-        return LooksLikeUnidentifiedMedia(item);
+        return item.ProviderIds is null || item.ProviderIds.Count == 0;
     }
 
     private static bool LooksLikeUnidentifiedMedia(BaseItem item)
@@ -648,6 +648,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         lookupInfo.Year = normalized.Year ?? lookupInfo.Year;
         lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
         lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
+        ApplyImdbIdIfAvailable(item, lookupInfo);
 
         var results = await _providerManager.GetRemoteSearchResults<Movie, MovieInfo>(
             new RemoteSearchQuery<MovieInfo>
@@ -727,6 +728,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
             lookupInfo.Year = attempt.Year;
             lookupInfo.MetadataLanguage = item.GetPreferredMetadataLanguage();
             lookupInfo.MetadataCountryCode = item.GetPreferredMetadataCountryCode();
+            ApplyImdbIdIfAvailable(item, lookupInfo);
 
             var results = await _providerManager.GetRemoteSearchResults<Series, SeriesInfo>(
                 new RemoteSearchQuery<SeriesInfo>
@@ -825,6 +827,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         CancellationToken cancellationToken)
     {
         var lookupInfo = item.GetLookupInfo();
+        ApplyImdbIdIfAvailable(item, lookupInfo);
 
         foreach (var attempt in BuildBookSearchAttempts(item, normalized))
         {
@@ -851,6 +854,41 @@ public class AiMetadataController : BaseMulletaFlixApiController
             if (best is not null)
             {
                 return best;
+            }
+        }
+
+        return null;
+    }
+
+    private static void ApplyImdbIdIfAvailable(BaseItem item, ItemLookupInfo lookupInfo)
+    {
+        var imdbId = GetImdbId(item);
+        if (!string.IsNullOrWhiteSpace(imdbId))
+        {
+            lookupInfo.ProviderIds[MediaBrowser.Model.Entities.MetadataProvider.Imdb.ToString()] = imdbId;
+        }
+    }
+
+    private static string? GetImdbId(BaseItem item)
+    {
+        if (item.ProviderIds is not null
+            && item.ProviderIds.TryGetValue(MediaBrowser.Model.Entities.MetadataProvider.Imdb.ToString(), out var providerId)
+            && !string.IsNullOrWhiteSpace(providerId))
+        {
+            return providerId.Trim();
+        }
+
+        foreach (var candidate in new[] { item.Name, item.OriginalTitle, item.Path })
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                continue;
+            }
+
+            var match = ImdbIdPattern.Match(candidate);
+            if (match.Success)
+            {
+                return match.Value.ToLowerInvariant();
             }
         }
 
