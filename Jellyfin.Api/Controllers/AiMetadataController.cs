@@ -52,7 +52,10 @@ public class AiMetadataController : BaseMulletaFlixApiController
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly object ActivityLock = new();
+    private static readonly object RunStateLock = new();
     private static readonly List<AiMetadataActivityItemDto> Activity = [];
+    private static CancellationTokenSource? ActiveRunCancellation;
+    private static string? ActiveRunActivityId;
     private static readonly Regex NoisePattern = new(
         @"(?i)(\s*\[(LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\]|\s*\((LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\)|\b1080p\b|\b720p\b|\b480p\b|\bWEB[- ]?DL\b|\bBluRay\b|\bBRRip\b|\bHDR\b|\bX264\b|\bX265\b|\bHEVC\b)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -168,6 +171,22 @@ public class AiMetadataController : BaseMulletaFlixApiController
             .ToImmutableArray();
         var mediaTypes = GetEnabledMediaTypes(configuration).ToImmutableArray();
         var now = DateTimeOffset.UtcNow;
+        CancellationTokenSource runCancellation;
+
+        lock (RunStateLock)
+        {
+            if (ActiveRunCancellation is not null)
+            {
+                return Conflict(new
+                {
+                    message = "Ja existe uma execucao de IA em andamento."
+                });
+            }
+
+            runCancellation = new CancellationTokenSource();
+            ActiveRunCancellation = runCancellation;
+        }
+
         var activity = new AiMetadataActivityItemDto
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -186,9 +205,68 @@ public class AiMetadataController : BaseMulletaFlixApiController
         };
 
         AddActivity(activity);
-        _ = Task.Run(() => RunAiMetadataActivityAsync(activity.Id, configuration, providers, mediaTypes, CancellationToken.None));
+        lock (RunStateLock)
+        {
+            ActiveRunActivityId = activity.Id;
+        }
+
+        _ = Task.Run(() => RunAiMetadataActivityAsync(activity.Id, configuration, providers, mediaTypes, runCancellation.Token));
 
         return CloneActivity(activity);
+    }
+
+    /// <summary>
+    /// Stops the active AI metadata activity run.
+    /// </summary>
+    /// <response code="200">Active AI metadata run cancelled.</response>
+    /// <response code="404">No active AI metadata run was found.</response>
+    [HttpPost("Stop")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult<AiMetadataActivityItemDto> StopRun()
+    {
+        string? activityId;
+        CancellationTokenSource? cancellationSource;
+
+        lock (RunStateLock)
+        {
+            activityId = ActiveRunActivityId;
+            cancellationSource = ActiveRunCancellation;
+
+            if (activityId is null || cancellationSource is null)
+            {
+                return NotFound(new
+                {
+                    message = "Nao existe execucao de IA em andamento."
+                });
+            }
+        }
+
+        UpdateActivity(activityId, activity =>
+        {
+            activity.Status = "Stopping";
+            activity.CurrentStep = "Cancelamento solicitado";
+            activity.Summary = "A parada da execucao foi solicitada.";
+        }, "Solicitacao de parada recebida. Cancelando execucao atual.");
+
+        cancellationSource.Cancel();
+
+        AiMetadataActivityItemDto? activity;
+        lock (ActivityLock)
+        {
+            activity = Activity.FirstOrDefault(item => string.Equals(item.Id, activityId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return Ok(activity is not null
+            ? CloneActivity(activity)
+            : new AiMetadataActivityItemDto
+            {
+                Id = activityId,
+                Status = "Stopping",
+                CurrentStep = "Cancelamento solicitado",
+                Summary = "A parada da execucao foi solicitada."
+            });
     }
 
     /// <summary>
@@ -242,86 +320,116 @@ public class AiMetadataController : BaseMulletaFlixApiController
         IReadOnlyList<string> mediaTypes,
         CancellationToken cancellationToken)
     {
-        if (!configuration.Enabled)
+        try
         {
-            UpdateActivity(activityId, activity =>
+            if (!configuration.Enabled)
             {
-                activity.Status = "Failed";
-                activity.CurrentStep = "IA desativada";
-                activity.Progress = 100;
-                activity.Summary = "Ative a curadoria de metadados por IA antes de executar.";
-            }, "A IA nao esta ativada na configuracao.");
-            return;
-        }
-
-        var items = await CollectCandidateItemsAsync(configuration, mediaTypes, cancellationToken).ConfigureAwait(false);
-        UpdateActivity(activityId, activity =>
-        {
-            activity.Status = "Running";
-            activity.CurrentStep = "Fila carregada";
-            activity.Progress = 3;
-            activity.Summary = $"{items.Count} itens elegiveis localizados para processamento.";
-        }, $"{items.Count} itens foram localizados para analise.");
-
-        if (items.Count == 0)
-        {
-            UpdateActivity(activityId, activity =>
-            {
-                activity.Status = "Completed";
-                activity.CurrentStep = "Sem itens";
-                activity.Progress = 100;
-                activity.Summary = "Nenhum item elegivel foi encontrado para processar.";
-            }, "Nenhum item precisou de analise.");
-            return;
-        }
-
-        var applied = 0;
-        var skipped = 0;
-        var failed = 0;
-
-        for (var index = 0; index < items.Count; index++)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var item = items[index];
-            UpdateActivity(activityId, activity =>
-            {
-                activity.CurrentStep = $"Analisando {item.TypeName}: {item.Name}";
-                activity.Progress = 5 + (int)Math.Round((index / (double)Math.Max(items.Count, 1)) * 90);
-            }, $"[{item.TypeName}] {item.Name}");
-
-            try
-            {
-                var result = await ProcessItemAsync(item, configuration, providers, cancellationToken).ConfigureAwait(false);
-                if (result.Applied)
+                UpdateActivity(activityId, activity =>
                 {
-                    applied++;
-                }
-                else if (result.Skipped)
+                    activity.Status = "Failed";
+                    activity.CurrentStep = "IA desativada";
+                    activity.Progress = 100;
+                    activity.Summary = "Ative a curadoria de metadados por IA antes de executar.";
+                }, "A IA nao esta ativada na configuracao.");
+                return;
+            }
+
+            var items = await CollectCandidateItemsAsync(configuration, mediaTypes, cancellationToken).ConfigureAwait(false);
+            UpdateActivity(activityId, activity =>
+            {
+                activity.Status = "Running";
+                activity.CurrentStep = "Fila carregada";
+                activity.Progress = 3;
+                activity.Summary = $"{items.Count} itens elegiveis localizados para processamento.";
+            }, $"{items.Count} itens foram localizados para analise.");
+
+            if (items.Count == 0)
+            {
+                UpdateActivity(activityId, activity =>
                 {
-                    skipped++;
+                    activity.Status = "Completed";
+                    activity.CurrentStep = "Sem itens";
+                    activity.Progress = 100;
+                    activity.Summary = "Nenhum item elegivel foi encontrado para processar.";
+                }, "Nenhum item precisou de analise.");
+                return;
+            }
+
+            var applied = 0;
+            var skipped = 0;
+            var failed = 0;
+
+            for (var index = 0; index < items.Count; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var item = items[index];
+                UpdateActivity(activityId, activity =>
+                {
+                    activity.CurrentStep = $"Analisando {item.TypeName}: {item.Name}";
+                    activity.Progress = 5 + (int)Math.Round((index / (double)Math.Max(items.Count, 1)) * 90);
+                }, $"[{item.TypeName}] {item.Name}");
+
+                try
+                {
+                    var result = await ProcessItemAsync(item, configuration, providers, cancellationToken).ConfigureAwait(false);
+                    if (result.Applied)
+                    {
+                        applied++;
+                    }
+                    else if (result.Skipped)
+                    {
+                        skipped++;
+                    }
+                    else
+                    {
+                        failed++;
+                    }
+
+                    UpdateActivity(activityId, _ => { }, result.LogMessage);
                 }
-                else
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UriFormatException)
                 {
                     failed++;
+                    UpdateActivity(activityId, _ => { }, $"[{item.TypeName}] falhou: {ex.Message}");
+                }
+            }
+
+            UpdateActivity(activityId, activity =>
+            {
+                activity.Status = failed > 0 ? "Completed" : "Completed";
+                activity.CurrentStep = "Concluido";
+                activity.Progress = 100;
+                activity.Summary = $"Processados {items.Count} itens. Aplicados: {applied}. Pulados: {skipped}. Falhas: {failed}.";
+            }, $"Execucao concluida. Aplicados: {applied}; pulados: {skipped}; falhas: {failed}.");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            UpdateActivity(activityId, activity =>
+            {
+                activity.Status = "Cancelled";
+                activity.CurrentStep = "Cancelado";
+                activity.Progress = 100;
+                activity.Summary = "A execucao foi cancelada pelo usuario.";
+            }, "Execucao cancelada pelo usuario.");
+        }
+        finally
+        {
+            lock (RunStateLock)
+            {
+                if (string.Equals(ActiveRunActivityId, activityId, StringComparison.OrdinalIgnoreCase))
+                {
+                    ActiveRunActivityId = null;
                 }
 
-                UpdateActivity(activityId, _ => { }, result.LogMessage);
-            }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UriFormatException)
-            {
-                failed++;
-                UpdateActivity(activityId, _ => { }, $"[{item.TypeName}] falhou: {ex.Message}");
+                ActiveRunCancellation?.Dispose();
+                ActiveRunCancellation = null;
             }
         }
-
-        UpdateActivity(activityId, activity =>
-        {
-            activity.Status = failed > 0 ? "Completed" : "Completed";
-            activity.CurrentStep = "Concluido";
-            activity.Progress = 100;
-            activity.Summary = $"Processados {items.Count} itens. Aplicados: {applied}. Pulados: {skipped}. Falhas: {failed}.";
-        }, $"Execucao concluida. Aplicados: {applied}; pulados: {skipped}; falhas: {failed}.");
     }
 
     private async Task<IReadOnlyList<AiMetadataWorkItem>> CollectCandidateItemsAsync(
