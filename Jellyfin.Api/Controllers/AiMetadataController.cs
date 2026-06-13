@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -345,7 +346,21 @@ public class AiMetadataController : BaseMulletaFlixApiController
         return await Task.FromResult(items
             .GroupBy(item => item.Item.Id)
             .Select(group => group.First())
+            .OrderBy(item => GetWorkItemPriority(item.TypeName))
+            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
             .ToList());
+    }
+
+    private static int GetWorkItemPriority(string typeName)
+    {
+        return typeName switch
+        {
+            "Filme" => 0,
+            "Serie" => 1,
+            "Livro" => 2,
+            "Canal" => 3,
+            _ => 4
+        };
     }
 
     private IEnumerable<AiMetadataWorkItem> CollectUnidentifiedItems(BaseItemKind itemKind, string typeName)
@@ -363,7 +378,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
         foreach (var item in items)
         {
-            if (item.ProviderIds is null || item.ProviderIds.Count == 0 || ShouldProcessItem(item))
+            if (ShouldProcessItem(item))
             {
                 yield return new AiMetadataWorkItem(typeName, item);
             }
@@ -382,7 +397,110 @@ public class AiMetadataController : BaseMulletaFlixApiController
             return false;
         }
 
-        return item.ProviderIds is null || item.ProviderIds.Count == 0;
+        if (item.ProviderIds is not null && item.ProviderIds.Count > 0)
+        {
+            return false;
+        }
+
+        return LooksLikeUnidentifiedMedia(item);
+    }
+
+    private static bool LooksLikeUnidentifiedMedia(BaseItem item)
+    {
+        var name = item.Name ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return true;
+        }
+
+        if (NoisePattern.IsMatch(name))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(item.Path))
+        {
+            return false;
+        }
+
+        TryParseCleanTitle(item.Path, out var parsedTitle, out _);
+        if (string.IsNullOrWhiteSpace(parsedTitle))
+        {
+            return false;
+        }
+
+        var normalizedName = NormalizeDisplayTitle(name);
+        var normalizedParsedTitle = NormalizeDisplayTitle(parsedTitle);
+        return !string.Equals(normalizedName, normalizedParsedTitle, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void TryParseCleanTitle(string path, out string title, out int? year)
+    {
+        title = string.Empty;
+        year = null;
+
+        try
+        {
+            var filename = Path.GetFileNameWithoutExtension(path);
+            if (string.IsNullOrWhiteSpace(filename))
+            {
+                return;
+            }
+
+            filename = filename.Replace('.', ' ').Replace('_', ' ').Trim();
+
+            var yearMatch = Regex.Match(filename, @"\b(19\d\d|20\d\d)\b");
+            if (yearMatch.Success)
+            {
+                year = int.Parse(yearMatch.Value, CultureInfo.InvariantCulture);
+                filename = filename[..yearMatch.Index].Trim();
+            }
+
+            var cleanPatterns = new[]
+            {
+                @"\b(1080[pi]|2160[pi]|720[pi]|480[pi]|576[pi])\b",
+                @"\b(BluRay|Blu-ray|WEB-DL|WEBRip|HDRip|BRRip|DVDRip|DVD|HDTV|TS|CAM)\b",
+                @"\b(x264|x265|h264|h265|HEVC|AVC|AV1|VP9)\b",
+                @"\b(AAC|DTS|AC3|TRUEHD|FLAC|MP3|5\.1|7\.1|2\.0)\b",
+                @"\b(IMAX|EXTENDED|UNCUT|UNRATED|DIRECTORS?[-\s]?CUT|THEATRICAL|REMUX|PROPER|REPACK|INTERNAL)\b",
+                @"\b(3[Dd]|SBS|Half[-]?SBS|OU|Half[-]?OU)\b",
+                @"\[.*?\]|\(.*?\)",
+                @"\bS\d{1,2}(E\d{1,2})?\b"
+            };
+
+            foreach (var pattern in cleanPatterns)
+            {
+                filename = Regex.Replace(filename, pattern, " ", RegexOptions.IgnoreCase);
+            }
+
+            filename = Regex.Replace(filename, @"\s+", " ").Trim();
+
+            if (filename.Length > 2)
+            {
+                var ci = CultureInfo.InvariantCulture;
+                var ti = ci.TextInfo;
+                filename = ti.ToTitleCase(filename.ToLower(ci));
+            }
+
+            title = filename;
+        }
+        catch
+        {
+            title = string.Empty;
+            year = null;
+        }
+    }
+
+    private static string NormalizeDisplayTitle(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var cleaned = Regex.Replace(value, @"[\p{P}\p{S}]+", " ", RegexOptions.CultureInvariant);
+        cleaned = Regex.Replace(cleaned, @"\s{2,}", " ", RegexOptions.CultureInvariant).Trim();
+        return cleaned;
     }
 
     private async Task<AiMetadataItemResult> ProcessItemAsync(
