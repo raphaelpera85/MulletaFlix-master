@@ -140,17 +140,34 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
         {
             var results = await GetSearchResults(new BookInfo { Name = title }, cancellationToken).ConfigureAwait(false);
             var best = results.FirstOrDefault();
-            if (best is not null && best.ProviderIds.TryGetValue("ISBN", out var isbn))
+            if (best is null)
             {
-                return await GetMetadataByIsbn(isbn, cancellationToken).ConfigureAwait(false);
+                return new MetadataResult<Book>();
             }
 
-            if (best is not null && best.ProviderIds.TryGetValue("OpenLibrary", out var openLibraryId))
+            MetadataResult<Book> metadata;
+
+            if (best.ProviderIds.TryGetValue("ISBN", out var isbn))
             {
-                return await GetMetadataByOpenLibraryId(openLibraryId, cancellationToken).ConfigureAwait(false);
+                metadata = await GetMetadataByIsbn(isbn, cancellationToken).ConfigureAwait(false);
+            }
+            else if (best.ProviderIds.TryGetValue("OpenLibrary", out var openLibraryId))
+            {
+                metadata = await GetMetadataByOpenLibraryId(openLibraryId, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                metadata = new MetadataResult<Book>();
             }
 
-            return new MetadataResult<Book>();
+            if (metadata.HasMetadata
+                && metadata.RemoteImages.Count == 0
+                && !string.IsNullOrWhiteSpace(best.ImageUrl))
+            {
+                metadata.RemoteImages.Add((best.ImageUrl, ImageType.Primary));
+            }
+
+            return metadata;
         }
 
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(BookInfo searchInfo, CancellationToken cancellationToken)
