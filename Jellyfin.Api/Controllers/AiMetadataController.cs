@@ -210,9 +210,11 @@ public class AiMetadataController : BaseMulletaFlixApiController
             Status = "Queued",
             Title = "Analise de IA e metadados",
             CurrentStep = "Aguardando inicio",
+            CurrentPhase = "Fila",
             Providers = providers.Select(provider => provider.DisplayName).ToArray(),
             MediaTypes = mediaTypes,
             Progress = 0,
+            PhaseProgress = 0,
             Summary = $"Escopo: {request?.Scope ?? "configured"}",
             Logs = [
                 $"[{now:yyyy-MM-dd HH:mm:ss}] Execucao criada para validar provedores e preparar analise de metadados."
@@ -280,6 +282,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 Id = activityId,
                 Status = "Stopping",
                 CurrentStep = "Cancelamento solicitado",
+                CurrentPhase = "Cancelando",
                 Summary = "A parada da execucao foi solicitada."
             });
     }
@@ -379,11 +382,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var item = items[index];
-                UpdateActivity(activityId, activity =>
-                {
-                    activity.CurrentStep = $"Analisando {item.TypeName}: {item.Name}";
-                    activity.Progress = 5 + (int)Math.Round((index / (double)Math.Max(items.Count, 1)) * 90);
-                }, $"[{item.TypeName}] {item.Name}");
+                UpdateItemProgress(activityId, "Preparando item", 0, 5 + (int)Math.Round((index / (double)Math.Max(items.Count, 1)) * 90), $"Analisando {item.TypeName}: {item.Name}", $"[{item.TypeName}] {item.Name}");
 
                 try
                 {
@@ -672,9 +671,9 @@ public class AiMetadataController : BaseMulletaFlixApiController
         string activityId,
         CancellationToken cancellationToken)
     {
-        UpdateActivity(activityId, _ => { }, $"[Filme] consenso de titulo em {item.Name}");
+        UpdateItemProgress(activityId, "Consenso de titulo", 12, 10, $"[Filme] consenso de titulo em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Filme", providers, cancellationToken).ConfigureAwait(false);
-        UpdateActivity(activityId, _ => { }, $"[Filme] busca remota em {item.Name}");
+        UpdateItemProgress(activityId, "Busca remota", 60, 35, $"[Filme] busca remota em {item.Name}");
         var lookupInfo = item.GetLookupInfo();
         lookupInfo.Name = normalized.NormalizedTitle;
         lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
@@ -707,6 +706,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
         if (best is null)
         {
+            UpdateItemProgress(activityId, "Aplicacao local", 100, 95, $"[{item.Name}] titulo normalizado sem correspondencia remota.");
             item.Name = normalized.NormalizedTitle;
             item.SortName = null;
             await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
@@ -717,6 +717,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 $"[{item.Name}] titulo normalizado para '{normalized.NormalizedTitle}' sem correspondencia remota.");
         }
 
+        UpdateItemProgress(activityId, "Aplicando metadados", 100, 95, $"[{item.Name}] aplicando correspondencia remota.");
         await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
         return AiMetadataItemResult.CreateApplied(
             "Filme",
@@ -732,13 +733,14 @@ public class AiMetadataController : BaseMulletaFlixApiController
         string activityId,
         CancellationToken cancellationToken)
     {
-        UpdateActivity(activityId, _ => { }, $"[Serie] consenso de titulo em {item.Name}");
+        UpdateItemProgress(activityId, "Consenso de titulo", 12, 10, $"[Serie] consenso de titulo em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Serie", providers, cancellationToken).ConfigureAwait(false);
-        UpdateActivity(activityId, _ => { }, $"[Serie] busca remota em {item.Name}");
+        UpdateItemProgress(activityId, "Busca remota", 60, 35, $"[Serie] busca remota em {item.Name}");
         var best = await SearchSeriesAsync(item, normalized, cancellationToken).ConfigureAwait(false);
 
         if (best is null)
         {
+            UpdateItemProgress(activityId, "Aplicacao local", 100, 95, $"[{item.Name}] titulo normalizado sem correspondencia remota.");
             item.Name = normalized.NormalizedTitle;
             item.SortName = null;
             await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
@@ -749,6 +751,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 $"[{item.Name}] titulo normalizado para '{normalized.NormalizedTitle}' sem correspondencia remota.");
         }
 
+        UpdateItemProgress(activityId, "Aplicando metadados", 100, 95, $"[{item.Name}] aplicando correspondencia remota.");
         await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
         return AiMetadataItemResult.CreateApplied(
             "Serie",
@@ -846,13 +849,14 @@ public class AiMetadataController : BaseMulletaFlixApiController
         string activityId,
         CancellationToken cancellationToken)
     {
-        UpdateActivity(activityId, _ => { }, $"[Livro] consenso de titulo em {item.Name}");
+        UpdateItemProgress(activityId, "Consenso de titulo", 10, 10, $"[Livro] consenso de titulo em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Livro", providers, cancellationToken).ConfigureAwait(false);
-        UpdateActivity(activityId, _ => { }, $"[Livro] busca de metadados em {item.Name}");
+        UpdateItemProgress(activityId, "Busca OpenLibrary", 45, 30, $"[Livro] busca de metadados em {item.Name}");
         var best = await SearchBookAsync(item, normalized, cancellationToken).ConfigureAwait(false);
 
         if (best is null)
         {
+            UpdateItemProgress(activityId, "Aplicacao local", 100, 90, $"[{item.Name}] titulo normalizado sem correspondencia remota.");
             item.Name = normalized.NormalizedTitle;
             item.SortName = null;
             await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
@@ -872,6 +876,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 $"Correspondencia remota rejeitada para '{best.Name}' por baixa similaridade com o titulo original.");
         }
 
+        UpdateItemProgress(activityId, "Aplicando capa e capitulos", 100, 92, $"[{item.Name}] aplicando metadados e capa.");
         await ApplyBookRemoteSearchResultAsync(item, best, cancellationToken).ConfigureAwait(false);
         await EnsureBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
         return AiMetadataItemResult.CreateApplied(
@@ -1389,12 +1394,13 @@ public class AiMetadataController : BaseMulletaFlixApiController
         string activityId,
         CancellationToken cancellationToken)
     {
-        UpdateActivity(activityId, _ => { }, $"[Canal] consenso de nome em {item.Name}");
+        UpdateItemProgress(activityId, "Consenso de nome", 15, 15, $"[Canal] consenso de nome em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Canal", providers, cancellationToken).ConfigureAwait(false);
         var newName = normalized.NormalizedTitle;
 
         if (!string.IsNullOrWhiteSpace(newName) && !string.Equals(newName, item.Name, StringComparison.Ordinal))
         {
+            UpdateItemProgress(activityId, "Aplicando nome", 100, 95, $"[{item.Name}] normalizando nome do canal.");
             item.Name = newName;
             item.SortName = null;
             await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
@@ -1405,6 +1411,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 $"[{item.Name}] nome normalizado para '{newName}'.");
         }
 
+        UpdateItemProgress(activityId, "Sem alteracao", 100, 100, $"[{item.Name}] canal ja estava normalizado.");
         return AiMetadataItemResult.CreateSkipped("Canal", item.Name, "Canal ja estava normalizado ou sem alteracao segura.");
     }
 
@@ -1734,6 +1741,23 @@ public class AiMetadataController : BaseMulletaFlixApiController
         }
     }
 
+    private static void UpdateItemProgress(
+        string activityId,
+        string phase,
+        int phaseProgress,
+        int overallProgress,
+        string currentStep,
+        string? log = null)
+    {
+        UpdateActivity(activityId, activity =>
+        {
+            activity.CurrentPhase = phase;
+            activity.PhaseProgress = Math.Clamp(phaseProgress, 0, 100);
+            activity.CurrentStep = currentStep;
+            activity.Progress = Math.Clamp(overallProgress, 0, 100);
+        }, log);
+    }
+
     private static AiMetadataActivityItemDto CloneActivity(AiMetadataActivityItemDto activity)
     {
         return new AiMetadataActivityItemDto
@@ -1744,9 +1768,11 @@ public class AiMetadataController : BaseMulletaFlixApiController
             Status = activity.Status,
             Title = activity.Title,
             CurrentStep = activity.CurrentStep,
+            CurrentPhase = activity.CurrentPhase,
             Providers = activity.Providers.ToArray(),
             MediaTypes = activity.MediaTypes.ToArray(),
             Progress = activity.Progress,
+            PhaseProgress = activity.PhaseProgress,
             Summary = activity.Summary,
             Logs = activity.Logs.ToArray()
         };

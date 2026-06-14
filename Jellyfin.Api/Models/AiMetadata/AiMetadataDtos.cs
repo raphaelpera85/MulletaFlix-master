@@ -289,6 +289,11 @@ public class AiMetadataActivityItemDto
     public string CurrentStep { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the current phase inside the item analysis.
+    /// </summary>
+    public string CurrentPhase { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the selected providers.
     /// </summary>
     public IReadOnlyList<string> Providers { get; set; } = [];
@@ -302,6 +307,11 @@ public class AiMetadataActivityItemDto
     /// Gets or sets the progress percentage.
     /// </summary>
     public int Progress { get; set; }
+
+    /// <summary>
+    /// Gets or sets the progress percentage for the current phase.
+    /// </summary>
+    public int PhaseProgress { get; set; }
 
     /// <summary>
     /// Gets or sets the result summary.
