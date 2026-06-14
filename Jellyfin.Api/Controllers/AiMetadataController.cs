@@ -73,6 +73,8 @@ public class AiMetadataController : BaseMulletaFlixApiController
         @"(?i)^(?:chapter|cap[íi]tulo|capitulo|parte|part|section|sec[çc][aã]o|prologo|ep[ií]logo)\s*(?:[0-9ivxlcdm]+)?(?:\s*[-:.\)]\s*|\s+)?(?<title>.+)?$|^(?:[0-9ivxlcdm]+)\s*[-:.\)]\s*(?<title>.+)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    private static readonly TimeSpan ItemProcessingTimeout = TimeSpan.FromMinutes(3);
+
     private readonly IServerConfigurationManager _configurationManager;
     private readonly IProviderManager _providerManager;
     private readonly ILibraryManager _libraryManager;
@@ -385,7 +387,10 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
                 try
                 {
-                    var result = await ProcessItemAsync(item, configuration, providers, cancellationToken).ConfigureAwait(false);
+                    using var itemCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    itemCancellation.CancelAfter(ItemProcessingTimeout);
+
+                    var result = await ProcessItemAsync(item, configuration, providers, activityId, itemCancellation.Token).ConfigureAwait(false);
                     if (result.Applied)
                     {
                         applied++;
@@ -404,6 +409,11 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
                     throw;
+                }
+                catch (OperationCanceledException)
+                {
+                    failed++;
+                    UpdateActivity(activityId, _ => { }, $"[{item.TypeName}] tempo limite excedido em {item.Name}.");
                 }
                 catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UriFormatException)
                 {
@@ -642,14 +652,15 @@ public class AiMetadataController : BaseMulletaFlixApiController
         AiMetadataWorkItem workItem,
         AiMetadataConfiguration configuration,
         IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        string activityId,
         CancellationToken cancellationToken)
     {
         return workItem.Item switch
         {
-            Movie movie => await ProcessMovieAsync(movie, configuration, providers, cancellationToken).ConfigureAwait(false),
-            Series series => await ProcessSeriesAsync(series, configuration, providers, cancellationToken).ConfigureAwait(false),
-            Book book => await ProcessBookAsync(book, configuration, providers, cancellationToken).ConfigureAwait(false),
-            LiveTvChannel channel => await ProcessChannelAsync(channel, configuration, providers, cancellationToken).ConfigureAwait(false),
+            Movie movie => await ProcessMovieAsync(movie, configuration, providers, activityId, cancellationToken).ConfigureAwait(false),
+            Series series => await ProcessSeriesAsync(series, configuration, providers, activityId, cancellationToken).ConfigureAwait(false),
+            Book book => await ProcessBookAsync(book, configuration, providers, activityId, cancellationToken).ConfigureAwait(false),
+            LiveTvChannel channel => await ProcessChannelAsync(channel, configuration, providers, activityId, cancellationToken).ConfigureAwait(false),
             _ => AiMetadataItemResult.CreateSkipped(workItem.TypeName, workItem.Item.Name, "Tipo de item nao suportado.")
         };
     }
@@ -658,9 +669,12 @@ public class AiMetadataController : BaseMulletaFlixApiController
         Movie item,
         AiMetadataConfiguration configuration,
         IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        string activityId,
         CancellationToken cancellationToken)
     {
+        UpdateActivity(activityId, _ => { }, $"[Filme] consenso de titulo em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Filme", providers, cancellationToken).ConfigureAwait(false);
+        UpdateActivity(activityId, _ => { }, $"[Filme] busca remota em {item.Name}");
         var lookupInfo = item.GetLookupInfo();
         lookupInfo.Name = normalized.NormalizedTitle;
         lookupInfo.OriginalTitle = normalized.OriginalTitle ?? lookupInfo.OriginalTitle;
@@ -715,9 +729,12 @@ public class AiMetadataController : BaseMulletaFlixApiController
         Series item,
         AiMetadataConfiguration configuration,
         IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        string activityId,
         CancellationToken cancellationToken)
     {
+        UpdateActivity(activityId, _ => { }, $"[Serie] consenso de titulo em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Serie", providers, cancellationToken).ConfigureAwait(false);
+        UpdateActivity(activityId, _ => { }, $"[Serie] busca remota em {item.Name}");
         var best = await SearchSeriesAsync(item, normalized, cancellationToken).ConfigureAwait(false);
 
         if (best is null)
@@ -826,9 +843,12 @@ public class AiMetadataController : BaseMulletaFlixApiController
         Book item,
         AiMetadataConfiguration configuration,
         IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        string activityId,
         CancellationToken cancellationToken)
     {
+        UpdateActivity(activityId, _ => { }, $"[Livro] consenso de titulo em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Livro", providers, cancellationToken).ConfigureAwait(false);
+        UpdateActivity(activityId, _ => { }, $"[Livro] busca de metadados em {item.Name}");
         var best = await SearchBookAsync(item, normalized, cancellationToken).ConfigureAwait(false);
 
         if (best is null)
@@ -1366,8 +1386,10 @@ public class AiMetadataController : BaseMulletaFlixApiController
         LiveTvChannel item,
         AiMetadataConfiguration configuration,
         IReadOnlyList<AiMetadataProviderConfiguration> providers,
+        string activityId,
         CancellationToken cancellationToken)
     {
+        UpdateActivity(activityId, _ => { }, $"[Canal] consenso de nome em {item.Name}");
         var normalized = await BuildConsensusNormalizationAsync(item, "Canal", providers, cancellationToken).ConfigureAwait(false);
         var newName = normalized.NormalizedTitle;
 
