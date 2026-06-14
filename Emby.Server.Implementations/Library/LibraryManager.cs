@@ -3954,6 +3954,11 @@ namespace Emby.Server.Implementations.Library
                 options.MetadataCountryCode = _configurationManager.Configuration.MetadataCountryCode;
             }
 
+            if (string.IsNullOrWhiteSpace(options.MetadataCountryCode))
+            {
+                options.MetadataCountryCode = GetInstalledMetadataCountryCode();
+            }
+
             if (string.IsNullOrWhiteSpace(options.PreferredMetadataLanguage))
             {
                 options.PreferredMetadataLanguage = GetDefaultMetadataLanguage(options.MetadataCountryCode);
@@ -3967,6 +3972,12 @@ namespace Emby.Server.Implementations.Library
                 && !string.IsNullOrWhiteSpace(mappedLanguage))
             {
                 return mappedLanguage;
+            }
+
+            var installedLanguage = CultureInfo.InstalledUICulture.TwoLetterISOLanguageName;
+            if (!string.IsNullOrWhiteSpace(installedLanguage))
+            {
+                return installedLanguage;
             }
 
             var configuredLanguage = _configurationManager.Configuration.PreferredMetadataLanguage;
@@ -3989,6 +4000,18 @@ namespace Emby.Server.Implementations.Library
             }
 
             return "en";
+        }
+
+        private static string GetInstalledMetadataCountryCode()
+        {
+            try
+            {
+                return new RegionInfo(CultureInfo.InstalledUICulture.Name).TwoLetterISORegionName;
+            }
+            catch (ArgumentException)
+            {
+                return string.Empty;
+            }
         }
 
         private static IReadOnlyDictionary<string, string> BuildCountryLanguageMap()

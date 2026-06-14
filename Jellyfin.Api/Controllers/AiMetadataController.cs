@@ -16,6 +16,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using MulletaFlix.Api.Attributes;
 using MulletaFlix.Api.Models.AiMetadata;
 using MediaBrowser.Common.Api;
@@ -63,6 +65,12 @@ public class AiMetadataController : BaseMulletaFlixApiController
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex NoisePattern = new(
         @"(?i)(\s*\[(LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\]|\s*\((LEG|DUB|DUBLADO|LEGENDADO|PT-BR|BR)\)|\b1080p\b|\b720p\b|\b480p\b|\bWEB[- ]?DL\b|\bBluRay\b|\bBRRip\b|\bHDR\b|\bX264\b|\bX265\b|\bHEVC\b)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex IsbnPattern = new(
+        @"(?i)(?<!\d)(?:97[89][-\s]?)?\d{1,5}[-\s]?\d{1,7}[-\s]?\d{1,7}[-\s]?[0-9Xx](?!\d)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex ChapterHeadingPattern = new(
+        @"(?i)^(?:chapter|cap[íi]tulo|capitulo|parte|part|section|sec[çc][aã]o|prologo|ep[ií]logo)\s*(?:[0-9ivxlcdm]+)?(?:\s*[-:.\)]\s*|\s+)?(?<title>.+)?$|^(?:[0-9ivxlcdm]+)\s*[-:.\)]\s*(?<title>.+)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private readonly IServerConfigurationManager _configurationManager;
@@ -446,22 +454,22 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
         if (configuration.MediaTypes.Movies && mediaTypes.Contains("Filmes", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectUnidentifiedItems(BaseItemKind.Movie, "Filme"));
+            items.AddRange(CollectItemsForAiReview(BaseItemKind.Movie, "Filme"));
         }
 
         if (configuration.MediaTypes.Series && mediaTypes.Contains("Series", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectUnidentifiedItems(BaseItemKind.Series, "Serie"));
+            items.AddRange(CollectItemsForAiReview(BaseItemKind.Series, "Serie"));
         }
 
         if (configuration.MediaTypes.Books && mediaTypes.Contains("Livros", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectUnidentifiedItems(BaseItemKind.Book, "Livro"));
+            items.AddRange(CollectItemsForAiReview(BaseItemKind.Book, "Livro"));
         }
 
         if (configuration.MediaTypes.Channels && mediaTypes.Contains("Canais", StringComparer.OrdinalIgnoreCase))
         {
-            items.AddRange(CollectUnidentifiedItems(BaseItemKind.LiveTvChannel, "Canal"));
+            items.AddRange(CollectItemsForAiReview(BaseItemKind.LiveTvChannel, "Canal"));
         }
 
         return await Task.FromResult(items
@@ -484,7 +492,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         };
     }
 
-    private IEnumerable<AiMetadataWorkItem> CollectUnidentifiedItems(BaseItemKind itemKind, string typeName)
+    private IEnumerable<AiMetadataWorkItem> CollectItemsForAiReview(BaseItemKind itemKind, string typeName)
     {
         var items = _libraryManager.GetItemList(new InternalItemsQuery
         {
@@ -500,14 +508,14 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
         foreach (var item in items)
         {
-            if (ShouldProcessUnidentifiedItem(item))
+            if (ShouldProcessAiItem(item, itemKind))
             {
                 yield return new AiMetadataWorkItem(typeName, item);
             }
         }
     }
 
-    private bool ShouldProcessUnidentifiedItem(BaseItem item)
+    private bool ShouldProcessAiItem(BaseItem item, BaseItemKind itemKind)
     {
         if (item is null)
         {
@@ -519,7 +527,17 @@ public class AiMetadataController : BaseMulletaFlixApiController
             return false;
         }
 
-        return item.ProviderIds is null || item.ProviderIds.Count == 0;
+        if (itemKind is BaseItemKind.Book or BaseItemKind.LiveTvChannel)
+        {
+            return true;
+        }
+
+        if (item.ProviderIds is not null && item.ProviderIds.Count > 0)
+        {
+            return false;
+        }
+
+        return item is Movie or Series ? LooksLikeUnidentifiedMedia(item) : true;
     }
 
     private static bool LooksLikeUnidentifiedMedia(BaseItem item)
@@ -834,7 +852,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 $"Correspondencia remota rejeitada para '{best.Name}' por baixa similaridade com o titulo original.");
         }
 
-        await ApplyRemoteSearchResultAsync(item, best, configuration, cancellationToken).ConfigureAwait(false);
+        await ApplyBookRemoteSearchResultAsync(item, best, cancellationToken).ConfigureAwait(false);
         await EnsureBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
         return AiMetadataItemResult.CreateApplied(
             "Livro",
@@ -850,6 +868,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     {
         var lookupInfo = item.GetLookupInfo();
         ApplyImdbIdIfAvailable(item, lookupInfo);
+        ApplyBookIdentifierHints(item, lookupInfo);
 
         foreach (var attempt in BuildBookSearchAttempts(item, normalized))
         {
@@ -882,6 +901,15 @@ public class AiMetadataController : BaseMulletaFlixApiController
         return null;
     }
 
+    private static void ApplyBookIdentifierHints(BaseItem item, ItemLookupInfo lookupInfo)
+    {
+        var isbn = GetIsbn(item);
+        if (!string.IsNullOrWhiteSpace(isbn))
+        {
+            lookupInfo.ProviderIds["ISBN"] = isbn;
+        }
+    }
+
     private static void ApplyImdbIdIfAvailable(BaseItem item, ItemLookupInfo lookupInfo)
     {
         var imdbId = GetImdbId(item);
@@ -911,6 +939,31 @@ public class AiMetadataController : BaseMulletaFlixApiController
             if (match.Success)
             {
                 return match.Value.ToLowerInvariant();
+            }
+        }
+
+        return null;
+    }
+
+    private static string? GetIsbn(BaseItem item)
+    {
+        foreach (var candidate in new[] { item.ProviderIds?.GetValueOrDefault("ISBN"), item.Name, item.OriginalTitle, item.Path })
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                continue;
+            }
+
+            var match = IsbnPattern.Match(candidate);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            var isbn = Regex.Replace(match.Value, @"[-\s]", string.Empty, RegexOptions.CultureInvariant);
+            if (isbn.Length is 10 or 13)
+            {
+                return isbn;
             }
         }
 
@@ -955,6 +1008,28 @@ public class AiMetadataController : BaseMulletaFlixApiController
         await EnsureBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
     }
 
+    private async Task ApplyBookRemoteSearchResultAsync(
+        Book item,
+        RemoteSearchResult result,
+        CancellationToken cancellationToken)
+    {
+        item.ProviderIds = result.ProviderIds;
+
+        var options = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
+        {
+            MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
+            ImageRefreshMode = MetadataRefreshMode.FullRefresh,
+            ReplaceAllMetadata = true,
+            ReplaceAllImages = true,
+            RemoveOldMetadata = true,
+            ForceSave = true,
+            IsAutomated = true,
+            SearchResult = result
+        };
+
+        await _providerManager.RefreshFullItem(item, options, cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task EnsureBookChaptersAsync(Book item, CancellationToken cancellationToken)
     {
         var chapters = await BuildBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
@@ -964,7 +1039,10 @@ public class AiMetadataController : BaseMulletaFlixApiController
         }
 
         var currentRuntimeTicks = item.RunTimeTicks.GetValueOrDefault();
-        var runtimeTicks = Math.Max(currentRuntimeTicks, TimeSpan.FromMinutes(chapters.Count + 1).Ticks);
+        var requiredRuntimeTicks = Math.Max(
+            chapters.Max(chapter => chapter.StartPositionTicks) + TimeSpan.FromMinutes(1).Ticks,
+            TimeSpan.FromMinutes(chapters.Count + 1).Ticks);
+        var runtimeTicks = Math.Max(currentRuntimeTicks, requiredRuntimeTicks);
         if (currentRuntimeTicks != runtimeTicks)
         {
             item.RunTimeTicks = runtimeTicks;
@@ -976,11 +1054,32 @@ public class AiMetadataController : BaseMulletaFlixApiController
 
     private async Task<IReadOnlyList<ChapterInfo>> BuildBookChaptersAsync(Book item, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(item.Path) || !string.Equals(Path.GetExtension(item.Path), ".epub", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(item.Path))
         {
             return [];
         }
 
+        var extension = Path.GetExtension(item.Path);
+        if (string.Equals(extension, ".epub", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BuildEpubBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (string.Equals(extension, ".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BuildPdfBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (IsTextBasedBookExtension(extension))
+        {
+            return await BuildTextBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
+        }
+
+        return [];
+    }
+
+    private async Task<IReadOnlyList<ChapterInfo>> BuildEpubBookChaptersAsync(Book item, CancellationToken cancellationToken)
+    {
         try
         {
             using var epub = ZipFile.OpenRead(item.Path);
@@ -1058,6 +1157,147 @@ public class AiMetadataController : BaseMulletaFlixApiController
         {
             return [];
         }
+    }
+
+    private async Task<IReadOnlyList<ChapterInfo>> BuildPdfBookChaptersAsync(Book item, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var document = PdfDocument.Open(item.Path);
+            var chapters = new List<ChapterInfo>();
+            var lastHeading = string.Empty;
+            var pageIndex = 0;
+
+            foreach (var page in document.GetPages())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var text = ContentOrderTextExtractor.GetText(page);
+                var heading = TryExtractBookChapterHeading(text);
+                if (!string.IsNullOrWhiteSpace(heading)
+                    && !string.Equals(heading, lastHeading, StringComparison.OrdinalIgnoreCase))
+                {
+                    chapters.Add(new ChapterInfo
+                    {
+                        StartPositionTicks = TimeSpan.FromMinutes(pageIndex).Ticks,
+                        Name = heading
+                    });
+                    lastHeading = heading;
+                }
+
+                pageIndex++;
+            }
+
+            return chapters;
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private async Task<IReadOnlyList<ChapterInfo>> BuildTextBookChaptersAsync(Book item, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var text = await System.IO.File.ReadAllTextAsync(item.Path, cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return [];
+            }
+
+            if (ShouldStripMarkup(Path.GetExtension(item.Path)))
+            {
+                text = Regex.Replace(text, @"<script[\s\S]*?</script>|<style[\s\S]*?</style>|<[^>]+>", "\n", RegexOptions.IgnoreCase);
+            }
+
+            var chapters = new List<ChapterInfo>();
+            var lastHeading = string.Empty;
+            var lines = text
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Replace('\r', '\n')
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            for (var index = 0; index < lines.Length; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var heading = TryExtractBookChapterHeading(lines[index]);
+                if (string.IsNullOrWhiteSpace(heading)
+                    || string.Equals(heading, lastHeading, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                chapters.Add(new ChapterInfo
+                {
+                    StartPositionTicks = TimeSpan.FromMinutes(chapters.Count).Ticks,
+                    Name = heading
+                });
+                lastHeading = heading;
+            }
+
+            return chapters;
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static bool IsTextBasedBookExtension(string? extension)
+    {
+        return string.Equals(extension, ".txt", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".md", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".html", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".htm", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".xhtml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".xml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".fb2", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".epub", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ShouldStripMarkup(string? extension)
+    {
+        return string.Equals(extension, ".html", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".htm", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".xhtml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".xml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".fb2", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? TryExtractBookChapterHeading(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var line = NormalizeDisplayTitle(text).Trim();
+        if (line.Length < 3)
+        {
+            return null;
+        }
+
+        if (line.Length > 120)
+        {
+            return null;
+        }
+
+        var match = ChapterHeadingPattern.Match(line);
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        var title = match.Groups["title"].Value.Trim();
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            title = line;
+        }
+
+        title = Regex.Replace(title, @"\s{2,}", " ", RegexOptions.CultureInvariant);
+        return NormalizeDisplayTitle(title);
     }
 
     private async Task<string?> TryReadEpubSectionTitleAsync(

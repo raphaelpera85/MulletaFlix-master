@@ -199,6 +199,12 @@ namespace Emby.Server.Implementations.Localization
                 return mappedLanguage;
             }
 
+            var installedLanguage = CultureInfo.InstalledUICulture.TwoLetterISOLanguageName;
+            if (!string.IsNullOrWhiteSpace(installedLanguage))
+            {
+                return installedLanguage;
+            }
+
             var configuredLanguage = _configurationManager.Configuration.PreferredMetadataLanguage;
             if (!string.IsNullOrWhiteSpace(configuredLanguage))
             {

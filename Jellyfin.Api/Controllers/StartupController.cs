@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Threading.Tasks;
 using MulletaFlix.Api.Models.StartupDtos;
 using MediaBrowser.Common.Api;
@@ -61,7 +62,11 @@ public class StartupController : BaseMulletaFlixApiController
     [Obsolete("Use configuration endpoints")]
     public ActionResult<StartupConfigurationDto> GetStartupConfiguration()
     {
-        var metadataCountryCode = _config.Configuration.MetadataCountryCode ?? string.Empty;
+        var metadataCountryCode = _config.Configuration.MetadataCountryCode;
+        if (string.IsNullOrWhiteSpace(metadataCountryCode))
+        {
+            metadataCountryCode = GetInstalledMetadataCountryCode();
+        }
         var preferredMetadataLanguage = _config.Configuration.PreferredMetadataLanguage;
         if (string.IsNullOrWhiteSpace(preferredMetadataLanguage))
         {
@@ -90,13 +95,29 @@ public class StartupController : BaseMulletaFlixApiController
     {
         _config.Configuration.ServerName = string.IsNullOrWhiteSpace(startupConfiguration.ServerName) ? DefaultServerName : startupConfiguration.ServerName;
         _config.Configuration.UICulture = startupConfiguration.UICulture ?? string.Empty;
-        var metadataCountryCode = startupConfiguration.MetadataCountryCode ?? string.Empty;
+        var metadataCountryCode = startupConfiguration.MetadataCountryCode;
+        if (string.IsNullOrWhiteSpace(metadataCountryCode))
+        {
+            metadataCountryCode = GetInstalledMetadataCountryCode();
+        }
         _config.Configuration.MetadataCountryCode = metadataCountryCode;
         _config.Configuration.PreferredMetadataLanguage = string.IsNullOrWhiteSpace(startupConfiguration.PreferredMetadataLanguage)
             ? _localizationManager.GetDefaultMetadataLanguage(metadataCountryCode)
             : startupConfiguration.PreferredMetadataLanguage;
         _config.SaveConfiguration();
         return NoContent();
+    }
+
+    private static string GetInstalledMetadataCountryCode()
+    {
+        try
+        {
+            return new RegionInfo(CultureInfo.InstalledUICulture.Name).TwoLetterISORegionName;
+        }
+        catch (ArgumentException)
+        {
+            return string.Empty;
+        }
     }
 
     /// <summary>
