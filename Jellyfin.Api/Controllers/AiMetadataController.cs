@@ -74,6 +74,10 @@ public class AiMetadataController : BaseMulletaFlixApiController
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly TimeSpan ItemProcessingTimeout = TimeSpan.FromMinutes(3);
+    private static readonly TimeSpan BookConsensusTimeout = TimeSpan.FromSeconds(45);
+    private static readonly TimeSpan BookSearchTimeout = TimeSpan.FromSeconds(45);
+    private static readonly TimeSpan BookRefreshTimeout = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan BookChapterTimeout = TimeSpan.FromSeconds(30);
 
     private readonly IServerConfigurationManager _configurationManager;
     private readonly IProviderManager _providerManager;
@@ -439,7 +443,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                     failed++;
                     UpdateActivity(activityId, _ => { }, $"[{item.TypeName}] tempo limite excedido em {item.Name}.");
                 }
-                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UriFormatException)
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException or UriFormatException or TimeoutException)
                 {
                     failed++;
                     UpdateActivity(activityId, _ => { }, $"[{item.TypeName}] falhou: {ex.Message}");
@@ -875,9 +879,20 @@ public class AiMetadataController : BaseMulletaFlixApiController
         CancellationToken cancellationToken)
     {
         UpdateItemProgress(activityId, "Consenso de titulo", 10, 10, $"[Livro] consenso de titulo em {item.Name}");
-        var normalized = await BuildConsensusNormalizationAsync(item, "Livro", providers, cancellationToken).ConfigureAwait(false);
+        var normalized = await RunBookPhaseAsync(
+            activityId,
+            "Consenso de titulo",
+            BookConsensusTimeout,
+            token => BuildConsensusNormalizationAsync(item, "Livro", providers, token),
+            cancellationToken).ConfigureAwait(false);
+
         UpdateItemProgress(activityId, "Busca OpenLibrary", 45, 30, $"[Livro] busca de metadados em {item.Name}");
-        var best = await SearchBookAsync(item, normalized, cancellationToken).ConfigureAwait(false);
+        var best = await RunBookPhaseAsync(
+            activityId,
+            "Busca OpenLibrary",
+            BookSearchTimeout,
+            token => SearchBookAsync(item, normalized, token),
+            cancellationToken).ConfigureAwait(false);
 
         if (best is null)
         {
@@ -885,7 +900,13 @@ public class AiMetadataController : BaseMulletaFlixApiController
             item.Name = normalized.NormalizedTitle;
             item.SortName = null;
             await item.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
-            await RefreshBookMetadataAsync(item, cancellationToken).ConfigureAwait(false);
+            await RunBookPhaseAsync(
+                activityId,
+                "Atualizando metadados locais",
+                BookRefreshTimeout,
+                token => RefreshBookMetadataAsync(item, token),
+                cancellationToken).ConfigureAwait(false);
+
             return AiMetadataItemResult.CreateApplied(
                 "Livro",
                 item.Name,
@@ -902,13 +923,67 @@ public class AiMetadataController : BaseMulletaFlixApiController
         }
 
         UpdateItemProgress(activityId, "Aplicando capa e capitulos", 100, 92, $"[{item.Name}] aplicando metadados e capa.");
-        await ApplyBookRemoteSearchResultAsync(item, best, cancellationToken).ConfigureAwait(false);
-        await EnsureBookChaptersAsync(item, cancellationToken).ConfigureAwait(false);
+        await RunBookPhaseAsync(
+            activityId,
+            "Aplicando metadados e capa",
+            BookRefreshTimeout,
+            token => ApplyBookRemoteSearchResultAsync(item, best, token),
+            cancellationToken).ConfigureAwait(false);
+
+        await RunBookPhaseAsync(
+            activityId,
+            "Mapeando capitulos",
+            BookChapterTimeout,
+            token => EnsureBookChaptersAsync(item, token),
+            cancellationToken).ConfigureAwait(false);
+
         return AiMetadataItemResult.CreateApplied(
             "Livro",
             item.Name,
             $"Atualizado com '{best.Name}' (score {best.Score:0.0}).",
             $"[{item.Name}] atualizado para '{best.Name}' usando consenso e busca remota.");
+    }
+
+    private async Task<T> RunBookPhaseAsync<T>(
+        string activityId,
+        string phase,
+        TimeSpan timeout,
+        Func<CancellationToken, Task<T>> action,
+        CancellationToken cancellationToken)
+    {
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(timeout);
+
+        try
+        {
+            return await action(timeoutSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            UpdateActivity(activityId, _ => { }, $"{phase} excedeu {timeout.TotalSeconds:0}s e foi interrompida para evitar travamento.");
+            throw new TimeoutException($"{phase} excedeu {timeout.TotalSeconds:0}s.");
+        }
+    }
+
+    private async Task RunBookPhaseAsync(
+        string activityId,
+        string phase,
+        TimeSpan timeout,
+        Func<CancellationToken, Task> action,
+        CancellationToken cancellationToken)
+    {
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(timeout);
+
+        try
+        {
+            await action(timeoutSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            UpdateActivity(activityId, _ => { }, $"{phase} excedeu {timeout.TotalSeconds:0}s e foi interrompida para evitar travamento.");
+            throw new TimeoutException($"{phase} excedeu {timeout.TotalSeconds:0}s.");
+        }
     }
 
     private async Task<RemoteSearchResult?> SearchBookAsync(
