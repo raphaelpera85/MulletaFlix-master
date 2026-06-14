@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -242,20 +243,24 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                 return results;
             }
 
-            var url = $"https://openlibrary.org/search.json?q={query.Replace(" ", "+", StringComparison.Ordinal)}&limit=10";
-
             try
             {
-                using var response = await _httpClientFactory.CreateClient(NamedClient.Default)
-                    .GetAsync(url, cancellationToken)
-                    .ConfigureAwait(false);
-
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                var searchResult = JsonSerializer.Deserialize<OpenLibrarySearchResult>(json);
-
-                if (searchResult?.Docs is not null)
+                foreach (var searchQuery in BuildSearchQueries(query))
                 {
+                    var url = $"https://openlibrary.org/search.json?q={Uri.EscapeDataString(searchQuery)}&limit=10";
+                    using var response = await _httpClientFactory.CreateClient(NamedClient.Default)
+                        .GetAsync(url, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    response.EnsureSuccessStatusCode();
+                    var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                    var searchResult = JsonSerializer.Deserialize<OpenLibrarySearchResult>(json);
+
+                    if (searchResult?.Docs is null)
+                    {
+                        continue;
+                    }
+
                     foreach (var doc in searchResult.Docs)
                     {
                         var item = new RemoteSearchResult
@@ -300,7 +305,12 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                             item.SetProviderId("OpenLibrary", olid);
                         }
 
-                        results.Add(item);
+                        AddSearchResultIfMissing(results, item);
+                    }
+
+                    if (results.Count > 0)
+                    {
+                        break;
                     }
                 }
             }
@@ -310,6 +320,74 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
             }
 
             return results;
+        }
+
+        private static IEnumerable<string> BuildSearchQueries(string query)
+        {
+            var clean = NormalizeSearchText(query);
+            var withoutDiacritics = RemoveDiacritics(clean);
+
+            foreach (var candidate in new[] { query, clean, withoutDiacritics })
+            {
+                if (!string.IsNullOrWhiteSpace(candidate))
+                {
+                    yield return candidate;
+                }
+            }
+
+            foreach (var part in clean.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (part.Length > 2)
+                {
+                    yield return part;
+                    yield return RemoveDiacritics(part);
+                }
+            }
+
+            var punctuationFree = Regex.Replace(withoutDiacritics, @"[^\p{L}\p{N}\s]+", " ", RegexOptions.CultureInvariant);
+            punctuationFree = Regex.Replace(punctuationFree, @"\s{2,}", " ", RegexOptions.CultureInvariant).Trim();
+            if (!string.IsNullOrWhiteSpace(punctuationFree))
+            {
+                yield return punctuationFree;
+            }
+        }
+
+        private static string NormalizeSearchText(string value)
+        {
+            var normalized = Regex.Replace(value, @"\s+", " ", RegexOptions.CultureInvariant).Trim();
+            normalized = Regex.Replace(normalized, @"\s*[-–—]\s*", " ", RegexOptions.CultureInvariant).Trim();
+            return normalized;
+        }
+
+        private static string RemoveDiacritics(string text)
+        {
+            var normalized = text.Normalize(NormalizationForm.FormD);
+            var builder = new StringBuilder(normalized.Length);
+
+            foreach (var character in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+                {
+                    builder.Append(character);
+                }
+            }
+
+            return builder.ToString().Normalize(NormalizationForm.FormC);
+        }
+
+        private static void AddSearchResultIfMissing(ICollection<RemoteSearchResult> results, RemoteSearchResult item)
+        {
+            var openLibraryId = item.GetProviderId("OpenLibrary");
+            var isbn = item.GetProviderId("ISBN");
+            if (results.Any(existing =>
+                    (!string.IsNullOrWhiteSpace(openLibraryId) && string.Equals(existing.GetProviderId("OpenLibrary"), openLibraryId, StringComparison.OrdinalIgnoreCase))
+                    || (!string.IsNullOrWhiteSpace(isbn) && string.Equals(existing.GetProviderId("ISBN"), isbn, StringComparison.OrdinalIgnoreCase))
+                    || string.Equals(existing.Name, item.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            results.Add(item);
         }
 
         private void PopulateMetadata(MetadataResult<Book> result, JsonElement bookEntry)
