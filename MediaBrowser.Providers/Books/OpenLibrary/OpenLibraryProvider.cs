@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging;
 
 namespace MediaBrowser.Providers.Books.OpenLibrary
 {
-    public class OpenLibraryProvider : IRemoteMetadataProvider<Book, BookInfo>, IHasOrder
+    public class OpenLibraryProvider : IRemoteMetadataProvider<Book, BookInfo>, IRemoteImageProvider, IHasOrder
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<OpenLibraryProvider> _logger;
@@ -33,14 +33,66 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
 
         public int Order => 0;
 
+        public bool Supports(BaseItem item)
+        {
+            return item is Book;
+        }
+
+        public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
+        {
+            yield return ImageType.Primary;
+        }
+
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
+        {
+            if (item is not Book)
+            {
+                return Enumerable.Empty<RemoteImageInfo>();
+            }
+
+            var images = new List<RemoteImageInfo>();
+
+            var openLibraryId = item.GetProviderId("OpenLibrary");
+            if (!string.IsNullOrWhiteSpace(openLibraryId))
+            {
+                var metadata = await GetMetadataByOpenLibraryId(openLibraryId, cancellationToken).ConfigureAwait(false);
+                AddRemoteImages(images, metadata);
+            }
+
+            var isbn = item.GetProviderId("ISBN");
+            if (images.Count == 0 && !string.IsNullOrWhiteSpace(isbn))
+            {
+                var metadata = await GetMetadataByIsbn(isbn, cancellationToken).ConfigureAwait(false);
+                AddRemoteImages(images, metadata);
+
+                var cleanIsbn = isbn.Replace("-", string.Empty, StringComparison.Ordinal).Replace(" ", string.Empty, StringComparison.Ordinal);
+                AddImageIfMissing(images, $"https://covers.openlibrary.org/b/isbn/{cleanIsbn}-L.jpg?default=false");
+            }
+
+            if (images.Count == 0 && !string.IsNullOrWhiteSpace(item.Name))
+            {
+                var metadata = await GetMetadataBySearch(item.Name, cancellationToken).ConfigureAwait(false);
+                AddRemoteImages(images, metadata);
+            }
+
+            return images;
+        }
+
         public async Task<MetadataResult<Book>> GetMetadata(BookInfo info, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<Book>();
             var isbn = info.GetProviderId("ISBN");
+            var openLibraryId = info.GetProviderId("OpenLibrary");
 
             if (!string.IsNullOrWhiteSpace(isbn))
             {
                 result = await GetMetadataByIsbn(isbn, cancellationToken).ConfigureAwait(false);
+                if (result.HasMetadata && !string.IsNullOrWhiteSpace(openLibraryId))
+                {
+                    var openLibraryMetadata = await GetMetadataByOpenLibraryId(openLibraryId, cancellationToken).ConfigureAwait(false);
+                    MergeSupplementalMetadata(result, openLibraryMetadata);
+                }
+
                 if (result.HasMetadata)
                 {
                     result.QueriedById = true;
@@ -48,7 +100,6 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                 }
             }
 
-            var openLibraryId = info.GetProviderId("OpenLibrary");
             if (!string.IsNullOrWhiteSpace(openLibraryId))
             {
                 result = await GetMetadataByOpenLibraryId(openLibraryId, cancellationToken).ConfigureAwait(false);
@@ -147,13 +198,19 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
 
             MetadataResult<Book> metadata;
 
-            if (best.ProviderIds.TryGetValue("ISBN", out var isbn))
-            {
-                metadata = await GetMetadataByIsbn(isbn, cancellationToken).ConfigureAwait(false);
-            }
-            else if (best.ProviderIds.TryGetValue("OpenLibrary", out var openLibraryId))
+            if (best.ProviderIds.TryGetValue("OpenLibrary", out var openLibraryId))
             {
                 metadata = await GetMetadataByOpenLibraryId(openLibraryId, cancellationToken).ConfigureAwait(false);
+
+                if (best.ProviderIds.TryGetValue("ISBN", out var isbn))
+                {
+                    var isbnMetadata = await GetMetadataByIsbn(isbn, cancellationToken).ConfigureAwait(false);
+                    MergeSupplementalMetadata(metadata, isbnMetadata);
+                }
+            }
+            else if (best.ProviderIds.TryGetValue("ISBN", out var isbn))
+            {
+                metadata = await GetMetadataByIsbn(isbn, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -401,6 +458,15 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
             result.Item = new Book();
             result.HasMetadata = true;
 
+            if (workEntry.TryGetProperty("key", out var key))
+            {
+                var openLibraryId = key.GetString()?.Replace("/works/", string.Empty, StringComparison.Ordinal);
+                if (!string.IsNullOrWhiteSpace(openLibraryId))
+                {
+                    result.Item.SetProviderId("OpenLibrary", openLibraryId);
+                }
+            }
+
             if (workEntry.TryGetProperty("title", out var title))
             {
                 result.Item.Name = title.GetString() ?? string.Empty;
@@ -453,6 +519,7 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
             if (workEntry.TryGetProperty("covers", out var covers) && covers.ValueKind == JsonValueKind.Array)
             {
                 var coverId = covers.EnumerateArray()
+                    .Where(item => item.ValueKind == JsonValueKind.Number)
                     .Select(item => item.GetInt32())
                     .FirstOrDefault(id => id > 0);
 
@@ -466,6 +533,78 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken);
+        }
+
+        private void AddRemoteImages(ICollection<RemoteImageInfo> images, MetadataResult<Book> metadata)
+        {
+            foreach (var remoteImage in metadata.RemoteImages.Where(image => image.Type == ImageType.Primary))
+            {
+                AddImageIfMissing(images, remoteImage.Url);
+            }
+        }
+
+        private void AddImageIfMissing(ICollection<RemoteImageInfo> images, string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)
+                || images.Any(image => string.Equals(image.Url, url, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            images.Add(new RemoteImageInfo
+            {
+                ProviderName = Name,
+                Url = url,
+                ThumbnailUrl = url.Replace("-L.jpg", "-M.jpg", StringComparison.OrdinalIgnoreCase),
+                Type = ImageType.Primary
+            });
+        }
+
+        private static void MergeSupplementalMetadata(MetadataResult<Book> target, MetadataResult<Book> source)
+        {
+            if (!target.HasMetadata || !source.HasMetadata || target.Item is null || source.Item is null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(target.Item.Overview))
+            {
+                target.Item.Overview = source.Item.Overview;
+            }
+
+            target.Item.PremiereDate ??= source.Item.PremiereDate;
+            target.Item.ProductionYear ??= source.Item.ProductionYear;
+
+            foreach (var providerId in source.Item.ProviderIds)
+            {
+                if (!target.Item.ProviderIds.ContainsKey(providerId.Key))
+                {
+                    target.Item.SetProviderId(providerId.Key, providerId.Value);
+                }
+            }
+
+            foreach (var genre in source.Item.Genres)
+            {
+                target.Item.AddGenre(genre);
+            }
+
+            foreach (var studio in source.Item.Studios)
+            {
+                target.Item.AddStudio(studio);
+            }
+
+            foreach (var person in source.People ?? [])
+            {
+                target.AddPerson(person);
+            }
+
+            foreach (var image in source.RemoteImages)
+            {
+                if (!target.RemoteImages.Any(existing => string.Equals(existing.Url, image.Url, StringComparison.OrdinalIgnoreCase)))
+                {
+                    target.RemoteImages.Add(image);
+                }
+            }
         }
 
         private static string NormalizeOpenLibraryId(string olId)
