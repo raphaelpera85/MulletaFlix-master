@@ -237,7 +237,6 @@ public class AiMetadataController : BaseMulletaFlixApiController
     /// </summary>
     /// <response code="200">Active AI metadata run cancelled.</response>
     [HttpPost("Stop")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<AiMetadataActivityItemDto> StopRun()
     {
