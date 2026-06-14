@@ -62,6 +62,8 @@ namespace MulletaFlix.Server
         private static bool _restartOnShutdown;
         private static IStartupLogger<MulletaFlixMigrationService>? _migrationLogger;
         private static string? _restoreFromBackup;
+        private static int _configuredWorkerThreads;
+        private static int _configuredCompletionPortThreads;
 
         /// <summary>
         /// The entry point of the application.
@@ -83,6 +85,7 @@ namespace MulletaFlix.Server
 
         private static async Task StartApp(StartupOptions options)
         {
+            ConfigureThreadPool();
             _restoreFromBackup = options.RestoreArchive;
             _startTimestamp = Stopwatch.GetTimestamp();
             ServerApplicationPaths appPaths = StartupHelpers.CreateApplicationPaths(options);
@@ -112,6 +115,10 @@ namespace MulletaFlix.Server
             _logger.LogInformation(
                 "MulletaFlix version: {Version}",
                 Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3));
+            _logger.LogInformation(
+                "ThreadPool minimum threads configured. WorkerThreads: {WorkerThreads}; CompletionPortThreads: {CompletionPortThreads}",
+                _configuredWorkerThreads,
+                _configuredCompletionPortThreads);
 
             StartupHelpers.LogEnvironmentInfo(_logger, appPaths);
 
@@ -152,6 +159,24 @@ namespace MulletaFlix.Server
             } while (_restartOnShutdown);
 
             _setupServer.Dispose();
+        }
+
+        private static void ConfigureThreadPool()
+        {
+            ThreadPool.GetMinThreads(out var currentWorkerThreads, out var currentCompletionPortThreads);
+
+            var desiredWorkerThreads = Math.Clamp(Environment.ProcessorCount * 16, 64, 512);
+            var configuredValue = Environment.GetEnvironmentVariable("MulletaFlix_THREADPOOL_MIN_THREADS");
+            if (int.TryParse(configuredValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var configuredThreads))
+            {
+                desiredWorkerThreads = Math.Clamp(configuredThreads, 16, 2048);
+            }
+
+            var desiredCompletionPortThreads = Math.Clamp(desiredWorkerThreads / 2, 32, 512);
+
+            _configuredWorkerThreads = Math.Max(currentWorkerThreads, desiredWorkerThreads);
+            _configuredCompletionPortThreads = Math.Max(currentCompletionPortThreads, desiredCompletionPortThreads);
+            ThreadPool.SetMinThreads(_configuredWorkerThreads, _configuredCompletionPortThreads);
         }
 
         private static async Task StartServer(IServerApplicationPaths appPaths, StartupOptions options, IConfiguration startupConfig)
