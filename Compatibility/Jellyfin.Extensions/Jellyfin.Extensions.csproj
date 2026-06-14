@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Jellyfin.Extensions</AssemblyName>
+    <RootNamespace>Jellyfin.Extensions</RootNamespace>
+    <AssemblyVersion>10.11.6.0</AssemblyVersion>
+    <FileVersion>10.11.6.0</FileVersion>
+    <Version>10.11.6</Version>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

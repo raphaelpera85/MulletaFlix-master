@@ -1,0 +1,35 @@
+namespace Jellyfin.Data.Enums;
+
+public enum ItemSortBy
+{
+    Default = 0,
+    AiredEpisodeOrder = 1,
+    Album = 2,
+    AlbumArtist = 3,
+    Artist = 4,
+    DateCreated = 5,
+    OfficialRating = 6,
+    DatePlayed = 7,
+    PremiereDate = 8,
+    StartDate = 9,
+    SortName = 10,
+    Name = 11,
+    Random = 12,
+    Runtime = 13,
+    CommunityRating = 14,
+    ProductionYear = 15,
+    PlayCount = 16,
+    CriticRating = 17,
+    IsFolder = 18,
+    IsUnplayed = 19,
+    IsPlayed = 20,
+    SeriesSortName = 21,
+    VideoBitRate = 22,
+    AirTime = 23,
+    Studio = 24,
+    IsFavoriteOrLiked = 25,
+    DateLastContentAdded = 26,
+    SeriesDatePlayed = 27,
+    ParentIndexNumber = 28,
+    IndexNumber = 29
+}
