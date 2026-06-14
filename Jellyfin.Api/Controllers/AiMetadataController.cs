@@ -236,11 +236,9 @@ public class AiMetadataController : BaseMulletaFlixApiController
     /// Stops the active AI metadata activity run.
     /// </summary>
     /// <response code="200">Active AI metadata run cancelled.</response>
-    /// <response code="404">No active AI metadata run was found.</response>
     [HttpPost("Stop")]
     [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<AiMetadataActivityItemDto> StopRun()
     {
         string? activityId;
@@ -250,24 +248,51 @@ public class AiMetadataController : BaseMulletaFlixApiController
         {
             activityId = ActiveRunActivityId;
             cancellationSource = ActiveRunCancellation;
+        }
 
-            if (activityId is null || cancellationSource is null)
+        if (activityId is null)
+        {
+            activityId = GetLatestActiveActivityId();
+        }
+
+        if (activityId is null)
+        {
+            return Ok(new AiMetadataActivityItemDto
             {
-                return NotFound(new
-                {
-                    message = "Nao existe execucao de IA em andamento."
-                });
-            }
+                Id = Guid.NewGuid().ToString("N"),
+                Status = "Completed",
+                CurrentStep = "Nenhuma execucao ativa",
+                CurrentPhase = "Parado",
+                Progress = 100,
+                PhaseProgress = 100,
+                Summary = "Nao existe execucao de IA em andamento."
+            });
         }
 
         UpdateActivity(activityId, activity =>
         {
             activity.Status = "Stopping";
             activity.CurrentStep = "Cancelamento solicitado";
+            activity.CurrentPhase = "Cancelando";
+            activity.PhaseProgress = 100;
             activity.Summary = "A parada da execucao foi solicitada.";
         }, "Solicitacao de parada recebida. Cancelando execucao atual.");
 
-        cancellationSource.Cancel();
+        if (cancellationSource is null)
+        {
+            MarkActivityCancelledWithoutActiveToken(activityId);
+        }
+        else
+        {
+            try
+            {
+                cancellationSource.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                MarkActivityCancelledWithoutActiveToken(activityId);
+            }
+        }
 
         AiMetadataActivityItemDto? activity;
         lock (ActivityLock)
@@ -283,6 +308,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 Status = "Stopping",
                 CurrentStep = "Cancelamento solicitado",
                 CurrentPhase = "Cancelando",
+                PhaseProgress = 100,
                 Summary = "A parada da execucao foi solicitada."
             });
     }
@@ -1715,6 +1741,43 @@ public class AiMetadataController : BaseMulletaFlixApiController
             {
                 Activity.RemoveRange(0, Activity.Count - 50);
             }
+        }
+    }
+
+    private static string? GetLatestActiveActivityId()
+    {
+        lock (ActivityLock)
+        {
+            return Activity
+                .Where(item => string.Equals(item.Status, "Queued", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(item.Status, "Running", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(item.Status, "Stopping", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(item => item.UpdatedAt)
+                .Select(item => item.Id)
+                .FirstOrDefault();
+        }
+    }
+
+    private static void MarkActivityCancelledWithoutActiveToken(string activityId)
+    {
+        UpdateActivity(activityId, activity =>
+        {
+            activity.Status = "Cancelled";
+            activity.CurrentStep = "Cancelado";
+            activity.CurrentPhase = "Cancelado";
+            activity.Progress = 100;
+            activity.PhaseProgress = 100;
+            activity.Summary = "A execucao foi marcada como cancelada porque nao havia processo ativo associado.";
+        }, "Execucao marcada como cancelada; nenhum token ativo estava associado a esta atividade.");
+
+        lock (RunStateLock)
+        {
+            if (string.Equals(ActiveRunActivityId, activityId, StringComparison.OrdinalIgnoreCase))
+            {
+                ActiveRunActivityId = null;
+            }
+
+            ActiveRunCancellation = null;
         }
     }
 
