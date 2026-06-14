@@ -960,11 +960,8 @@ namespace MediaBrowser.Providers.Manager
             var searchName = searchInfo.SearchInfo.Name;
             if (!string.IsNullOrWhiteSpace(searchName))
             {
-                searchName = Regex.Replace(searchName, @"\s*[\(\[]?\d{4}[\)\]]?\s*", " ");
-                searchName = searchName.Replace(":", " - ", StringComparison.Ordinal);
-                searchName = Regex.Replace(searchName, @"[^\p{L}\p{N}\s\-]", " ");
-                searchName = Regex.Replace(searchName, @"\s+", " ").Trim().Trim('-');
-                searchInfo.SearchInfo.Name = searchName;
+                searchInfo.SearchInfo.Name = NormalizeRemoteSearchName(searchName, searchInfo.SearchInfo.Year, out var parsedYear);
+                searchInfo.SearchInfo.Year ??= parsedYear;
             }
 
             var providerTasks = providers.Select(provider => RunProviderSearchAsync(provider, searchInfo, cancellationToken));
@@ -1013,6 +1010,36 @@ namespace MediaBrowser.Providers.Manager
             }
 
             return resultList;
+        }
+
+        private static string NormalizeRemoteSearchName(string name, int? existingYear, out int? parsedYear)
+        {
+            parsedYear = existingYear;
+            var cleaned = name.Trim();
+
+            var yearMatch = Regex.Match(cleaned, @"(?:^|[\s\(\[])(?<year>(?:19|20)\d{2})(?:$|[\s\)\]])");
+            if (!parsedYear.HasValue && yearMatch.Success && int.TryParse(yearMatch.Groups["year"].Value, CultureInfo.InvariantCulture, out var year))
+            {
+                parsedYear = year;
+            }
+
+            cleaned = Regex.Replace(cleaned, @"[\(\[]\s*(?:19|20)\d{2}\s*[\)\]]", " ");
+            cleaned = Regex.Replace(
+                cleaned,
+                @"(?i)[\(\[]\s*(?:LEG|DUB|DUBLADO|LEGENDADO|DUAL\s*AUDIO|PT[-_\s]?BR|PORTUGU[EÊ]S|SUBBED|SUB|MULTI|NACIONAL)\s*[\)\]]",
+                " ");
+            cleaned = Regex.Replace(
+                cleaned,
+                @"(?i)\b(?:LEG|DUB|DUBLADO|LEGENDADO|DUAL\s*AUDIO|PT[-_\s]?BR|PORTUGU[EÊ]S|SUBBED|SUB|MULTI|1080[pi]|2160[pi]|720[pi]|480[pi]|576[pi]|WEB[-_\s]?DL|WEBRip|Blu[-_\s]?Ray|BRRip|HDRip|DVDRip|DVD|HDTV|REMUX|REPACK|EXTENDED|x264|x265|h264|h265|HEVC|AVC|AV1|AAC|DTS|TRUEHD|ATMOS)\b",
+                " ");
+
+            cleaned = cleaned.Replace('.', ' ');
+            cleaned = cleaned.Replace('_', ' ');
+            cleaned = cleaned.Replace(':', ' ');
+            cleaned = Regex.Replace(cleaned, @"[^\p{L}\p{N}\s'\-]", " ");
+            cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim().Trim('-');
+
+            return string.IsNullOrWhiteSpace(cleaned) ? name.Trim() : cleaned;
         }
 
         private static double ComputeSearchScore(RemoteSearchResult result, string? queryName, int? queryYear)

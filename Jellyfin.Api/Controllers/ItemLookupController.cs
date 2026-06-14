@@ -13,6 +13,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
 using Microsoft.AspNetCore.Authorization;
@@ -276,6 +277,28 @@ public class ItemLookupController : BaseMulletaFlixApiController
                 RemoveOldMetadata = true
             },
             CancellationToken.None).ConfigureAwait(false);
+
+        if (replaceAllImages
+            && !item.HasImage(ImageType.Primary)
+            && !string.IsNullOrWhiteSpace(searchResult.ImageUrl))
+        {
+            try
+            {
+                await _providerManager.SaveImage(item, searchResult.ImageUrl, ImageType.Primary, null, CancellationToken.None)
+                    .ConfigureAwait(false);
+                await item.UpdateToRepositoryAsync(ItemUpdateType.ImageUpdate, CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Unable to save primary image fallback for item {ItemId}-{ItemName}: {ImageUrl}",
+                    item.Id,
+                    item.Name,
+                    searchResult.ImageUrl);
+            }
+        }
 
         return NoContent();
     }
