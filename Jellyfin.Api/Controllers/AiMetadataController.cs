@@ -55,6 +55,7 @@ namespace MulletaFlix.Api.Controllers;
 [Tags("AiMetadata")]
 public class AiMetadataController : BaseMulletaFlixApiController
 {
+    private const string DisabledMessage = "A funcionalidade de IA foi desativada no MulletaFlix.";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly object ActivityLock = new();
     private static readonly object RunStateLock = new();
@@ -137,7 +138,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<AiMetadataConfigurationDto> GetConfiguration()
     {
-        return ToDto(GetStoredConfiguration());
+        return StatusCode(StatusCodes.Status410Gone, new { message = DisabledMessage });
     }
 
     /// <summary>
@@ -151,11 +152,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public ActionResult UpdateConfiguration([FromBody, Required] AiMetadataConfigurationDto configuration)
     {
-        var current = GetStoredConfiguration();
-        var stored = FromDto(configuration, current);
-
-        _configurationManager.SaveConfiguration(AiMetadataConfiguration.ConfigurationKey, stored);
-        return NoContent();
+        return StatusCode(StatusCodes.Status410Gone, new { message = DisabledMessage });
     }
 
     /// <summary>
@@ -167,14 +164,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<IReadOnlyList<AiMetadataActivityItemDto>> GetActivity()
     {
-        lock (ActivityLock)
-        {
-            return Activity
-                .OrderByDescending(item => item.CreatedAt)
-                .Take(50)
-                .Select(CloneActivity)
-                .ToArray();
-        }
+        return StatusCode(StatusCodes.Status410Gone, new { message = DisabledMessage });
     }
 
     /// <summary>
@@ -189,66 +179,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     [Consumes(MediaTypeNames.Application.Json)]
     public ActionResult<AiMetadataActivityItemDto> StartRun([FromBody] AiMetadataRunRequest? request)
     {
-        var configuration = GetStoredConfiguration();
-        var providers = configuration.Providers
-            .Where(provider => provider.Enabled)
-            .ToImmutableArray();
-        var mediaTypes = GetEnabledMediaTypes(configuration).ToImmutableArray();
-        var now = DateTimeOffset.UtcNow;
-        CancellationTokenSource runCancellation;
-
-        lock (RunStateLock)
-        {
-            if (ActiveRunCancellation is not null)
-            {
-                return Conflict(new
-                {
-                    message = "Ja existe uma execucao de IA em andamento."
-                });
-            }
-
-            runCancellation = new CancellationTokenSource();
-            ActiveRunCancellation = runCancellation;
-        }
-
-        var activity = new AiMetadataActivityItemDto
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            CreatedAt = now,
-            UpdatedAt = now,
-            Status = "Queued",
-            Title = "Analise de IA e metadados",
-            CurrentStep = "Aguardando inicio",
-            CurrentPhase = "Fila",
-            Providers = providers.Select(provider => provider.DisplayName).ToArray(),
-            MediaTypes = mediaTypes,
-            Progress = 0,
-            PhaseProgress = 0,
-            Summary = $"Escopo: {request?.Scope ?? "configured"}",
-            Logs = [
-                $"[{now:yyyy-MM-dd HH:mm:ss}] Execucao criada para validar provedores e preparar analise de metadados."
-            ]
-        };
-
-        AddActivity(activity);
-        lock (RunStateLock)
-        {
-            ActiveRunActivityId = activity.Id;
-        }
-
-        _jobQueue.Enqueue(
-            "AiMetadata",
-            "Analise de IA e metadados",
-            async (queueCancellationToken, progress) =>
-            {
-                using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(runCancellation.Token, queueCancellationToken);
-                progress.Report(new JobQueueProgress(1, "IA", "Execucao de IA iniciada."));
-                await RunAiMetadataActivityAsync(activity.Id, configuration, providers, mediaTypes, linkedCancellation.Token).ConfigureAwait(false);
-                progress.Report(new JobQueueProgress(100, "IA", "Execucao de IA concluida."));
-            },
-            activity.Id);
-
-        return CloneActivity(activity);
+        return StatusCode(StatusCodes.Status410Gone, new { message = DisabledMessage });
     }
 
     /// <summary>
@@ -259,6 +190,8 @@ public class AiMetadataController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<AiMetadataActivityItemDto> StopRun()
     {
+        return StatusCode(StatusCodes.Status410Gone, new { message = DisabledMessage });
+
         string? activityId;
         CancellationTokenSource? cancellationSource;
 
@@ -348,6 +281,9 @@ public class AiMetadataController : BaseMulletaFlixApiController
         [FromBody, Required] AiMetadataProviderTestRequest request,
         CancellationToken cancellationToken)
     {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return StatusCode(StatusCodes.Status410Gone, new { message = DisabledMessage });
+
         var provider = ResolveProviderForTest(request);
         if (provider is null)
         {
