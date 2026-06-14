@@ -26,6 +26,7 @@ using MediaBrowser.Providers.Plugins.MidiaStorageOnline;
 using MediaBrowser.XbmcMetadata;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
@@ -229,6 +230,27 @@ namespace MulletaFlix.Server
                         FileProvider = new PhysicalFileProvider(_serverConfigurationManager.ApplicationPaths.WebPath),
                         RequestPath = "/web"
                     });
+                    mainApp.Use(async (context, next) =>
+                    {
+                        if (context.Request.Path.StartsWithSegments("/web/assets", out var remainingPath)
+                            && string.Equals(Path.GetExtension(remainingPath.Value), ".js", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var relativeAssetPath = remainingPath.Value?.TrimStart('/', '\\') ?? string.Empty;
+                            var assetPath = Path.GetFullPath(Path.Combine(_serverConfigurationManager.ApplicationPaths.WebPath, "assets", relativeAssetPath));
+                            var assetsRoot = Path.GetFullPath(Path.Combine(_serverConfigurationManager.ApplicationPaths.WebPath, "assets"));
+
+                            if (assetPath.StartsWith(assetsRoot, StringComparison.OrdinalIgnoreCase)
+                                && !File.Exists(assetPath))
+                            {
+                                context.Response.ContentType = "application/javascript; charset=utf-8";
+                                context.Response.Headers.CacheControl = new StringValues("no-store, no-cache, must-revalidate");
+                                await context.Response.WriteAsync("globalThis.location && globalThis.location.reload(); export default {};").ConfigureAwait(false);
+                                return;
+                            }
+                        }
+
+                        await next().ConfigureAwait(false);
+                    });
                     mainApp.UseStaticFiles(new StaticFileOptions
                     {
                         FileProvider = new PhysicalFileProvider(_serverConfigurationManager.ApplicationPaths.WebPath),
@@ -236,9 +258,20 @@ namespace MulletaFlix.Server
                         ContentTypeProvider = extensionProvider,
                         OnPrepareResponse = (context) =>
                         {
-                            if (Path.GetFileName(context.File.Name).Equals("index.html", StringComparison.Ordinal))
+                            var extension = Path.GetExtension(context.File.Name);
+                            if (string.Equals(extension, ".html", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(extension, ".json", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(Path.GetFileName(context.File.Name), "manifest.json", StringComparison.OrdinalIgnoreCase))
                             {
-                                context.Context.Response.Headers.CacheControl = new StringValues("no-cache");
+                                context.Context.Response.Headers.CacheControl = new StringValues("no-store, no-cache, must-revalidate");
+                                context.Context.Response.Headers.Pragma = new StringValues("no-cache");
+                                context.Context.Response.Headers.Expires = new StringValues("0");
+                            }
+                            else if (string.Equals(extension, ".js", StringComparison.OrdinalIgnoreCase)
+                                     || string.Equals(extension, ".css", StringComparison.OrdinalIgnoreCase)
+                                     || string.Equals(extension, ".wasm", StringComparison.OrdinalIgnoreCase))
+                            {
+                                context.Context.Response.Headers.CacheControl = new StringValues("public, max-age=3600");
                             }
                         }
                     });
