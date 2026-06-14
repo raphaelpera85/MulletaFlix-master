@@ -831,7 +831,16 @@ namespace MediaBrowser.Providers.Manager
             var isLocalLocked = temp.Item.IsLocked;
             if (!isLocalLocked && (options.ReplaceAllMetadata || options.MetadataRefreshMode > MetadataRefreshMode.ValidationOnly))
             {
-                var remoteResult = await ExecuteRemoteProviders(temp, logName, false, id, providers.OfType<IRemoteMetadataProvider<TItemType, TIdType>>(), cancellationToken)
+                var remoteResult = await ExecuteRemoteProviders(
+                        item,
+                        temp,
+                        logName,
+                        false,
+                        id,
+                        options,
+                        imageService,
+                        providers.OfType<IRemoteMetadataProvider<TItemType, TIdType>>(),
+                        cancellationToken)
                     .ConfigureAwait(false);
 
                 refreshResult.UpdateType |= remoteResult.UpdateType;
@@ -895,7 +904,16 @@ namespace MediaBrowser.Providers.Manager
             return new TItemType();
         }
 
-        private async Task<RefreshResult> ExecuteRemoteProviders(MetadataResult<TItemType> temp, string logName, bool replaceData, TIdType id, IEnumerable<IRemoteMetadataProvider<TItemType, TIdType>> providers, CancellationToken cancellationToken)
+        private async Task<RefreshResult> ExecuteRemoteProviders(
+            TItemType item,
+            MetadataResult<TItemType> temp,
+            string logName,
+            bool replaceData,
+            TIdType id,
+            MetadataRefreshOptions options,
+            ItemImageProvider imageService,
+            IEnumerable<IRemoteMetadataProvider<TItemType, TIdType>> providers,
+            CancellationToken cancellationToken)
         {
             var refreshResult = new RefreshResult();
 
@@ -916,6 +934,13 @@ namespace MediaBrowser.Providers.Manager
                     if (result.HasMetadata)
                     {
                         result.Provider = provider.Name;
+
+                        var foundImageTypes = await SaveRemoteResultImages(item, result, options, provider.Name, cancellationToken).ConfigureAwait(false);
+                        if (foundImageTypes.Count > 0)
+                        {
+                            imageService.UpdateReplaceImages(options, foundImageTypes);
+                            refreshResult.UpdateType |= ItemUpdateType.ImageUpdate;
+                        }
 
                         MergeData(result, temp, [], replaceData, false);
                         MergeNewData(temp.Item, id);
@@ -940,6 +965,46 @@ namespace MediaBrowser.Providers.Manager
             }
 
             return refreshResult;
+        }
+
+        private async Task<List<ImageType>> SaveRemoteResultImages(
+            TItemType item,
+            MetadataResult<TItemType> result,
+            MetadataRefreshOptions options,
+            string providerName,
+            CancellationToken cancellationToken)
+        {
+            if (result.RemoteImages.Count == 0)
+            {
+                return [];
+            }
+
+            var foundImageTypes = new List<ImageType>();
+            foreach (var remoteImage in result.RemoteImages)
+            {
+                try
+                {
+                    if (item.ImageInfos.Any(x => x.Type == remoteImage.Type)
+                        && !options.IsReplacingImage(remoteImage.Type))
+                    {
+                        continue;
+                    }
+
+                    await ProviderManager.SaveImage(item, remoteImage.Url, remoteImage.Type, null, cancellationToken).ConfigureAwait(false);
+                    foundImageTypes.Add(remoteImage.Type);
+                }
+                catch (HttpRequestException ex)
+                {
+                    Logger.LogError(
+                        ex,
+                        "Could not save {ImageType} image from {Provider}: {Url}",
+                        Enum.GetName(remoteImage.Type),
+                        providerName,
+                        remoteImage.Url);
+                }
+            }
+
+            return foundImageTypes;
         }
 
         private void MergeNewData(TItemType source, TIdType lookupInfo)

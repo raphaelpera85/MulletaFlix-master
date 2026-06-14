@@ -1133,6 +1133,8 @@ namespace MediaBrowser.Providers.Manager
         public IEnumerable<ExternalIdInfo> GetExternalIdInfos(IHasProviderIds item)
         {
             return GetExternalIds(item)
+                .GroupBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
                 .Select(i => new ExternalIdInfo(
                     name: i.ProviderName,
                     key: i.Key,
@@ -1425,4 +1427,3 @@ namespace MediaBrowser.Providers.Manager
             bool ForceEnableInternetMetadata);
     }
 }
-
