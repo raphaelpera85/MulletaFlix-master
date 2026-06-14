@@ -19,6 +19,7 @@ using System.Xml.Linq;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Jobs;
 using MulletaFlix.Api.Models.AiMetadata;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Configuration;
@@ -88,6 +89,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     private readonly IFileSystem _fileSystem;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IDataProtector _dataProtector;
+    private readonly IJobQueue _jobQueue;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AiMetadataController"/> class.
@@ -100,6 +102,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
     /// <param name="userManager">The user manager.</param>
     /// <param name="fileSystem">The file system.</param>
     /// <param name="httpClientFactory">The HTTP client factory.</param>
+    /// <param name="jobQueue">The internal job queue.</param>
     /// <param name="dataProtectionProvider">The data protection provider.</param>
     public AiMetadataController(
         IServerConfigurationManager configurationManager,
@@ -110,6 +113,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         IUserManager userManager,
         IFileSystem fileSystem,
         IHttpClientFactory httpClientFactory,
+        IJobQueue jobQueue,
         IDataProtectionProvider dataProtectionProvider)
     {
         _configurationManager = configurationManager;
@@ -120,6 +124,7 @@ public class AiMetadataController : BaseMulletaFlixApiController
         _userManager = userManager;
         _fileSystem = fileSystem;
         _httpClientFactory = httpClientFactory;
+        _jobQueue = jobQueue;
         _dataProtector = dataProtectionProvider.CreateProtector("MulletaFlix.AiMetadata.ApiKeys.v1");
     }
 
@@ -231,7 +236,17 @@ public class AiMetadataController : BaseMulletaFlixApiController
             ActiveRunActivityId = activity.Id;
         }
 
-        _ = Task.Run(() => RunAiMetadataActivityAsync(activity.Id, configuration, providers, mediaTypes, runCancellation.Token));
+        _jobQueue.Enqueue(
+            "AiMetadata",
+            "Analise de IA e metadados",
+            async (queueCancellationToken, progress) =>
+            {
+                using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(runCancellation.Token, queueCancellationToken);
+                progress.Report(new JobQueueProgress(1, "IA", "Execucao de IA iniciada."));
+                await RunAiMetadataActivityAsync(activity.Id, configuration, providers, mediaTypes, linkedCancellation.Token).ConfigureAwait(false);
+                progress.Report(new JobQueueProgress(100, "IA", "Execucao de IA concluida."));
+            },
+            activity.Id);
 
         return CloneActivity(activity);
     }
@@ -296,6 +311,8 @@ public class AiMetadataController : BaseMulletaFlixApiController
                 MarkActivityCancelledWithoutActiveToken(activityId);
             }
         }
+
+        _jobQueue.CancelByCorrelationId(activityId);
 
         AiMetadataActivityItemDto? activity;
         lock (ActivityLock)

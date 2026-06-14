@@ -9,6 +9,7 @@ using System.Text;
 using Emby.Server.Implementations.EntryPoints;
 using Emby.Server.Implementations.Localization;
 using MulletaFlix.Api.Middleware;
+using MulletaFlix.Api.Jobs;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.LiveTv.Extensions;
 using MulletaFlix.LiveTv.Recordings;
@@ -137,6 +138,8 @@ namespace MulletaFlix.Server
 
             services.AddHlsPlaylistGenerator();
             services.AddLiveTvServices();
+            services.AddSingleton<MulletaFlixJobQueue>();
+            services.AddSingleton<IJobQueue>(serviceProvider => serviceProvider.GetRequiredService<MulletaFlixJobQueue>());
 
             var serverUICulture = _serverConfigurationManager.Configuration.UICulture;
             if (string.IsNullOrEmpty(serverUICulture))
@@ -163,6 +166,7 @@ namespace MulletaFlix.Server
             services.AddHostedService<LibraryChangedNotifier>();
             services.AddHostedService<UserDataChangeNotifier>();
             services.AddHostedService<RecordingNotifier>();
+            services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<MulletaFlixJobQueue>());
         }
 
         /// <summary>
