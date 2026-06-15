@@ -313,6 +313,16 @@ internal class MulletaFlixMigrationService
                 }
 
                 await InitializeDomainSchemasAsync(logger).ConfigureAwait(false);
+
+                logger.LogInformation("Migrating legacy media data to domain schemas.");
+                await DomainDataMigrator.MigrateAsync(
+                    _dbContextFactory,
+                    _moviesDbContextFactory,
+                    _seriesDbContextFactory,
+                    _channelsDbContextFactory,
+                    _booksDbContextFactory,
+                    logger,
+                    CancellationToken.None).ConfigureAwait(false);
             }
         }
     }
