@@ -99,7 +99,22 @@ public static class ServiceCollectionExtensions
                 efCoreConfiguration = new DatabaseConfigurationOptions()
                 {
                     DatabaseType = "MulletaFlix-MySQL",
-                    LockingBehavior = DatabaseLockingBehaviorTypes.NoLock
+                    LockingBehavior = DatabaseLockingBehaviorTypes.NoLock,
+                    CustomProviderOptions = new CustomDatabaseOptions
+                    {
+                        PluginName = "",
+                        PluginAssembly = "",
+                        ConnectionString = "",
+                        Options =
+                        [
+                            new() { Key = "server", Value = "localhost" },
+                            new() { Key = "port", Value = "3306" },
+                            new() { Key = "user", Value = "root" },
+                            new() { Key = "password", Value = "" },
+                            new() { Key = "backup-dir", Value = "" },
+                            new() { Key = "mysql-tools-dir", Value = "" },
+                        ]
+                    }
                 };
                 configurationManager.SaveConfiguration("database", efCoreConfiguration);
             }

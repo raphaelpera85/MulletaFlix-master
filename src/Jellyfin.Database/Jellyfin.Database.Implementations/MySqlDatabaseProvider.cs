@@ -141,6 +141,8 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
 
     public async Task RunScheduledOptimisation(CancellationToken cancellationToken)
     {
+        if (!CheckToolsAvailable()) return;
+
         try
         {
             var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
@@ -170,8 +172,32 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         return Task.CompletedTask;
     }
 
+    private bool CheckToolsAvailable()
+    {
+        var mysqldump = MysqldumpPath;
+        var mysql = MysqlPath;
+
+        if (string.IsNullOrEmpty(ToolsDir)) return true; // rely on PATH
+
+        if (!File.Exists(mysqldump))
+        {
+            _logger.LogWarning("mysqldump not found at {Path}. Backup/restore unavailable.", mysqldump);
+            return false;
+        }
+
+        if (!File.Exists(mysql))
+        {
+            _logger.LogWarning("mysql CLI not found at {Path}. Backup/restore unavailable.", mysql);
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task<string> MigrationBackupFast(CancellationToken cancellationToken)
     {
+        if (!CheckToolsAvailable()) return string.Empty;
+
         var key = DateTime.UtcNow.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
         var backupFolder = GetBackupFolder();
         Directory.CreateDirectory(backupFolder);
