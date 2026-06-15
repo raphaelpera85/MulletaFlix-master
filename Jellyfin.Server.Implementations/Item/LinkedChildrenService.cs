@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
 
@@ -68,7 +68,7 @@ public class LinkedChildrenService : ILinkedChildrenService
         var artists = dbContext.BaseItems
             .AsNoTracking()
             .Where(e => e.Type == _itemTypeLookup.BaseItemKindNames[BaseItemKind.MusicArtist]!)
-            .Where(e => lowerNames.Contains(e.Name!.ToLower()))
+            .Where(e => Enumerable.Contains(lowerNames, e.Name!.ToLower()))
             .ToArray();
 
         var lookup = artists

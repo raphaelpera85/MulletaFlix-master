@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS1591
+#pragma warning disable CS1591
 
 using System;
 using System.Collections.Generic;
@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using MulletaFlix.Data.Queries;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
@@ -20,14 +21,14 @@ namespace MulletaFlix.Server.Implementations.Security
 {
     public class AuthorizationContext : IAuthorizationContext
     {
-        private readonly IDbContextFactory<MulletaFlixDbContext> _MulletaFlixDbProvider;
+        private readonly IDbContextFactory<SystemDbContext> _MulletaFlixDbProvider;
         private readonly IUserManager _userManager;
         private readonly IDeviceManager _deviceManager;
         private readonly IServerApplicationHost _serverApplicationHost;
         private readonly IServerConfigurationManager _configurationManager;
 
         public AuthorizationContext(
-            IDbContextFactory<MulletaFlixDbContext> MulletaFlixDb,
+            IDbContextFactory<SystemDbContext> MulletaFlixDb,
             IUserManager userManager,
             IDeviceManager deviceManager,
             IServerApplicationHost serverApplicationHost,

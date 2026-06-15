@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MulletaFlix.Data.Enums;
@@ -114,7 +114,7 @@ public class PeopleRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider
             item = e,
             SelectionKey = e.Name.ToLower() + "-" + e.PersonType
         })
-            .Where(p => personKeys.Contains(p.SelectionKey))
+            .Where(p => Enumerable.Contains(personKeys, p.SelectionKey))
             .Select(f => f.item)
             .ToArray();
 

@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Data;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Library;
@@ -19,7 +20,7 @@ namespace MulletaFlix.Server.Implementations.Users;
 /// </summary>
 public class UserLicenseManager : IUserLicenseManager
 {
-    private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
+    private readonly IDbContextFactory<UsersDbContext> _dbProvider;
     private readonly IUserManager _userManager;
     private readonly ISessionManager _sessionManager;
     private readonly ILogger<UserLicenseManager> _logger;
@@ -32,7 +33,7 @@ public class UserLicenseManager : IUserLicenseManager
     /// <param name="sessionManager">The session manager.</param>
     /// <param name="logger">The logger.</param>
     public UserLicenseManager(
-        IDbContextFactory<MulletaFlixDbContext> dbProvider,
+        IDbContextFactory<UsersDbContext> dbProvider,
         IUserManager userManager,
         ISessionManager sessionManager,
         ILogger<UserLicenseManager> logger)

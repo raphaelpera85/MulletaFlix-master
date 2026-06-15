@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities.Security;
 using MediaBrowser.Controller.Security;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,13 @@ namespace MulletaFlix.Server.Implementations.Security
     /// <inheritdoc />
     public class AuthenticationManager : IAuthenticationManager
     {
-        private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
+        private readonly IDbContextFactory<SystemDbContext> _dbProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthenticationManager"/> class.
         /// </summary>
         /// <param name="dbProvider">The database provider.</param>
-        public AuthenticationManager(IDbContextFactory<MulletaFlixDbContext> dbProvider)
+        public AuthenticationManager(IDbContextFactory<SystemDbContext> dbProvider)
         {
             _dbProvider = dbProvider;
         }

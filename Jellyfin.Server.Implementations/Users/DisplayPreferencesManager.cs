@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller;
 using Microsoft.EntityFrameworkCore;
@@ -13,13 +14,13 @@ namespace MulletaFlix.Server.Implementations.Users;
 /// </summary>
 public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
 {
-    private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<UsersDbContext> _dbContextFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DisplayPreferencesManager"/> class.
     /// </summary>
     /// <param name="dbContextFactory">The database context factory.</param>
-    public DisplayPreferencesManager(IDbContextFactory<MulletaFlixDbContext> dbContextFactory)
+    public DisplayPreferencesManager(IDbContextFactory<UsersDbContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;
     }

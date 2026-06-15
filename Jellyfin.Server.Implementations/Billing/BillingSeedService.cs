@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MulletaFlix.Server.Implementations.Billing;
 
@@ -89,6 +91,8 @@ public static class BillingSeedService
 
     public static async Task SeedAsync(UsersDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        await EnsureSchemaAsync(dbContext, cancellationToken).ConfigureAwait(false);
+
         var now = DateTime.UtcNow;
         var changed = false;
 
@@ -151,6 +155,22 @@ public static class BillingSeedService
         if (changed)
         {
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task EnsureSchemaAsync(UsersDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var databaseCreator = dbContext.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator
+            ?? throw new InvalidOperationException("Billing seed requires a relational database provider.");
+
+        if (!await databaseCreator.ExistsAsync(cancellationToken).ConfigureAwait(false))
+        {
+            await databaseCreator.CreateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (!await databaseCreator.HasTablesAsync(cancellationToken).ConfigureAwait(false))
+        {
+            await databaseCreator.CreateTablesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }

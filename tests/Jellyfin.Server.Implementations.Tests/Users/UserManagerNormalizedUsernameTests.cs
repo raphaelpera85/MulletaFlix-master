@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Locking;
 using MulletaFlix.Database.Providers.Sqlite;
 using MulletaFlix.Server.Implementations.Users;
@@ -26,7 +27,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
     public sealed class UserManagerNormalizedUsernameTests : IDisposable
     {
         private readonly SqliteConnection _connection;
-        private readonly DbContextOptions<MulletaFlixDbContext> _dbOptions;
+        private readonly DbContextOptions<UsersDbContext> _dbOptions;
         private readonly UserManager _userManager;
 
         public UserManagerNormalizedUsernameTests()
@@ -34,7 +35,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
             _connection = new SqliteConnection("Data Source=:memory:");
             _connection.Open();
 
-            _dbOptions = new DbContextOptionsBuilder<MulletaFlixDbContext>()
+            _dbOptions = new DbContextOptionsBuilder<UsersDbContext>()
                 .UseSqlite(_connection)
                 .Options;
 
@@ -42,7 +43,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
             using var ctx = CreateDbContext();
             ctx.Database.EnsureCreated();
 
-            var factory = new Mock<IDbContextFactory<MulletaFlixDbContext>>();
+            var factory = new Mock<IDbContextFactory<UsersDbContext>>();
             factory.Setup(f => f.CreateDbContext()).Returns(CreateDbContext);
             factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateDbContext);
@@ -81,13 +82,11 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
             _connection.Dispose();
         }
 
-        private MulletaFlixDbContext CreateDbContext()
+        private UsersDbContext CreateDbContext()
         {
-            return new MulletaFlixDbContext(
+            return new UsersDbContext(
                 _dbOptions,
-                NullLogger<MulletaFlixDbContext>.Instance,
-                new SqliteDatabaseProvider(null!, NullLogger<SqliteDatabaseProvider>.Instance),
-                new NoLockBehavior(NullLogger<NoLockBehavior>.Instance));
+                NullLogger<UsersDbContext>.Instance);
         }
 
         // ----- GetUserByName tests -----

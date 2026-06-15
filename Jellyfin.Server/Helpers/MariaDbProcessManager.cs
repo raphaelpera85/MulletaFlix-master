@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using MediaBrowser.Common.Configuration;
+using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
 
 namespace MulletaFlix.Server.Helpers
@@ -16,7 +17,7 @@ namespace MulletaFlix.Server.Helpers
             try
             {
                 var dataDir = Path.Combine(appPaths.DataPath, "mariadb_data");
-                
+
                 var appDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
                 if (string.IsNullOrEmpty(appDir)) return;
 
@@ -35,7 +36,7 @@ namespace MulletaFlix.Server.Helpers
                 {
                     logger.LogInformation("Initializing new MariaDB data directory at {DataDir}", dataDir);
                     Directory.CreateDirectory(dataDir);
-                    
+
                     if (File.Exists(installDbPath))
                     {
                         var initProcess = Process.Start(new ProcessStartInfo
@@ -66,7 +67,7 @@ namespace MulletaFlix.Server.Helpers
 
                 // Wait for the database engine to come online
                 Thread.Sleep(3000);
-                
+
                 if (_mariaDbProcess.HasExited)
                 {
                     logger.LogError("Embedded MariaDB process exited prematurely with code {Code}", _mariaDbProcess.ExitCode);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -14,6 +14,12 @@ public class BaseItemConfiguration : IEntityTypeConfiguration<BaseItemEntity>
     public void Configure(EntityTypeBuilder<BaseItemEntity> builder)
     {
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Type).HasMaxLength(100);
+        builder.Property(e => e.SeriesPresentationUniqueKey).HasMaxLength(100);
+        builder.Property(e => e.PresentationUniqueKey).HasMaxLength(100);
+        builder.Property(e => e.SortName).HasMaxLength(255);
+        builder.Property(e => e.CleanName).HasMaxLength(255);
+        builder.Property(e => e.MediaType).HasMaxLength(100);
         // TODO: See rant in entity file.
         // builder.HasOne(e => e.Parent).WithMany(e => e.DirectChildren).HasForeignKey(e => e.ParentId);
         // builder.HasOne(e => e.TopParent).WithMany(e => e.AllChildren).HasForeignKey(e => e.TopParentId);

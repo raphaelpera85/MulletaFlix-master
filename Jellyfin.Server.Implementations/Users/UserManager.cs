@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -13,6 +13,7 @@ using MulletaFlix.Data.Enums;
 using MulletaFlix.Data.Events;
 using MulletaFlix.Data.Events.Users;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Enums;
 using MulletaFlix.Extensions;
@@ -38,7 +39,7 @@ namespace MulletaFlix.Server.Implementations.Users
     /// </summary>
     public partial class UserManager : IUserManager, IDisposable
     {
-        private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
+        private readonly IDbContextFactory<UsersDbContext> _dbProvider;
         private readonly IEventManager _eventManager;
         private readonly INetworkManager _networkManager;
         private readonly IApplicationHost _appHost;
@@ -66,7 +67,7 @@ namespace MulletaFlix.Server.Implementations.Users
         /// <param name="passwordResetProviders">The password reset providers.</param>
         /// <param name="authenticationProviders">The authentication providers.</param>
         public UserManager(
-            IDbContextFactory<MulletaFlixDbContext> dbProvider,
+            IDbContextFactory<UsersDbContext> dbProvider,
             IEventManager eventManager,
             INetworkManager networkManager,
             IApplicationHost appHost,
@@ -132,7 +133,7 @@ namespace MulletaFlix.Server.Implementations.Users
                 .FirstOrDefault(user => user.Id == id);
         }
 
-        private static IQueryable<User> UserQuery(MulletaFlixDbContext dbContext)
+        private static IQueryable<User> UserQuery(UsersDbContext dbContext)
         {
             return dbContext.Users
                             .AsSingleQuery()
@@ -218,7 +219,7 @@ namespace MulletaFlix.Server.Implementations.Users
             }
         }
 
-        internal async Task<User> CreateUserInternalAsync(string name, MulletaFlixDbContext dbContext)
+        internal async Task<User> CreateUserInternalAsync(string name, UsersDbContext dbContext)
         {
             // TODO: Remove after user item data is migrated.
             var max = await dbContext.Users.AsQueryable().AnyAsync().ConfigureAwait(false)
@@ -1011,7 +1012,7 @@ namespace MulletaFlix.Server.Implementations.Users
             }
         }
 
-        private async Task UpdateUserInternalAsync(MulletaFlixDbContext dbContext, User user)
+        private async Task UpdateUserInternalAsync(UsersDbContext dbContext, User user)
         {
             dbContext.Users.Attach(user);
             dbContext.Entry(user).State = EntityState.Modified;

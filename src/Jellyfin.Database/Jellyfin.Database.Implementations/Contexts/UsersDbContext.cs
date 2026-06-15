@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace MulletaFlix.Database.Implementations.Contexts;
 
-public class UsersDbContext(DbContextOptions<UsersDbContext> options, ILogger<UsersDbContext> logger, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class UsersDbContext(DbContextOptions<UsersDbContext> options, ILogger<UsersDbContext> logger) : DbContext(options)
 {
     public DbSet<AccessSchedule> AccessSchedules => Set<AccessSchedule>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
@@ -24,27 +24,21 @@ public class UsersDbContext(DbContextOptions<UsersDbContext> options, ILogger<Us
     public DbSet<Preference> Preferences => Set<Preference>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserLicense> UserLicenses => Set<UserLicense>();
+    public DbSet<PricingPlan> PricingPlans => Set<PricingPlan>();
+    public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
+    public DbSet<PaymentGatewayConfig> PaymentGatewayConfigs => Set<PaymentGatewayConfig>();
+    public DbSet<DiscountCoupon> DiscountCoupons => Set<DiscountCoupon>();
 
-    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         HandleConcurrencyToken();
-        var result = -1;
-        await entityFrameworkCoreLocking.OnSaveChangesAsync(this, async () =>
-        {
-            result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
-        }).ConfigureAwait(false);
-        return result;
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         HandleConcurrencyToken();
-        var result = -1;
-        entityFrameworkCoreLocking.OnSaveChanges(this, () =>
-        {
-            result = base.SaveChanges(acceptAllChangesOnSuccess);
-        });
-        return result;
+        return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
     private void HandleConcurrencyToken()
@@ -61,6 +55,21 @@ public class UsersDbContext(DbContextOptions<UsersDbContext> options, ILogger<Us
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        // modelBuilder.ApplyConfigurationsFromAssembly(typeof(UsersDbContext).Assembly);
+
+        // Apply configurations for entities managed by UsersDbContext
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.UserConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.UserLicenseConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.DisplayPreferencesConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.PermissionConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.PreferenceConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.DeviceConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.ActivityLogConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.CustomItemDisplayPreferencesConfiguration());
+
+        // New billing configurations
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.PricingPlanConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.PaymentTransactionConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.PaymentGatewayConfigConfiguration());
+        modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.DiscountCouponConfiguration());
     }
 }

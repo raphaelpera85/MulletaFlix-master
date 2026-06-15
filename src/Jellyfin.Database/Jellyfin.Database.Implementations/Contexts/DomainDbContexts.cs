@@ -5,9 +5,11 @@ using MulletaFlix.Database.Implementations.Locking;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using MulletaFlix.Database.Implementations.Entities.Security;
+
 namespace MulletaFlix.Database.Implementations.Contexts;
 
-public class MoviesDbContext(DbContextOptions<MoviesDbContext> options, ILogger<MoviesDbContext> logger, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class MoviesDbContext(DbContextOptions<MoviesDbContext> options, ILogger<MoviesDbContext> logger) : DbContext(options)
 {
     // Em Jellyfin puro tudo era BaseItems. Agora abstrairemos as tabelas específicas.
     public DbSet<Movie> Movies => Set<Movie>();
@@ -21,7 +23,7 @@ public class MoviesDbContext(DbContextOptions<MoviesDbContext> options, ILogger<
     }
 }
 
-public class SeriesDbContext(DbContextOptions<SeriesDbContext> options, ILogger<SeriesDbContext> logger, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class SeriesDbContext(DbContextOptions<SeriesDbContext> options, ILogger<SeriesDbContext> logger) : DbContext(options)
 {
     public DbSet<Series> Series => Set<Series>();
     public DbSet<Season> Seasons => Set<Season>();
@@ -37,7 +39,7 @@ public class SeriesDbContext(DbContextOptions<SeriesDbContext> options, ILogger<
     }
 }
 
-public class ChannelsDbContext(DbContextOptions<ChannelsDbContext> options, ILogger<ChannelsDbContext> logger, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class ChannelsDbContext(DbContextOptions<ChannelsDbContext> options, ILogger<ChannelsDbContext> logger) : DbContext(options)
 {
     public DbSet<Channel> Channels => Set<Channel>();
     public DbSet<Program> Programs => Set<Program>(); // EPG
@@ -48,7 +50,7 @@ public class ChannelsDbContext(DbContextOptions<ChannelsDbContext> options, ILog
     }
 }
 
-public class BooksDbContext(DbContextOptions<BooksDbContext> options, ILogger<BooksDbContext> logger, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class BooksDbContext(DbContextOptions<BooksDbContext> options, ILogger<BooksDbContext> logger) : DbContext(options)
 {
     public DbSet<Book> Books => Set<Book>();
     public DbSet<BookMetadata> BookMetadata => Set<BookMetadata>();
@@ -60,11 +62,10 @@ public class BooksDbContext(DbContextOptions<BooksDbContext> options, ILogger<Bo
     }
 }
 
-public class SystemDbContext(DbContextOptions<SystemDbContext> options, ILogger<SystemDbContext> logger, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class SystemDbContext(DbContextOptions<SystemDbContext> options, ILogger<SystemDbContext> logger) : DbContext(options)
 {
     public DbSet<DeviceOptions> DeviceOptions => Set<DeviceOptions>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
-    public DbSet<ProviderMapping> ProviderMappings => Set<ProviderMapping>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

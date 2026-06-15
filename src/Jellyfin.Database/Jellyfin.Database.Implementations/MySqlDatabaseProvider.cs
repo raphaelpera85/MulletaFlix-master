@@ -33,7 +33,6 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
     {
         // Default Connection String matching portable MariaDB setup
         var connectionString = "Server=localhost;Port=3306;User ID=root;Password=;Database=mulletaflix_users;CharSet=utf8mb4;";
-        
         _logger.LogInformation("MySQL Connection String: {ConnectionString}", connectionString);
 
         var serverVersion = new MariaDbServerVersion(new Version(11, 4, 2));
@@ -41,7 +40,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         options.UseMySql(connectionString, serverVersion, mySqlOptions =>
         {
             mySqlOptions.MigrationsAssembly(GetType().Assembly.GetName().Name);
-            mySqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (schema, table) => $"{schema}.{table}");
         });
     }
 
@@ -67,19 +66,19 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
                 => "mulletaflix_users",
 
             // Movies
-            "Movie" or "MovieMetadata" or "BaseItemEntity" or "Chapter" or "LinkedChildEntity" 
+            "Movie" or "MovieMetadata" or "BaseItemEntity" or "Chapter" or "LinkedChildEntity"
                 => "mulletaflix_movies",
 
             // Series
-            "Series" or "Season" or "Episode" or "SeriesMetadata" or "SeasonMetadata" or "EpisodeMetadata" 
+            "Series" or "Season" or "Episode" or "SeriesMetadata" or "SeasonMetadata" or "EpisodeMetadata"
                 => "mulletaflix_series",
 
             // Channels (IPTV)
-            "Channel" or "Program" 
+            "Channel" or "Program"
                 => "mulletaflix_channels",
 
             // Books
-            "Book" or "BookMetadata" 
+            "Book" or "BookMetadata"
                 => "mulletaflix_books",
 
             // System Default / Core Configuration

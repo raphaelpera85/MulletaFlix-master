@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.DbConfiguration;
 using MulletaFlix.Database.Implementations.Locking;
 using MulletaFlix.Database.Providers.Sqlite;
@@ -143,6 +144,42 @@ public static class ServiceCollectionExtensions
             provider.Initialise(opt, efCoreConfiguration);
             var lockingBehavior = serviceProvider.GetRequiredService<IEntityFrameworkCoreLockingBehavior>();
             lockingBehavior.Initialise(opt);
+        });
+
+        serviceCollection.AddPooledDbContextFactory<UsersDbContext>((serviceProvider, opt) =>
+        {
+            var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
+            provider.Initialise(opt, efCoreConfiguration);
+        });
+
+        serviceCollection.AddPooledDbContextFactory<MoviesDbContext>((serviceProvider, opt) =>
+        {
+            var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
+            provider.Initialise(opt, efCoreConfiguration);
+        });
+
+        serviceCollection.AddPooledDbContextFactory<SeriesDbContext>((serviceProvider, opt) =>
+        {
+            var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
+            provider.Initialise(opt, efCoreConfiguration);
+        });
+
+        serviceCollection.AddPooledDbContextFactory<ChannelsDbContext>((serviceProvider, opt) =>
+        {
+            var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
+            provider.Initialise(opt, efCoreConfiguration);
+        });
+
+        serviceCollection.AddPooledDbContextFactory<BooksDbContext>((serviceProvider, opt) =>
+        {
+            var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
+            provider.Initialise(opt, efCoreConfiguration);
+        });
+
+        serviceCollection.AddPooledDbContextFactory<SystemDbContext>((serviceProvider, opt) =>
+        {
+            var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
+            provider.Initialise(opt, efCoreConfiguration);
         });
 
         return serviceCollection;

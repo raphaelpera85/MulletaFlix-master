@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -48,7 +48,7 @@ public class NextUpService : INextUpService
 
         var query = context.BaseItems
             .AsNoTracking()
-            .Where(i => filter.TopParentIds.Contains(i.TopParentId!.Value))
+            .Where(i => Enumerable.Contains(filter.TopParentIds, i.TopParentId!.Value))
             .Where(i => i.Type == _itemTypeLookup.BaseItemKindNames[BaseItemKind.Episode])
             .Join(
                 context.UserData.AsNoTracking().Where(e => e.ItemId != EF.Constant(BaseItemRepository.PlaceholderId)),

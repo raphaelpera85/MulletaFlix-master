@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -186,7 +186,7 @@ public class ItemCountService : IItemCountService
         }
 
         var typeNames = relatedItemKinds.Select(k => _itemTypeLookup.BaseItemKindNames[k]).ToArray();
-        baseQuery = baseQuery.Where(e => typeNames.Contains(e.Type));
+        baseQuery = baseQuery.Where(e => Enumerable.Contains(typeNames, e.Type));
 
         baseQuery = _queryHelpers.ApplyAccessFiltering(context, baseQuery, accessFilter);
 
@@ -314,13 +314,13 @@ public class ItemCountService : IItemCountService
         var parentIdsArray = parentIds.ToArray();
 
         var hierarchicalCounts = dbContext.BaseItems
-            .Where(b => b.ParentId.HasValue && parentIdsArray.Contains(b.ParentId.Value))
+            .Where(b => b.ParentId.HasValue && Enumerable.Contains(parentIdsArray, b.ParentId.Value))
             .GroupBy(b => b.ParentId!.Value)
             .Select(g => new { ParentId = g.Key, Count = g.Count() })
             .ToDictionary(x => x.ParentId, x => x.Count);
 
         var linkedCounts = dbContext.LinkedChildren
-            .Where(lc => parentIdsArray.Contains(lc.ParentId))
+            .Where(lc => Enumerable.Contains(parentIdsArray, lc.ParentId))
             .GroupBy(lc => lc.ParentId)
             .Select(g => new { ParentId = g.Key, Count = g.Count() })
             .ToDictionary(x => x.ParentId, x => x.Count);

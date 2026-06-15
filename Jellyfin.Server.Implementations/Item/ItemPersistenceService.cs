@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
@@ -210,7 +210,7 @@ public class ItemPersistenceService : IItemPersistenceService
 
                 await dbContext.UserData
                     .Where(e => e.ItemId == BaseItemRepository.PlaceholderId)
-                    .Where(e => userKeys.Contains(e.CustomDataKey))
+                    .Where(e => Enumerable.Contains(userKeys, e.CustomDataKey))
                     .ExecuteUpdateAsync(
                         e => e
                             .SetProperty(f => f.ItemId, item.Id)
@@ -252,7 +252,7 @@ public class ItemPersistenceService : IItemPersistenceService
         using var transaction = context.Database.BeginTransaction();
 
         var ids = tuples.Select(f => f.Item.Id).ToArray();
-        var existingItems = context.BaseItems.Where(e => ids.Contains(e.Id)).Select(f => f.Id).ToArray();
+        var existingItems = context.BaseItems.Where(e => Enumerable.Contains(ids, e.Id)).Select(f => f.Id).ToArray();
 
         foreach (var item in tuples)
         {
@@ -296,7 +296,7 @@ public class ItemPersistenceService : IItemPersistenceService
         var allListedItemValuesSet = allListedItemValues.ToHashSet();
 
         var existingValues = context.ItemValues
-            .Where(e => types.Contains(e.Type) && values.Contains(e.Value))
+            .Where(e => Enumerable.Contains(types, e.Type) && Enumerable.Contains(values, e.Value))
             .AsEnumerable()
             .Where(e => allListedItemValuesSet.Contains((e.Type, e.Value)))
             .ToArray();
@@ -314,7 +314,7 @@ public class ItemPersistenceService : IItemPersistenceService
             .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStore.First(g => g.Value == e.Value && g.Type == e.MagicNumber)).DistinctBy(e => e.ItemValueId).ToArray()))
             .ToArray();
 
-        var mappedValues = context.ItemValuesMap.Where(e => ids.Contains(e.ItemId)).ToList();
+        var mappedValues = context.ItemValuesMap.Where(e => Enumerable.Contains(ids, e.ItemId)).ToList();
 
         foreach (var item in valueMap)
         {
