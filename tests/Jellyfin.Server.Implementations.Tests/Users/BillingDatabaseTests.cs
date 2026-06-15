@@ -103,6 +103,35 @@ public sealed class BillingDatabaseTests : IDisposable
     }
 
     [Fact]
+    public async Task SeedBillingDefaultsAsync_CreatesSchemaWhenTablesAreMissing()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var options = new DbContextOptionsBuilder<UsersDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var context = new UsersDbContext(options, NullLogger<UsersDbContext>.Instance);
+
+        await BillingSeedService.SeedAsync(context);
+
+        var plans = await context.PricingPlans
+            .AsNoTracking()
+            .OrderBy(p => p.DurationMonths)
+            .ToListAsync();
+
+        Assert.Equal(4, plans.Count);
+        Assert.Contains(plans, plan => plan.DurationMonths == 12 && plan.IsHighlighted);
+
+        var gateways = await context.PaymentGatewayConfigs
+            .AsNoTracking()
+            .ToListAsync();
+
+        Assert.Equal(2, gateways.Count);
+    }
+
+    [Fact]
     public void BillingModel_ContainsRequiredUniqueIndexesAndRelations()
     {
         var pricingPlanEntity = _context.Model.FindEntityType(typeof(PricingPlan));
