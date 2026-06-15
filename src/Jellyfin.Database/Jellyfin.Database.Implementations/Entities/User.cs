@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -36,6 +36,7 @@ namespace MulletaFlix.Database.Implementations.Entities
             ItemDisplayPreferences = new HashSet<ItemDisplayPreferences>();
             // Groups = new HashSet<Group>();
             Permissions = new HashSet<Permission>();
+            PaymentTransactions = new HashSet<PaymentTransaction>();
             Preferences = new HashSet<Preference>();
             // ProviderMappings = new HashSet<ProviderMapping>();
 
@@ -93,6 +94,13 @@ namespace MulletaFlix.Database.Implementations.Entities
         [MaxLength(65535)]
         [StringLength(65535)]
         public string? Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's phone number for notifications.
+        /// </summary>
+        [MaxLength(20)]
+        [StringLength(20)]
+        public string? PhoneNumber { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the user must update their password.
@@ -328,6 +336,11 @@ namespace MulletaFlix.Database.Implementations.Entities
         /// </summary>
         [ForeignKey("Permission_Permissions_Guid")]
         public virtual ICollection<Permission> Permissions { get; private set; }
+
+        /// <summary>
+        /// Gets the list of payment transactions recorded for this user.
+        /// </summary>
+        public virtual ICollection<PaymentTransaction> PaymentTransactions { get; private set; }
 
         /*
         /// <summary>

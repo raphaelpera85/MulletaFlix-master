@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MulletaFlix.Database.Implementations.Entities;
 
@@ -14,4 +15,5 @@ public class PricingPlan
     public int SortOrder { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public virtual ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new HashSet<PaymentTransaction>();
 }

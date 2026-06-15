@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -8,7 +8,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.Serialization;
 using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Server.Implementations.SystemBackupService;
+using MulletaFlix.Server.Implementations.Billing;
 using MulletaFlix.Server.Migrations.Stages;
 using MulletaFlix.Server.ServerSetupApp;
 using MediaBrowser.Common.Configuration;
@@ -29,6 +31,7 @@ internal class MulletaFlixMigrationService
 {
     private const string DbFilename = "library.db";
     private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<UsersDbContext> _usersDbContextFactory;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStartupLogger _startupLogger;
     private readonly IBackupService? _backupService;
@@ -47,6 +50,7 @@ internal class MulletaFlixMigrationService
     /// <param name="MulletaFlixDatabaseProvider">The MulletaFlix database provider.</param>
     public MulletaFlixMigrationService(
         IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
+        IDbContextFactory<UsersDbContext> usersDbContextFactory,
         ILoggerFactory loggerFactory,
         IStartupLogger<MulletaFlixMigrationService> startupLogger,
         IApplicationPaths applicationPaths,
@@ -54,6 +58,7 @@ internal class MulletaFlixMigrationService
         IMulletaFlixDatabaseProvider? MulletaFlixDatabaseProvider = null)
     {
         _dbContextFactory = dbContextFactory;
+        _usersDbContextFactory = usersDbContextFactory;
         _loggerFactory = loggerFactory;
         _startupLogger = startupLogger;
         _backupService = backupService;
@@ -111,6 +116,12 @@ internal class MulletaFlixMigrationService
                 if (!await databaseCreator.ExistsAsync().ConfigureAwait(false))
                 {
                     await databaseCreator.CreateAsync().ConfigureAwait(false);
+                }
+
+                if (!await databaseCreator.HasTablesAsync().ConfigureAwait(false))
+                {
+                    logger.LogInformation("Database tables do not exist. Creating relational tables...");
+                    await databaseCreator.CreateTablesAsync().ConfigureAwait(false);
                 }
 
                 var historyRepository = dbContext.GetService<IHistoryRepository>();
@@ -276,6 +287,16 @@ internal class MulletaFlixMigrationService
                     }
                 }
             } while (migrations.Length != 0);
+
+            if (stage is MulletaFlixMigrationStageTypes.CoreInitialisation)
+            {
+                var billingDbContext = await _usersDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+                await using (billingDbContext.ConfigureAwait(false))
+                {
+                    logger.LogInformation("Seeding billing defaults for plans and gateways.");
+                    await BillingSeedService.SeedAsync(billingDbContext).ConfigureAwait(false);
+                }
+            }
         }
     }
 
