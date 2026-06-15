@@ -47,7 +47,6 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
         });
         _kindLimits = new Dictionary<string, SemaphoreSlim>(StringComparer.OrdinalIgnoreCase)
         {
-            ["AiMetadata"] = new(1, 1),
             ["MovieMetadata"] = new(6, 6),
             ["SeriesMetadata"] = new(6, 6),
             ["BookMetadata"] = new(2, 2),
@@ -352,7 +351,6 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
     {
         return kind switch
         {
-            "AiMetadata" => TimeSpan.FromMilliseconds(1500),
             "BookMetadata" => TimeSpan.FromMilliseconds(500),
             "ChannelMetadata" => TimeSpan.FromMilliseconds(300),
             "MovieMetadata" or "SeriesMetadata" => TimeSpan.FromMilliseconds(100),
