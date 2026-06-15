@@ -57,6 +57,20 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         _user = GetOption(opts, "user", e => e, () => "root");
         _password = GetOption(opts, "password", e => e, () => "");
         _toolsDir = GetOption<string?>(opts, "mysql-tools-dir", e => e, () => null);
+        if (string.IsNullOrEmpty(_toolsDir))
+        {
+            // Auto-detect mariadb/bin relative to this assembly's location
+            var assemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            if (assemblyDir is not null)
+            {
+                var candidate = Path.Combine(assemblyDir, "mariadb", "bin");
+                if (Directory.Exists(candidate))
+                {
+                    _toolsDir = candidate;
+                    _logger.LogInformation("Auto-detected MariaDB tools at {Path}", candidate);
+                }
+            }
+        }
         _backupDir = GetOption(opts, "backup-dir", e => e, () => string.Empty);
 
         var connString = opts is not null
