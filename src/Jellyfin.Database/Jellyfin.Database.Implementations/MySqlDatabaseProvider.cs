@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +20,14 @@ namespace MulletaFlix.Database.Implementations;
 public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
 {
     private readonly ILogger<MySqlDatabaseProvider> _logger;
+    private string? _toolsDir;
+    private string _backupDir = string.Empty;
+    private string _server = "localhost";
+    private int _port = 3306;
+    private string _user = "root";
+    private string _password = string.Empty;
+
+    private const string BackupFolderName = "MySQLBackups";
 
     private static readonly string DefaultConnectionString =
         "Server=localhost;Port=3306;User ID=root;Password=;CharSet=utf8mb4;";
@@ -30,40 +41,40 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         _logger = logger;
     }
 
+    private string ToolsDir => _toolsDir ?? string.Empty;
+    private string MysqldumpPath => string.IsNullOrEmpty(ToolsDir) ? "mysqldump" : Path.Combine(ToolsDir, "mysqldump.exe");
+    private string MysqlPath => string.IsNullOrEmpty(ToolsDir) ? "mysql" : Path.Combine(ToolsDir, "mysql.exe");
+
     /// <inheritdoc/>
     public IDbContextFactory<MulletaFlixDbContext>? DbContextFactory { get; set; }
 
     /// <inheritdoc/>
     public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration, string schemaName = "")
     {
-        var connString = databaseConfiguration.CustomProviderOptions?.Options is { } opts
-            ? BuildConnectionString(opts)
+        var opts = databaseConfiguration.CustomProviderOptions?.Options;
+        _server = GetOption(opts, "server", e => e, () => "localhost");
+        _port = int.TryParse(GetOption(opts, "port", e => e, () => "3306"), out var p) ? p : 3306;
+        _user = GetOption(opts, "user", e => e, () => "root");
+        _password = GetOption(opts, "password", e => e, () => "");
+        _toolsDir = GetOption<string?>(opts, "mysql-tools-dir", e => e, () => null);
+        _backupDir = GetOption(opts, "backup-dir", e => e, () => string.Empty);
+
+        var connString = opts is not null
+            ? $"Server={_server};Port={_port};User ID={_user};Password={_password};CharSet=utf8mb4;"
             : DefaultConnectionString;
 
         var schema = !string.IsNullOrEmpty(schemaName) ? schemaName : "mulletaflix_users";
         connString = ApplySchema(connString, schema);
         _logger.LogInformation("MySQL: {Schema}", schema);
 
-        var versionStr = databaseConfiguration.CustomProviderOptions?.Options is { } cfg
-            ? GetOption(cfg, "server-version", e => e, () => "11.4.2")
-            : "11.4.2";
-
+        var versionStr = GetOption(opts, "server-version", e => e, () => "11.4.2");
         var serverVersion = new MariaDbServerVersion(new Version(versionStr));
 
         options.UseMySql(connString, serverVersion, mySqlOptions =>
         {
             mySqlOptions.MigrationsAssembly(GetType().Assembly.GetName().Name);
-            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (schema, table) => table);
+            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (s, table) => table);
         });
-    }
-
-    private static string BuildConnectionString(ICollection<CustomDatabaseOption> opts)
-    {
-        var server = GetOption(opts, "server", e => e, () => "localhost");
-        var port = GetOption(opts, "port", e => e, () => "3306");
-        var user = GetOption(opts, "user", e => e, () => "root");
-        var password = GetOption(opts, "password", e => e, () => "");
-        return $"Server={server};Port={port};User ID={user};Password={password};CharSet=utf8mb4;";
     }
 
     private static string ApplySchema(string connString, string schema)
@@ -91,6 +102,32 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         return defaultValue is not null ? defaultValue() : default!;
     }
 
+    private async Task<string> RunProcessAsync(string fileName, string arguments, CancellationToken cancellationToken)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = new Process { StartInfo = psi };
+        process.Start();
+        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        var error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            _logger.LogError("{Tool} failed (exit {Code}): {Error}", fileName, process.ExitCode, error);
+        }
+
+        return output;
+    }
+
     /// <inheritdoc/>
     public void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -102,34 +139,108 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
     {
     }
 
-    /// <inheritdoc/>
-    public Task RunScheduledOptimisation(CancellationToken cancellationToken)
+    public async Task RunScheduledOptimisation(CancellationToken cancellationToken)
     {
-        return Task.CompletedTask;
+        try
+        {
+            var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
+                "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+
+            foreach (var schema in schemas)
+            {
+                var result = await RunProcessAsync(MysqlPath,
+                    $"-h {_server} -P {_port} -u {_user} -p{_password} {schema} -e \"ANALYZE TABLE `{schema}`.`Movies`;\" 2>/nul",
+                    cancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation(
+                    "Optimization result for {Schema}: {Result}",
+                    schema,
+                    string.IsNullOrEmpty(result) ? "OK" : result);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Scheduled MySQL optimization failed.");
+        }
     }
 
-    /// <inheritdoc/>
     public Task RunShutdownTask(CancellationToken cancellationToken)
     {
+        // FLUSH not needed for embedded MariaDB — process kill handles it
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc/>
-    public Task<string> MigrationBackupFast(CancellationToken cancellationToken)
+    public async Task<string> MigrationBackupFast(CancellationToken cancellationToken)
     {
-        return Task.FromResult(Guid.NewGuid().ToString("N"));
+        var key = DateTime.UtcNow.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+        var backupFolder = GetBackupFolder();
+        Directory.CreateDirectory(backupFolder);
+
+        var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
+            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+
+        foreach (var schema in schemas)
+        {
+            var outputFile = Path.Combine(backupFolder, $"{key}_{schema}.sql");
+            _logger.LogInformation("Backing up {Schema} to {File}", schema, outputFile);
+
+            await RunProcessAsync(MysqldumpPath,
+                $"-h {_server} -P {_port} -u {_user} -p{_password} --databases {schema} --routines --triggers --single-transaction --quick > \"{outputFile}\"",
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        return key;
     }
 
-    /// <inheritdoc/>
-    public Task RestoreBackupFast(string key, CancellationToken cancellationToken)
+    public async Task RestoreBackupFast(string key, CancellationToken cancellationToken)
     {
-        return Task.CompletedTask;
+        var backupFolder = GetBackupFolder();
+
+        var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
+            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+
+        foreach (var schema in schemas)
+        {
+            var inputFile = Path.Combine(backupFolder, $"{key}_{schema}.sql");
+            if (!File.Exists(inputFile))
+            {
+                _logger.LogWarning("Backup file not found for {Schema}: {File}", schema, inputFile);
+                continue;
+            }
+
+            _logger.LogInformation("Restoring {Schema} from {File}", schema, inputFile);
+
+            await RunProcessAsync(MysqlPath,
+                $"-h {_server} -P {_port} -u {_user} -p{_password} {schema} < \"{inputFile}\"",
+                cancellationToken).ConfigureAwait(false);
+        }
     }
 
-    /// <inheritdoc/>
     public Task DeleteBackup(string key)
     {
+        var backupFolder = GetBackupFolder();
+        if (!Directory.Exists(backupFolder)) return Task.CompletedTask;
+
+        var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
+            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+
+        foreach (var schema in schemas)
+        {
+            var file = Path.Combine(backupFolder, $"{key}_{schema}.sql");
+            if (File.Exists(file))
+            {
+                try { File.Delete(file); } catch (Exception ex) { _logger.LogWarning(ex, "Failed to delete backup {File}", file); }
+            }
+        }
+
         return Task.CompletedTask;
+    }
+
+    private string GetBackupFolder()
+    {
+        return !string.IsNullOrEmpty(_backupDir)
+            ? Path.Combine(_backupDir, BackupFolderName)
+            : Path.Combine(Path.GetTempPath(), "MulletaFlix", BackupFolderName);
     }
 
     /// <inheritdoc/>
