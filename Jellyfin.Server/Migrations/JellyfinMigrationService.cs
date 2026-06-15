@@ -32,6 +32,11 @@ internal class MulletaFlixMigrationService
     private const string DbFilename = "library.db";
     private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
     private readonly IDbContextFactory<UsersDbContext> _usersDbContextFactory;
+    private readonly IDbContextFactory<MoviesDbContext> _moviesDbContextFactory;
+    private readonly IDbContextFactory<SeriesDbContext> _seriesDbContextFactory;
+    private readonly IDbContextFactory<ChannelsDbContext> _channelsDbContextFactory;
+    private readonly IDbContextFactory<BooksDbContext> _booksDbContextFactory;
+    private readonly IDbContextFactory<SystemDbContext> _systemDbContextFactory;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStartupLogger _startupLogger;
     private readonly IBackupService? _backupService;
@@ -51,6 +56,11 @@ internal class MulletaFlixMigrationService
     public MulletaFlixMigrationService(
         IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
         IDbContextFactory<UsersDbContext> usersDbContextFactory,
+        IDbContextFactory<MoviesDbContext> moviesDbContextFactory,
+        IDbContextFactory<SeriesDbContext> seriesDbContextFactory,
+        IDbContextFactory<ChannelsDbContext> channelsDbContextFactory,
+        IDbContextFactory<BooksDbContext> booksDbContextFactory,
+        IDbContextFactory<SystemDbContext> systemDbContextFactory,
         ILoggerFactory loggerFactory,
         IStartupLogger<MulletaFlixMigrationService> startupLogger,
         IApplicationPaths applicationPaths,
@@ -59,6 +69,11 @@ internal class MulletaFlixMigrationService
     {
         _dbContextFactory = dbContextFactory;
         _usersDbContextFactory = usersDbContextFactory;
+        _moviesDbContextFactory = moviesDbContextFactory;
+        _seriesDbContextFactory = seriesDbContextFactory;
+        _channelsDbContextFactory = channelsDbContextFactory;
+        _booksDbContextFactory = booksDbContextFactory;
+        _systemDbContextFactory = systemDbContextFactory;
         _loggerFactory = loggerFactory;
         _startupLogger = startupLogger;
         _backupService = backupService;
@@ -296,6 +311,8 @@ internal class MulletaFlixMigrationService
                     logger.LogInformation("Seeding billing defaults for plans and gateways.");
                     await BillingSeedService.SeedAsync(billingDbContext).ConfigureAwait(false);
                 }
+
+                await InitializeDomainSchemasAsync(logger).ConfigureAwait(false);
             }
         }
     }
@@ -440,6 +457,49 @@ internal class MulletaFlixMigrationService
             Subtitles = left.Subtitles || right!.Subtitles,
             Trickplay = left.Trickplay || right!.Trickplay
         };
+    }
+
+    private async Task InitializeDomainSchemasAsync(ILogger logger)
+    {
+        var moviesCtx = await _moviesDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+        await using (moviesCtx.ConfigureAwait(false))
+        {
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(moviesCtx, "mulletaflix_movies", CancellationToken.None)
+                .ConfigureAwait(false);
+            logger.LogInformation("Movies schema initialized.");
+        }
+
+        var seriesCtx = await _seriesDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+        await using (seriesCtx.ConfigureAwait(false))
+        {
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(seriesCtx, "mulletaflix_series", CancellationToken.None)
+                .ConfigureAwait(false);
+            logger.LogInformation("Series schema initialized.");
+        }
+
+        var channelsCtx = await _channelsDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+        await using (channelsCtx.ConfigureAwait(false))
+        {
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(channelsCtx, "mulletaflix_channels", CancellationToken.None)
+                .ConfigureAwait(false);
+            logger.LogInformation("Channels schema initialized.");
+        }
+
+        var booksCtx = await _booksDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+        await using (booksCtx.ConfigureAwait(false))
+        {
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(booksCtx, "mulletaflix_books", CancellationToken.None)
+                .ConfigureAwait(false);
+            logger.LogInformation("Books schema initialized.");
+        }
+
+        var systemCtx = await _systemDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+        await using (systemCtx.ConfigureAwait(false))
+        {
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(systemCtx, "mulletaflix_system", CancellationToken.None)
+                .ConfigureAwait(false);
+            logger.LogInformation("System schema initialized.");
+        }
     }
 
     private class InternalCodeMigration : IInternalMigration

@@ -22,7 +22,8 @@ public interface IMulletaFlixDatabaseProvider
     /// </summary>
     /// <param name="options">The EFCore database options.</param>
     /// <param name="databaseConfiguration">The MulletaFlix database options.</param>
-    void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration);
+    /// <param name="schemaName">Optional schema/database name for multi-schema providers.</param>
+    void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration, string schemaName = "");
 
     /// <summary>
     /// Will be invoked when EFCore wants to build its model.

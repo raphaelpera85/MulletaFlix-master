@@ -40,7 +40,7 @@ public sealed class SqliteDatabaseProvider : IMulletaFlixDatabaseProvider
     public IDbContextFactory<MulletaFlixDbContext>? DbContextFactory { get; set; }
 
     /// <inheritdoc/>
-    public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration)
+    public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration, string schemaName = "")
     {
         static T? GetOption<T>(ICollection<CustomDatabaseOption>? options, string key, Func<string, T> converter, Func<T>? defaultValue = null)
         {

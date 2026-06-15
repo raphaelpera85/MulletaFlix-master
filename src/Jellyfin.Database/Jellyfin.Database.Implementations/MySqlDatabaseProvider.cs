@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.DbConfiguration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -16,6 +18,9 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
 {
     private readonly ILogger<MySqlDatabaseProvider> _logger;
 
+    private static readonly string DefaultConnectionString =
+        "Server=localhost;Port=3306;User ID=root;Password=;CharSet=utf8mb4;";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MySqlDatabaseProvider"/> class.
     /// </summary>
@@ -29,61 +34,67 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
     public IDbContextFactory<MulletaFlixDbContext>? DbContextFactory { get; set; }
 
     /// <inheritdoc/>
-    public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration)
+    public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration, string schemaName = "")
     {
-        // Default Connection String matching portable MariaDB setup
-        var connectionString = "Server=localhost;Port=3306;User ID=root;Password=;Database=mulletaflix_users;CharSet=utf8mb4;";
-        _logger.LogInformation("MySQL Connection String: {ConnectionString}", connectionString);
+        var connString = databaseConfiguration.CustomProviderOptions?.Options is { } opts
+            ? BuildConnectionString(opts)
+            : DefaultConnectionString;
 
-        var serverVersion = new MariaDbServerVersion(new Version(11, 4, 2));
+        var schema = !string.IsNullOrEmpty(schemaName) ? schemaName : "mulletaflix_users";
+        connString = ApplySchema(connString, schema);
+        _logger.LogInformation("MySQL: {Schema}", schema);
 
-        options.UseMySql(connectionString, serverVersion, mySqlOptions =>
+        var versionStr = databaseConfiguration.CustomProviderOptions?.Options is { } cfg
+            ? GetOption(cfg, "server-version", e => e, () => "11.4.2")
+            : "11.4.2";
+
+        var serverVersion = new MariaDbServerVersion(new Version(versionStr));
+
+        options.UseMySql(connString, serverVersion, mySqlOptions =>
         {
             mySqlOptions.MigrationsAssembly(GetType().Assembly.GetName().Name);
-            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (schema, table) => $"{schema}.{table}");
+            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (schema, table) => table);
         });
+    }
+
+    private static string BuildConnectionString(ICollection<CustomDatabaseOption> opts)
+    {
+        var server = GetOption(opts, "server", e => e, () => "localhost");
+        var port = GetOption(opts, "port", e => e, () => "3306");
+        var user = GetOption(opts, "user", e => e, () => "root");
+        var password = GetOption(opts, "password", e => e, () => "");
+        return $"Server={server};Port={port};User ID={user};Password={password};CharSet=utf8mb4;";
+    }
+
+    private static string ApplySchema(string connString, string schema)
+    {
+        var parts = connString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < parts.Length; i++)
+        {
+            if (parts[i].StartsWith("Database=", StringComparison.OrdinalIgnoreCase))
+            {
+                parts[i] = $"Database={schema}";
+                return string.Join(";", parts) + ";";
+            }
+        }
+        return $"{connString.TrimEnd(';')};Database={schema};";
+    }
+
+    public static T GetOption<T>(ICollection<CustomDatabaseOption>? options, string key, Func<string, T> converter, Func<T>? defaultValue = null)
+    {
+        if (options is null) return defaultValue is not null ? defaultValue() : default!;
+        foreach (var opt in options)
+        {
+            if (opt.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
+                return converter(opt.Value);
+        }
+        return defaultValue is not null ? defaultValue() : default!;
     }
 
     /// <inheritdoc/>
     public void OnModelCreating(ModelBuilder modelBuilder)
     {
-        foreach (var entity in modelBuilder.Model.GetEntityTypes())
-        {
-            var typeName = entity.ClrType.Name;
-            var schema = GetSchemaForType(typeName);
-            entity.SetSchema(schema);
-        }
-    }
-
-    private string GetSchemaForType(string typeName)
-    {
-        return typeName switch
-        {
-            // Users and Licensing
-            "AccessSchedule" or "ActivityLog" or "Device" or "DisplayPreferences" or "ItemDisplayPreferences" or
-            "CustomItemDisplayPreferences" or "Permission" or "Preference" or "User" or "UserLicense" or
-            "PricingPlan" or "PaymentTransaction" or "PaymentGatewayConfig" or "DiscountCoupon" or "UserData"
-                => "mulletaflix_users",
-
-            // Movies
-            "Movie" or "MovieMetadata" or "BaseItemEntity" or "Chapter" or "LinkedChildEntity"
-                => "mulletaflix_movies",
-
-            // Series
-            "Series" or "Season" or "Episode" or "SeriesMetadata" or "SeasonMetadata" or "EpisodeMetadata"
-                => "mulletaflix_series",
-
-            // Channels (IPTV)
-            "Channel" or "Program"
-                => "mulletaflix_channels",
-
-            // Books
-            "Book" or "BookMetadata"
-                => "mulletaflix_books",
-
-            // System Default / Core Configuration
-            _ => "mulletaflix_system"
-        };
+        // Per-schema entity configuration done by each DbContext's OnModelCreating
     }
 
     /// <inheritdoc/>
