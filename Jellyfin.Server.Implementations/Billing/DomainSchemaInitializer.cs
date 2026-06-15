@@ -22,7 +22,7 @@ public static class DomainSchemaInitializer
             "mulletaflix_series" => SeriesSchema(),
             "mulletaflix_channels" => ChannelsSchema(),
             "mulletaflix_books" => BooksSchema(),
-            "mulletaflix_system" => SystemSchema(),
+            "mulletaflix_system" => "", // Uses mullettaflix_users schema via SystemDbContext
             _ => ""
         };
 
@@ -180,24 +180,4 @@ public static class DomainSchemaInitializer
         );
         """;
 
-    private static string SystemSchema() => """
-        CREATE TABLE IF NOT EXISTS `DeviceOptions` (
-            `Id` int NOT NULL AUTO_INCREMENT,
-            `DeviceId` varchar(256) NOT NULL,
-            `Key` varchar(256) NOT NULL,
-            `Value` text NULL,
-            CONSTRAINT `PK_DeviceOptions` PRIMARY KEY (`Id`),
-            INDEX `IX_DeviceOptions_DeviceId` (`DeviceId`)
-        );
-
-        CREATE TABLE IF NOT EXISTS `ApiKeys` (
-            `Id` int NOT NULL AUTO_INCREMENT,
-            `Name` varchar(64) NOT NULL,
-            `AccessToken` varchar(256) NOT NULL,
-            `IsActive` tinyint(1) NOT NULL DEFAULT 1,
-            `CreatedAt` datetime(6) NOT NULL,
-            CONSTRAINT `PK_ApiKeys` PRIMARY KEY (`Id`),
-            INDEX `IX_ApiKeys_AccessToken` (`AccessToken`)
-        );
-        """;
 }

@@ -55,7 +55,7 @@ namespace MulletaFlix.Server.Helpers
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = exePath,
-                    Arguments = $"--datadir=\"{dataDir}\" --console",
+                    Arguments = $"--datadir=\"{dataDir}\" --console --skip-log-bin",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -63,7 +63,22 @@ namespace MulletaFlix.Server.Helpers
                 };
 
                 _mariaDbProcess = new Process { StartInfo = startInfo };
+
+                // Async readers prevent I/O deadlock when output buffer fills
+                _mariaDbProcess.OutputDataReceived += (_, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        logger.LogDebug("MariaDB: {Data}", e.Data);
+                };
+                _mariaDbProcess.ErrorDataReceived += (_, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        logger.LogWarning("MariaDB: {Data}", e.Data);
+                };
+
                 _mariaDbProcess.Start();
+                _mariaDbProcess.BeginOutputReadLine();
+                _mariaDbProcess.BeginErrorReadLine();
 
                 // Wait for the database engine to come online
                 Thread.Sleep(3000);
@@ -93,8 +108,7 @@ namespace MulletaFlix.Server.Helpers
                 "mulletaflix_movies",
                 "mulletaflix_series",
                 "mulletaflix_channels",
-                "mulletaflix_books",
-                "mulletaflix_system"
+                "mulletaflix_books"
             };
 
             for (int i = 0; i < 5; i++) // Tenta até 5 vezes estabelecer a conexão inicial

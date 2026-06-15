@@ -194,7 +194,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddPooledDbContextFactory<SystemDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_system");
+            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_users");
         });
 
         return serviceCollection;

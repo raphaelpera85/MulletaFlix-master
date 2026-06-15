@@ -146,7 +146,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         try
         {
             var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-                "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+                "mulletaflix_channels", "mulletaflix_books" };
 
             foreach (var schema in schemas)
             {
@@ -203,7 +203,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         Directory.CreateDirectory(backupFolder);
 
         var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_books" };
 
         foreach (var schema in schemas)
         {
@@ -223,7 +223,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         var backupFolder = GetBackupFolder();
 
         var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_books" };
 
         foreach (var schema in schemas)
         {
@@ -248,7 +248,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         if (!Directory.Exists(backupFolder)) return Task.CompletedTask;
 
         var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_system" };
+            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_books" };
 
         foreach (var schema in schemas)
         {

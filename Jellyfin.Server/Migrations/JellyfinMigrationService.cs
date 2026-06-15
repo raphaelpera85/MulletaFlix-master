@@ -503,13 +503,6 @@ internal class MulletaFlixMigrationService
             logger.LogInformation("Books schema initialized.");
         }
 
-        var systemCtx = await _systemDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
-        await using (systemCtx.ConfigureAwait(false))
-        {
-            await DomainSchemaInitializer.EnsureDomainTablesAsync(systemCtx, "mulletaflix_system", CancellationToken.None)
-                .ConfigureAwait(false);
-            logger.LogInformation("System schema initialized.");
-        }
     }
 
     private class InternalCodeMigration : IInternalMigration
