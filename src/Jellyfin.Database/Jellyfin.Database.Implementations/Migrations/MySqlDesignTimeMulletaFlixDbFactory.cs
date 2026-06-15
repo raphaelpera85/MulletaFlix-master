@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MulletaFlix.Database.Implementations.Migrations;
 
-internal sealed class MySqlDesignTimeMulletaFlixDbFactory : IDesignTimeDbContextFactory<MulletaFlixDbContext>
+public sealed class MySqlDesignTimeMulletaFlixDbFactory : IDesignTimeDbContextFactory<MulletaFlixDbContext>
 {
     public MulletaFlixDbContext CreateDbContext(string[] args)
     {
