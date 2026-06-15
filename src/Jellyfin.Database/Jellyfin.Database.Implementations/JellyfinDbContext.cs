@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
@@ -87,6 +87,26 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
     /// Gets the <see cref="DbSet{TEntity}"/> containing the user licenses.
     /// </summary>
     public DbSet<UserLicense> UserLicenses => Set<UserLicense>();
+
+    /// <summary>
+    /// Gets the <see cref="DbSet{TEntity}"/> containing the pricing plans.
+    /// </summary>
+    public DbSet<PricingPlan> PricingPlans => Set<PricingPlan>();
+
+    /// <summary>
+    /// Gets the <see cref="DbSet{TEntity}"/> containing the payment transactions.
+    /// </summary>
+    public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
+
+    /// <summary>
+    /// Gets the <see cref="DbSet{TEntity}"/> containing the payment gateway configs.
+    /// </summary>
+    public DbSet<PaymentGatewayConfig> PaymentGatewayConfigs => Set<PaymentGatewayConfig>();
+
+    /// <summary>
+    /// Gets the <see cref="DbSet{TEntity}"/> containing the discount coupons.
+    /// </summary>
+    public DbSet<DiscountCoupon> DiscountCoupons => Set<DiscountCoupon>();
 
     /// <summary>
     /// Gets the <see cref="DbSet{TEntity}"/> containing the trickplay metadata.

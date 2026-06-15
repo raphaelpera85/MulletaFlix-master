@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -144,6 +144,9 @@ namespace MulletaFlix.Server
 
             StartupHelpers.PerformStaticInitialization();
 
+            // Iniciar o MariaDB Embutido
+            MariaDbProcessManager.StartMariaDb(appPaths, _logger);
+
             await ApplyStartupMigrationAsync(appPaths, startupConfig, options).ConfigureAwait(false);
 
             do
@@ -159,6 +162,9 @@ namespace MulletaFlix.Server
             } while (_restartOnShutdown);
 
             _setupServer.Dispose();
+
+            // Parar o MariaDB Embutido
+            MariaDbProcessManager.StopMariaDb(_logger);
         }
 
         private static void ConfigureThreadPool()

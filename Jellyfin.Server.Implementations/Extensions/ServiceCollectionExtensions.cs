@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
     private static IEnumerable<Type> DatabaseProviderTypes()
     {
         yield return typeof(SqliteDatabaseProvider);
+        yield return typeof(MySqlDatabaseProvider);
     }
 
     private static IDictionary<string, MulletaFlixDbProviderFactory> GetSupportedDbProviders()
@@ -93,10 +94,10 @@ public static class ServiceCollectionExtensions
             }
             else
             {
-                // when nothing is setup via new Database configuration, fallback to SQLite with default settings.
+                // fallback to MariaDB/MySQL with default settings.
                 efCoreConfiguration = new DatabaseConfigurationOptions()
                 {
-                    DatabaseType = "MulletaFlix-SQLite",
+                    DatabaseType = "MulletaFlix-MySQL",
                     LockingBehavior = DatabaseLockingBehaviorTypes.NoLock
                 };
                 configurationManager.SaveConfiguration("database", efCoreConfiguration);
