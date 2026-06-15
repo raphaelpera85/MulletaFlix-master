@@ -354,7 +354,9 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
         base.OnModelCreating(modelBuilder);
 
         // Configuration for each entity is in its own class inside 'ModelConfiguration'.
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MulletaFlixDbContext).Assembly);
+        // Domain entity configurations (movies, series, etc.) are excluded via [DomainConfiguration] attribute.
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MulletaFlixDbContext).Assembly,
+            type => !type.IsDefined(typeof(DomainConfigurationAttribute), inherit: false));
     }
 
     /// <inheritdoc />

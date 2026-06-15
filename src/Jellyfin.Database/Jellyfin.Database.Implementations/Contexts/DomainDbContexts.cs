@@ -1,25 +1,28 @@
-using System.Threading;
-using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Entities.Books;
+using MulletaFlix.Database.Implementations.Entities.Channels;
+using MulletaFlix.Database.Implementations.Entities.Movies;
+using MulletaFlix.Database.Implementations.Entities.Security;
+using MulletaFlix.Database.Implementations.Entities.Series;
 using MulletaFlix.Database.Implementations.Locking;
+using MulletaFlix.Database.Implementations.ModelConfiguration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-
-using MulletaFlix.Database.Implementations.Entities.Security;
 
 namespace MulletaFlix.Database.Implementations.Contexts;
 
 public class MoviesDbContext(DbContextOptions<MoviesDbContext> options, ILogger<MoviesDbContext> logger) : DbContext(options)
 {
-    // Em Jellyfin puro tudo era BaseItems. Agora abstrairemos as tabelas específicas.
     public DbSet<Movie> Movies => Set<Movie>();
     public DbSet<MovieMetadata> MovieMetadata => Set<MovieMetadata>();
-    public DbSet<Chapter> Chapters => Set<Chapter>();
-    public DbSet<UserData> MovieUserData => Set<UserData>();
+    public DbSet<MovieUserData> MovieUserData => Set<MovieUserData>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfiguration(new MovieConfiguration());
+        modelBuilder.ApplyConfiguration(new MovieMetadataConfiguration());
+        modelBuilder.ApplyConfiguration(new MovieUserDataConfiguration());
     }
 }
 
@@ -28,37 +31,41 @@ public class SeriesDbContext(DbContextOptions<SeriesDbContext> options, ILogger<
     public DbSet<Series> Series => Set<Series>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<Episode> Episodes => Set<Episode>();
-    public DbSet<SeriesMetadata> SeriesMetadata => Set<SeriesMetadata>();
-    public DbSet<SeasonMetadata> SeasonMetadata => Set<SeasonMetadata>();
-    public DbSet<EpisodeMetadata> EpisodeMetadata => Set<EpisodeMetadata>();
-    public DbSet<UserData> SeriesUserData => Set<UserData>();
+    public DbSet<SeriesUserData> SeriesUserData => Set<SeriesUserData>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfiguration(new SeriesConfiguration());
+        modelBuilder.ApplyConfiguration(new SeasonConfiguration());
+        modelBuilder.ApplyConfiguration(new EpisodeConfiguration());
+        modelBuilder.ApplyConfiguration(new SeriesUserDataConfiguration());
     }
 }
 
 public class ChannelsDbContext(DbContextOptions<ChannelsDbContext> options, ILogger<ChannelsDbContext> logger) : DbContext(options)
 {
     public DbSet<Channel> Channels => Set<Channel>();
-    public DbSet<Program> Programs => Set<Program>(); // EPG
+    public DbSet<Program> Programs => Set<Program>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfiguration(new ChannelConfiguration());
+        modelBuilder.ApplyConfiguration(new ProgramConfiguration());
     }
 }
 
 public class BooksDbContext(DbContextOptions<BooksDbContext> options, ILogger<BooksDbContext> logger) : DbContext(options)
 {
     public DbSet<Book> Books => Set<Book>();
-    public DbSet<BookMetadata> BookMetadata => Set<BookMetadata>();
-    public DbSet<UserData> BookUserData => Set<UserData>();
+    public DbSet<BookUserData> BookUserData => Set<BookUserData>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfiguration(new BookConfiguration());
+        modelBuilder.ApplyConfiguration(new BookUserDataConfiguration());
     }
 }
 
@@ -72,16 +79,3 @@ public class SystemDbContext(DbContextOptions<SystemDbContext> options, ILogger<
         base.OnModelCreating(modelBuilder);
     }
 }
-
-public class Movie {}
-public class MovieMetadata {}
-public class Series {}
-public class Season {}
-public class Episode {}
-public class SeriesMetadata {}
-public class SeasonMetadata {}
-public class EpisodeMetadata {}
-public class Channel {}
-public class Program {}
-public class Book {}
-public class BookMetadata {}

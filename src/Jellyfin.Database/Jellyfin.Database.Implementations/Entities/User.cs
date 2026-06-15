@@ -334,7 +334,6 @@ namespace MulletaFlix.Database.Implementations.Entities
         /// <summary>
         /// Gets the list of permissions this user has.
         /// </summary>
-        [ForeignKey("Permission_Permissions_Guid")]
         public virtual ICollection<Permission> Permissions { get; private set; }
 
         /// <summary>
@@ -352,7 +351,6 @@ namespace MulletaFlix.Database.Implementations.Entities
         /// <summary>
         /// Gets the list of preferences this user has.
         /// </summary>
-        [ForeignKey("Preference_Preferences_Guid")]
         public virtual ICollection<Preference> Preferences { get; private set; }
 
         /// <summary>
