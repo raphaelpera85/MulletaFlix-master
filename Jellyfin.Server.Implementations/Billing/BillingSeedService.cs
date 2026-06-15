@@ -168,9 +168,106 @@ public static class BillingSeedService
             await databaseCreator.CreateAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        if (!await databaseCreator.HasTablesAsync(cancellationToken).ConfigureAwait(false))
+        await EnsureBillingTablesAsync(dbContext, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task EnsureBillingTablesAsync(UsersDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var providerName = dbContext.Database.ProviderName ?? string.Empty;
+        var supportsSqlite = providerName.Contains("Sqlite", StringComparison.OrdinalIgnoreCase);
+        var supportsMySql = providerName.Contains("MySql", StringComparison.OrdinalIgnoreCase) ||
+                            providerName.Contains("MariaDb", StringComparison.OrdinalIgnoreCase);
+
+        if (supportsSqlite)
         {
-            await databaseCreator.CreateTablesAsync(cancellationToken).ConfigureAwait(false);
+            const string createSqliteBillingSchemaSql = """
+                CREATE TABLE IF NOT EXISTS "PricingPlans" (
+                    "Id" INTEGER NOT NULL CONSTRAINT "PK_PricingPlans" PRIMARY KEY AUTOINCREMENT,
+                    "Name" TEXT NOT NULL,
+                    "DurationMonths" INTEGER NOT NULL,
+                    "PricePerMonth" TEXT NOT NULL,
+                    "TotalPrice" TEXT NOT NULL,
+                    "IsActive" INTEGER NOT NULL,
+                    "IsHighlighted" INTEGER NOT NULL,
+                    "SortOrder" INTEGER NOT NULL,
+                    "CreatedAt" TEXT NOT NULL,
+                    "UpdatedAt" TEXT NOT NULL,
+                    CONSTRAINT "AK_PricingPlans_DurationMonths" UNIQUE ("DurationMonths")
+                );
+
+                CREATE TABLE IF NOT EXISTS "PaymentGatewayConfigs" (
+                    "Id" INTEGER NOT NULL CONSTRAINT "PK_PaymentGatewayConfigs" PRIMARY KEY AUTOINCREMENT,
+                    "GatewayName" TEXT NOT NULL,
+                    "DisplayName" TEXT NOT NULL,
+                    "IsEnabled" INTEGER NOT NULL,
+                    "IsPrimary" INTEGER NOT NULL,
+                    "AccessToken" TEXT NOT NULL,
+                    "PublicKey" TEXT NOT NULL,
+                    "WebhookSecret" TEXT NOT NULL,
+                    "SandboxMode" INTEGER NOT NULL,
+                    "EnablePix" INTEGER NOT NULL,
+                    "EnableCredit" INTEGER NOT NULL,
+                    "EnableDebit" INTEGER NOT NULL,
+                    "ExtraConfig" TEXT NULL,
+                    "CreatedAt" TEXT NOT NULL,
+                    "UpdatedAt" TEXT NOT NULL,
+                    CONSTRAINT "AK_PaymentGatewayConfigs_GatewayName" UNIQUE ("GatewayName")
+                );
+                """;
+
+            await dbContext.Database.ExecuteSqlRawAsync(
+                createSqliteBillingSchemaSql,
+                cancellationToken).ConfigureAwait(false);
+            return;
         }
+
+        if (supportsMySql)
+        {
+            // Tables are created by EF Core migration (InitialMySqlCreate).
+            // Raw SQL fallback ensures they exist even if migration hasn't run yet.
+            const string createMySqlBillingSchemaSql = """
+                CREATE TABLE IF NOT EXISTS `PricingPlans` (
+                    `Id` int NOT NULL AUTO_INCREMENT,
+                    `Name` varchar(100) NOT NULL,
+                    `DurationMonths` int NOT NULL,
+                    `PricePerMonth` decimal(18,2) NOT NULL,
+                    `TotalPrice` decimal(18,2) NOT NULL,
+                    `IsActive` tinyint(1) NOT NULL,
+                    `IsHighlighted` tinyint(1) NOT NULL,
+                    `SortOrder` int NOT NULL,
+                    `CreatedAt` datetime(6) NOT NULL,
+                    `UpdatedAt` datetime(6) NOT NULL,
+                    CONSTRAINT `PK_PricingPlans` PRIMARY KEY (`Id`),
+                    CONSTRAINT `AK_PricingPlans_DurationMonths` UNIQUE (`DurationMonths`)
+                );
+
+                CREATE TABLE IF NOT EXISTS `PaymentGatewayConfigs` (
+                    `Id` int NOT NULL AUTO_INCREMENT,
+                    `GatewayName` varchar(50) NOT NULL,
+                    `DisplayName` varchar(100) NOT NULL,
+                    `IsEnabled` tinyint(1) NOT NULL,
+                    `IsPrimary` tinyint(1) NOT NULL,
+                    `AccessToken` longtext NOT NULL,
+                    `PublicKey` varchar(200) NULL,
+                    `WebhookSecret` longtext NOT NULL,
+                    `SandboxMode` tinyint(1) NOT NULL,
+                    `EnablePix` tinyint(1) NOT NULL,
+                    `EnableCredit` tinyint(1) NOT NULL,
+                    `EnableDebit` tinyint(1) NOT NULL,
+                    `ExtraConfig` longtext NULL,
+                    `CreatedAt` datetime(6) NOT NULL,
+                    `UpdatedAt` datetime(6) NOT NULL,
+                    CONSTRAINT `PK_PaymentGatewayConfigs` PRIMARY KEY (`Id`),
+                    CONSTRAINT `AK_PaymentGatewayConfigs_GatewayName` UNIQUE (`GatewayName`)
+                );
+                """;
+
+            await dbContext.Database.ExecuteSqlRawAsync(
+                createMySqlBillingSchemaSql,
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        throw new InvalidOperationException($"Billing seed does not support provider '{providerName}'.");
     }
 }
