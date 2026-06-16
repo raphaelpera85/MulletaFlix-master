@@ -26,6 +26,8 @@ namespace MulletaFlix.Server.Implementations.Item;
 /// </summary>
 public class ItemPersistenceService : IItemPersistenceService
 {
+    internal static readonly IEqualityComparer<(ItemValueType MagicNumber, string Value)> ItemValueKeyComparer = new ItemValueKeyEqualityComparer();
+
     private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IServerApplicationHost _appHost;
     private readonly ILogger<ItemPersistenceService> _logger;
@@ -288,19 +290,20 @@ public class ItemPersistenceService : IItemPersistenceService
             .ToArray();
         var allListedItemValues = itemValueMaps
             .SelectMany(f => f.Values)
-            .Distinct()
+            .Distinct(ItemValueKeyComparer)
             .ToArray();
 
         var types = allListedItemValues.Select(e => e.MagicNumber).Distinct().ToArray();
-        var values = allListedItemValues.Select(e => e.Value).Distinct().ToArray();
-        var allListedItemValuesSet = allListedItemValues.ToHashSet();
+        var values = allListedItemValues.Select(e => e.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var allListedItemValuesSet = allListedItemValues.ToHashSet(ItemValueKeyComparer);
 
         var existingValues = context.ItemValues
             .Where(e => Enumerable.Contains(types, e.Type) && Enumerable.Contains(values, e.Value))
             .AsEnumerable()
             .Where(e => allListedItemValuesSet.Contains((e.Type, e.Value)))
+            .DistinctBy(e => (e.Type, e.Value), ItemValueKeyComparer)
             .ToArray();
-        var missingItemValues = allListedItemValues.Except(existingValues.Select(f => (MagicNumber: f.Type, f.Value))).Select(f => new ItemValue()
+        var missingItemValues = allListedItemValues.Except(existingValues.Select(f => (MagicNumber: f.Type, f.Value)), ItemValueKeyComparer).Select(f => new ItemValue()
         {
             CleanValue = f.Value.GetCleanValue(),
             ItemValueId = Guid.NewGuid(),
@@ -311,7 +314,7 @@ public class ItemPersistenceService : IItemPersistenceService
 
         var itemValuesStore = existingValues.Concat(missingItemValues).ToArray();
         var valueMap = itemValueMaps
-            .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStore.First(g => g.Value == e.Value && g.Type == e.MagicNumber)).DistinctBy(e => e.ItemValueId).ToArray()))
+            .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStore.First(g => g.Type == e.MagicNumber && string.Equals(g.Value, e.Value, StringComparison.OrdinalIgnoreCase))).DistinctBy(e => e.ItemValueId).ToArray()))
             .ToArray();
 
         var mappedValues = context.ItemValuesMap.Where(e => Enumerable.Contains(ids, e.ItemId)).ToList();
@@ -660,6 +663,19 @@ public class ItemPersistenceService : IItemPersistenceService
         list.RemoveAll(i => string.IsNullOrWhiteSpace(i.Item2));
 
         return list;
+    }
+
+    private sealed class ItemValueKeyEqualityComparer : IEqualityComparer<(ItemValueType MagicNumber, string Value)>
+    {
+        public bool Equals((ItemValueType MagicNumber, string Value) x, (ItemValueType MagicNumber, string Value) y)
+        {
+            return x.MagicNumber == y.MagicNumber && string.Equals(x.Value, y.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode((ItemValueType MagicNumber, string Value) obj)
+        {
+            return HashCode.Combine(obj.MagicNumber, StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Value));
+        }
     }
 }
 
