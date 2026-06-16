@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Threading;
@@ -16,6 +17,7 @@ using MulletaFlix.Api.Extensions;
 using MulletaFlix.Api.Helpers;
 using MulletaFlix.Extensions;
 using MediaBrowser.Common.Api;
+using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Drawing;
@@ -28,6 +30,7 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Net;
+using MediaBrowser.Model.Providers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -300,7 +303,7 @@ public class ImageController : BaseMulletaFlixApiController
         var item = _libraryManager.GetItemById<BaseItem>(itemId, User.GetUserId());
         if (item is null)
         {
-            return NotFound();
+            return NoContent();
         }
 
         await item.DeleteImageAsync(imageType, imageIndex ?? 0).ConfigureAwait(false);
@@ -328,7 +331,7 @@ public class ImageController : BaseMulletaFlixApiController
         var item = _libraryManager.GetItemById<BaseItem>(itemId, User.GetUserId());
         if (item is null)
         {
-            return NotFound();
+            return NoContent();
         }
 
         await item.DeleteImageAsync(imageType, imageIndex).ConfigureAwait(false);
@@ -357,7 +360,7 @@ public class ImageController : BaseMulletaFlixApiController
         var item = _libraryManager.GetItemById<BaseItem>(itemId, User.GetUserId());
         if (item is null)
         {
-            return NotFound();
+            return NoContent();
         }
 
         if (!TryGetImageExtensionFromContentType(Request.ContentType, out _))
@@ -1838,6 +1841,8 @@ public class ImageController : BaseMulletaFlixApiController
         BaseItem? item,
         ItemImageInfo? imageInfo = null)
     {
+        var cancellationToken = HttpContext.RequestAborted;
+
         if (percentPlayed.HasValue)
         {
             if (percentPlayed.Value <= 0)
@@ -1861,61 +1866,177 @@ public class ImageController : BaseMulletaFlixApiController
             unplayedCount = null;
         }
 
-        if (imageInfo is null)
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            imageInfo = item?.GetImageInfo(imageType, imageIndex ?? 0);
             if (imageInfo is null)
             {
-                return NotFound(string.Format(NumberFormatInfo.InvariantInfo, "{0} does not have an image of type {1}", item?.Name, imageType));
+                imageInfo = item?.GetImageInfo(imageType, imageIndex ?? 0);
+            }
+
+            if (imageInfo is null)
+            {
+                if (attempt == 0 && await TryRecoverMissingBookPrimaryImageAsync(item, imageType, imageIndex ?? 0, cancellationToken).ConfigureAwait(false))
+                {
+                    imageInfo = null;
+                    continue;
+                }
+
+                _logger.LogDebug("Skipping missing image for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                return NoContent();
+            }
+
+            if (imageInfo.IsLocalFile && !System.IO.File.Exists(PathFallbackHelper.ResolveExistingFilePath(imageInfo.Path)))
+            {
+                if (attempt == 0 && await TryRecoverMissingBookPrimaryImageAsync(item, imageType, imageIndex ?? 0, cancellationToken).ConfigureAwait(false))
+                {
+                    _logger.LogDebug("Recovered stale local image for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                    imageInfo = null;
+                    continue;
+                }
+
+                _logger.LogDebug("Skipping stale local image for item {ItemId} ({ItemName}) of type {ImageType} at {ImagePath}", itemId, item?.Name, imageType, imageInfo.Path);
+                return NoContent();
+            }
+
+            var outputFormats = GetOutputFormats(format);
+
+            TimeSpan? cacheDuration = null;
+
+            if (!string.IsNullOrEmpty(tag))
+            {
+                cacheDuration = TimeSpan.FromDays(365);
+            }
+
+            var responseHeaders = new Dictionary<string, string>
+            {
+                { "transferMode.dlna.org", "Interactive" },
+                { "realTimeInfo.dlna.org", "DLNA.ORG_TLAG=*" }
+            };
+
+            try
+            {
+                if (!imageInfo.IsLocalFile && item is not null)
+                {
+                    imageInfo = await _libraryManager.ConvertImageToLocal(item, imageInfo, imageIndex ?? 0).ConfigureAwait(false);
+                }
+
+                var options = new ImageProcessingOptions
+                {
+                    Height = height,
+                    ImageIndex = imageIndex ?? 0,
+                    Image = imageInfo,
+                    Item = item,
+                    ItemId = itemId,
+                    MaxHeight = maxHeight,
+                    MaxWidth = maxWidth,
+                    FillHeight = fillHeight,
+                    FillWidth = fillWidth,
+                    Quality = quality ?? 100,
+                    Width = width,
+                    PercentPlayed = percentPlayed ?? 0,
+                    UnplayedCount = unplayedCount,
+                    Blur = blur,
+                    BackgroundColor = backgroundColor,
+                    ForegroundLayer = foregroundLayer,
+                    SupportedOutputFormats = outputFormats
+                };
+
+                return await GetImageResult(
+                    options,
+                    cacheDuration,
+                    responseHeaders,
+                    tag).ConfigureAwait(false);
+            }
+            catch (FileNotFoundException ex)
+            {
+                if (attempt == 0 && await TryRecoverMissingBookPrimaryImageAsync(item, imageType, imageIndex ?? 0, cancellationToken).ConfigureAwait(false))
+                {
+                    _logger.LogDebug(ex, "Recovering missing image file for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                    imageInfo = null;
+                    continue;
+                }
+
+                _logger.LogDebug(ex, "Missing image file for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                return NoContent();
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                if (attempt == 0 && await TryRecoverMissingBookPrimaryImageAsync(item, imageType, imageIndex ?? 0, cancellationToken).ConfigureAwait(false))
+                {
+                    _logger.LogDebug(ex, "Recovering missing image directory for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                    imageInfo = null;
+                    continue;
+                }
+
+                _logger.LogDebug(ex, "Missing image directory for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                return NoContent();
+            }
+            catch (ResourceNotFoundException ex)
+            {
+                if (attempt == 0 && await TryRecoverMissingBookPrimaryImageAsync(item, imageType, imageIndex ?? 0, cancellationToken).ConfigureAwait(false))
+                {
+                    _logger.LogDebug(ex, "Recovering missing image resource for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                    imageInfo = null;
+                    continue;
+                }
+
+                _logger.LogDebug(ex, "Missing image resource for item {ItemId} ({ItemName}) of type {ImageType}", itemId, item?.Name, imageType);
+                return NoContent();
             }
         }
 
-        var outputFormats = GetOutputFormats(format);
+        return NoContent();
+    }
 
-        TimeSpan? cacheDuration = null;
-
-        if (!string.IsNullOrEmpty(tag))
+    internal async Task<bool> TryRecoverMissingBookPrimaryImageAsync(
+        BaseItem? item,
+        ImageType imageType,
+        int imageIndex,
+        CancellationToken cancellationToken)
+    {
+        if (item is not Book || imageType != ImageType.Primary || !item.SupportsRemoteImageDownloading)
         {
-            cacheDuration = TimeSpan.FromDays(365);
+            return false;
         }
 
-        var responseHeaders = new Dictionary<string, string>
+        try
         {
-            { "transferMode.dlna.org", "Interactive" },
-            { "realTimeInfo.dlna.org", "DLNA.ORG_TLAG=*" }
-        };
+            var remoteImages = await _providerManager.GetAvailableRemoteImages(
+                    item,
+                    new RemoteImageQuery(string.Empty)
+                    {
+                        IncludeAllLanguages = true,
+                        IncludeDisabledProviders = true,
+                        ImageType = imageType
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
 
-        if (!imageInfo.IsLocalFile && item is not null)
+            foreach (var remoteImage in remoteImages)
+            {
+                if (string.IsNullOrWhiteSpace(remoteImage.Url) || remoteImage.Type != imageType)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    await _providerManager.SaveImage(item, remoteImage.Url, imageType, imageIndex, cancellationToken).ConfigureAwait(false);
+                    _logger.LogDebug("Recovered missing book image for item {ItemId} ({ItemName}) from {ImageUrl}", item.Id, item.Name, remoteImage.Url);
+                    return item.GetImageInfo(imageType, imageIndex) is not null;
+                }
+                catch (HttpRequestException ex)
+                {
+                    _logger.LogDebug(ex, "Error recovering book image for item {ItemId} ({ItemName}) from {ImageUrl}", item.Id, item.Name, remoteImage.Url);
+                }
+            }
+        }
+        catch (Exception ex)
         {
-            imageInfo = await _libraryManager.ConvertImageToLocal(item, imageInfo, imageIndex ?? 0).ConfigureAwait(false);
+            _logger.LogDebug(ex, "Error querying remote book images for item {ItemId} ({ItemName})", item?.Id, item?.Name);
         }
 
-        var options = new ImageProcessingOptions
-        {
-            Height = height,
-            ImageIndex = imageIndex ?? 0,
-            Image = imageInfo,
-            Item = item,
-            ItemId = itemId,
-            MaxHeight = maxHeight,
-            MaxWidth = maxWidth,
-            FillHeight = fillHeight,
-            FillWidth = fillWidth,
-            Quality = quality ?? 100,
-            Width = width,
-            PercentPlayed = percentPlayed ?? 0,
-            UnplayedCount = unplayedCount,
-            Blur = blur,
-            BackgroundColor = backgroundColor,
-            ForegroundLayer = foregroundLayer,
-            SupportedOutputFormats = outputFormats
-        };
-
-        return await GetImageResult(
-            options,
-            cacheDuration,
-            responseHeaders,
-            tag).ConfigureAwait(false);
+        return false;
     }
 
     private ImageFormat[] GetOutputFormats(ImageFormat? format)
@@ -2061,6 +2182,11 @@ public class ImageController : BaseMulletaFlixApiController
         }
 
         imagePath = PathFallbackHelper.ResolveExistingFilePath(imagePath);
+        if (!System.IO.File.Exists(imagePath))
+        {
+            _logger.LogDebug("Skipping image response because image file does not exist: {ImagePath}", imagePath);
+            return NoContent();
+        }
 
         return PhysicalFile(imagePath, imageContentType ?? MediaTypeNames.Text.Plain);
     }

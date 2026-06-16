@@ -139,6 +139,8 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                 {
                     PopulateMetadata(result, bookEntry);
                 }
+
+                AddOpenLibraryFallbackImages(result, cleanIsbn, null);
             }
             catch (Exception ex)
             {
@@ -179,6 +181,8 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                         PopulateMetadata(result, bookEntry);
                     }
                 }
+
+                AddOpenLibraryFallbackImages(result, null, normalizedId);
             }
             catch (Exception ex)
             {
@@ -636,6 +640,24 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                 ThumbnailUrl = url.Replace("-L.jpg", "-M.jpg", StringComparison.OrdinalIgnoreCase),
                 Type = ImageType.Primary
             });
+        }
+
+        private static void AddOpenLibraryFallbackImages(MetadataResult<Book> result, string? isbn, string? openLibraryId)
+        {
+            if (result.RemoteImages.Count > 0)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(openLibraryId))
+            {
+                result.RemoteImages.Add(($"https://covers.openlibrary.org/b/olid/{Uri.EscapeDataString(openLibraryId)}-L.jpg?default=false", ImageType.Primary));
+            }
+
+            if (!string.IsNullOrWhiteSpace(isbn))
+            {
+                result.RemoteImages.Add(($"https://covers.openlibrary.org/b/isbn/{Uri.EscapeDataString(isbn)}-L.jpg?default=false", ImageType.Primary));
+            }
         }
 
         private static void MergeSupplementalMetadata(MetadataResult<Book> target, MetadataResult<Book> source)
