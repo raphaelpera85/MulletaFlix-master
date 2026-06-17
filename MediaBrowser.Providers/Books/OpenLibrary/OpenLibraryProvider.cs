@@ -171,6 +171,10 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                 {
                     using var document = JsonDocument.Parse(json);
                     PopulateMetadataFromWork(result, document.RootElement);
+                    if (result.RemoteImages.Count == 0)
+                    {
+                        await AddEditionImagesFromWork(result, normalizedId, cancellationToken).ConfigureAwait(false);
+                    }
                 }
                 else
                 {
@@ -612,6 +616,91 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
             }
         }
 
+        private async Task AddEditionImagesFromWork(MetadataResult<Book> result, string workId, CancellationToken cancellationToken)
+        {
+            var url = $"https://openlibrary.org/works/{Uri.EscapeDataString(workId)}/editions.json?limit=25";
+
+            try
+            {
+                using var response = await _httpClientFactory.CreateClient(NamedClient.Default)
+                    .GetAsync(url, cancellationToken)
+                    .ConfigureAwait(false);
+
+                response.EnsureSuccessStatusCode();
+                var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                using var document = JsonDocument.Parse(json);
+                if (!document.RootElement.TryGetProperty("entries", out var entries)
+                    || entries.ValueKind != JsonValueKind.Array)
+                {
+                    return;
+                }
+
+                foreach (var edition in entries.EnumerateArray())
+                {
+                    AddEditionImages(result, edition);
+
+                    if (result.RemoteImages.Count > 0)
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error fetching OpenLibrary editions for work {Id}", workId);
+            }
+        }
+
+        private static void AddEditionImages(MetadataResult<Book> result, JsonElement edition)
+        {
+            if (edition.TryGetProperty("covers", out var covers) && covers.ValueKind == JsonValueKind.Array)
+            {
+                var coverId = covers.EnumerateArray()
+                    .Where(item => item.ValueKind == JsonValueKind.Number)
+                    .Select(item => item.GetInt32())
+                    .FirstOrDefault(id => id > 0);
+
+                if (coverId > 0)
+                {
+                    AddRemoteImageIfMissing(result, $"https://covers.openlibrary.org/b/id/{coverId}-L.jpg");
+                    return;
+                }
+            }
+
+            if (edition.TryGetProperty("cover_i", out var coverIdElement)
+                && coverIdElement.ValueKind == JsonValueKind.Number)
+            {
+                var coverId = coverIdElement.GetInt32();
+                if (coverId > 0)
+                {
+                    AddRemoteImageIfMissing(result, $"https://covers.openlibrary.org/b/id/{coverId}-L.jpg");
+                    return;
+                }
+            }
+
+            if (edition.TryGetProperty("isbn_13", out var isbn13)
+                && isbn13.ValueKind == JsonValueKind.Array
+                && isbn13.GetArrayLength() > 0)
+            {
+                var isbn = isbn13[0].GetString();
+                if (!string.IsNullOrWhiteSpace(isbn))
+                {
+                    result.Item?.SetProviderId("ISBN", isbn);
+                }
+            }
+            else if (edition.TryGetProperty("isbn_10", out var isbn10)
+                && isbn10.ValueKind == JsonValueKind.Array
+                && isbn10.GetArrayLength() > 0)
+            {
+                var isbn = isbn10[0].GetString();
+                if (!string.IsNullOrWhiteSpace(isbn))
+                {
+                    result.Item?.SetProviderId("ISBN", isbn);
+                }
+            }
+        }
+
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken);
@@ -649,14 +738,23 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(openLibraryId))
+            if (!string.IsNullOrWhiteSpace(openLibraryId)
+                && !openLibraryId.EndsWith('W'))
             {
-                result.RemoteImages.Add(($"https://covers.openlibrary.org/b/olid/{Uri.EscapeDataString(openLibraryId)}-L.jpg?default=false", ImageType.Primary));
+                AddRemoteImageIfMissing(result, $"https://covers.openlibrary.org/b/olid/{Uri.EscapeDataString(openLibraryId)}-L.jpg?default=false");
             }
 
             if (!string.IsNullOrWhiteSpace(isbn))
             {
-                result.RemoteImages.Add(($"https://covers.openlibrary.org/b/isbn/{Uri.EscapeDataString(isbn)}-L.jpg?default=false", ImageType.Primary));
+                AddRemoteImageIfMissing(result, $"https://covers.openlibrary.org/b/isbn/{Uri.EscapeDataString(isbn)}-L.jpg?default=false");
+            }
+        }
+
+        private static void AddRemoteImageIfMissing(MetadataResult<Book> result, string url)
+        {
+            if (!result.RemoteImages.Any(image => string.Equals(image.Url, url, StringComparison.OrdinalIgnoreCase)))
+            {
+                result.RemoteImages.Add((url, ImageType.Primary));
             }
         }
 
