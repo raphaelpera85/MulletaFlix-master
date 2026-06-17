@@ -2690,7 +2690,7 @@ namespace Emby.Server.Implementations.Library
 
                 if (!File.Exists(image.Path))
                 {
-                    _logger.LogWarning("Image not found at {ImagePath}", image.Path);
+                    _logger.LogDebug("Image not found at {ImagePath}", image.Path);
                     continue;
                 }
 
@@ -4017,6 +4017,7 @@ namespace Emby.Server.Implementations.Library
         private static IReadOnlyDictionary<string, string> BuildCountryLanguageMap()
         {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            map["BR"] = "pt-BR";
 
             foreach (var culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures).OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase))
             {
@@ -4025,7 +4026,7 @@ namespace Emby.Server.Implementations.Library
                     var regionInfo = new RegionInfo(culture.Name);
                     if (!map.ContainsKey(regionInfo.TwoLetterISORegionName))
                     {
-                        map[regionInfo.TwoLetterISORegionName] = culture.TwoLetterISOLanguageName;
+                        map[regionInfo.TwoLetterISORegionName] = culture.Name;
                     }
                 }
                 catch (ArgumentException)

@@ -340,7 +340,7 @@ public sealed partial class BaseItemRepository
 
         if (filter.TrailerTypes.Length > 0)
         {
-            var trailerTypes = filter.TrailerTypes.Select(e => (int)e).ToArray();
+            var trailerTypes = filter.TrailerTypes.Select(e => (int)e).ToArray().AsEnumerable();
             baseQuery = baseQuery.Where(e => e.TrailerTypes!.Any(w => trailerTypes.Contains(w.Id)));
         }
 
@@ -428,7 +428,7 @@ public sealed partial class BaseItemRepository
 
         if (filter.ImageTypes.Length > 0)
         {
-            var imgTypes = filter.ImageTypes.Select(e => (ImageInfoImageType)e).ToArray();
+            var imgTypes = filter.ImageTypes.Select(e => (ImageInfoImageType)e).ToArray().AsEnumerable();
             baseQuery = baseQuery.Where(e => e.Images!.Any(w => imgTypes.Contains(w.ImageType)));
         }
 
@@ -504,7 +504,8 @@ public sealed partial class BaseItemRepository
             {
                 var playedItemIds = context.UserData
                     .Where(ud => ud.UserId == filter.User!.Id && ud.Played)
-                    .Select(ud => ud.ItemId);
+                    .Select(ud => ud.ItemId)
+                    .ToList();
                 var isPlayedItem = filter.IsPlayed.Value;
                 baseQuery = baseQuery.Where(e => playedItemIds.Contains(e.Id) == isPlayedItem);
             }
@@ -537,12 +538,14 @@ public sealed partial class BaseItemRepository
                 // or if it has both played and unplayed episodes (partially watched).
                 var resumableSeriesIds = seriesEpisodeStats
                     .Where(s => s.HasInProgress || (s.HasPlayed && s.HasUnplayed))
-                    .Select(s => s.SeriesId);
+                    .Select(s => s.SeriesId)
+                    .ToList();
 
                 // Non-series items: resumable if PlaybackPositionTicks > 0
                 var resumableItemIds = context.UserData
                     .Where(ud => ud.UserId == userId && ud.PlaybackPositionTicks > 0)
-                    .Select(ud => ud.ItemId);
+                    .Select(ud => ud.ItemId)
+                    .ToList();
 
                 baseQuery = baseQuery.Where(e =>
                     (e.Type == seriesTypeName && resumableSeriesIds.Contains(e.Id) == isResumable)
@@ -552,7 +555,8 @@ public sealed partial class BaseItemRepository
             {
                 var resumableItemIds = context.UserData
                     .Where(ud => ud.UserId == filter.User!.Id && ud.PlaybackPositionTicks > 0)
-                    .Select(ud => ud.ItemId);
+                    .Select(ud => ud.ItemId)
+                    .ToList();
                 var isResumable = filter.IsResumable.Value;
                 baseQuery = baseQuery.Where(e => resumableItemIds.Contains(e.Id) == isResumable);
             }
@@ -750,13 +754,14 @@ public sealed partial class BaseItemRepository
 
         if (filter.OwnerIds.Length > 0)
         {
-            baseQuery = baseQuery.Where(e => e.OwnerId != null && filter.OwnerIds.Contains(e.OwnerId.Value));
+            var ownerIdList = filter.OwnerIds.ToList();
+            baseQuery = baseQuery.Where(e => e.OwnerId != null && ownerIdList.Contains(e.OwnerId.Value));
         }
 
         if (filter.ExtraTypes.Length > 0)
         {
             // Convert ExtraType enum to BaseItemExtraType enum via int cast (same underlying values)
-            var extraTypeValues = filter.ExtraTypes.Select(e => (BaseItemExtraType?)(int)e).ToArray();
+            var extraTypeValues = filter.ExtraTypes.Select(e => (BaseItemExtraType?)(int)e).ToList();
             baseQuery = baseQuery.Where(e => e.ExtraType != null && extraTypeValues.Contains(e.ExtraType));
         }
 

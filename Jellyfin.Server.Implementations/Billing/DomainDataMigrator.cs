@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
+using System.Globalization;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,10 +28,68 @@ public static class DomainDataMigrator
         var legacyCtx = await legacyFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         await using (legacyCtx.ConfigureAwait(false))
         {
+            if (!await LegacyBaseItemsTableExistsAsync(legacyCtx, ct).ConfigureAwait(false))
+            {
+                logger.LogInformation("Legacy media table BaseItems was not found. Skipping legacy media migration and continuing startup.");
+                return;
+            }
+
             await MigrateMoviesAsync(legacyCtx, moviesFactory, logger, ct).ConfigureAwait(false);
             await MigrateSeriesAsync(legacyCtx, seriesFactory, logger, ct).ConfigureAwait(false);
             await MigrateChannelsAsync(legacyCtx, channelsFactory, logger, ct).ConfigureAwait(false);
             await MigrateBooksAsync(legacyCtx, booksFactory, logger, ct).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task<bool> LegacyBaseItemsTableExistsAsync(MulletaFlixDbContext legacy, CancellationToken ct)
+    {
+        var connection = legacy.Database.GetDbConnection();
+        var openedHere = false;
+        try
+        {
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await connection.OpenAsync(ct).ConfigureAwait(false);
+                openedHere = true;
+            }
+
+            var providerName = legacy.Database.ProviderName ?? string.Empty;
+            var command = connection.CreateCommand();
+
+            if (providerName.Contains("MySql", StringComparison.OrdinalIgnoreCase))
+            {
+                command.CommandText = """
+                    SELECT COUNT(*)
+                    FROM information_schema.tables
+                    WHERE table_schema = DATABASE()
+                      AND table_name = 'BaseItems'
+                    """;
+            }
+            else if (providerName.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
+            {
+                command.CommandText = """
+                    SELECT COUNT(*)
+                    FROM sqlite_master
+                    WHERE type = 'table'
+                      AND name = 'BaseItems'
+                    """;
+            }
+            else
+            {
+                // Fallback: if the provider is not one of the supported relational backends,
+                // keep startup resilient and skip the legacy migration instead of crashing boot.
+                return false;
+            }
+
+            var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
+            return Convert.ToInt64(result, CultureInfo.InvariantCulture) > 0;
+        }
+        finally
+        {
+            if (openedHere)
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+            }
         }
     }
 

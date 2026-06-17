@@ -15,6 +15,7 @@ using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Controller.Playlists;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 using DbLinkedChildType = MulletaFlix.Database.Implementations.Entities.LinkedChildType;
 using LinkedChildType = MediaBrowser.Controller.Entities.LinkedChildType;
@@ -27,6 +28,7 @@ namespace MulletaFlix.Server.Implementations.Item;
 public class ItemPersistenceService : IItemPersistenceService
 {
     internal static readonly IEqualityComparer<(ItemValueType MagicNumber, string Value)> ItemValueKeyComparer = new ItemValueKeyEqualityComparer();
+    private static readonly SemaphoreSlim _updateOrInsertLock = new(1, 1);
 
     private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IServerApplicationHost _appHost;
@@ -235,20 +237,44 @@ public class ItemPersistenceService : IItemPersistenceService
         ArgumentNullException.ThrowIfNull(items);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var tuples = new List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)>();
-        foreach (var item in items.GroupBy(e => e.Id).Select(e => e.Last()).Where(e => e.Id != BaseItemRepository.PlaceholderId))
+        _updateOrInsertLock.Wait(cancellationToken);
+        try
         {
-            var ancestorIds = item.SupportsAncestors ?
-                item.GetAncestorIds().Distinct().ToList() :
-                null;
-
-            var topParent = item.GetTopParent();
-
-            var userdataKey = item.GetUserDataKeys();
-            var inheritedTags = item.GetInheritedTags();
-
-            tuples.Add((item, ancestorIds, topParent, userdataKey, inheritedTags));
+            for (var attempt = 1; attempt <= 2; attempt++)
+            {
+                try
+                {
+                    UpdateOrInsertItemsCore(items);
+                    return;
+                }
+                catch (DbUpdateException ex) when (attempt == 1 && IsDuplicateItemValueConflict(ex))
+                {
+                    _logger.LogWarning(ex, "Concurrent item value insert detected while saving metadata. Retrying once.");
+                }
+            }
         }
+        finally
+        {
+            _updateOrInsertLock.Release();
+        }
+    }
+
+    private void UpdateOrInsertItemsCore(IReadOnlyList<BaseItemDto> items)
+    {
+            var tuples = new List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)>();
+            foreach (var item in items.GroupBy(e => e.Id).Select(e => e.Last()).Where(e => e.Id != BaseItemRepository.PlaceholderId))
+            {
+                var ancestorIds = item.SupportsAncestors ?
+                    item.GetAncestorIds().Distinct().ToList() :
+                    null;
+
+                var topParent = item.GetTopParent();
+
+                var userdataKey = item.GetUserDataKeys();
+                var inheritedTags = item.GetInheritedTags();
+
+                tuples.Add((item, ancestorIds, topParent, userdataKey, inheritedTags));
+            }
 
         using var context = _dbProvider.CreateDbContext();
         using var transaction = context.Database.BeginTransaction();
@@ -638,6 +664,13 @@ public class ItemPersistenceService : IItemPersistenceService
 
         context.SaveChanges();
         transaction.Commit();
+    }
+
+    private static bool IsDuplicateItemValueConflict(DbUpdateException exception)
+    {
+        return exception.InnerException is MySqlException mySqlException
+               && mySqlException.Number == 1062
+               && mySqlException.Message.Contains("IX_ItemValues_Type_Value", StringComparison.OrdinalIgnoreCase);
     }
 
     private static List<(ItemValueType MagicNumber, string Value)> GetItemValuesToSave(BaseItemDto item, List<string> inheritedTags)

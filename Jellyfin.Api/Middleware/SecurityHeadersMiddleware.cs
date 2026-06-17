@@ -26,6 +26,7 @@ public class SecurityHeadersMiddleware
             "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
             + "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; "
             + "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; "
+            + "style-src 'self' 'unsafe-inline' https:; "
             + "img-src 'self' data: blob: https:; "
             + "media-src 'self' data: blob: https:; "
             + "font-src 'self' data:; "
@@ -34,3 +35,4 @@ public class SecurityHeadersMiddleware
         await _next(context);
     }
 }
+

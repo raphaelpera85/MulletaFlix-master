@@ -52,7 +52,11 @@ public class DevicesController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<QueryResult<DeviceInfoDto>> GetDevices([FromQuery] Guid? userId)
     {
-        userId = RequestHelpers.GetUserId(User, userId);
+        if (userId.HasValue)
+        {
+            userId = RequestHelpers.GetUserId(User, userId);
+        }
+
         return _deviceManager.GetDevicesForUser(userId);
     }
 

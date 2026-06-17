@@ -12,7 +12,10 @@ using Microsoft.Extensions.Logging;
 
 namespace MulletaFlix.Database.Implementations.Contexts;
 
-public class UsersDbContext(DbContextOptions<UsersDbContext> options, ILogger<UsersDbContext> logger) : DbContext(options)
+public class UsersDbContext(
+    DbContextOptions<UsersDbContext> options,
+    ILogger<UsersDbContext> logger,
+    IMulletaFlixDatabaseProvider? mulletaFlixDatabaseProvider = null) : DbContext(options)
 {
     public DbSet<AccessSchedule> AccessSchedules => Set<AccessSchedule>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
@@ -54,6 +57,7 @@ public class UsersDbContext(DbContextOptions<UsersDbContext> options, ILogger<Us
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        mulletaFlixDatabaseProvider?.OnModelCreating(modelBuilder);
         base.OnModelCreating(modelBuilder);
 
         // Apply configurations for entities managed by UsersDbContext
@@ -71,5 +75,11 @@ public class UsersDbContext(DbContextOptions<UsersDbContext> options, ILogger<Us
         modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.PaymentTransactionConfiguration());
         modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.PaymentGatewayConfigConfiguration());
         modelBuilder.ApplyConfiguration(new MulletaFlix.Database.Implementations.ModelConfiguration.DiscountCouponConfiguration());
+    }
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        mulletaFlixDatabaseProvider?.ConfigureConventions(configurationBuilder);
+        base.ConfigureConventions(configurationBuilder);
     }
 }

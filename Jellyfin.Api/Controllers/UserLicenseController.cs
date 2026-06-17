@@ -17,7 +17,7 @@ namespace MulletaFlix.Api.Controllers;
 /// <summary>
 /// User license management controller.
 /// </summary>
-[Route("Users/{userId}/License")]
+[Route("/Users/{userId}/License")]
 [Authorize(Policy = Policies.LocalAccessOrRequiresElevation)]
 public class UserLicenseController : BaseMulletaFlixApiController
 {

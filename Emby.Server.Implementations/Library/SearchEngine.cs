@@ -34,23 +34,7 @@ namespace Emby.Server.Implementations.Library
                 user = _userManager.GetUserById(query.UserId);
             }
 
-            var results = GetSearchHints(query, user);
-            var totalRecordCount = results.Count;
-
-            if (query.StartIndex.HasValue)
-            {
-                results = results.GetRange(query.StartIndex.Value, totalRecordCount - query.StartIndex.Value);
-            }
-
-            if (query.Limit.HasValue && query.Limit.Value > 0)
-            {
-                results = results.GetRange(0, Math.Min(query.Limit.Value, results.Count));
-            }
-
-            return new QueryResult<SearchHintInfo>(
-                query.StartIndex,
-                totalRecordCount,
-                results);
+            return GetSearchHints(query, user);
         }
 
         private static void AddIfMissing(List<BaseItemKind> list, BaseItemKind value)
@@ -68,7 +52,7 @@ namespace Emby.Server.Implementations.Library
         /// <param name="user">The user.</param>
         /// <returns>IEnumerable{SearchHintResult}.</returns>
         /// <exception cref="ArgumentException"><c>query.SearchTerm</c> is <c>null</c> or empty.</exception>
-        private List<SearchHintInfo> GetSearchHints(SearchQuery query, User? user)
+        private QueryResult<SearchHintInfo> GetSearchHints(SearchQuery query, User? user)
         {
             var searchTerm = query.SearchTerm;
 
@@ -148,6 +132,7 @@ namespace Emby.Server.Implementations.Library
                 ExcludeItemTypes = excludeItemTypes.ToArray(),
                 IncludeItemTypes = includeItemTypes.ToArray(),
                 Limit = query.Limit,
+                StartIndex = query.StartIndex,
                 IncludeItemsByName = !query.ParentId.HasValue,
                 ParentId = query.ParentId ?? Guid.Empty,
                 OrderBy = new[] { (ItemSortBy.SortName, SortOrder.Ascending) },
@@ -173,6 +158,7 @@ namespace Emby.Server.Implementations.Library
             };
 
             IReadOnlyList<BaseItem> mediaItems;
+            int totalRecordCount;
 
             if (searchQuery.IncludeItemTypes.Length == 1 && searchQuery.IncludeItemTypes[0] == BaseItemKind.MusicArtist)
             {
@@ -184,17 +170,26 @@ namespace Emby.Server.Implementations.Library
 
                 searchQuery.IncludeItemsByName = true;
                 searchQuery.IncludeItemTypes = Array.Empty<BaseItemKind>();
-                mediaItems = _libraryManager.GetAllArtists(searchQuery).Items.Select(i => i.Item).ToList();
+                var artistResult = _libraryManager.GetAllArtists(searchQuery);
+                mediaItems = artistResult.Items.Select(i => i.Item).ToList();
+                totalRecordCount = artistResult.TotalRecordCount;
             }
             else
             {
-                mediaItems = _libraryManager.GetItemList(searchQuery);
+                var itemResult = _libraryManager.GetItemsResult(searchQuery);
+                mediaItems = itemResult.Items;
+                totalRecordCount = itemResult.TotalRecordCount;
             }
 
-            return mediaItems.Select(i => new SearchHintInfo
+            var results = mediaItems.Select(i => new SearchHintInfo
             {
                 Item = i
             }).ToList();
+
+            return new QueryResult<SearchHintInfo>(
+                searchQuery.StartIndex,
+                totalRecordCount,
+                results);
         }
     }
 }

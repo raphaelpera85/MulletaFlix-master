@@ -25,6 +25,7 @@ namespace Emby.Server.Implementations.Library
     /// </summary>
     public class UserDataManager : IUserDataManager
     {
+        private static readonly SemaphoreSlim _saveUserDataLock = new(1, 1);
         private readonly IServerConfigurationManager _config;
         private readonly IDbContextFactory<MulletaFlixDbContext> _repository;
         private readonly FastConcurrentLru<string, UserItemData> _cache;
@@ -55,41 +56,49 @@ namespace Emby.Server.Implementations.Library
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var keys = item.GetUserDataKeys();
-
-            using var dbContext = _repository.CreateDbContext();
-            using var transaction = dbContext.Database.BeginTransaction();
-
-            foreach (var key in keys)
+            _saveUserDataLock.Wait(cancellationToken);
+            try
             {
-                userData.Key = key;
-                var userDataEntry = Map(userData, user.Id, item.Id);
-                if (dbContext.UserData.Any(f => f.ItemId == userDataEntry.ItemId && f.UserId == userDataEntry.UserId && f.CustomDataKey == userDataEntry.CustomDataKey))
+                var keys = item.GetUserDataKeys();
+
+                using var dbContext = _repository.CreateDbContext();
+                using var transaction = dbContext.Database.BeginTransaction();
+
+                foreach (var key in keys)
                 {
-                    dbContext.UserData.Attach(userDataEntry).State = EntityState.Modified;
+                    userData.Key = key;
+                    var userDataEntry = Map(userData, user.Id, item.Id);
+                    if (dbContext.UserData.Any(f => f.ItemId == userDataEntry.ItemId && f.UserId == userDataEntry.UserId && f.CustomDataKey == userDataEntry.CustomDataKey))
+                    {
+                        dbContext.UserData.Attach(userDataEntry).State = EntityState.Modified;
+                    }
+                    else
+                    {
+                        dbContext.UserData.Add(userDataEntry);
+                    }
                 }
-                else
+
+                dbContext.SaveChanges();
+                transaction.Commit();
+
+                var userId = user.InternalId;
+                var cacheKey = GetCacheKey(userId, item.Id);
+                _cache.AddOrUpdate(cacheKey, userData);
+                item.UserData = dbContext.UserData.Where(e => e.ItemId == item.Id).AsNoTracking().ToArray(); // rehydrate the cached userdata
+
+                UserDataSaved?.Invoke(this, new UserDataSaveEventArgs
                 {
-                    dbContext.UserData.Add(userDataEntry);
-                }
+                    Keys = keys,
+                    UserData = userData,
+                    SaveReason = reason,
+                    UserId = user.Id,
+                    Item = item
+                });
             }
-
-            dbContext.SaveChanges();
-            transaction.Commit();
-
-            var userId = user.InternalId;
-            var cacheKey = GetCacheKey(userId, item.Id);
-            _cache.AddOrUpdate(cacheKey, userData);
-            item.UserData = dbContext.UserData.Where(e => e.ItemId == item.Id).AsNoTracking().ToArray(); // rehydrate the cached userdata
-
-            UserDataSaved?.Invoke(this, new UserDataSaveEventArgs
+            finally
             {
-                Keys = keys,
-                UserData = userData,
-                SaveReason = reason,
-                UserId = user.Id,
-                Item = item
-            });
+                _saveUserDataLock.Release();
+            }
         }
 
         /// <inheritdoc />
@@ -217,12 +226,13 @@ namespace Emby.Server.Implementations.Library
             if (allKeys.Count > 0)
             {
                 using var context = _repository.CreateDbContext();
-                var userDataArray = context.UserData
+                var userDataList = context.UserData
                     .AsNoTracking()
                     .Where(e => e.UserId.Equals(user.Id))
                     .WhereOneOrMany(allItemIds, e => e.ItemId)
                     .WhereOneOrMany(allKeys, e => e.CustomDataKey)
-                    .ToArray();
+                    .ToList();
+                var userDataArray = userDataList.ToArray();
 
                 var userDataByItem = userDataArray.GroupBy(e => e.ItemId).ToDictionary(g => g.Key, g => g.ToArray());
                 foreach (var (item, keys) in itemsNeedingQuery)

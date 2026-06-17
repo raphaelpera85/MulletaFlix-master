@@ -105,6 +105,15 @@ namespace Emby.Server.Implementations.Plugins
         /// <returns>An IEnumerable{Assembly}.</returns>
         public IEnumerable<Assembly> LoadAssemblies()
         {
+            var currentJellyfinDataVersion = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a =>
+                {
+                    var name = a.GetName().Name;
+                    return string.Equals(name, "Jellyfin.Data", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(name, "MulletaFlix.Data", StringComparison.OrdinalIgnoreCase);
+                })
+                ?.GetName().Version;
+
             // Attempt to remove any deleted plugins and change any successors to be active.
             for (int i = _plugins.Count - 1; i >= 0; i--)
             {
@@ -137,7 +146,14 @@ namespace Emby.Server.Implementations.Plugins
                 {
                     try
                     {
-                        assemblies.Add(assemblyLoadContext.LoadFromAssemblyPath(file));
+                        var assembly = assemblyLoadContext.LoadFromAssemblyPath(file);
+                        if (!IsCompatibleWithRuntime(assembly, currentJellyfinDataVersion, plugin, file))
+                        {
+                            loadedAll = false;
+                            break;
+                        }
+
+                        assemblies.Add(assembly);
                     }
                     catch (FileLoadException ex)
                     {
@@ -812,6 +828,38 @@ namespace Emby.Server.Implementations.Plugins
 
             // Only want plugin folders which have files.
             return versions.Where(p => p.DllFiles.Count != 0);
+        }
+
+        private bool IsCompatibleWithRuntime(Assembly assembly, Version? currentJellyfinDataVersion, LocalPlugin plugin, string path)
+        {
+            if (currentJellyfinDataVersion is null)
+            {
+                return true;
+            }
+
+            var jellyfinDataReference = assembly
+                .GetReferencedAssemblies()
+                .FirstOrDefault(a => string.Equals(a.Name, "Jellyfin.Data", StringComparison.OrdinalIgnoreCase));
+
+            if (jellyfinDataReference is null || jellyfinDataReference.Version is null)
+            {
+                return true;
+            }
+
+            if (jellyfinDataReference.Version <= currentJellyfinDataVersion)
+            {
+                return true;
+            }
+
+            _logger.LogError(
+                "Plugin {Plugin} references Jellyfin.Data {PluginVersion}, but the runtime only provides {RuntimeVersion}. Disabling plugin assembly {Path}.",
+                plugin.Name,
+                jellyfinDataReference.Version,
+                currentJellyfinDataVersion,
+                path);
+
+            ChangePluginState(plugin, PluginStatus.NotSupported);
+            return false;
         }
 
         /// <summary>

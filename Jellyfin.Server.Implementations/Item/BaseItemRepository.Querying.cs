@@ -126,50 +126,69 @@ public sealed partial class BaseItemRepository
 
         if (collectionType is CollectionType.movies)
         {
-            // Group by PresentationUniqueKey, pick the newest item per group.
-            var topGroupItems = baseQuery
+            // MariaDB can struggle with LIMIT inside grouped subqueries produced by First().
+            // Stream the already ordered rows and pick the first item per presentation key in-memory.
+            var orderedMovieCandidates = baseQuery
                 .Where(e => e.PresentationUniqueKey != null)
-                .GroupBy(e => e.PresentationUniqueKey)
-                .Select(g => new
+                .OrderByDescending(e => e.DateCreated)
+                .ThenByDescending(e => e.Id)
+                .Select(e => new { e.Id, e.PresentationUniqueKey, e.DateCreated })
+                .AsEnumerable();
+
+            var seenPresentationKeys = new HashSet<string?>(StringComparer.Ordinal);
+            var firstIds = new List<Guid>();
+
+            foreach (var candidate in orderedMovieCandidates)
+            {
+                if (!seenPresentationKeys.Add(candidate.PresentationUniqueKey))
                 {
-                    MaxDate = g.Max(e => e.DateCreated),
-                    FirstId = g.OrderByDescending(e => e.DateCreated).ThenByDescending(e => e.Id).Select(e => e.Id).First()
-                })
-                .OrderByDescending(g => g.MaxDate);
+                    continue;
+                }
 
-            var firstIdsQuery = filter.Limit.HasValue
-                ? topGroupItems.Take(filter.Limit.Value).Select(g => g.FirstId)
-                : topGroupItems.Select(g => g.FirstId);
+                firstIds.Add(candidate.Id);
+                if (filter.Limit.HasValue && firstIds.Count >= filter.Limit.Value)
+                {
+                    break;
+                }
+            }
 
-            return LoadLatestByIds(context, firstIdsQuery, filter);
+            return LoadLatestByIds(context, firstIds, filter);
         }
 
         // Albums whose Id is the parent of any track matching the user's filter.
         var albumIdsWithMatchingTrack = context.AncestorIds
-            .Join(baseQuery, ai => ai.ItemId, t => t.Id, (ai, _) => ai.ParentItemId);
+            .Join(baseQuery, ai => ai.ItemId, t => t.Id, (ai, _) => ai.ParentItemId)
+            .Distinct()
+            .ToList();
 
         var musicAlbumTypeName = _itemTypeLookup.BaseItemKindNames[BaseItemKind.MusicAlbum]!;
         var topAlbumsQuery = context.BaseItems.AsNoTracking()
             .Where(album => album.Type == musicAlbumTypeName)
-            .Where(album => albumIdsWithMatchingTrack.Contains(album.Id))
+            .WhereOneOrMany(albumIdsWithMatchingTrack, album => album.Id)
             .OrderByDescending(album => album.DateCreated)
             .ThenByDescending(album => album.Id);
 
-        var albumIdsQuery = filter.Limit.HasValue
+        var albumIds = (filter.Limit.HasValue
             ? topAlbumsQuery.Take(filter.Limit.Value).Select(a => a.Id)
-            : topAlbumsQuery.Select(a => a.Id);
+            : topAlbumsQuery.Select(a => a.Id))
+            .ToList();
 
-        return LoadLatestByIds(context, albumIdsQuery, filter);
+        return LoadLatestByIds(context, albumIds, filter);
     }
 
-    // Keeping idsQuery deferred lets EF emit `WHERE Id IN (<subquery>)`.
+    // Materialize ids first so MariaDB does not see a LIMIT inside an IN subquery.
     private IReadOnlyList<BaseItemDto> LoadLatestByIds(
         MulletaFlixDbContext context,
-        IQueryable<Guid> idsQuery,
+        IList<Guid> ids,
         InternalItemsQuery filter)
     {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
         var itemsQuery = ApplyNavigations(
-            context.BaseItems.AsNoTracking().Where(e => idsQuery.Contains(e.Id)),
+            context.BaseItems.AsNoTracking().WhereOneOrMany(ids, e => e.Id),
             filter);
 
         return itemsQuery

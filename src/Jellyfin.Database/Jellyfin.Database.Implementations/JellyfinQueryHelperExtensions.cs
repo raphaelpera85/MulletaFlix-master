@@ -17,7 +17,6 @@ namespace MulletaFlix.Database.Implementations;
 public static class MulletaFlixQueryHelperExtensions
 {
     private static readonly MethodInfo _containsMethodGenericCache = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static).First(m => m.Name == nameof(Enumerable.Contains) && m.GetParameters().Length == 2);
-    private static readonly MethodInfo _efParameterInstruction = typeof(EF).GetMethod(nameof(EF.Parameter), BindingFlags.Public | BindingFlags.Static)!;
     private static readonly ConcurrentDictionary<Type, MethodInfo> _containsQueryCache = new();
 
     /// <summary>
@@ -144,7 +143,10 @@ public static class MulletaFlixQueryHelperExtensions
             return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Constant(oneOf), property.Body), parameter);
         }
 
-        return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Call(null, _efParameterInstruction.MakeGenericMethod(oneOf.GetType()), Expression.Constant(oneOf)), property.Body), parameter);
+        // MariaDB/Pomelo currently does not support the primitive-collection parameter
+        // translation path emitted by EF.Parameter(...) in this codebase. Keep the
+        // list as a constant so the provider can translate it as a regular IN (...) clause.
+        return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Constant(oneOf), property.Body), parameter);
     }
 
     internal static class ParameterReplacer

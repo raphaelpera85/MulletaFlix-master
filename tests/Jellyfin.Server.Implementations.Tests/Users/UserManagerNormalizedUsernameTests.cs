@@ -224,6 +224,59 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
                 () => _userManager.RenameUser(targetUser.Id, "renametarget", conflictingNewName));
         }
 
+        [Fact]
+        public async Task InitializeAsync_WhenUsersTableIsMissing_CreatesTheSchemaAndFirstUser()
+        {
+            using var connection = new SqliteConnection("Data Source=:memory:");
+            await connection.OpenAsync();
+
+            var dbOptions = new DbContextOptionsBuilder<UsersDbContext>()
+                .UseSqlite(connection)
+                .Options;
+
+            var factory = new Mock<IDbContextFactory<UsersDbContext>>();
+            factory.Setup(f => f.CreateDbContext()).Returns(() => new UsersDbContext(dbOptions, NullLogger<UsersDbContext>.Instance));
+            factory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => new UsersDbContext(dbOptions, NullLogger<UsersDbContext>.Instance));
+
+            var cryptoProvider = new Mock<ICryptoProvider>();
+            var configManager = new Mock<IServerConfigurationManager>();
+            var appPaths = new Mock<IServerApplicationPaths>();
+            appPaths.Setup(x => x.ProgramDataPath).Returns(Path.GetTempPath());
+            configManager.Setup(x => x.ApplicationPaths).Returns(appPaths.Object);
+
+            var appHost = new Mock<IApplicationHost>();
+            var defaultAuthProvider = new DefaultAuthenticationProvider(
+                NullLogger<DefaultAuthenticationProvider>.Instance,
+                cryptoProvider.Object);
+            var invalidAuthProvider = new InvalidAuthProvider();
+            var defaultPasswordResetProvider = new DefaultPasswordResetProvider(
+                configManager.Object,
+                appHost.Object);
+
+            var userManager = new UserManager(
+                factory.Object,
+                new NoopEventManager(),
+                new Mock<INetworkManager>().Object,
+                appHost.Object,
+                new Mock<IImageProcessor>().Object,
+                NullLogger<UserManager>.Instance,
+                configManager.Object,
+                new IPasswordResetProvider[] { defaultPasswordResetProvider },
+                new IAuthenticationProvider[] { defaultAuthProvider, invalidAuthProvider });
+
+            await userManager.InitializeAsync();
+
+            var users = userManager.GetUsers();
+            var firstUser = userManager.GetFirstUser();
+
+            Assert.Single(users);
+            Assert.NotNull(firstUser);
+            Assert.False(string.IsNullOrWhiteSpace(firstUser!.Username));
+
+            userManager.Dispose();
+        }
+
         private sealed class NoopEventManager : IEventManager
         {
             public void Publish<T>(T eventArgs)

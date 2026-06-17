@@ -107,11 +107,11 @@ public class PeopleValidationTask : IScheduledTask, IConfigurableScheduledTask
                     {
                         var item = buffer[i];
                         var reference = item[0];
-                        var dups = item[1..];
-                        await context.PeopleBaseItemMap.WhereOneOrMany(dups, e => e.PeopleId)
+                        var dupsList = item[1..].ToList();
+                        await context.PeopleBaseItemMap.WhereOneOrMany(dupsList, e => e.PeopleId)
                             .ExecuteUpdateAsync(e => e.SetProperty(f => f.PeopleId, reference), cancellationToken)
                             .ConfigureAwait(false);
-                        await context.Peoples.Where(e => dups.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+                        await context.Peoples.Where(e => dupsList.Contains(e.Id)).ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
                         subProgress.Report(100f / total * ((iterator * PartitionSize) + i));
                     }
 

@@ -21,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using MulletaFlix.Data.Enums;
 using MediaBrowser.Common.Configuration;
+using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.LiveTv;
@@ -53,6 +54,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfigurationManager _configurationManager;
+        private readonly IServerApplicationHost _serverApplicationHost;
         private readonly ITunerHostManager _tunerHostManager;
         private readonly ILibraryManager _libraryManager;
         private readonly IActivityManager _activityManager;
@@ -61,6 +63,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
         public MidiaStorageOnlineController(
             IHttpClientFactory httpClientFactory,
             IConfigurationManager configurationManager,
+            IServerApplicationHost serverApplicationHost,
             ITunerHostManager tunerHostManager,
             ILibraryManager libraryManager,
             IActivityManager activityManager,
@@ -68,6 +71,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
         {
             _httpClientFactory = httpClientFactory;
             _configurationManager = configurationManager;
+            _serverApplicationHost = serverApplicationHost;
             _tunerHostManager = tunerHostManager;
             _libraryManager = libraryManager;
             _activityManager = activityManager;
@@ -808,6 +812,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 Log($"Iniciando sync: baixando M3U de {config.M3uUrl}");
+                MidiaStorageOnlineStreamProxy.LocalBaseUrl = _serverApplicationHost.GetSmartApiUrl(Request);
                 string m3uRaw;
                 using (var httpClient = _httpClientFactory.CreateClient())
                 {
@@ -824,6 +829,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
 
                 var entries = ParseM3u(m3uRaw, out var headerLine);
+                entries = MidiaStorageOnlineEntryDeduplicator.DeduplicateByKey(entries, BuildEntryDedupKey).ToList();
+                Log($"Entries deduplicadas: {entries.Count} entradas ativas.");
                 Log($"M3U parsed: {entries.Count} entradas");
 
                 if (entries.Count > 0)
@@ -979,35 +986,29 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         var name = SanitizeName(entry.Name);
                         var relPath = Path.Combine("Filmes", name, name + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
-                        var newUrl = MidiaStorageOnlineStreamProxy.BuildProxyUrl(entry.Url.Trim());
+                        var newUrl = entry.Url.Trim();
 
                         newManifest.TryAdd(relPath, newUrl);
 
                         var fileExists = System.IO.File.Exists(filePath);
-                        if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl && fileExists)
+                        if (fileExists)
                         {
-                            Interlocked.Increment(ref skippedCount);
+                            Log($"Sobrescrevendo .strm: {filePath}");
                         }
-                        else
+
+                        var dir = Path.Combine(moviesPath, name);
+                        if (createdDirs.TryAdd(dir, 0))
                         {
-                            var dir = Path.Combine(moviesPath, name);
-                            if (createdDirs.TryAdd(dir, 0))
-                            {
-                                Directory.CreateDirectory(dir);
-                            }
-                            var fileParentDir = Path.GetDirectoryName(filePath);
-                            if (!string.IsNullOrWhiteSpace(fileParentDir))
-                            {
-                                Directory.CreateDirectory(fileParentDir);
-                            }
-                            if (cachedUrl == newUrl && !fileExists)
-                            {
-                                Log($"Recriando .strm ausente: {filePath}");
-                            }
-                            await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
-                            Interlocked.Increment(ref totalSynced);
-                            Interlocked.Increment(ref movieCount);
+                            Directory.CreateDirectory(dir);
                         }
+                        var fileParentDir = Path.GetDirectoryName(filePath);
+                        if (!string.IsNullOrWhiteSpace(fileParentDir))
+                        {
+                            Directory.CreateDirectory(fileParentDir);
+                        }
+                        await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
+                        Interlocked.Increment(ref totalSynced);
+                        Interlocked.Increment(ref movieCount);
                     }
                     else if (entry.Type == "Serie")
                     {
@@ -1016,35 +1017,29 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         var seasonFolder = SanitizeName(entry.Season);
                         var relPath = Path.Combine("Series", showName, seasonFolder, name + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
-                        var newUrl = MidiaStorageOnlineStreamProxy.BuildProxyUrl(entry.Url.Trim());
+                        var newUrl = entry.Url.Trim();
 
                         newManifest.TryAdd(relPath, newUrl);
 
                         var fileExists = System.IO.File.Exists(filePath);
-                        if (manifest.TryGetValue(relPath, out var cachedUrl) && cachedUrl == newUrl && fileExists)
+                        if (fileExists)
                         {
-                            Interlocked.Increment(ref skippedCount);
+                            Log($"Sobrescrevendo .strm: {filePath}");
                         }
-                        else
+
+                        var dir = Path.Combine(seriesPath, showName, seasonFolder);
+                        if (createdDirs.TryAdd(dir, 0))
                         {
-                            var dir = Path.Combine(seriesPath, showName, seasonFolder);
-                            if (createdDirs.TryAdd(dir, 0))
-                            {
-                                Directory.CreateDirectory(dir);
-                            }
-                            var fileParentDir = Path.GetDirectoryName(filePath);
-                            if (!string.IsNullOrWhiteSpace(fileParentDir))
-                            {
-                                Directory.CreateDirectory(fileParentDir);
-                            }
-                            if (cachedUrl == newUrl && !fileExists)
-                            {
-                                Log($"Recriando .strm ausente: {filePath}");
-                            }
-                            await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
-                            Interlocked.Increment(ref totalSynced);
-                            Interlocked.Increment(ref seriesCount);
+                            Directory.CreateDirectory(dir);
                         }
+                        var fileParentDir = Path.GetDirectoryName(filePath);
+                        if (!string.IsNullOrWhiteSpace(fileParentDir))
+                        {
+                            Directory.CreateDirectory(fileParentDir);
+                        }
+                        await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
+                        Interlocked.Increment(ref totalSynced);
+                        Interlocked.Increment(ref seriesCount);
                     }
                 }).ConfigureAwait(false);
 
@@ -1243,6 +1238,36 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
             }
             return Regex.Replace(sb.ToString().TrimEnd('.', ' '), @"\s+", " ").Trim();
+        }
+
+        private static async Task<bool> HasSameContentAsync(string filePath, string expectedContent, CancellationToken ct)
+        {
+            if (!System.IO.File.Exists(filePath))
+            {
+                return false;
+            }
+
+            var currentContent = await System.IO.File.ReadAllTextAsync(filePath, ct).ConfigureAwait(false);
+            return string.Equals(currentContent.Trim(), expectedContent.Trim(), StringComparison.Ordinal);
+        }
+
+        private static string BuildEntryDedupKey(M3uEntry entry)
+        {
+            if (string.Equals(entry.Type, "Filme", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"Filme|{SanitizeName(entry.Name)}";
+            }
+
+            if (string.Equals(entry.Type, "Serie", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"Serie|{SanitizeName(entry.ShowName)}|{SanitizeName(entry.Season)}|{SanitizeName(entry.Name)}";
+            }
+
+            var stableChannelKey = !string.IsNullOrWhiteSpace(entry.TvgId)
+                ? entry.TvgId!.Trim()
+                : NormalizeChannelDisplayName(entry.TvgName ?? entry.Name);
+
+            return $"Canal|{stableChannelKey}|{entry.Url.Trim()}";
         }
 
         private static string ExtractDisplayName(string extinfLine)

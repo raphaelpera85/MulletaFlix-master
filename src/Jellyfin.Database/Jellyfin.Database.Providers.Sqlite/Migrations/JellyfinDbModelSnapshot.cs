@@ -15,7 +15,7 @@ namespace MulletaFlix.Server.Implementations.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
 
             modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.AccessSchedule", b =>
                 {
@@ -161,6 +161,7 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CleanName")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<float?>("CommunityRating")
@@ -251,6 +252,7 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<string>("MediaType")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -293,6 +295,7 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PresentationUniqueKey")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("PrimaryVersionId")
@@ -320,6 +323,7 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SeriesPresentationUniqueKey")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ShowId")
@@ -329,6 +333,7 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SortName")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("StartDate")
@@ -350,6 +355,7 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Type")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UnratedType")
@@ -576,6 +582,66 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .IsUnique();
 
                     b.ToTable("CustomItemDisplayPreferences");
+
+                    b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
+                });
+
+            modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.DiscountCoupon", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CurrentUses")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("DiscountFixed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("FirstPurchaseOnly")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("MaxUses")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("MinOrderAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("MinPlanMonths")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ValidUntil")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("DiscountCoupons");
 
                     b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
                 });
@@ -1002,6 +1068,167 @@ namespace MulletaFlix.Server.Implementations.Migrations
                     b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
                 });
 
+            modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.PaymentGatewayConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AccessToken")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EnableCredit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("EnableDebit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("EnablePix")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ExtraConfig")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GatewayName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PublicKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("SandboxMode")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WebhookSecret")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GatewayName")
+                        .IsUnique();
+
+                    b.ToTable("PaymentGatewayConfigs");
+
+                    b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
+                });
+
+            modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.PaymentTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CouponId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GatewayName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GatewayResponse")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GatewayTransactionId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PricingPlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RecurringSubscriptionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
+
+                    b.HasIndex("GatewayTransactionId")
+                        .IsUnique();
+
+                    b.HasIndex("PricingPlanId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PaymentTransactions");
+
+                    b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
+                });
+
             modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.People", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1062,9 +1289,6 @@ namespace MulletaFlix.Server.Implementations.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid?>("Permission_Permissions_Guid")
-                        .HasColumnType("TEXT");
-
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
@@ -1095,9 +1319,6 @@ namespace MulletaFlix.Server.Implementations.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid?>("Preference_Preferences_Guid")
-                        .HasColumnType("TEXT");
-
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
@@ -1116,6 +1337,55 @@ namespace MulletaFlix.Server.Implementations.Migrations
                         .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Preferences");
+
+                    b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
+                });
+
+            modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.PricingPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DurationMonths")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsHighlighted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PricePerMonth")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DurationMonths")
+                        .IsUnique();
+
+                    b.HasIndex("SortOrder");
+
+                    b.ToTable("PricingPlans");
 
                     b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
                 });
@@ -1333,6 +1603,10 @@ namespace MulletaFlix.Server.Implementations.Migrations
 
                     b.Property<string>("PasswordResetProviderId")
                         .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("PlayDefaultAudioTrack")
@@ -1692,6 +1966,32 @@ namespace MulletaFlix.Server.Implementations.Migrations
                     b.Navigation("Item");
                 });
 
+            modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.PaymentTransaction", b =>
+                {
+                    b.HasOne("MulletaFlix.Database.Implementations.Entities.DiscountCoupon", "Coupon")
+                        .WithMany("PaymentTransactions")
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MulletaFlix.Database.Implementations.Entities.PricingPlan", "PricingPlan")
+                        .WithMany("PaymentTransactions")
+                        .HasForeignKey("PricingPlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MulletaFlix.Database.Implementations.Entities.User", "User")
+                        .WithMany("PaymentTransactions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coupon");
+
+                    b.Navigation("PricingPlan");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.PeopleBaseItemMap", b =>
                 {
                     b.HasOne("MulletaFlix.Database.Implementations.Entities.BaseItemEntity", "Item")
@@ -1801,6 +2101,11 @@ namespace MulletaFlix.Server.Implementations.Migrations
                     b.Navigation("UserData");
                 });
 
+            modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.DiscountCoupon", b =>
+                {
+                    b.Navigation("PaymentTransactions");
+                });
+
             modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.DisplayPreferences", b =>
                 {
                     b.Navigation("HomeSections");
@@ -1816,6 +2121,11 @@ namespace MulletaFlix.Server.Implementations.Migrations
                     b.Navigation("BaseItems");
                 });
 
+            modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.PricingPlan", b =>
+                {
+                    b.Navigation("PaymentTransactions");
+                });
+
             modelBuilder.Entity("MulletaFlix.Database.Implementations.Entities.User", b =>
                 {
                     b.Navigation("AccessSchedules");
@@ -1825,6 +2135,8 @@ namespace MulletaFlix.Server.Implementations.Migrations
                     b.Navigation("ItemDisplayPreferences");
 
                     b.Navigation("License");
+
+                    b.Navigation("PaymentTransactions");
 
                     b.Navigation("Permissions");
 

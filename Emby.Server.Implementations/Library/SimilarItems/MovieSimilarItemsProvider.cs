@@ -244,35 +244,42 @@ public sealed class MovieSimilarItemsProvider : ILocalSimilarItemsProvider<Movie
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
 
             var sourceMap = sourceRows.GroupBy(r => r.ItemId).ToDictionary(g => g.Key, g => g.Select(x => x.Key).ToHashSet());
-            var allKeys = sourceMap.Values.SelectMany(v => v).Distinct().ToList();
+            var allKeys = sourceMap.Values.SelectMany(v => v).Distinct(StringComparer.OrdinalIgnoreCase).ToHashSet(StringComparer.OrdinalIgnoreCase);
             if (allKeys.Count == 0)
             {
                 continue;
             }
 
             var candidateRows = await context.ItemValuesMap.AsNoTracking()
-                .Where(m => m.ItemValue.Type == valueType && allKeys.Contains(m.ItemValue.CleanValue))
+                .Where(m => m.ItemValue.Type == valueType)
                 .Select(m => new { m.ItemId, Key = m.ItemValue.CleanValue })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
 
-            var keyToCandidates = candidateRows.GroupBy(r => r.Key).ToDictionary(g => g.Key, g => g.Select(x => x.ItemId).ToList());
+            var keyToCandidates = candidateRows
+                .Where(r => allKeys.Contains(r.Key))
+                .GroupBy(r => r.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.ItemId).ToList(), StringComparer.OrdinalIgnoreCase);
             ApplyDimensionScores(sourceIds, sourceMap, keyToCandidates, weight, result);
         }
 
         var personSourceRows = await context.PeopleBaseItemMap.AsNoTracking()
-            .Where(m => sourceIds.Contains(m.ItemId) && _scoredPersonTypes.Contains(m.People.PersonType))
             .Select(m => new { m.ItemId, m.PeopleId, m.People.PersonType })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        personSourceRows = personSourceRows
+            .Where(m => sourceIds.Contains(m.ItemId) && _personTypeWeights.ContainsKey(m.PersonType))
+            .ToList();
 
         if (personSourceRows.Count > 0)
         {
             var personCandidateRows = await context.PeopleBaseItemMap.AsNoTracking()
-                .Where(m => context.PeopleBaseItemMap
-                    .Where(s => sourceIds.Contains(s.ItemId) && _scoredPersonTypes.Contains(s.People.PersonType))
-                    .Select(s => s.PeopleId)
-                    .Contains(m.PeopleId))
                 .Select(m => new { m.ItemId, m.PeopleId })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+            var scoredPersonIds = personSourceRows.Select(r => r.PeopleId).ToHashSet();
+            personCandidateRows = personCandidateRows
+                .Where(r => scoredPersonIds.Contains(r.PeopleId))
+                .ToList();
 
             var personToCandidates = personCandidateRows
                 .GroupBy(r => r.PeopleId)

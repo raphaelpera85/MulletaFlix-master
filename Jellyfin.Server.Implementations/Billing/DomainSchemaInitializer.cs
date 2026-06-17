@@ -1,4 +1,6 @@
 using System;
+using System.Data.Common;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -16,24 +18,92 @@ public static class DomainSchemaInitializer
             return;
         }
 
-        var sql = schemaName switch
+        var tables = schemaName switch
         {
-            "mulletaflix_movies" => MoviesSchema(),
-            "mulletaflix_series" => SeriesSchema(),
-            "mulletaflix_channels" => ChannelsSchema(),
-            "mulletaflix_books" => BooksSchema(),
-            "mulletaflix_system" => "", // Uses mullettaflix_users schema via SystemDbContext
-            _ => ""
+            "mulletaflix_movies" => new[]
+            {
+                ("Movies", MoviesTableSql()),
+                ("MovieMetadata", MovieMetadataTableSql()),
+                ("MovieUserData", MovieUserDataTableSql())
+            },
+            "mulletaflix_series" => new[]
+            {
+                ("Series", SeriesTableSql()),
+                ("Seasons", SeasonsTableSql()),
+                ("Episodes", EpisodesTableSql()),
+                ("SeriesUserData", SeriesUserDataTableSql())
+            },
+            "mulletaflix_channels" => new[]
+            {
+                ("Channels", ChannelsTableSql()),
+                ("Programs", ProgramsTableSql())
+            },
+            "mulletaflix_books" => new[]
+            {
+                ("Books", BooksTableSql()),
+                ("BookUserData", BookUserDataTableSql())
+            },
+            "mulletaflix_system" => Array.Empty<(string TableName, string Sql)>(), // Uses mullettaflix_users schema via SystemDbContext
+            _ => Array.Empty<(string TableName, string Sql)>()
         };
 
-        if (!string.IsNullOrEmpty(sql))
+        foreach (var (tableName, sql) in tables)
         {
+            if (await TableExistsAsync(dbContext, schemaName, tableName, ct).ConfigureAwait(false))
+            {
+                continue;
+            }
+
             await dbContext.Database.ExecuteSqlRawAsync(sql, ct).ConfigureAwait(false);
         }
     }
 
-    private static string MoviesSchema() => """
-        CREATE TABLE IF NOT EXISTS `Movies` (
+    private static async Task<bool> TableExistsAsync(DbContext dbContext, string schemaName, string tableName, CancellationToken ct)
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        var openedHere = false;
+
+        try
+        {
+            if (connection.State != System.Data.ConnectionState.Open)
+            {
+                await connection.OpenAsync(ct).ConfigureAwait(false);
+                openedHere = true;
+            }
+
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT COUNT(*)
+                FROM information_schema.tables
+                WHERE table_schema = @schemaName
+                  AND table_name = @tableName
+                """;
+
+            AddParameter(command, "@schemaName", schemaName);
+            AddParameter(command, "@tableName", tableName);
+
+            var result = await command.ExecuteScalarAsync(ct).ConfigureAwait(false);
+            return Convert.ToInt64(result, CultureInfo.InvariantCulture) > 0;
+        }
+        finally
+        {
+            if (openedHere)
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+            }
+        }
+    }
+
+    private static void AddParameter(DbCommand command, string name, object? value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+        command.Parameters.Add(parameter);
+    }
+
+    private static string MoviesTableSql() => """
+        CREATE TABLE `Movies` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `BaseItemId` char(36) NOT NULL,
             `Name` varchar(500) NULL,
@@ -48,8 +118,10 @@ public static class DomainSchemaInitializer
             INDEX `IX_Movies_BaseItemId` (`BaseItemId`),
             INDEX `IX_Movies_Name` (`Name`)
         );
+        """;
 
-        CREATE TABLE IF NOT EXISTS `MovieMetadata` (
+    private static string MovieMetadataTableSql() => """
+        CREATE TABLE `MovieMetadata` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `MovieId` int NOT NULL,
             `Title` varchar(500) NULL,
@@ -58,8 +130,10 @@ public static class DomainSchemaInitializer
             CONSTRAINT `PK_MovieMetadata` PRIMARY KEY (`Id`),
             CONSTRAINT `FK_MovieMetadata_Movies_MovieId` FOREIGN KEY (`MovieId`) REFERENCES `Movies` (`Id`) ON DELETE CASCADE
         );
+        """;
 
-        CREATE TABLE IF NOT EXISTS `MovieUserData` (
+    private static string MovieUserDataTableSql() => """
+        CREATE TABLE `MovieUserData` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `UserId` char(36) NOT NULL,
             `MovieId` int NOT NULL,
@@ -73,8 +147,8 @@ public static class DomainSchemaInitializer
         );
         """;
 
-    private static string SeriesSchema() => """
-        CREATE TABLE IF NOT EXISTS `Series` (
+    private static string SeriesTableSql() => """
+        CREATE TABLE `Series` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `BaseItemId` char(36) NOT NULL,
             `Name` varchar(500) NULL,
@@ -88,8 +162,10 @@ public static class DomainSchemaInitializer
             INDEX `IX_Series_BaseItemId` (`BaseItemId`),
             INDEX `IX_Series_Name` (`Name`)
         );
+        """;
 
-        CREATE TABLE IF NOT EXISTS `Seasons` (
+    private static string SeasonsTableSql() => """
+        CREATE TABLE `Seasons` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `SeriesId` int NOT NULL,
             `BaseItemId` char(36) NOT NULL,
@@ -100,8 +176,10 @@ public static class DomainSchemaInitializer
             INDEX `IX_Seasons_SeriesId` (`SeriesId`),
             CONSTRAINT `FK_Seasons_Series_SeriesId` FOREIGN KEY (`SeriesId`) REFERENCES `Series` (`Id`) ON DELETE CASCADE
         );
+        """;
 
-        CREATE TABLE IF NOT EXISTS `Episodes` (
+    private static string EpisodesTableSql() => """
+        CREATE TABLE `Episodes` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `SeasonId` int NOT NULL,
             `BaseItemId` char(36) NOT NULL,
@@ -115,8 +193,10 @@ public static class DomainSchemaInitializer
             INDEX `IX_Episodes_BaseItemId` (`BaseItemId`),
             CONSTRAINT `FK_Episodes_Seasons_SeasonId` FOREIGN KEY (`SeasonId`) REFERENCES `Seasons` (`Id`) ON DELETE CASCADE
         );
+        """;
 
-        CREATE TABLE IF NOT EXISTS `SeriesUserData` (
+    private static string SeriesUserDataTableSql() => """
+        CREATE TABLE `SeriesUserData` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `UserId` char(36) NOT NULL,
             `SeriesId` int NOT NULL,
@@ -129,8 +209,8 @@ public static class DomainSchemaInitializer
         );
         """;
 
-    private static string ChannelsSchema() => """
-        CREATE TABLE IF NOT EXISTS `Channels` (
+    private static string ChannelsTableSql() => """
+        CREATE TABLE `Channels` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `BaseItemId` char(36) NOT NULL,
             `Name` varchar(500) NULL,
@@ -139,8 +219,10 @@ public static class DomainSchemaInitializer
             CONSTRAINT `PK_Channels` PRIMARY KEY (`Id`),
             INDEX `IX_Channels_BaseItemId` (`BaseItemId`)
         );
+        """;
 
-        CREATE TABLE IF NOT EXISTS `Programs` (
+    private static string ProgramsTableSql() => """
+        CREATE TABLE `Programs` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `ChannelId` int NOT NULL,
             `BaseItemId` char(36) NOT NULL,
@@ -155,8 +237,8 @@ public static class DomainSchemaInitializer
         );
         """;
 
-    private static string BooksSchema() => """
-        CREATE TABLE IF NOT EXISTS `Books` (
+    private static string BooksTableSql() => """
+        CREATE TABLE `Books` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `BaseItemId` char(36) NOT NULL,
             `Name` varchar(500) NULL,
@@ -167,8 +249,10 @@ public static class DomainSchemaInitializer
             INDEX `IX_Books_BaseItemId` (`BaseItemId`),
             INDEX `IX_Books_Name` (`Name`)
         );
+        """;
 
-        CREATE TABLE IF NOT EXISTS `BookUserData` (
+    private static string BookUserDataTableSql() => """
+        CREATE TABLE `BookUserData` (
             `Id` int NOT NULL AUTO_INCREMENT,
             `UserId` char(36) NOT NULL,
             `BookId` int NOT NULL,
@@ -179,5 +263,4 @@ public static class DomainSchemaInitializer
             INDEX `IX_BookUserData_BookId` (`BookId`)
         );
         """;
-
 }

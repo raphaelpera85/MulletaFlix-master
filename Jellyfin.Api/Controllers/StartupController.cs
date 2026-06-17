@@ -11,6 +11,7 @@ using MediaBrowser.Model.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace MulletaFlix.Api.Controllers;
 
@@ -24,6 +25,7 @@ public class StartupController : BaseMulletaFlixApiController
     private readonly IServerConfigurationManager _config;
     private readonly IUserManager _userManager;
     private readonly ILocalizationManager _localizationManager;
+    private readonly ILogger<StartupController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StartupController" /> class.
@@ -31,11 +33,17 @@ public class StartupController : BaseMulletaFlixApiController
     /// <param name="config">The server configuration manager.</param>
     /// <param name="userManager">The user manager.</param>
     /// <param name="localizationManager">The localization manager.</param>
-    public StartupController(IServerConfigurationManager config, IUserManager userManager, ILocalizationManager localizationManager)
+    /// <param name="logger">The logger.</param>
+    public StartupController(
+        IServerConfigurationManager config,
+        IUserManager userManager,
+        ILocalizationManager localizationManager,
+        ILogger<StartupController> logger)
     {
         _config = config;
         _userManager = userManager;
         _localizationManager = localizationManager;
+        _logger = logger;
     }
 
     /// <summary>
@@ -133,6 +141,8 @@ public class StartupController : BaseMulletaFlixApiController
     {
         NetworkConfiguration settings = _config.GetNetworkConfiguration();
         settings.EnableRemoteAccess = startupRemoteAccessDto.EnableRemoteAccess;
+        settings.EnableUPnP = startupRemoteAccessDto.EnableRemoteAccess;
+        settings.EnablePublishedServerUriByRequest = startupRemoteAccessDto.EnableRemoteAccess;
         _config.SaveConfiguration(NetworkConfigurationStore.StoreKey, settings);
         return NoContent();
     }
@@ -170,32 +180,40 @@ public class StartupController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult> UpdateStartupUser([FromBody] StartupUserDto startupUserDto)
     {
-        var user = _userManager.GetFirstUser();
-        if (user is null)
+        try
         {
-            return NotFound();
-        }
+            await _userManager.InitializeAsync().ConfigureAwait(false);
 
-        if (string.IsNullOrWhiteSpace(startupUserDto.Password))
-        {
-            return BadRequest("Password must not be empty");
-        }
+            var user = _userManager.GetFirstUser();
+            if (user is null)
+            {
+                return NotFound();
+            }
 
-        await _userManager.UpdateUserAsync(user).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(startupUserDto.Password))
+            {
+                return BadRequest("Password must not be empty");
+            }
 
 #pragma warning disable CA1309 // Use ordinal string comparison
-        if (startupUserDto.Name is not null && !startupUserDto.Name.Equals(user.Username, StringComparison.InvariantCultureIgnoreCase))
-        {
-            await _userManager.RenameUser(user.Id, user.Username, startupUserDto.Name).ConfigureAwait(false);
-        }
+            if (startupUserDto.Name is not null && !startupUserDto.Name.Equals(user.Username, StringComparison.InvariantCultureIgnoreCase))
+            {
+                await _userManager.RenameUser(user.Id, user.Username, startupUserDto.Name).ConfigureAwait(false);
+            }
 #pragma warning restore CA1309 // Use ordinal string comparison
 
-        if (!string.IsNullOrEmpty(startupUserDto.Password))
-        {
-            await _userManager.ChangePassword(user.Id, startupUserDto.Password).ConfigureAwait(false);
-        }
+            if (!string.IsNullOrEmpty(startupUserDto.Password))
+            {
+                await _userManager.ChangePassword(user.Id, startupUserDto.Password).ConfigureAwait(false);
+            }
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update startup user.");
+            throw;
+        }
     }
 }
 

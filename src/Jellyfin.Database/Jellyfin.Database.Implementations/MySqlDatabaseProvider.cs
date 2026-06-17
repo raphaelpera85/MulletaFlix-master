@@ -87,7 +87,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         options.UseMySql(connString, serverVersion, mySqlOptions =>
         {
             mySqlOptions.MigrationsAssembly(GetType().Assembly.GetName().Name);
-            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (s, table) => table);
+            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (schema, table) => schema ?? "mulletaflix_users");
         });
     }
 
@@ -116,6 +116,17 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         return defaultValue is not null ? defaultValue() : default!;
     }
 
+    private string BuildUserCredentialArguments()
+    {
+        var userArgument = $"-u {_user}";
+        if (string.IsNullOrWhiteSpace(_password))
+        {
+            return userArgument;
+        }
+
+        return $"{userArgument} -p{_password}";
+    }
+
     private async Task<string> RunProcessAsync(string fileName, string arguments, CancellationToken cancellationToken)
     {
         var psi = new ProcessStartInfo
@@ -130,6 +141,41 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
 
         using var process = new Process { StartInfo = psi };
         process.Start();
+        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        var error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            _logger.LogError("{Tool} failed (exit {Code}): {Error}", fileName, process.ExitCode, error);
+        }
+
+        return output;
+    }
+
+    private async Task<string> RunProcessWithInputFileAsync(string fileName, string arguments, string inputFile, CancellationToken cancellationToken)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            RedirectStandardInput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = new Process { StartInfo = psi };
+        process.Start();
+
+        await using (var input = File.OpenRead(inputFile))
+        {
+            await input.CopyToAsync(process.StandardInput.BaseStream, cancellationToken).ConfigureAwait(false);
+        }
+
+        process.StandardInput.Close();
+
         var output = await process.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         var error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         process.WaitForExit();
@@ -165,7 +211,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
             foreach (var schema in schemas)
             {
                 var result = await RunProcessAsync(MysqlPath,
-                    $"-h {_server} -P {_port} -u {_user} -p{_password} {schema} -e \"ANALYZE TABLE `{schema}`.`Movies`;\" 2>/nul",
+                    $"-h {_server} -P {_port} {BuildUserCredentialArguments()} {schema} -e \"ANALYZE TABLE `{schema}`.`Movies`;\"",
                     cancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation(
@@ -217,7 +263,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         Directory.CreateDirectory(backupFolder);
 
         var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_books" };
+            "mulletaflix_channels", "mulletaflix_books" };
 
         foreach (var schema in schemas)
         {
@@ -225,7 +271,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
             _logger.LogInformation("Backing up {Schema} to {File}", schema, outputFile);
 
             await RunProcessAsync(MysqldumpPath,
-                $"-h {_server} -P {_port} -u {_user} -p{_password} --databases {schema} --routines --triggers --single-transaction --quick > \"{outputFile}\"",
+                $"-h {_server} -P {_port} {BuildUserCredentialArguments()} --databases {schema} --routines --triggers --single-transaction --quick --result-file=\"{outputFile}\"",
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -237,7 +283,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         var backupFolder = GetBackupFolder();
 
         var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_books" };
+            "mulletaflix_channels", "mulletaflix_books" };
 
         foreach (var schema in schemas)
         {
@@ -250,8 +296,9 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
 
             _logger.LogInformation("Restoring {Schema} from {File}", schema, inputFile);
 
-            await RunProcessAsync(MysqlPath,
-                $"-h {_server} -P {_port} -u {_user} -p{_password} {schema} < \"{inputFile}\"",
+            await RunProcessWithInputFileAsync(MysqlPath,
+                $"-h {_server} -P {_port} {BuildUserCredentialArguments()} {schema}",
+                inputFile,
                 cancellationToken).ConfigureAwait(false);
         }
     }
@@ -262,7 +309,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         if (!Directory.Exists(backupFolder)) return Task.CompletedTask;
 
         var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books", "mulletaflix_books" };
+            "mulletaflix_channels", "mulletaflix_books" };
 
         foreach (var schema in schemas)
         {

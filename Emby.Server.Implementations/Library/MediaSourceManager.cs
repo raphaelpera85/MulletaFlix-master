@@ -185,16 +185,23 @@ namespace Emby.Server.Implementations.Library
                     || (item.MediaType == MediaType.Video && mediaSources[0].MediaStreams.All(i => i.Type != MediaStreamType.Video))
                     || (item.MediaType == MediaType.Audio && mediaSources[0].MediaStreams.All(i => i.Type != MediaStreamType.Audio))))
             {
-                await item.RefreshMetadata(
-                    new MetadataRefreshOptions(_directoryService)
-                    {
-                        EnableRemoteContentProbe = true,
-                        MetadataRefreshMode = MetadataRefreshMode.FullRefresh
-                    },
-                    cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await item.RefreshMetadata(
+                        new MetadataRefreshOptions(_directoryService)
+                        {
+                            EnableRemoteContentProbe = true,
+                            MetadataRefreshMode = MetadataRefreshMode.FullRefresh
+                        },
+                        cancellationToken).ConfigureAwait(false);
 
-                mediaSources = GetStaticMediaSources(item, enablePathSubstitution, user);
-                ResolveSymlinkPaths(mediaSources, enablePathSubstitution);
+                    mediaSources = GetStaticMediaSources(item, enablePathSubstitution, user);
+                    ResolveSymlinkPaths(mediaSources, enablePathSubstitution);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to refresh metadata for playback source {ItemPath}. Continuing with existing media source data.", item.Path);
+                }
             }
 
             var dynamicMediaSources = await GetDynamicMediaSources(item, cancellationToken).ConfigureAwait(false);

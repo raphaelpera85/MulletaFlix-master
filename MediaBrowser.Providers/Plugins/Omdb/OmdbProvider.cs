@@ -3,6 +3,7 @@
 #pragma warning disable CS159, SA1300
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -27,6 +28,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
     /// <summary>Provider for OMDB service.</summary>
     public class OmdbProvider
     {
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> _fileLocks = new(StringComparer.OrdinalIgnoreCase);
         private readonly IFileSystem _fileSystem;
         private readonly IServerConfigurationManager _configurationManager;
         private readonly IHttpClientFactory _httpClientFactory;
@@ -298,36 +300,42 @@ namespace MediaBrowser.Providers.Plugins.Omdb
             var imdbParam = imdbId.StartsWith("tt", StringComparison.OrdinalIgnoreCase) ? imdbId : "tt" + imdbId;
 
             var path = GetDataFilePath(imdbParam);
+            var fileLock = _fileLocks.GetOrAdd(path, _ => new SemaphoreSlim(1, 1));
 
-            var fileInfo = _fileSystem.GetFileSystemInfo(path);
-
-            if (fileInfo.Exists)
+            await fileLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
             {
-                // If it's recent or automatic updates are enabled, don't re-download
-                if ((DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 1)
+                var fileInfo = _fileSystem.GetFileSystemInfo(path);
+
+                if (fileInfo.Exists)
                 {
-                    return path;
+                    // If it's recent or automatic updates are enabled, don't re-download
+                    if ((DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 1)
+                    {
+                        return path;
+                    }
                 }
-            }
-            else
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-            }
+                else
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));
+                }
 
-            var url = GetOmdbUrl(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "i={0}&plot=short&tomatoes=true&r=json",
-                    imdbParam));
+                var url = GetOmdbUrl(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "i={0}&plot=short&tomatoes=true&r=json",
+                        imdbParam));
 
-            var rootObject = await _httpClientFactory.CreateClient(NamedClient.Default).GetFromJsonAsync<RootObject>(url, _jsonOptions, cancellationToken).ConfigureAwait(false);
-            FileStream jsonFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
-            await using (jsonFileStream.ConfigureAwait(false))
-            {
+                var rootObject = await _httpClientFactory.CreateClient(NamedClient.Default).GetFromJsonAsync<RootObject>(url, _jsonOptions, cancellationToken).ConfigureAwait(false);
+                await using var jsonFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
                 await JsonSerializer.SerializeAsync(jsonFileStream, rootObject, _jsonOptions, cancellationToken).ConfigureAwait(false);
-            }
 
-            return path;
+                return path;
+            }
+            finally
+            {
+                fileLock.Release();
+            }
         }
 
         private async Task<string> EnsureSeasonInfo(string seriesImdbId, int seasonId, CancellationToken cancellationToken)
@@ -340,37 +348,43 @@ namespace MediaBrowser.Providers.Plugins.Omdb
             var imdbParam = seriesImdbId.StartsWith("tt", StringComparison.OrdinalIgnoreCase) ? seriesImdbId : "tt" + seriesImdbId;
 
             var path = GetSeasonFilePath(imdbParam, seasonId);
+            var fileLock = _fileLocks.GetOrAdd(path, _ => new SemaphoreSlim(1, 1));
 
-            var fileInfo = _fileSystem.GetFileSystemInfo(path);
-
-            if (fileInfo.Exists)
+            await fileLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
             {
-                // If it's recent or automatic updates are enabled, don't re-download
-                if ((DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 1)
+                var fileInfo = _fileSystem.GetFileSystemInfo(path);
+
+                if (fileInfo.Exists)
                 {
-                    return path;
+                    // If it's recent or automatic updates are enabled, don't re-download
+                    if ((DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 1)
+                    {
+                        return path;
+                    }
                 }
-            }
-            else
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-            }
+                else
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));
+                }
 
-            var url = GetOmdbUrl(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "i={0}&season={1}&detail=full",
-                    imdbParam,
-                    seasonId));
+                var url = GetOmdbUrl(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "i={0}&season={1}&detail=full",
+                        imdbParam,
+                        seasonId));
 
-            var rootObject = await _httpClientFactory.CreateClient(NamedClient.Default).GetFromJsonAsync<SeasonRootObject>(url, _jsonOptions, cancellationToken).ConfigureAwait(false);
-            FileStream jsonFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
-            await using (jsonFileStream.ConfigureAwait(false))
-            {
+                var rootObject = await _httpClientFactory.CreateClient(NamedClient.Default).GetFromJsonAsync<SeasonRootObject>(url, _jsonOptions, cancellationToken).ConfigureAwait(false);
+                await using var jsonFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
                 await JsonSerializer.SerializeAsync(jsonFileStream, rootObject, _jsonOptions, cancellationToken).ConfigureAwait(false);
-            }
 
-            return path;
+                return path;
+            }
+            finally
+            {
+                fileLock.Release();
+            }
         }
 
         internal string GetDataFilePath(string imdbId)

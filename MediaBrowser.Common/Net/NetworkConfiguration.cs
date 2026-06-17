@@ -111,7 +111,7 @@ public class NetworkConfiguration
     /// Gets or sets a value indicating whether to enable automatic port forwarding.
     /// </summary>
     [Obsolete("No longer supported")]
-    public bool EnableUPnP { get; set; }
+    public bool EnableUPnP { get; set; } = true;
 
     /// <summary>
     /// Gets or sets a value indicating whether IPv6 is enabled.
@@ -156,7 +156,7 @@ public class NetworkConfiguration
     /// <summary>
     /// Gets or sets a value indicating whether the published server uri is based on information in HTTP requests.
     /// </summary>
-    public bool EnablePublishedServerUriByRequest { get; set; } = false;
+    public bool EnablePublishedServerUriByRequest { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the PublishedServerUriBySubnet

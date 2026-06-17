@@ -91,6 +91,7 @@ namespace Emby.Server.Implementations.Localization
         private static IReadOnlyDictionary<string, string> BuildCountryLanguageMap()
         {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            map["BR"] = "pt-BR";
 
             foreach (var culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures).OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase))
             {
@@ -99,7 +100,7 @@ namespace Emby.Server.Implementations.Localization
                     var regionInfo = new RegionInfo(culture.Name);
                     if (!map.ContainsKey(regionInfo.TwoLetterISORegionName))
                     {
-                        map[regionInfo.TwoLetterISORegionName] = culture.TwoLetterISOLanguageName;
+                        map[regionInfo.TwoLetterISORegionName] = culture.Name;
                     }
                 }
                 catch (ArgumentException)
