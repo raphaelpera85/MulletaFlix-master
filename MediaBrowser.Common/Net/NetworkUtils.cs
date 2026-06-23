@@ -104,7 +104,7 @@ public static partial class NetworkUtils
         Span<byte> bytes = stackalloc byte[mask.AddressFamily == AddressFamily.InterNetwork ? NetworkConstants.IPv4MaskBytes : NetworkConstants.IPv6MaskBytes];
         if (!mask.TryWriteBytes(bytes, out var bytesWritten))
         {
-            Console.WriteLine("Unable to write address bytes, only {0} bytes written.", bytesWritten.ToString(CultureInfo.InvariantCulture));
+            // Non-critical: mask bytes could not be written, continuing with uninitialized buffer
         }
 
         var zeroed = false;

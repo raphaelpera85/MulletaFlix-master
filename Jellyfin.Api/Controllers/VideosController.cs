@@ -36,6 +36,7 @@ namespace MulletaFlix.Api.Controllers;
 /// The videos controller.
 /// </summary>
 [Tags("Video")]
+[Authorize]
 public class VideosController : BaseMulletaFlixApiController
 {
     private readonly ILibraryManager _libraryManager;
@@ -311,6 +312,7 @@ public class VideosController : BaseMulletaFlixApiController
     /// <param name="enableAudioVbrEncoding">Optional. Whether to enable Audio Encoding.</param>
     /// <response code="200">Video stream returned.</response>
     /// <returns>A <see cref="FileResult"/> containing the audio file.</returns>
+    [AllowAnonymous]
     [HttpGet("{itemId}/stream")]
     [HttpHead("{itemId}/stream", Name = "HeadVideoStream")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -549,6 +551,7 @@ public class VideosController : BaseMulletaFlixApiController
     /// <param name="enableAudioVbrEncoding">Optional. Whether to enable Audio Encoding.</param>
     /// <response code="200">Video stream returned.</response>
     /// <returns>A <see cref="FileResult"/> containing the audio file.</returns>
+    [AllowAnonymous]
     [HttpGet("{itemId}/stream.{container}")]
     [HttpHead("{itemId}/stream.{container}", Name = "HeadVideoStreamByContainer")]
     [ProducesResponseType(StatusCodes.Status200OK)]

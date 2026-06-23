@@ -74,7 +74,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         _backupDir = GetOption(opts, "backup-dir", e => e, () => string.Empty);
 
         var connString = opts is not null
-            ? $"Server={_server};Port={_port};User ID={_user};Password={_password};CharSet=utf8mb4;"
+            ? $"Server={_server};Port={_port};User ID={_user};Password={_password};CharSet=utf8mb4;Pooling=True;Minimum Pool Size=10;Maximum Pool Size=200;Connection Idle Timeout=300;Connection Lifetime=1800;Default Command Timeout=120;"
             : DefaultConnectionString;
 
         var schema = !string.IsNullOrEmpty(schemaName) ? schemaName : "mulletaflix_users";
@@ -336,10 +336,27 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         if (tableNames == null) return;
 
         await dbContext.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 0;").ConfigureAwait(false);
-        foreach (var tableName in tableNames)
+        try
         {
-            await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM `{tableName}`;").ConfigureAwait(false);
+            foreach (var tableName in tableNames)
+            {
+                var quotedTableName = string.Join('.', tableName.Split('.').Select(QuoteIdentifier));
+                await dbContext.Database.ExecuteSqlRawAsync($"DELETE FROM {quotedTableName};").ConfigureAwait(false);
+            }
         }
-        await dbContext.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 1;").ConfigureAwait(false);
+        finally
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 1;").ConfigureAwait(false);
+        }
+    }
+
+    private static string QuoteIdentifier(string identifier)
+    {
+        if (string.IsNullOrWhiteSpace(identifier) || identifier.Any(ch => !(char.IsAsciiLetterOrDigit(ch) || ch == '_')))
+        {
+            throw new ArgumentException("Invalid MySQL identifier.", nameof(identifier));
+        }
+
+        return $"`{identifier}`";
     }
 }

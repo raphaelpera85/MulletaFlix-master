@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Contexts;
-using MulletaFlix.Database.Implementations.DbConfiguration;
-using MulletaFlix.Database.Implementations.Locking;
-using MulletaFlix.Database.Providers.Sqlite;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
+using MulletaFlix.Database.Implementations.DbConfiguration;
+using MulletaFlix.Database.Implementations.Locking;
 using MulletaFlixDbProviderFactory = System.Func<System.IServiceProvider, MulletaFlix.Database.Implementations.IMulletaFlixDatabaseProvider>;
 
 namespace MulletaFlix.Server.Implementations.Extensions;
@@ -24,7 +23,6 @@ public static class ServiceCollectionExtensions
 {
     private static IEnumerable<Type> DatabaseProviderTypes()
     {
-        yield return typeof(SqliteDatabaseProvider);
         yield return typeof(MySqlDatabaseProvider);
     }
 

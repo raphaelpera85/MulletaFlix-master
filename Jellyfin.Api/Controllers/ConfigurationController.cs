@@ -9,6 +9,7 @@ using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Model.Branding;
 using MediaBrowser.Model.Configuration;
+using MediaBrowser.Model.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,7 @@ namespace MulletaFlix.Api.Controllers;
 public class ConfigurationController : BaseMulletaFlixApiController
 {
     private readonly IServerConfigurationManager _configurationManager;
+    private readonly ILocalizationManager _localizationManager;
     private readonly IMediaEncoder _mediaEncoder;
 
     private readonly JsonSerializerOptions _serializerOptions = JsonDefaults.Options;
@@ -35,9 +37,11 @@ public class ConfigurationController : BaseMulletaFlixApiController
     /// <param name="mediaEncoder">Instance of the <see cref="IMediaEncoder"/> interface.</param>
     public ConfigurationController(
         IServerConfigurationManager configurationManager,
+        ILocalizationManager localizationManager,
         IMediaEncoder mediaEncoder)
     {
         _configurationManager = configurationManager;
+        _localizationManager = localizationManager;
         _mediaEncoder = mediaEncoder;
     }
 
@@ -64,6 +68,11 @@ public class ConfigurationController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public ActionResult UpdateConfiguration([FromBody, Required] ServerConfiguration configuration)
     {
+        if (string.Equals(configuration.MetadataCountryCode, "BR", StringComparison.OrdinalIgnoreCase))
+        {
+            configuration.PreferredMetadataLanguage = _localizationManager.GetDefaultMetadataLanguage(configuration.MetadataCountryCode);
+        }
+
         _configurationManager.ReplaceConfiguration(configuration);
         return NoContent();
     }

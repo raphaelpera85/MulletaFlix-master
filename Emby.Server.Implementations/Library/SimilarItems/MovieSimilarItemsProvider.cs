@@ -251,7 +251,7 @@ public sealed class MovieSimilarItemsProvider : ILocalSimilarItemsProvider<Movie
             }
 
             var candidateRows = await context.ItemValuesMap.AsNoTracking()
-                .Where(m => m.ItemValue.Type == valueType)
+                .Where(m => m.ItemValue.Type == valueType && allKeys.Contains(m.ItemValue.CleanValue))
                 .Select(m => new { m.ItemId, Key = m.ItemValue.CleanValue })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
 
@@ -263,23 +263,21 @@ public sealed class MovieSimilarItemsProvider : ILocalSimilarItemsProvider<Movie
         }
 
         var personSourceRows = await context.PeopleBaseItemMap.AsNoTracking()
+            .Where(m => sourceIds.Contains(m.ItemId))
             .Select(m => new { m.ItemId, m.PeopleId, m.People.PersonType })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         personSourceRows = personSourceRows
-            .Where(m => sourceIds.Contains(m.ItemId) && _personTypeWeights.ContainsKey(m.PersonType))
+            .Where(m => _personTypeWeights.ContainsKey(m.PersonType))
             .ToList();
 
         if (personSourceRows.Count > 0)
         {
+            var scoredPersonIds = personSourceRows.Select(r => r.PeopleId).ToHashSet();
             var personCandidateRows = await context.PeopleBaseItemMap.AsNoTracking()
+                .Where(m => scoredPersonIds.Contains(m.PeopleId) && m.ItemId != null)
                 .Select(m => new { m.ItemId, m.PeopleId })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
-
-            var scoredPersonIds = personSourceRows.Select(r => r.PeopleId).ToHashSet();
-            personCandidateRows = personCandidateRows
-                .Where(r => scoredPersonIds.Contains(r.PeopleId))
-                .ToList();
 
             var personToCandidates = personCandidateRows
                 .GroupBy(r => r.PeopleId)

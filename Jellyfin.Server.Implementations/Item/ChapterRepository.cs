@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Item;
 
@@ -78,7 +78,7 @@ public class ChapterRepository : IChapterRepository
             context.Chapters.Add(Map(chapter, i, itemId));
         }
 
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
         transaction.Commit();
     }
 

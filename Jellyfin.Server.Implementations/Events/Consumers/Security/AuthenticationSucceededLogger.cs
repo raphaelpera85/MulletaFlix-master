@@ -1,10 +1,10 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Events.Authentication;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Events.Consumers.Security
 {

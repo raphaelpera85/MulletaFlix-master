@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using MulletaFlix.Api.Caching;
 using MulletaFlix.Api.Extensions;
 using MulletaFlix.Api.Helpers;
 using MulletaFlix.Api.ModelBinders;
@@ -34,6 +35,7 @@ public class UserViewsController : BaseMulletaFlixApiController
     private readonly IUserViewManager _userViewManager;
     private readonly IDtoService _dtoService;
     private readonly ILibraryManager _libraryManager;
+    private readonly ItemsResponseCache _itemsResponseCache;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserViewsController"/> class.
@@ -42,16 +44,19 @@ public class UserViewsController : BaseMulletaFlixApiController
     /// <param name="userViewManager">Instance of the <see cref="IUserViewManager"/> interface.</param>
     /// <param name="dtoService">Instance of the <see cref="IDtoService"/> interface.</param>
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
+    /// <param name="itemsResponseCache">Instance of the <see cref="ItemsResponseCache"/>.</param>
     public UserViewsController(
         IUserManager userManager,
         IUserViewManager userViewManager,
         IDtoService dtoService,
-        ILibraryManager libraryManager)
+        ILibraryManager libraryManager,
+        ItemsResponseCache itemsResponseCache)
     {
         _userManager = userManager;
         _userViewManager = userViewManager;
         _dtoService = dtoService;
         _libraryManager = libraryManager;
+        _itemsResponseCache = itemsResponseCache;
     }
 
     /// <summary>
@@ -86,6 +91,11 @@ public class UserViewsController : BaseMulletaFlixApiController
             query.PresetViews = presetViews;
         }
 
+        var cacheKey = $"userviews-{userId}-{includeExternalContent}-{string.Join(",", presetViews.Select(p => p?.ToString() ?? "null"))}-{includeHidden}";
+
+        if (_itemsResponseCache.TryGet(cacheKey, out var cached))
+            return cached;
+
         var folders = await _userViewManager.GetUserViewsAsync(query).ConfigureAwait(false);
 
         var dtoOptions = new DtoOptions();
@@ -93,7 +103,9 @@ public class UserViewsController : BaseMulletaFlixApiController
 
         var dtos = await _dtoService.GetBaseItemDtosAsync(folders, dtoOptions, user).ConfigureAwait(false);
 
-        return new QueryResult<BaseItemDto>(dtos);
+        var result = new QueryResult<BaseItemDto>(dtos);
+        _itemsResponseCache.Set(cacheKey, result);
+        return result;
     }
 
     /// <summary>

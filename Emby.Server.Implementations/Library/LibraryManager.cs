@@ -4116,8 +4116,14 @@ namespace Emby.Server.Implementations.Library
         {
             Task.Run(() =>
             {
-                // No need to start if scanning the library because it will handle it
-                ValidateMediaLibrary(new Progress<double>(), CancellationToken.None);
+                try
+                {
+                    ValidateMediaLibrary(new Progress<double>(), CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error during background media library scan");
+                }
             });
         }
 

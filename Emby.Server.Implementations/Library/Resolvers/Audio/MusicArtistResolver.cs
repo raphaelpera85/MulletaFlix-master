@@ -90,7 +90,7 @@ namespace Emby.Server.Implementations.Library.Resolvers.Audio
 
             var directories = args.FileSystemChildren.Where(i => i.IsDirectory);
 
-            var result = Parallel.ForEach(directories, (fileSystemInfo, state) =>
+            var result = Parallel.ForEach(directories, new ParallelOptions { MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 8) }, (fileSystemInfo, state) =>
             {
                 // If we contain a artist subfolder assume we are an artist folder
                 foreach (var subfolder in _namingOptions.ArtistSubfolders)

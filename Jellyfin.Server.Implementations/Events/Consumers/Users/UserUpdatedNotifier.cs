@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Data.Events.Users;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Session;
+using MulletaFlix.Data.Events.Users;
 
 namespace MulletaFlix.Server.Implementations.Events.Consumers.Users
 {

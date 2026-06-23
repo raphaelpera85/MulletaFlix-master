@@ -141,11 +141,11 @@ namespace MediaBrowser.Controller.Entities.TV
                 var series = Series;
                 if (series is not null)
                 {
-                    return series.PresentationUniqueKey + "-" + IndexNumber.Value.ToString("000", CultureInfo.InvariantCulture);
+                    return NormalizePresentationUniqueKey(series.PresentationUniqueKey + "-" + IndexNumber.Value.ToString("000", CultureInfo.InvariantCulture));
                 }
             }
 
-            return base.CreatePresentationUniqueKey();
+            return NormalizePresentationUniqueKey(base.CreatePresentationUniqueKey());
         }
 
         /// <summary>

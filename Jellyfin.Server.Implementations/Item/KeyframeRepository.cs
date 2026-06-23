@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Item;
 

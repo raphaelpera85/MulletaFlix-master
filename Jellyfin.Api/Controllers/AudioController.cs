@@ -8,6 +8,7 @@ using MulletaFlix.Api.Models.StreamingDtos;
 using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Controller.Streaming;
 using MediaBrowser.Model.Dlna;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +17,7 @@ namespace MulletaFlix.Api.Controllers;
 /// <summary>
 /// The audio controller.
 /// </summary>
+[Authorize]
 public class AudioController : BaseMulletaFlixApiController
 {
     private readonly AudioHelper _audioHelper;
@@ -85,6 +87,7 @@ public class AudioController : BaseMulletaFlixApiController
     /// <param name="enableAudioVbrEncoding">Optional. Whether to enable Audio Encoding.</param>
     /// <response code="200">Audio stream returned.</response>
     /// <returns>A <see cref="FileResult"/> containing the audio file.</returns>
+    [AllowAnonymous]
     [HttpGet("{itemId}/stream", Name = "GetAudioStream")]
     [HttpHead("{itemId}/stream", Name = "HeadAudioStream")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -249,6 +252,7 @@ public class AudioController : BaseMulletaFlixApiController
     /// <param name="enableAudioVbrEncoding">Optional. Whether to enable Audio Encoding.</param>
     /// <response code="200">Audio stream returned.</response>
     /// <returns>A <see cref="FileResult"/> containing the audio file.</returns>
+    [AllowAnonymous]
     [HttpGet("{itemId}/stream.{container}", Name = "GetAudioStreamByContainer")]
     [HttpHead("{itemId}/stream.{container}", Name = "HeadAudioStreamByContainer")]
     [ProducesResponseType(StatusCodes.Status200OK)]

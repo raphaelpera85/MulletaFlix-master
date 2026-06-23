@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MediaBrowser.Controller.Security;
+using Microsoft.EntityFrameworkCore;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities.Security;
-using MediaBrowser.Controller.Security;
-using Microsoft.EntityFrameworkCore;
 
 namespace MulletaFlix.Server.Implementations.Security
 {
@@ -42,6 +42,7 @@ namespace MulletaFlix.Server.Implementations.Security
             await using (dbContext.ConfigureAwait(false))
             {
                 return await dbContext.ApiKeys
+                    .AsNoTracking()
                     .Select(key => new AuthenticationInfo
                     {
                         AppName = key.Name,

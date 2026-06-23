@@ -12,11 +12,20 @@ using Microsoft.Extensions.Logging;
 
 namespace MulletaFlix.Database.Implementations.Contexts;
 
-public class UsersDbContext(
-    DbContextOptions<UsersDbContext> options,
-    ILogger<UsersDbContext> logger,
-    IMulletaFlixDatabaseProvider? mulletaFlixDatabaseProvider = null) : DbContext(options)
+public class UsersDbContext : DbContext
 {
+    private readonly ILogger<UsersDbContext> _logger;
+    private readonly IMulletaFlixDatabaseProvider? _mulletaFlixDatabaseProvider;
+
+    public UsersDbContext(
+        DbContextOptions<UsersDbContext> options,
+        ILogger<UsersDbContext> logger,
+        IMulletaFlixDatabaseProvider? mulletaFlixDatabaseProvider = null) : base(options)
+    {
+        _logger = logger;
+        _mulletaFlixDatabaseProvider = mulletaFlixDatabaseProvider;
+    }
+
     public DbSet<AccessSchedule> AccessSchedules => Set<AccessSchedule>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
     public DbSet<Device> Devices => Set<Device>();
@@ -57,7 +66,7 @@ public class UsersDbContext(
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        mulletaFlixDatabaseProvider?.OnModelCreating(modelBuilder);
+        _mulletaFlixDatabaseProvider?.OnModelCreating(modelBuilder);
         base.OnModelCreating(modelBuilder);
 
         // Apply configurations for entities managed by UsersDbContext
@@ -79,7 +88,7 @@ public class UsersDbContext(
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        mulletaFlixDatabaseProvider?.ConfigureConventions(configurationBuilder);
+        _mulletaFlixDatabaseProvider?.ConfigureConventions(configurationBuilder);
         base.ConfigureConventions(configurationBuilder);
     }
 }

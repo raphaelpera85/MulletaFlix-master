@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using MulletaFlix.Data.Enums;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Locking;
-using MulletaFlix.Database.Providers.Sqlite;
 using MulletaFlix.Server.Implementations.Item;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Persistence;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -21,7 +18,6 @@ namespace MulletaFlix.Server.Implementations.Tests.Item;
 
 public sealed class NextUpQueryOptimizationTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
     private readonly MulletaFlixDbContext _context;
     private readonly Mock<IDbContextFactory<MulletaFlixDbContext>> _dbProviderMock;
     private readonly Mock<IItemTypeLookup> _itemTypeLookupMock;
@@ -30,16 +26,12 @@ public sealed class NextUpQueryOptimizationTests : IDisposable
 
     public NextUpQueryOptimizationTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
-
         var options = new DbContextOptionsBuilder<MulletaFlixDbContext>()
-            .UseSqlite(_connection)
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
             .Options;
 
         var dbProvider = new Mock<IMulletaFlixDatabaseProvider>();
-        dbProvider.Setup(p => p.OnModelCreating(It.IsAny<ModelBuilder>()))
-            .Callback<ModelBuilder>(static mb => mb.SetDefaultDateTimeKind(DateTimeKind.Utc));
+        dbProvider.Setup(p => p.OnModelCreating(It.IsAny<ModelBuilder>()));
 
         var lockingBehavior = new Mock<IEntityFrameworkCoreLockingBehavior>();
         lockingBehavior.Setup(l => l.OnSaveChanges(It.IsAny<MulletaFlixDbContext>(), It.IsAny<Action>()))
@@ -73,7 +65,6 @@ public sealed class NextUpQueryOptimizationTests : IDisposable
     public void Dispose()
     {
         _context.Dispose();
-        _connection.Dispose();
     }
 
     [Fact]

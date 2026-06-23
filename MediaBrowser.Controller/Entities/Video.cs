@@ -338,10 +338,10 @@ namespace MediaBrowser.Controller.Entities
         {
             if (PrimaryVersionId.HasValue)
             {
-                return PrimaryVersionId.Value.ToString("N", CultureInfo.InvariantCulture);
+                return NormalizePresentationUniqueKey(PrimaryVersionId.Value.ToString("N", CultureInfo.InvariantCulture));
             }
 
-            return base.CreatePresentationUniqueKey();
+            return NormalizePresentationUniqueKey(base.CreatePresentationUniqueKey());
         }
 
         public override bool CanDownload()

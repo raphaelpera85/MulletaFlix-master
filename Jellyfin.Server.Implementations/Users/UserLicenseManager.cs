@@ -2,16 +2,16 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Data;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Contexts;
-using MulletaFlix.Database.Implementations.Entities;
-using MulletaFlix.Database.Implementations.Enums;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Data;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
 
 namespace MulletaFlix.Server.Implementations.Users;
 
@@ -72,6 +72,7 @@ public class UserLicenseManager : IUserLicenseManager
         await using (dbContext.ConfigureAwait(false))
         {
             var user = await dbContext.Users
+                .AsSplitQuery()
                 .Include(u => u.Permissions)
                 .FirstOrDefaultAsync(u => u.Id.Equals(userId))
                 .ConfigureAwait(false);
@@ -159,6 +160,7 @@ public class UserLicenseManager : IUserLicenseManager
         await using (dbContext.ConfigureAwait(false))
         {
             var license = await dbContext.UserLicenses
+                .AsSplitQuery()
                 .Include(l => l.User)
                     .ThenInclude(u => u.Permissions)
                 .FirstOrDefaultAsync(l => l.UserId.Equals(userId))
@@ -193,6 +195,7 @@ public class UserLicenseManager : IUserLicenseManager
         {
             // Find all expired, non-unlimited licenses whose users are still enabled
             var expiredLicenses = await dbContext.UserLicenses
+                .AsSplitQuery()
                 .Include(l => l.User)
                     .ThenInclude(u => u.Permissions)
                 .Where(l => !l.IsUnlimited

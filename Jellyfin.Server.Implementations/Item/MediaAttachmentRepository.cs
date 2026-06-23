@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Item;
 
@@ -35,7 +35,7 @@ public class MediaAttachmentRepository(IDbContextFactory<MulletaFlixDbContext> d
             context.AttachmentStreamInfos.AddRange(attachments.Select(e => Map(e, id)));
         }
 
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
         transaction.Commit();
     }
 

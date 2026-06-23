@@ -566,13 +566,12 @@ public class ScheduledTaskWorker : IScheduledTaskWorker
                 try
                 {
                     _logger.LogInformation("{Name}: Waiting on Task", Name);
-                    var exited = task.Wait(2000);
-
-                    if (exited)
+                    try
                     {
+                        task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
                         _logger.LogInformation("{Name}: Task exited", Name);
                     }
-                    else
+                    catch (TimeoutException)
                     {
                         _logger.LogInformation("{Name}: Timed out waiting for task to stop", Name);
                     }

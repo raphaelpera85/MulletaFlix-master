@@ -5,9 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
-using MulletaFlix.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -15,6 +12,9 @@ using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Controller.Playlists;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using MySqlConnector;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 using DbLinkedChildType = MulletaFlix.Database.Implementations.Entities.LinkedChildType;
@@ -28,7 +28,7 @@ namespace MulletaFlix.Server.Implementations.Item;
 public class ItemPersistenceService : IItemPersistenceService
 {
     internal static readonly IEqualityComparer<(ItemValueType MagicNumber, string Value)> ItemValueKeyComparer = new ItemValueKeyEqualityComparer();
-    private static readonly SemaphoreSlim _updateOrInsertLock = new(1, 1);
+    private static readonly SemaphoreSlim[] _updateOrInsertLocks = Enumerable.Range(0, 16).Select(_ => new SemaphoreSlim(1, 1)).ToArray();
 
     private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
     private readonly IServerApplicationHost _appHost;
@@ -99,11 +99,19 @@ public class ItemPersistenceService : IItemPersistenceService
                 .Skip(1))
             .ToList();
 
-        foreach (var dup in duplicateRows)
+        if (duplicateRows.Count > 0)
         {
-            context.UserData
-                .Where(ud => ud.ItemId == dup.ItemId && ud.UserId == dup.UserId && ud.CustomDataKey == dup.CustomDataKey)
-                .ExecuteDelete();
+            var dupItemIds = duplicateRows.Select(d => d.ItemId).Distinct().ToList();
+            var candidates = context.UserData
+                .Where(ud => dupItemIds.Contains(ud.ItemId))
+                .ToList();
+            var toDelete = candidates
+                .Where(ud => duplicateRows.Any(k => k.ItemId == ud.ItemId && k.UserId == ud.UserId && k.CustomDataKey == ud.CustomDataKey))
+                .ToList();
+            if (toDelete.Count > 0)
+            {
+                context.UserData.RemoveRange(toDelete);
+            }
         }
 
         // Delete existing placeholder rows that would conflict with the incoming ones
@@ -143,7 +151,7 @@ public class ItemPersistenceService : IItemPersistenceService
         context.PeopleBaseItemMap.WhereOneOrMany(relatedItems, e => e.ItemId).ExecuteDelete();
         context.Peoples.WhereOneOrMany(query, e => e.Id).Where(e => e.BaseItems!.Count == 0).ExecuteDelete();
         context.TrickplayInfos.WhereOneOrMany(relatedItems, e => e.ItemId).ExecuteDelete();
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
         transaction.Commit();
     }
 
@@ -154,7 +162,7 @@ public class ItemPersistenceService : IItemPersistenceService
         using var transaction = context.Database.BeginTransaction();
 
         context.ItemValuesMap.Where(e => e.ItemValue.Type == ItemValueType.InheritedTags).ExecuteDelete();
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
 
         transaction.Commit();
     }
@@ -237,7 +245,9 @@ public class ItemPersistenceService : IItemPersistenceService
         ArgumentNullException.ThrowIfNull(items);
         cancellationToken.ThrowIfCancellationRequested();
 
-        _updateOrInsertLock.Wait(cancellationToken);
+        var lockIndex = items.Count > 0 ? (items[0].Id.GetHashCode() & 15) : 0;
+        var updateLock = _updateOrInsertLocks[lockIndex];
+        updateLock.WaitAsync(cancellationToken).GetAwaiter().GetResult();
         try
         {
             for (var attempt = 1; attempt <= 2; attempt++)
@@ -255,39 +265,39 @@ public class ItemPersistenceService : IItemPersistenceService
         }
         finally
         {
-            _updateOrInsertLock.Release();
+            updateLock.Release();
         }
     }
 
     private void UpdateOrInsertItemsCore(IReadOnlyList<BaseItemDto> items)
     {
-            var tuples = new List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)>();
-            foreach (var item in items.GroupBy(e => e.Id).Select(e => e.Last()).Where(e => e.Id != BaseItemRepository.PlaceholderId))
-            {
-                var ancestorIds = item.SupportsAncestors ?
-                    item.GetAncestorIds().Distinct().ToList() :
-                    null;
+        var tuples = new List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)>();
+        foreach (var item in items.GroupBy(e => e.Id).Select(e => e.Last()).Where(e => e.Id != BaseItemRepository.PlaceholderId))
+        {
+            var ancestorIds = item.SupportsAncestors ?
+                item.GetAncestorIds().Distinct().ToList() :
+                null;
 
-                var topParent = item.GetTopParent();
+            var topParent = item.GetTopParent();
 
-                var userdataKey = item.GetUserDataKeys();
-                var inheritedTags = item.GetInheritedTags();
+            var userdataKey = item.GetUserDataKeys();
+            var inheritedTags = item.GetInheritedTags();
 
-                tuples.Add((item, ancestorIds, topParent, userdataKey, inheritedTags));
-            }
+            tuples.Add((item, ancestorIds, topParent, userdataKey, inheritedTags));
+        }
 
         using var context = _dbProvider.CreateDbContext();
         using var transaction = context.Database.BeginTransaction();
 
         var ids = tuples.Select(f => f.Item.Id).ToArray();
-        var existingItems = context.BaseItems.Where(e => Enumerable.Contains(ids, e.Id)).Select(f => f.Id).ToArray();
+        var existingItems = context.BaseItems.Where(e => Enumerable.Contains(ids, e.Id)).Select(f => f.Id).ToHashSet();
 
         foreach (var item in tuples)
         {
             var entity = BaseItemMapper.Map(item.Item, _appHost);
             entity.TopParentId = item.TopParent?.Id;
 
-            if (!existingItems.Any(e => e == entity.Id))
+            if (!existingItems.Contains(entity.Id))
             {
                 context.BaseItems.Add(entity);
             }
@@ -425,7 +435,7 @@ public class ItemPersistenceService : IItemPersistenceService
             }
         }
 
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
 
         var folderIds = tuples
             .Where(t => t.Item is Folder)
@@ -662,7 +672,7 @@ public class ItemPersistenceService : IItemPersistenceService
             }
         }
 
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
         transaction.Commit();
     }
 

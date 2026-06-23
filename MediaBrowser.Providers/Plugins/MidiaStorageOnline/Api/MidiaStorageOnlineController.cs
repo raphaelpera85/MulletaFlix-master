@@ -80,7 +80,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private void Log(string msg)
         {
-            Console.WriteLine($"[MidiaStorageOnline] {msg}");
             _logger.LogInformation("{Msg}", msg);
         }
 
@@ -216,6 +215,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             }
 
             using var client = _httpClientFactory.CreateClient(NamedClient.Default);
+            client.Timeout = TimeSpan.FromSeconds(120);
             using var upstreamResponse = await client
                 .SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
                 .ConfigureAwait(false);
@@ -385,6 +385,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             if (Uri.TryCreate(config.EpgUrl, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
                 using var httpClient = _httpClientFactory.CreateClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(120);
                 httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 using var response = await httpClient.GetAsync(config.EpgUrl, ct).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
@@ -450,7 +451,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             }
 
             var dataDir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
-            var epgDir = Path.Combine(dataDir, "epg-grabber");
             var channelsXmlPath = Path.Combine(dataDir, "channels.xml");
             var guideXmlPath = Path.Combine(dataDir, "guide.xml");
             var guideXmlTempPath = Path.Combine(dataDir, "guide.xml.new");
@@ -459,27 +459,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
             try
             {
-                if (!Directory.Exists(epgDir))
-                {
-                    Log("Auto EPG: Clonando iptv-org/epg...");
-                    var gitExitCode = await RunProcessAsync(dataDir, "git", "clone --depth 1 -b master https://github.com/iptv-org/epg.git epg-grabber", ct).ConfigureAwait(false);
-                    if (gitExitCode != 0)
-                    {
-                        throw new InvalidOperationException($"Falha ao clonar epg-grabber: exit code {gitExitCode}");
-                    }
-                }
-
-                var nodeModules = Path.Combine(epgDir, "node_modules");
-                if (!Directory.Exists(nodeModules))
-                {
-                    Log("Auto EPG: Executando npm install...");
-                    var npmExitCode = await RunProcessAsync(epgDir, "cmd.exe", "/c npm install", ct).ConfigureAwait(false);
-                    if (npmExitCode != 0)
-                    {
-                        throw new InvalidOperationException($"Falha ao rodar npm install: exit code {npmExitCode}");
-                    }
-                }
-
                 var guidesJsonPath = Path.Combine(dataDir, "guides.json");
                 var needDownloadGuides = true;
                 if (System.IO.File.Exists(guidesJsonPath))
@@ -513,7 +492,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     return null;
                 }
 
-                Log($"Auto EPG: {catalog.UniqueChannelCount} canais ?nicos resolvidos. Guia: {catalog.GuideMatchCount}, overrides: {catalog.OverrideCount}, sint?ticos: {catalog.SyntheticCount}.");
+                Log($"Auto EPG: {catalog.UniqueChannelCount} canais unicos resolvidos. Guia: {catalog.GuideMatchCount}, overrides: {catalog.OverrideCount}, sinteticos: {catalog.SyntheticCount}.");
 
                 var xmlSettings = new XmlWriterSettings
                 {
@@ -541,25 +520,68 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     writer.WriteEndDocument();
                 }
 
-                Log("Auto EPG: Executando grabber da iptv-org...");
+                var guideUrls = catalog.Channels
+                    .Select(ch => $"https://iptv-org.github.io/epg/{ch.Site}.xml")
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (guideUrls.Count == 0)
+                {
+                    Log("Auto EPG: nenhuma URL de guia encontrada para os canais resolvidos.");
+                    return null;
+                }
+
+                Log($"Auto EPG: Baixando {guideUrls.Count} fontes de guia XMLTV...");
+                var mergedXml = new StringBuilder();
+                mergedXml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                mergedXml.AppendLine("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">");
+                mergedXml.AppendLine("<tv>");
+
+                var sourcesLoaded = 0;
+                foreach (var guideUrl in guideUrls)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    try
+                    {
+                        var xml = await DownloadStringWithRetryAsync(guideUrl, ct, maxRetries: 1).ConfigureAwait(false);
+                        if (string.IsNullOrWhiteSpace(xml))
+                        {
+                            continue;
+                        }
+
+                        var xmlDoc = new XmlDocument();
+                        xmlDoc.LoadXml(xml);
+                        var programmes = xmlDoc.SelectNodes("//programme");
+                        if (programmes is not null)
+                        {
+                            foreach (XmlNode prog in programmes)
+                            {
+                                mergedXml.AppendLine(prog.OuterXml);
+                            }
+                        }
+
+                        sourcesLoaded++;
+                    }
+                    catch (Exception srcEx)
+                    {
+                        Log($"Auto EPG: Falha ao baixar guia {guideUrl}: {srcEx.Message}");
+                    }
+                }
+
+                mergedXml.AppendLine("</tv>");
+
+                var mergedContent = mergedXml.ToString();
+                if (sourcesLoaded == 0 || mergedContent.Length < 500)
+                {
+                    throw new InvalidOperationException("Auto EPG: Nenhum dado de programa obtido das fontes.");
+                }
+
                 if (System.IO.File.Exists(guideXmlTempPath))
                 {
                     try { System.IO.File.Delete(guideXmlTempPath); } catch { }
                 }
 
-                var grabArguments = $"/c npm run grab -- --channels=\"{channelsXmlPath}\" --output=\"{guideXmlTempPath}\" --days=1";
-                var grabExitCode = await RunProcessAsync(epgDir, "cmd.exe", grabArguments, ct).ConfigureAwait(false);
-
-                if (grabExitCode != 0)
-                {
-                    throw new InvalidOperationException($"Falha ao executar o grabber: exit code {grabExitCode}");
-                }
-
-                var guideInfo = new FileInfo(guideXmlTempPath);
-                if (!guideInfo.Exists || guideInfo.Length == 0)
-                {
-                    throw new InvalidOperationException("Auto EPG gerou guia XMLTV vazio.");
-                }
+                await System.IO.File.WriteAllTextAsync(guideXmlTempPath, mergedContent, ct).ConfigureAwait(false);
 
                 try
                 {
@@ -582,7 +604,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
 
                 var finalGuideInfo = new FileInfo(guideXmlPath);
-                Log($"Auto EPG: Guia XMLTV gerado com sucesso: {finalGuideInfo.Length / 1024} KB.");
+                Log($"Auto EPG: Guia XMLTV gerado com sucesso: {finalGuideInfo.Length / 1024} KB de {sourcesLoaded} fontes.");
                 config.EpgLastSyncTime = DateTime.UtcNow;
                 config.EpgLastError = null;
                 return guideXmlPath;
@@ -624,55 +646,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
             }
             return null;
-        }
-
-        private async Task<int> RunProcessAsync(string workingDirectory, string filename, string arguments, CancellationToken ct)
-        {
-            var startInfo = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = filename,
-                Arguments = arguments,
-                WorkingDirectory = workingDirectory,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-
-            using var process = new System.Diagnostics.Process { StartInfo = startInfo };
-            
-            var tcs = new TaskCompletionSource<int>();
-            process.EnableRaisingEvents = true;
-            process.Exited += (sender, args) => tcs.TrySetResult(process.ExitCode);
-
-            if (!process.Start())
-            {
-                throw new InvalidOperationException($"Failed to start process: {filename}");
-            }
-
-            var readOutputTask = process.StandardOutput.ReadToEndAsync(ct);
-            var readErrorTask = process.StandardError.ReadToEndAsync(ct);
-
-            await using (ct.Register(() => {
-                try { process.Kill(); } catch { }
-                tcs.TrySetCanceled();
-            }))
-            {
-                await Task.WhenAll(tcs.Task, readOutputTask, readErrorTask).ConfigureAwait(false);
-                var exitCode = process.ExitCode;
-                var output = await readOutputTask.ConfigureAwait(false);
-                var error = await readErrorTask.ConfigureAwait(false);
-                
-                if (exitCode != 0)
-                {
-                    Log($"Process exited with code {exitCode}. Stderr: {error}");
-                }
-                else
-                {
-                    Log($"Process completed successfully. Stdout: {output}");
-                }
-                return exitCode;
-            }
         }
 
         private class MappedChannel
@@ -813,19 +786,35 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 Log($"Iniciando sync: baixando M3U de {config.M3uUrl}");
                 MidiaStorageOnlineStreamProxy.LocalBaseUrl = _serverApplicationHost.GetSmartApiUrl(Request);
-                string m3uRaw;
-                using (var httpClient = _httpClientFactory.CreateClient())
+                string m3uRaw = null!;
+                for (var attempt = 0; attempt <= 2; attempt++)
                 {
-                    httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                    var resp = await httpClient.GetAsync(config.M3uUrl).ConfigureAwait(false);
-                    if (!resp.IsSuccessStatusCode)
+                    try
                     {
-                        Log($"Falha ao baixar M3U: HTTP {resp.StatusCode}");
-                        return BadRequest(new { error = $"Falha ao baixar M3U: HTTP {resp.StatusCode}" });
+                        using var httpClient = _httpClientFactory.CreateClient();
+                        httpClient.Timeout = TimeSpan.FromMinutes(5);
+                        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                        var resp = await httpClient.GetAsync(config.M3uUrl!).ConfigureAwait(false);
+                        if (!resp.IsSuccessStatusCode)
+                        {
+                            Log($"Falha ao baixar M3U: HTTP {resp.StatusCode}");
+                            if (attempt < 2)
+                            {
+                                await Task.Delay(2000 * (attempt + 1)).ConfigureAwait(false);
+                                continue;
+                            }
+                            return BadRequest(new { error = $"Falha ao baixar M3U: HTTP {resp.StatusCode}" });
+                        }
+                        var bytes = await resp.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                        m3uRaw = Encoding.UTF8.GetString(bytes);
+                        Log($"M3U baixado: {m3uRaw.Length / 1024}KB");
+                        break;
                     }
-                    var bytes = await resp.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                    m3uRaw = Encoding.UTF8.GetString(bytes);
-                    Log($"M3U baixado: {m3uRaw.Length / 1024}KB");
+                    catch (Exception ex) when (attempt < 2)
+                    {
+                        Log($"Download M3U falhou (tentativa {attempt + 1}/3): {ex.Message}. Retentando...");
+                        await Task.Delay(2000 * (attempt + 1)).ConfigureAwait(false);
+                    }
                 }
 
                 var entries = ParseM3u(m3uRaw, out var headerLine);

@@ -383,6 +383,11 @@ public class LibraryStructureController : BaseMulletaFlixApiController
             options.MetadataCountryCode = _serverConfigurationManager.Configuration.MetadataCountryCode;
         }
 
+        if (string.Equals(options.MetadataCountryCode, "BR", StringComparison.OrdinalIgnoreCase))
+        {
+            options.PreferredMetadataLanguage = _localizationManager.GetDefaultMetadataLanguage(options.MetadataCountryCode);
+        }
+
         if (string.IsNullOrWhiteSpace(options.PreferredMetadataLanguage))
         {
             var serverLang = _serverConfigurationManager.Configuration.PreferredMetadataLanguage;

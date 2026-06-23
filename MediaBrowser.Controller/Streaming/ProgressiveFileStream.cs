@@ -91,7 +91,7 @@ public class ProgressiveFileStream : Stream
                 break;
             }
 
-            Thread.Sleep(50);
+            Task.Delay(50).GetAwaiter().GetResult();
         }
 
         UpdateBytesWritten(totalBytesRead);

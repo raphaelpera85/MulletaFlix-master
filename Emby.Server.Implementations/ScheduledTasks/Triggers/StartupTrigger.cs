@@ -30,11 +30,18 @@ public sealed class StartupTrigger : ITaskTrigger
     /// <inheritdoc />
     public async void Start(TaskResult? lastResult, ILogger logger, string taskName, bool isApplicationStartup)
     {
-        if (isApplicationStartup)
+        try
         {
-            await Task.Delay(DelayMs).ConfigureAwait(false);
+            if (isApplicationStartup)
+            {
+                await Task.Delay(DelayMs).ConfigureAwait(false);
 
-            OnTriggered();
+                OnTriggered();
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error in startup trigger for {TaskName}", taskName);
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -8,9 +8,6 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Server.Implementations.StorageHelpers;
-using MulletaFlix.Server.Implementations.SystemBackupService;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.SystemBackupService;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +15,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Server.Implementations.StorageHelpers;
+using MulletaFlix.Server.Implementations.SystemBackupService;
 
 namespace MulletaFlix.Server.Implementations.FullSystemBackup;
 
@@ -74,8 +74,16 @@ public class BackupService : IBackupService
         _applicationHost.NotifyPendingRestart();
         _ = Task.Run(async () =>
         {
-            await Task.Delay(500).ConfigureAwait(false);
-            _hostApplicationLifetime.StopApplication();
+            try
+            {
+                await Task.Delay(500).ConfigureAwait(false);
+                _hostApplicationLifetime.StopApplication();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during delayed application stop after restore");
+                Environment.Exit(1);
+            }
         });
     }
 

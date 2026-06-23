@@ -11,8 +11,11 @@ using Microsoft.Extensions.Logging;
 
 namespace MulletaFlix.Database.Implementations.Contexts;
 
-public class MoviesDbContext(DbContextOptions<MoviesDbContext> options, ILogger<MoviesDbContext> logger) : DbContext(options)
+public class MoviesDbContext : DbContext
 {
+    public MoviesDbContext(DbContextOptions<MoviesDbContext> options, ILogger<MoviesDbContext> logger) : base(options)
+    {
+    }
     public DbSet<Movie> Movies => Set<Movie>();
     public DbSet<MovieMetadata> MovieMetadata => Set<MovieMetadata>();
     public DbSet<MovieUserData> MovieUserData => Set<MovieUserData>();
@@ -26,8 +29,11 @@ public class MoviesDbContext(DbContextOptions<MoviesDbContext> options, ILogger<
     }
 }
 
-public class SeriesDbContext(DbContextOptions<SeriesDbContext> options, ILogger<SeriesDbContext> logger) : DbContext(options)
+public class SeriesDbContext : DbContext
 {
+    public SeriesDbContext(DbContextOptions<SeriesDbContext> options, ILogger<SeriesDbContext> logger) : base(options)
+    {
+    }
     public DbSet<Series> Series => Set<Series>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<Episode> Episodes => Set<Episode>();
@@ -43,8 +49,11 @@ public class SeriesDbContext(DbContextOptions<SeriesDbContext> options, ILogger<
     }
 }
 
-public class ChannelsDbContext(DbContextOptions<ChannelsDbContext> options, ILogger<ChannelsDbContext> logger) : DbContext(options)
+public class ChannelsDbContext : DbContext
 {
+    public ChannelsDbContext(DbContextOptions<ChannelsDbContext> options, ILogger<ChannelsDbContext> logger) : base(options)
+    {
+    }
     public DbSet<Channel> Channels => Set<Channel>();
     public DbSet<Program> Programs => Set<Program>();
 
@@ -56,8 +65,11 @@ public class ChannelsDbContext(DbContextOptions<ChannelsDbContext> options, ILog
     }
 }
 
-public class BooksDbContext(DbContextOptions<BooksDbContext> options, ILogger<BooksDbContext> logger) : DbContext(options)
+public class BooksDbContext : DbContext
 {
+    public BooksDbContext(DbContextOptions<BooksDbContext> options, ILogger<BooksDbContext> logger) : base(options)
+    {
+    }
     public DbSet<Book> Books => Set<Book>();
     public DbSet<BookUserData> BookUserData => Set<BookUserData>();
 
@@ -69,8 +81,11 @@ public class BooksDbContext(DbContextOptions<BooksDbContext> options, ILogger<Bo
     }
 }
 
-public class SystemDbContext(DbContextOptions<SystemDbContext> options, ILogger<SystemDbContext> logger) : DbContext(options)
+public class SystemDbContext : DbContext
 {
+    public SystemDbContext(DbContextOptions<SystemDbContext> options, ILogger<SystemDbContext> logger) : base(options)
+    {
+    }
     public DbSet<DeviceOptions> DeviceOptions => Set<DeviceOptions>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 

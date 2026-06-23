@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Linq;

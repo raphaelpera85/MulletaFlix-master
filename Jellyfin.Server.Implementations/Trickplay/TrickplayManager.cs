@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -8,8 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
 using J2N.Collections.Generic.Extensions;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Drawing;
@@ -22,6 +20,8 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Trickplay;
 

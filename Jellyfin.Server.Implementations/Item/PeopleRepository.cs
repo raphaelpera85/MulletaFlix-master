@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MulletaFlix.Data.Enums;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
-using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Querying;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 
 namespace MulletaFlix.Server.Implementations.Item;
 #pragma warning disable RS0030 // Do not use banned APIs
@@ -122,7 +122,7 @@ public class PeopleRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider
             .Where(e => !existingPersons.Any(f => string.Equals(f.Name, e.Name, StringComparison.OrdinalIgnoreCase) && f.PersonType == e.Type.ToString()))
             .Select(Map);
         context.Peoples.AddRange(toAdd);
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
 
         var personsEntities = toAdd.Concat(existingPersons).ToArray();
 
@@ -161,7 +161,7 @@ public class PeopleRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider
 
         context.PeopleBaseItemMap.RemoveRange(existingMaps);
 
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
         transaction.Commit();
     }
 

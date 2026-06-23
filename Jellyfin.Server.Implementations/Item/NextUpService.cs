@@ -3,12 +3,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MulletaFlix.Data.Enums;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 
 namespace MulletaFlix.Server.Implementations.Item;
@@ -48,7 +48,7 @@ public class NextUpService : INextUpService
 
         var query = context.BaseItems
             .AsNoTracking()
-            .Where(i => Enumerable.Contains(filter.TopParentIds, i.TopParentId!.Value))
+            .Where(i => i.TopParentId.HasValue && Enumerable.Contains(filter.TopParentIds, i.TopParentId.Value))
             .Where(i => i.Type == _itemTypeLookup.BaseItemKindNames[BaseItemKind.Episode])
             .Join(
                 context.UserData.AsNoTracking().Where(e => e.ItemId != EF.Constant(BaseItemRepository.PlaceholderId)),
@@ -215,13 +215,21 @@ public class NextUpService : INextUpService
             })
             .ToList();
 
+        var candidatesBySeries = allUnplayedCandidates
+            .GroupBy(c => c.SeriesPresentationUniqueKey!)
+            .ToDictionary(g => g.Key, g => g.AsEnumerable());
+
         var nextEpisodeIds = new HashSet<Guid>();
         var seriesNextIdMap = new Dictionary<string, Guid>();
 
         foreach (var seriesKey in seriesKeys)
         {
-            var candidates = allUnplayedCandidates
-                .Where(c => c.SeriesPresentationUniqueKey == seriesKey);
+            if (!candidatesBySeries.TryGetValue(seriesKey, out var allCandidates))
+            {
+                continue;
+            }
+
+            var candidates = allCandidates.AsEnumerable();
 
             if (positionLookup.TryGetValue(seriesKey, out var pos))
             {
@@ -263,6 +271,10 @@ public class NextUpService : INextUpService
                 })
                 .ToList();
 
+            var playedBySeries = allPlayedCandidates
+                .GroupBy(c => c.SeriesPresentationUniqueKey!)
+                .ToDictionary(g => g.Key, g => g.AsEnumerable());
+
             foreach (var seriesKey in seriesKeys)
             {
                 if (!lastWatchedByDateInfo.TryGetValue(seriesKey, out var lastByDateId))
@@ -276,8 +288,12 @@ public class NextUpService : INextUpService
                     continue;
                 }
 
-                var playedCandidates = allPlayedCandidates
-                    .Where(c => c.SeriesPresentationUniqueKey == seriesKey);
+                if (!playedBySeries.TryGetValue(seriesKey, out var allPlayed))
+                {
+                    continue;
+                }
+
+                var playedCandidates = allPlayed.AsEnumerable();
 
                 if (lastByDateEntity.ParentIndexNumber.HasValue && lastByDateEntity.IndexNumber.HasValue)
                 {
@@ -357,4 +373,3 @@ public class NextUpService : INextUpService
         return result;
     }
 }
-

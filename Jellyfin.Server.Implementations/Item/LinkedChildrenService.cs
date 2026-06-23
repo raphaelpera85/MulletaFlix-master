@@ -5,11 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MulletaFlix.Data.Enums;
-using MulletaFlix.Database.Implementations;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
 using DbLinkedChildType = MulletaFlix.Database.Implementations.Entities.LinkedChildType;
 using LinkedChildType = MediaBrowser.Controller.Entities.LinkedChildType;
 
@@ -172,7 +172,7 @@ public class LinkedChildrenService : ILinkedChildrenService
             existingLink.ChildType = dbChildType;
         }
 
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
     }
 }
 

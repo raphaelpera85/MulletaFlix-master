@@ -109,7 +109,9 @@ public class StartupController : BaseMulletaFlixApiController
             metadataCountryCode = GetInstalledMetadataCountryCode();
         }
         _config.Configuration.MetadataCountryCode = metadataCountryCode;
-        _config.Configuration.PreferredMetadataLanguage = string.IsNullOrWhiteSpace(startupConfiguration.PreferredMetadataLanguage)
+        _config.Configuration.PreferredMetadataLanguage = string.Equals(metadataCountryCode, "BR", StringComparison.OrdinalIgnoreCase)
+            ? _localizationManager.GetDefaultMetadataLanguage(metadataCountryCode)
+            : string.IsNullOrWhiteSpace(startupConfiguration.PreferredMetadataLanguage)
             ? _localizationManager.GetDefaultMetadataLanguage(metadataCountryCode)
             : startupConfiguration.PreferredMetadataLanguage;
         _config.SaveConfiguration();

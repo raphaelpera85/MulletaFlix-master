@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Events.Updates;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Notifications;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Events.Consumers.Updates
 {

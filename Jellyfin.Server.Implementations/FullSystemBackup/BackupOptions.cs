@@ -1,4 +1,4 @@
-﻿namespace MulletaFlix.Server.Implementations.FullSystemBackup;
+namespace MulletaFlix.Server.Implementations.FullSystemBackup;
 
 /// <summary>
 /// Defines the optional contents of the backup archive.

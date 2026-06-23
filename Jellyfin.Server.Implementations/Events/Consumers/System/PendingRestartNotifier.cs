@@ -1,8 +1,8 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Data.Events.System;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Session;
+using MulletaFlix.Data.Events.System;
 
 namespace MulletaFlix.Server.Implementations.Events.Consumers.System
 {

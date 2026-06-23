@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Lyrics;
 using MediaBrowser.Model.Activity;
 using MediaBrowser.Model.Globalization;
+using MulletaFlix.Database.Implementations.Entities;
 using Episode = MediaBrowser.Controller.Entities.TV.Episode;
 
 namespace MulletaFlix.Server.Implementations.Events.Consumers.Library;

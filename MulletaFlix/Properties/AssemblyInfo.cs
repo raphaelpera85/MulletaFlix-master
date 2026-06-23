@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("MulletaFlix")]
-[assembly: AssemblyProduct("MulletaFlix Server")]
+[assembly: AssemblyProduct("Jellyfin Server")]
 [assembly: AssemblyCopyright("Copyright (c) 2019 MulletaFlix Contributors. Code released under the GNU General Public License")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

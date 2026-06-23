@@ -166,6 +166,11 @@ namespace Emby.Server.Implementations.Updates
                 _logger.LogError(ex, "An error occurred while accessing the plugin manifest: {Manifest}", manifest);
                 return Array.Empty<PackageInfo>();
             }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogError(ex, "The request to the plugin manifest timed out or was cancelled: {Manifest}", manifest);
+                return Array.Empty<PackageInfo>();
+            }
         }
 
         /// <inheritdoc />

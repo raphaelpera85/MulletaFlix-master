@@ -49,6 +49,28 @@ public class HomeDtoCacheTests
     }
 
     [Fact]
+    public void BuildCacheKey_DifferentVirtualItemFilters_ProducesDifferentKeys()
+    {
+        var queryA = new InternalItemsQuery { Limit = 20, EnableTotalRecordCount = true, IsVirtualItem = false };
+        var queryB = new InternalItemsQuery { Limit = 20, EnableTotalRecordCount = true, IsVirtualItem = true };
+
+        Assert.NotEqual(ItemsResponseCache.BuildCacheKey(queryA), ItemsResponseCache.BuildCacheKey(queryB));
+    }
+
+    [Fact]
+    public void IsCacheable_UnsupportedParentalRatingFilter_ReturnsFalse()
+    {
+        var query = new InternalItemsQuery
+        {
+            EnableTotalRecordCount = true,
+            Limit = 20,
+            MinParentalRating = new MediaBrowser.Model.Entities.ParentalRatingScore(5, null)
+        };
+
+        Assert.False(ItemsResponseCache.IsCacheable(query));
+    }
+
+    [Fact]
     public void IsCacheable_FirstPageQuery_ReturnsTrue()
     {
         var query = new InternalItemsQuery

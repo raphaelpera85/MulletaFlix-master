@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Net.Sockets;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller;
@@ -105,6 +106,7 @@ namespace MulletaFlix.Server.Helpers
                 }
 
                 logger.LogInformation("MariaDB embedded process started with PID {PID} and is accepting connections on port 3306", _mariaDbProcess.Id);
+                logger.LogWarning("Embedded MariaDB is running without a root password. This is acceptable for localhost-only access, but set a password if the port is exposed.");
                 InitializeDatabaseSchemas(logger, masterConnString);
             }
             catch (Exception ex)
@@ -138,7 +140,7 @@ namespace MulletaFlix.Server.Helpers
                 "mulletaflix_books"
             };
 
-            for (int i = 0; i < 5; i++) // Tenta atÃ© 5 vezes estabelecer a conexÃ£o inicial
+            for (int i = 0; i < 5; i++) // Tenta até 5 vezes estabelecer a conexão inicial
             {
                 try
                 {
@@ -158,40 +160,36 @@ namespace MulletaFlix.Server.Helpers
                 catch (Exception ex)
                 {
                     logger.LogWarning("Connection attempt {Attempt} failed: {Message}. Retrying...", i + 1, ex.Message);
-                    Thread.Sleep(2000);
+                    Task.Delay(2000).GetAwaiter().GetResult();
                 }
             }
             logger.LogError("Could not connect to MariaDB to initialize schemas.");
         }
 
-        
+
         /// <summary>
         /// Polls the given TCP port until it accepts a connection or the timeout expires.
         /// </summary>
         private static bool WaitForPort(int port, TimeSpan timeout, ILogger logger)
         {
             var sw = Stopwatch.StartNew();
-            var delay = TimeSpan.FromMilliseconds(250);
+            var delay = 250;
 
             while (sw.Elapsed < timeout)
             {
                 try
                 {
                     using var tcpClient = new TcpClient();
-                    var connectResult = tcpClient.BeginConnect("127.0.0.1", port, null, null);
-                    if (connectResult.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(2)))
-                    {
-                        tcpClient.EndConnect(connectResult);
-                        logger.LogInformation("MariaDB port {Port} is accepting connections after {Elapsed}ms", port, sw.ElapsedMilliseconds);
-                        return true;
-                    }
+                    tcpClient.Connect("127.0.0.1", port);
+                    logger.LogInformation("MariaDB port {Port} is accepting connections after {Elapsed}ms", port, sw.ElapsedMilliseconds);
+                    return true;
                 }
                 catch
                 {
                     // Port not ready yet, continue polling
                 }
 
-                Thread.Sleep(delay);
+                Task.Delay(delay).GetAwaiter().GetResult();
             }
 
             return false;

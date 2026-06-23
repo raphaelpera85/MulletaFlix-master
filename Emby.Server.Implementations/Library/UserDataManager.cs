@@ -25,7 +25,7 @@ namespace Emby.Server.Implementations.Library
     /// </summary>
     public class UserDataManager : IUserDataManager
     {
-        private static readonly SemaphoreSlim _saveUserDataLock = new(1, 1);
+        private static readonly SemaphoreSlim[] _saveUserDataLocks = Enumerable.Range(0, 8).Select(_ => new SemaphoreSlim(1, 1)).ToArray();
         private readonly IServerConfigurationManager _config;
         private readonly IDbContextFactory<MulletaFlixDbContext> _repository;
         private readonly FastConcurrentLru<string, UserItemData> _cache;
@@ -56,7 +56,9 @@ namespace Emby.Server.Implementations.Library
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            _saveUserDataLock.Wait(cancellationToken);
+            var lockIndex = item.Id.GetHashCode() & 7;
+            var saveLock = _saveUserDataLocks[lockIndex];
+            saveLock.WaitAsync(cancellationToken).GetAwaiter().GetResult();
             try
             {
                 var keys = item.GetUserDataKeys();
@@ -78,7 +80,7 @@ namespace Emby.Server.Implementations.Library
                     }
                 }
 
-                dbContext.SaveChanges();
+                dbContext.SaveChangesAsync(cancellationToken).GetAwaiter().GetResult();
                 transaction.Commit();
 
                 var userId = user.InternalId;
@@ -97,7 +99,7 @@ namespace Emby.Server.Implementations.Library
             }
             finally
             {
-                _saveUserDataLock.Release();
+                saveLock.Release();
             }
         }
 

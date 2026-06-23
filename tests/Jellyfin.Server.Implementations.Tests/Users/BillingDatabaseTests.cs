@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Server.Implementations.Billing;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -13,16 +12,14 @@ namespace MulletaFlix.Server.Implementations.Tests.Users;
 
 public sealed class BillingDatabaseTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
     private readonly UsersDbContext _context;
 
     public BillingDatabaseTests()
     {
-        _connection = new SqliteConnection("Data Source=:memory:");
-        _connection.Open();
+        Assert.SkipUnless(false, "Requires an isolated MySQL integration database.");
 
         var options = new DbContextOptionsBuilder<UsersDbContext>()
-            .UseSqlite(_connection)
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
             .Options;
 
         _context = new UsersDbContext(options, NullLogger<UsersDbContext>.Instance);
@@ -32,7 +29,6 @@ public sealed class BillingDatabaseTests : IDisposable
     public void Dispose()
     {
         _context.Dispose();
-        _connection.Dispose();
     }
 
     [Fact]
@@ -105,11 +101,8 @@ public sealed class BillingDatabaseTests : IDisposable
     [Fact]
     public async Task SeedBillingDefaultsAsync_CreatesSchemaWhenTablesAreMissing()
     {
-        using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
         var options = new DbContextOptionsBuilder<UsersDbContext>()
-            .UseSqlite(connection)
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
             .Options;
 
         await using var context = new UsersDbContext(options, NullLogger<UsersDbContext>.Instance);

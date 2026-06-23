@@ -214,44 +214,44 @@ internal class MulletaFlixMigrationService
         var logger = _startupLogger.With(_loggerFactory.CreateLogger<MulletaFlixMigrationService>()).BeginGroup($"Migrate stage {stage}.");
         ICollection<CodeMigration> migrationStage = (Migrations.FirstOrDefault(e => e.Stage == stage) as ICollection<CodeMigration>) ?? [];
 
-            var dbContext = await _dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
-            await using (dbContext.ConfigureAwait(false))
+        var dbContext = await _dbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
+        await using (dbContext.ConfigureAwait(false))
+        {
+            var historyRepository = dbContext.GetService<IHistoryRepository>();
+            var migrationsAssembly = dbContext.GetService<IMigrationsAssembly>();
+            var databaseCreator = dbContext.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator
+                ?? throw new InvalidOperationException("MulletaFlix does only support relational databases.");
+            (string Key, IInternalMigration Migration)[] migrations = [];
+            var appliedMigrations = await historyRepository.GetAppliedMigrationsAsync().ConfigureAwait(false);
+
+            if (stage is MulletaFlixMigrationStageTypes.CoreInitialisation &&
+                await databaseCreator.HasTablesAsync().ConfigureAwait(false) &&
+                migrationsAssembly.Migrations.Count > 0)
             {
-                var historyRepository = dbContext.GetService<IHistoryRepository>();
-                var migrationsAssembly = dbContext.GetService<IMigrationsAssembly>();
-                var databaseCreator = dbContext.Database.GetService<IDatabaseCreator>() as IRelationalDatabaseCreator
-                    ?? throw new InvalidOperationException("MulletaFlix does only support relational databases.");
-                (string Key, IInternalMigration Migration)[] migrations = [];
-                var appliedMigrations = await historyRepository.GetAppliedMigrationsAsync().ConfigureAwait(false);
+                var initialMigration = migrationsAssembly.Migrations
+                    .OrderBy(m => m.Key, StringComparer.Ordinal)
+                    .First();
 
-                if (stage is MulletaFlixMigrationStageTypes.CoreInitialisation &&
-                    await databaseCreator.HasTablesAsync().ConfigureAwait(false) &&
-                    migrationsAssembly.Migrations.Count > 0)
+                if (appliedMigrations.All(m => m.MigrationId != initialMigration.Key))
                 {
-                    var initialMigration = migrationsAssembly.Migrations
-                        .OrderBy(m => m.Key, StringComparer.Ordinal)
-                        .First();
+                    logger.LogInformation(
+                        "Detected an existing relational schema without EF migration {MigrationId}. Marking it as already applied so the server can continue.",
+                        initialMigration.Key);
 
-                    if (appliedMigrations.All(m => m.MigrationId != initialMigration.Key))
-                    {
-                        logger.LogInformation(
-                            "Detected an existing relational schema without EF migration {MigrationId}. Marking it as already applied so the server can continue.",
-                            initialMigration.Key);
-
-                        await historyRepository.CreateIfNotExistsAsync().ConfigureAwait(false);
-                        var insertScript = historyRepository.GetInsertScript(new HistoryRow(initialMigration.Key, GetMulletaFlixVersion()));
-                        await dbContext.Database.ExecuteSqlRawAsync(insertScript).ConfigureAwait(false);
-                        appliedMigrations = await historyRepository.GetAppliedMigrationsAsync().ConfigureAwait(false);
-                    }
-                }
-
-                do
-                { // migrations may alter the migration state. Reevaluate the applicable migrations after every stage ran until there are no more to apply.
+                    await historyRepository.CreateIfNotExistsAsync().ConfigureAwait(false);
+                    var insertScript = historyRepository.GetInsertScript(new HistoryRow(initialMigration.Key, GetMulletaFlixVersion()));
+                    await dbContext.Database.ExecuteSqlRawAsync(insertScript).ConfigureAwait(false);
                     appliedMigrations = await historyRepository.GetAppliedMigrationsAsync().ConfigureAwait(false);
-                    var pendingCodeMigrations = migrationStage
-                        .Where(e => appliedMigrations.All(f => f.MigrationId != e.BuildCodeMigrationId()))
-                        .Select(e => (Key: e.BuildCodeMigrationId(), Migration: new InternalCodeMigration(e, serviceProvider, dbContext)))
-                        .ToArray();
+                }
+            }
+
+            do
+            { // migrations may alter the migration state. Reevaluate the applicable migrations after every stage ran until there are no more to apply.
+                appliedMigrations = await historyRepository.GetAppliedMigrationsAsync().ConfigureAwait(false);
+                var pendingCodeMigrations = migrationStage
+                    .Where(e => appliedMigrations.All(f => f.MigrationId != e.BuildCodeMigrationId()))
+                    .Select(e => (Key: e.BuildCodeMigrationId(), Migration: new InternalCodeMigration(e, serviceProvider, dbContext)))
+                    .ToArray();
 
                 (string Key, InternalDatabaseMigration Migration)[] pendingDatabaseMigrations = [];
                 if (stage is MulletaFlixMigrationStageTypes.CoreInitialisation)

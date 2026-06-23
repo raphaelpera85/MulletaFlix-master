@@ -1,14 +1,14 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Controller.Devices;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Session;
+using Microsoft.Extensions.Hosting;
 using MulletaFlix.Data;
 using MulletaFlix.Data.Events;
 using MulletaFlix.Data.Queries;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Enums;
-using MediaBrowser.Controller.Devices;
-using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Session;
-using Microsoft.Extensions.Hosting;
 
 namespace MulletaFlix.Server.Implementations.Users;
 

@@ -256,14 +256,15 @@ namespace MediaBrowser.Providers.Plugins.Omdb
         /// <returns>OMDB URL with optional query string.</returns>
         public static string GetOmdbUrl(string query)
         {
-            const string Url = "https://www.omdbapi.com?apikey=2c9d9507";
+            var apiKey = Plugin.Instance?.Configuration.OmdbApiKey ?? "2c9d9507";
+            var url = $"https://www.omdbapi.com?apikey={Uri.EscapeDataString(apiKey)}";
 
             if (string.IsNullOrWhiteSpace(query))
             {
-                return Url;
+                return url;
             }
 
-            return Url + "&" + query;
+            return url + "&" + query;
         }
 
         /// <summary>

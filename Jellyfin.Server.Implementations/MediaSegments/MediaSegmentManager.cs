@@ -1,14 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
-using MulletaFlix.Database.Implementations.Enums;
-using MulletaFlix.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -19,6 +15,10 @@ using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.MediaSegments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 
 namespace MulletaFlix.Server.Implementations.MediaSegments;
 

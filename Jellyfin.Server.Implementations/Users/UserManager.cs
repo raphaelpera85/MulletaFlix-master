@@ -8,15 +8,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
-using MulletaFlix.Data;
-using MulletaFlix.Data.Enums;
-using MulletaFlix.Data.Events;
-using MulletaFlix.Data.Events.Users;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Contexts;
-using MulletaFlix.Database.Implementations.Entities;
-using MulletaFlix.Database.Implementations.Enums;
-using MulletaFlix.Extensions;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
@@ -33,6 +24,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Data;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Data.Events;
+using MulletaFlix.Data.Events.Users;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+using MulletaFlix.Extensions;
 
 namespace MulletaFlix.Server.Implementations.Users
 {
@@ -143,7 +143,7 @@ namespace MulletaFlix.Server.Implementations.Users
         private static IQueryable<User> UserQuery(UsersDbContext dbContext)
         {
             return dbContext.Users
-                            .AsSingleQuery()
+                            .AsSplitQuery()
                             .Include(user => user.Permissions)
                             .Include(user => user.Preferences)
                             .Include(user => user.AccessSchedules)

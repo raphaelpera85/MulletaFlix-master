@@ -13,7 +13,7 @@ namespace MulletaFlix.Api.Caching;
 public class ItemsResponseCache
 {
     private readonly IMemoryCache _cache;
-    private static readonly TimeSpan DefaultTtl = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan DefaultTtl = TimeSpan.FromSeconds(120);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ItemsResponseCache"/> class.
@@ -126,6 +126,8 @@ public class ItemsResponseCache
 
         sb.Append('|');
         sb.Append(query.ParentId.ToString());
+        sb.Append('|');
+        sb.Append(query.IsVirtualItem?.ToString() ?? "n");
 
         if (query.DtoOptions?.Fields.Count > 0)
         {
@@ -222,6 +224,16 @@ public class ItemsResponseCache
         }
 
         if (query.HasParentalRating.HasValue)
+        {
+            return false;
+        }
+
+        if (query.MinParentalRating is not null || query.MaxParentalRating is not null)
+        {
+            return false;
+        }
+
+        if (query.SeriesStatuses.Length > 0)
         {
             return false;
         }

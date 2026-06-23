@@ -9,7 +9,6 @@ using MulletaFlix.Database.Implementations.Enums;
 using MulletaFlix.Server.Implementations.Users;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -19,17 +18,13 @@ namespace MulletaFlix.Server.Implementations.Tests.Users;
 
 public sealed class UserLicenseManagerTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
     private readonly DbContextOptions<UsersDbContext> _dbOptions;
     private readonly UserLicenseManager _licenseManager;
 
     public UserLicenseManagerTests()
     {
-        _connection = new SqliteConnection("Data Source=:memory:");
-        _connection.Open();
-
         _dbOptions = new DbContextOptionsBuilder<UsersDbContext>()
-            .UseSqlite(_connection)
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
             .Options;
 
         using var context = CreateDbContext();
@@ -49,7 +44,6 @@ public sealed class UserLicenseManagerTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Dispose();
     }
 
     [Fact]

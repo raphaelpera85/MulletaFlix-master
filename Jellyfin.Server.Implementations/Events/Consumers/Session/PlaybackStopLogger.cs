@@ -1,8 +1,6 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using MulletaFlix.Data.Enums;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Activity;
@@ -11,6 +9,8 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Notifications;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Events.Consumers.Session
 {

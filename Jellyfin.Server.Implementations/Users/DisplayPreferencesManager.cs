@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MediaBrowser.Controller;
+using Microsoft.EntityFrameworkCore;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities;
-using MediaBrowser.Controller;
-using Microsoft.EntityFrameworkCore;
 
 namespace MulletaFlix.Server.Implementations.Users;
 
@@ -38,7 +38,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
         {
             prefs = new DisplayPreferences(userId, itemId, client);
             dbContext.DisplayPreferences.Add(prefs);
-            dbContext.SaveChanges();
+            dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
         }
 
         return prefs;
@@ -55,7 +55,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
         {
             prefs = new ItemDisplayPreferences(userId, Guid.Empty, client);
             dbContext.ItemDisplayPreferences.Add(prefs);
-            dbContext.SaveChanges();
+            dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
         }
 
         return prefs;
@@ -66,6 +66,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
         return dbContext.ItemDisplayPreferences
+            .AsNoTracking()
             .Where(prefs => prefs.UserId.Equals(userId) && !prefs.ItemId.Equals(default) && prefs.Client == client)
             .ToList();
     }
@@ -75,6 +76,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
         return dbContext.CustomItemDisplayPreferences
+            .AsNoTracking()
             .Where(prefs => prefs.UserId.Equals(userId)
                             && prefs.ItemId.Equals(itemId)
                             && prefs.Client == client)
@@ -96,7 +98,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
                 .Add(new CustomItemDisplayPreferences(userId, itemId, client, key, value));
         }
 
-        dbContext.SaveChanges();
+        dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc/>
@@ -104,7 +106,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
         dbContext.DisplayPreferences.Attach(displayPreferences).State = EntityState.Modified;
-        dbContext.SaveChanges();
+        dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc/>
@@ -112,7 +114,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
         dbContext.ItemDisplayPreferences.Attach(itemDisplayPreferences).State = EntityState.Modified;
-        dbContext.SaveChanges();
+        dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
     }
 }
 

@@ -22,6 +22,7 @@ public class SecurityHeadersMiddleware
         headers["X-Frame-Options"] = "SAMEORIGIN";
         headers["Referrer-Policy"] = "same-origin";
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        headers["X-Application-Name"] = "Jellyfin";
         headers["Content-Security-Policy"] =
             "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
             + "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; "

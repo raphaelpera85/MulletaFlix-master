@@ -560,23 +560,12 @@ public class ItemsController : BaseMulletaFlixApiController
 
             query.Parent = null;
 
-            var cacheKey = ItemsResponseCache.BuildCacheKey(query);
-            if (ItemsResponseCache.IsCacheable(query) && _memoryCache.TryGetValue(cacheKey, out QueryResult<BaseItemDto>? cached) && cached is not null)
-            {
-                return cached;
-            }
-
             result = folder.GetItems(query);
 
             var dtoResult = new QueryResult<BaseItemDto>(
                 startIndex,
                 result.TotalRecordCount,
                 _dtoService.GetBaseItemDtos(result.Items, dtoOptions, user, skipVisibilityCheck: true));
-
-            if (ItemsResponseCache.IsCacheable(query))
-            {
-                _memoryCache.Set(cacheKey, dtoResult, TimeSpan.FromSeconds(30));
-            }
 
             return dtoResult;
         }

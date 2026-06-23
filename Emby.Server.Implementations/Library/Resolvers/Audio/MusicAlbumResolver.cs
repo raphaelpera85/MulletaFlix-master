@@ -150,7 +150,7 @@ namespace Emby.Server.Implementations.Library.Resolvers.Audio
 
             var directories = list.Where(fileSystemInfo => fileSystemInfo.IsDirectory);
 
-            var result = Parallel.ForEach(directories, (fileSystemInfo, state) =>
+            var result = Parallel.ForEach(directories, new ParallelOptions { MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 8) }, (fileSystemInfo, state) =>
             {
                 var path = fileSystemInfo.FullName;
                 var hasMusic = ContainsMusic(directoryService.GetFileSystemEntries(path), false, directoryService);

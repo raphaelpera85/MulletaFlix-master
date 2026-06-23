@@ -1,8 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MediaBrowser.Common.Extensions;
+using MediaBrowser.Controller.Devices;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Devices;
+using MediaBrowser.Model.Dto;
+using MediaBrowser.Model.Querying;
+using MediaBrowser.Model.Session;
+using Microsoft.EntityFrameworkCore;
 using MulletaFlix.Data;
 using MulletaFlix.Data.Dtos;
 using MulletaFlix.Data.Events;
@@ -12,14 +20,6 @@ using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Entities.Security;
 using MulletaFlix.Database.Implementations.Enums;
 using MulletaFlix.Extensions;
-using MediaBrowser.Common.Extensions;
-using MediaBrowser.Controller.Devices;
-using MediaBrowser.Controller.Library;
-using MediaBrowser.Model.Devices;
-using MediaBrowser.Model.Dto;
-using MediaBrowser.Model.Querying;
-using MediaBrowser.Model.Session;
-using Microsoft.EntityFrameworkCore;
 
 namespace MulletaFlix.Server.Implementations.Devices
 {

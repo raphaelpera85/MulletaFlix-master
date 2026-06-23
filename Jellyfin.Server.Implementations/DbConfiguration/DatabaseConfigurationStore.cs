@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using MulletaFlix.Database.Implementations.DbConfiguration;
 using MediaBrowser.Common.Configuration;
+using MulletaFlix.Database.Implementations.DbConfiguration;
 
 namespace MulletaFlix.Server.Implementations.DatabaseConfiguration;
 

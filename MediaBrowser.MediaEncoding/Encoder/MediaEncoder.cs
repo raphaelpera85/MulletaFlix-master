@@ -203,9 +203,24 @@ namespace MediaBrowser.MediaEncoding.Encoder
 
             if (!ValidatePath(ffmpegPath))
             {
-                _ffmpegPath = null;
-                _logger.LogError("FFmpeg: Path set by {FfmpegPathSetMethodText} is invalid", ffmpegPathSetMethodText);
-                return false;
+                var fallbackPath = ResolveBundledFfmpegPath();
+                if (!string.IsNullOrWhiteSpace(fallbackPath) && !string.Equals(ffmpegPath, fallbackPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(
+                        "FFmpeg: Path set by {FfmpegPathSetMethodText} is invalid. Falling back to bundled encoder at {FallbackPath}",
+                        ffmpegPathSetMethodText,
+                        fallbackPath);
+
+                    ffmpegPath = fallbackPath;
+                    ffmpegPathSetMethodText = "bundled application directory";
+                }
+
+                if (!ValidatePath(ffmpegPath))
+                {
+                    _ffmpegPath = null;
+                    _logger.LogError("FFmpeg: Path set by {FfmpegPathSetMethodText} is invalid", ffmpegPathSetMethodText);
+                    return false;
+                }
             }
 
             // Write the FFmpeg path to the config/encoding.xml file as <EncoderAppPathDisplay> so it appears in UI
@@ -281,6 +296,37 @@ namespace MediaBrowser.MediaEncoding.Encoder
 
             _logger.LogInformation("FFmpeg: {FfmpegPath}", _ffmpegPath ?? string.Empty);
             return !string.IsNullOrWhiteSpace(ffmpegPath);
+        }
+
+        private string? ResolveBundledFfmpegPath()
+        {
+            var candidateDirectories = new[]
+            {
+                AppContext.BaseDirectory,
+                _serverConfig.ApplicationPaths.ProgramDataPath
+            };
+
+            foreach (var directory in candidateDirectories)
+            {
+                if (string.IsNullOrWhiteSpace(directory))
+                {
+                    continue;
+                }
+
+                var candidate = Path.Combine(directory, "ffmpeg.exe");
+                if (_fileSystem.FileExists(candidate))
+                {
+                    return candidate;
+                }
+
+                candidate = Path.Combine(directory, "ffmpeg");
+                if (_fileSystem.FileExists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

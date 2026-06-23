@@ -8,6 +8,10 @@ using System.Net.Mime;
 using System.Text;
 using Emby.Server.Implementations.EntryPoints;
 using Emby.Server.Implementations.Localization;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Timeout;
+using Polly.Timeout;
 using MulletaFlix.Api.Middleware;
 using MulletaFlix.Api.Jobs;
 using MulletaFlix.Database.Implementations;
@@ -107,7 +111,8 @@ namespace MulletaFlix.Server
                     c.DefaultRequestHeaders.Accept.Add(acceptXmlHeader);
                     c.DefaultRequestHeaders.Accept.Add(acceptAnyHeader);
                 })
-                .ConfigurePrimaryHttpMessageHandler(eyeballsHttpClientHandlerDelegate);
+                .ConfigurePrimaryHttpMessageHandler(eyeballsHttpClientHandlerDelegate)
+                .AddPolicyHandler(GetRetryPolicy());
 
             services.AddHttpClient(NamedClient.MusicBrainz, c =>
                 {
@@ -116,7 +121,8 @@ namespace MulletaFlix.Server
                     c.DefaultRequestHeaders.Accept.Add(acceptXmlHeader);
                     c.DefaultRequestHeaders.Accept.Add(acceptAnyHeader);
                 })
-                .ConfigurePrimaryHttpMessageHandler(eyeballsHttpClientHandlerDelegate);
+                .ConfigurePrimaryHttpMessageHandler(eyeballsHttpClientHandlerDelegate)
+                .AddPolicyHandler(GetRetryPolicy());
 
             services.AddHttpClient(NamedClient.DirectIp, c =>
                 {
@@ -125,7 +131,8 @@ namespace MulletaFlix.Server
                     c.DefaultRequestHeaders.Accept.Add(acceptXmlHeader);
                     c.DefaultRequestHeaders.Accept.Add(acceptAnyHeader);
                 })
-                .ConfigurePrimaryHttpMessageHandler(defaultHttpClientHandlerDelegate);
+                .ConfigurePrimaryHttpMessageHandler(defaultHttpClientHandlerDelegate)
+                .AddPolicyHandler(GetRetryPolicy());
 
             services.AddHsts(options =>
             {
@@ -141,6 +148,8 @@ namespace MulletaFlix.Server
             services.AddLiveTvServices();
             services.AddSingleton<MulletaFlixJobQueue>();
             services.AddSingleton<IJobQueue>(serviceProvider => serviceProvider.GetRequiredService<MulletaFlixJobQueue>());
+
+            services.AddSingleton<MulletaFlix.Api.Caching.ItemsResponseCache>();
 
             // Book Reader services
             services.AddSingleton<MediaBrowser.Controller.Books.IBookConversionService, MulletaFlix.Server.Implementations.Books.BookConversionService>();
@@ -307,5 +316,11 @@ namespace MulletaFlix.Server
                 });
             });
         }
+
+        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+            => HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .Or<TimeoutRejectedException>()
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     }
 }

@@ -1,15 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Item;
 
@@ -43,7 +43,7 @@ public class MediaStreamRepository : IMediaStreamRepository
 
         context.MediaStreamInfos.Where(e => e.ItemId.Equals(id)).ExecuteDelete();
         context.MediaStreamInfos.AddRange(streams.Select(f => Map(f, id)));
-        context.SaveChanges();
+        context.SaveChangesAsync(default).GetAwaiter().GetResult();
 
         transaction.Commit();
     }

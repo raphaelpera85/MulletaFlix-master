@@ -1,14 +1,14 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MulletaFlix.Data.Enums;
-using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
 using Microsoft.EntityFrameworkCore;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 
 namespace MulletaFlix.Server.Implementations.Item;

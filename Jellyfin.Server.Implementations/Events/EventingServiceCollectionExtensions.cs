@@ -1,11 +1,3 @@
-﻿using MulletaFlix.Data.Events.System;
-using MulletaFlix.Data.Events.Users;
-using MulletaFlix.Server.Implementations.Events.Consumers.Library;
-using MulletaFlix.Server.Implementations.Events.Consumers.Security;
-using MulletaFlix.Server.Implementations.Events.Consumers.Session;
-using MulletaFlix.Server.Implementations.Events.Consumers.System;
-using MulletaFlix.Server.Implementations.Events.Consumers.Updates;
-using MulletaFlix.Server.Implementations.Events.Consumers.Users;
 using MediaBrowser.Common.Updates;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Events.Authentication;
@@ -16,6 +8,14 @@ using MediaBrowser.Controller.Lyrics;
 using MediaBrowser.Controller.Subtitles;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using MulletaFlix.Data.Events.System;
+using MulletaFlix.Data.Events.Users;
+using MulletaFlix.Server.Implementations.Events.Consumers.Library;
+using MulletaFlix.Server.Implementations.Events.Consumers.Security;
+using MulletaFlix.Server.Implementations.Events.Consumers.Session;
+using MulletaFlix.Server.Implementations.Events.Consumers.System;
+using MulletaFlix.Server.Implementations.Events.Consumers.Updates;
+using MulletaFlix.Server.Implementations.Events.Consumers.Users;
 
 namespace MulletaFlix.Server.Implementations.Events
 {

@@ -8,6 +8,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -821,6 +822,28 @@ namespace MediaBrowser.Controller.Entities
         public virtual string CreatePresentationUniqueKey()
         {
             return Id.ToString("N", CultureInfo.InvariantCulture);
+        }
+
+        protected static string NormalizePresentationUniqueKey(string key)
+        {
+            const int maxLength = 100;
+
+            if (string.IsNullOrEmpty(key) || key.Length <= maxLength)
+            {
+                return key;
+            }
+
+            var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(key));
+            var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
+            const int suffixLength = 16;
+            var prefixLength = maxLength - suffixLength - 1;
+
+            if (prefixLength <= 0)
+            {
+                return hash[..maxLength];
+            }
+
+            return key[..prefixLength] + "-" + hash[..suffixLength];
         }
 
         public virtual bool CanDelete()

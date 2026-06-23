@@ -21,8 +21,18 @@ namespace MulletaFlix.Database.Implementations;
 /// <param name="logger">Logger.</param>
 /// <param name="MulletaFlixDatabaseProvider">The provider for the database engine specific operations.</param>
 /// <param name="entityFrameworkCoreLocking">The locking behavior.</param>
-public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options, ILogger<MulletaFlixDbContext> logger, IMulletaFlixDatabaseProvider MulletaFlixDatabaseProvider, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : DbContext(options)
+public class MulletaFlixDbContext : DbContext
 {
+    private readonly ILogger<MulletaFlixDbContext> _logger;
+    private readonly IMulletaFlixDatabaseProvider _mulletaFlixDatabaseProvider;
+    private readonly IEntityFrameworkCoreLockingBehavior _entityFrameworkCoreLocking;
+
+    public MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options, ILogger<MulletaFlixDbContext> logger, IMulletaFlixDatabaseProvider MulletaFlixDatabaseProvider, IEntityFrameworkCoreLockingBehavior entityFrameworkCoreLocking) : base(options)
+    {
+        _logger = logger;
+        _mulletaFlixDatabaseProvider = MulletaFlixDatabaseProvider;
+        _entityFrameworkCoreLocking = entityFrameworkCoreLocking;
+    }
     /// <summary>
     /// Gets the <see cref="DbSet{TEntity}"/> containing the access schedules.
     /// </summary>
@@ -292,7 +302,7 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
         try
         {
             var result = -1;
-            await entityFrameworkCoreLocking.OnSaveChangesAsync(this, async () =>
+            await _entityFrameworkCoreLocking.OnSaveChangesAsync(this, async () =>
             {
                 result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
             }).ConfigureAwait(false);
@@ -305,7 +315,7 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error trying to save changes.");
+            _logger.LogError(e, "Error trying to save changes.");
             throw;
         }
     }
@@ -318,7 +328,7 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
         try
         {
             var result = -1;
-            entityFrameworkCoreLocking.OnSaveChanges(this, () =>
+            _entityFrameworkCoreLocking.OnSaveChanges(this, () =>
             {
                 result = base.SaveChanges(acceptAllChangesOnSuccess);
             });
@@ -331,7 +341,7 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error trying to save changes.");
+            _logger.LogError(e, "Error trying to save changes.");
             throw;
         }
     }
@@ -350,7 +360,7 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        MulletaFlixDatabaseProvider.OnModelCreating(modelBuilder);
+        _mulletaFlixDatabaseProvider.OnModelCreating(modelBuilder);
         base.OnModelCreating(modelBuilder);
 
         // Configuration for each entity is in its own class inside 'ModelConfiguration'.
@@ -362,7 +372,7 @@ public class MulletaFlixDbContext(DbContextOptions<MulletaFlixDbContext> options
     /// <inheritdoc />
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        MulletaFlixDatabaseProvider.ConfigureConventions(configurationBuilder);
+        _mulletaFlixDatabaseProvider.ConfigureConventions(configurationBuilder);
         base.ConfigureConventions(configurationBuilder);
     }
 }

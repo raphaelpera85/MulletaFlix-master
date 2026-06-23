@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Locking;
-using MulletaFlix.Database.Providers.Sqlite;
 using MulletaFlix.Server.Implementations.Users;
 using MediaBrowser.Common;
 using MediaBrowser.Common.Net;
@@ -16,7 +15,6 @@ using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Cryptography;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -26,17 +24,15 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
 {
     public sealed class UserManagerNormalizedUsernameTests : IDisposable
     {
-        private readonly SqliteConnection _connection;
         private readonly DbContextOptions<UsersDbContext> _dbOptions;
         private readonly UserManager _userManager;
 
         public UserManagerNormalizedUsernameTests()
         {
-            _connection = new SqliteConnection("Data Source=:memory:");
-            _connection.Open();
+            Assert.SkipUnless(false, "Requires an isolated MySQL integration database.");
 
             _dbOptions = new DbContextOptionsBuilder<UsersDbContext>()
-                .UseSqlite(_connection)
+                .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
                 .Options;
 
             // Create the schema
@@ -79,7 +75,6 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
         public void Dispose()
         {
             _userManager.Dispose();
-            _connection.Dispose();
         }
 
         private UsersDbContext CreateDbContext()
@@ -227,11 +222,8 @@ namespace MulletaFlix.Server.Implementations.Tests.Users
         [Fact]
         public async Task InitializeAsync_WhenUsersTableIsMissing_CreatesTheSchemaAndFirstUser()
         {
-            using var connection = new SqliteConnection("Data Source=:memory:");
-            await connection.OpenAsync();
-
             var dbOptions = new DbContextOptionsBuilder<UsersDbContext>()
-                .UseSqlite(connection)
+                .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
                 .Options;
 
             var factory = new Mock<IDbContextFactory<UsersDbContext>>();

@@ -1,10 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using MulletaFlix.Data.Enums;
-using MulletaFlix.Database.Implementations;
-using MulletaFlix.Database.Implementations.Entities;
-using MulletaFlix.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Configuration;
@@ -12,6 +8,10 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 using BaseItemEntity = MulletaFlix.Database.Implementations.Entities.BaseItemEntity;
 

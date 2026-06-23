@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 
 using System;
 using System.Collections.Concurrent;
@@ -6,9 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using MulletaFlix.Database.Implementations.Entities;
-using MulletaFlix.Extensions;
-using MulletaFlix.Extensions.Json;
 using MediaBrowser.Common;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
@@ -18,6 +15,9 @@ using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.LiveTv;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Extensions;
+using MulletaFlix.Extensions.Json;
 using BaseItemDto = MediaBrowser.Controller.Entities.BaseItem;
 using BaseItemEntity = MulletaFlix.Database.Implementations.Entities.BaseItemEntity;
 

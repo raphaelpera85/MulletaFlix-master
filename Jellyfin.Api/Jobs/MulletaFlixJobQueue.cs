@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using MediaBrowser.Controller;
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MulletaFlix.Database.Implementations.Contexts;
 
 namespace MulletaFlix.Api.Jobs;
 
@@ -23,26 +23,35 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly Channel<JobQueueWorkItem> _channel;
+    private readonly Channel<JobQueueWorkItem> _persistenceChannel;
     private readonly ConcurrentDictionary<string, JobQueueWorkItem> _jobs = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, DateTimeOffset> _lastStartByKind = new(StringComparer.OrdinalIgnoreCase);
     private readonly IReadOnlyDictionary<string, SemaphoreSlim> _kindLimits;
     private readonly IMemoryCache _memoryCache;
     private readonly ILogger<MulletaFlixJobQueue> _logger;
-    private readonly string _databasePath;
+    private readonly IDbContextFactory<SystemDbContext> _dbContextFactory;
     private int _activeWorkers;
 
     public MulletaFlixJobQueue(
-        IServerApplicationPaths applicationPaths,
+        IDbContextFactory<SystemDbContext> dbContextFactory,
         IMemoryCache memoryCache,
         ILogger<MulletaFlixJobQueue> logger)
     {
+        _dbContextFactory = dbContextFactory;
         _memoryCache = memoryCache;
         _logger = logger;
-        _databasePath = Path.Combine(applicationPaths.DataPath, "mulletaflix-jobqueue.db");
-        _channel = Channel.CreateUnbounded<JobQueueWorkItem>(new UnboundedChannelOptions
+        _channel = Channel.CreateBounded<JobQueueWorkItem>(new BoundedChannelOptions(2048)
         {
             SingleReader = false,
             SingleWriter = false,
+            FullMode = BoundedChannelFullMode.Wait,
+            AllowSynchronousContinuations = false
+        });
+        _persistenceChannel = Channel.CreateBounded<JobQueueWorkItem>(new BoundedChannelOptions(1024)
+        {
+            SingleReader = true,
+            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.DropOldest,
             AllowSynchronousContinuations = false
         });
         _kindLimits = new Dictionary<string, SemaphoreSlim>(StringComparer.OrdinalIgnoreCase)
@@ -83,14 +92,14 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
         workItem.Logs.Enqueue($"[{now:yyyy-MM-dd HH:mm:ss}] Job enfileirado: {title}.");
 
         _jobs[workItem.Id] = workItem;
-        PersistJobSafe(workItem);
+        QueuePersistence(workItem);
 
         if (!_channel.Writer.TryWrite(workItem))
         {
             workItem.Status = "Failed";
             workItem.ErrorMessage = "Nao foi possivel enfileirar o trabalho.";
             workItem.FinishedAt = DateTimeOffset.UtcNow;
-            PersistJobSafe(workItem);
+            QueuePersistence(workItem);
         }
 
         return ToDto(workItem);
@@ -167,20 +176,21 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
     {
         var expiresAt = DateTimeOffset.UtcNow.Add(ttl);
         _memoryCache.Set(cacheKey, value, expiresAt);
-        await using var connection = CreateConnection();
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var connection = dbContext.Database.GetDbConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await EnsureDatabaseAsync(connection, cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO JobCache (CacheKey, Value, ExpiresAt)
-            VALUES ($cacheKey, $value, $expiresAt)
-            ON CONFLICT(CacheKey) DO UPDATE SET
-                Value = excluded.Value,
-                ExpiresAt = excluded.ExpiresAt;
+            VALUES (@cacheKey, @value, @expiresAt)
+            ON DUPLICATE KEY UPDATE
+                Value = VALUES(Value),
+                ExpiresAt = VALUES(ExpiresAt);
             """;
-        command.Parameters.AddWithValue("$cacheKey", cacheKey);
-        command.Parameters.AddWithValue("$value", value);
-        command.Parameters.AddWithValue("$expiresAt", expiresAt.ToString("O", CultureInfo.InvariantCulture));
+        AddParameter(command, "@cacheKey", cacheKey);
+        AddParameter(command, "@value", value);
+        AddParameter(command, "@expiresAt", expiresAt.UtcDateTime);
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -191,12 +201,13 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
             return cached;
         }
 
-        await using var connection = CreateConnection();
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var connection = dbContext.Database.GetDbConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await EnsureDatabaseAsync(connection, cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT Value, ExpiresAt FROM JobCache WHERE CacheKey = $cacheKey LIMIT 1;";
-        command.Parameters.AddWithValue("$cacheKey", cacheKey);
+        command.CommandText = "SELECT Value, ExpiresAt FROM JobCache WHERE CacheKey = @cacheKey LIMIT 1;";
+        AddParameter(command, "@cacheKey", cacheKey);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -204,8 +215,8 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
             return null;
         }
 
-        if (!DateTimeOffset.TryParse(reader.GetString(1), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expiresAt)
-            || expiresAt <= DateTimeOffset.UtcNow)
+        var expiresAt = new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(1), DateTimeKind.Utc));
+        if (expiresAt <= DateTimeOffset.UtcNow)
         {
             return null;
         }
@@ -218,13 +229,14 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await InitializeDatabaseAsync(stoppingToken).ConfigureAwait(false);
-        _ = Task.Run(() => MaintenanceLoopAsync(stoppingToken), stoppingToken);
+        var maintenance = Task.Factory.StartNew(() => MaintenanceLoopAsync(stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+        var persistence = Task.Factory.StartNew(() => PersistenceLoopAsync(stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
 
         var workers = Enumerable.Range(0, GetWorkerCount())
-            .Select(_ => Task.Run(() => WorkerLoopAsync(stoppingToken), stoppingToken))
+            .Select(_ => Task.Factory.StartNew(() => WorkerLoopAsync(stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap())
             .ToArray();
 
-        await Task.WhenAll(workers).ConfigureAwait(false);
+        await Task.WhenAll(workers.Append(maintenance).Append(persistence)).ConfigureAwait(false);
     }
 
     private async Task WorkerLoopAsync(CancellationToken stoppingToken)
@@ -263,7 +275,7 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
             job.Phase = update.Phase;
             job.Summary = update.Summary;
             AddLog(job, $"{update.Phase}: {update.Summary}");
-            PersistJobSafe(job);
+            QueuePersistence(job);
         });
 
         job.Status = "Running";
@@ -271,7 +283,7 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
         job.Phase = "Executando";
         job.Summary = "Processamento iniciado.";
         AddLog(job, "Processamento iniciado.");
-        PersistJobSafe(job);
+        QueuePersistence(job);
 
         try
         {
@@ -299,7 +311,7 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
         }
         finally
         {
-            PersistJobSafe(job);
+            QueuePersistence(job);
         }
     }
 
@@ -312,7 +324,7 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
             {
                 foreach (var job in _jobs.Values)
                 {
-                    PersistJobSafe(job);
+                    QueuePersistence(job);
                 }
 
                 await CleanupDatabaseAsync(stoppingToken).ConfigureAwait(false);
@@ -414,14 +426,14 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
 
     private async Task InitializeDatabaseAsync(CancellationToken cancellationToken)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_databasePath)!);
-        await using var connection = CreateConnection();
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var connection = dbContext.Database.GetDbConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await EnsureDatabaseAsync(connection, cancellationToken).ConfigureAwait(false);
         await LoadRecentJobsAsync(connection, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task LoadRecentJobsAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private async Task LoadRecentJobsAsync(DbConnection connection, CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.CommandText = """
@@ -444,9 +456,9 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
                 Phase = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
                 Summary = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
                 ErrorMessage = reader.IsDBNull(8) ? null : reader.GetString(8),
-                CreatedAt = ParseDate(reader.GetString(9)) ?? DateTimeOffset.UtcNow,
-                StartedAt = reader.IsDBNull(10) ? null : ParseDate(reader.GetString(10)),
-                FinishedAt = reader.IsDBNull(11) ? null : ParseDate(reader.GetString(11)),
+                CreatedAt = ReadDate(reader, 9) ?? DateTimeOffset.UtcNow,
+                StartedAt = ReadDate(reader, 10),
+                FinishedAt = ReadDate(reader, 11),
                 Handler = (_, _) => Task.CompletedTask
             };
 
@@ -465,107 +477,128 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
         return IsActiveStatus(status) ? "Cancelled" : status;
     }
 
-    private static DateTimeOffset? ParseDate(string? value)
+    private static DateTimeOffset? ReadDate(DbDataReader reader, int ordinal)
     {
-        return DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var date)
-            ? date
-            : null;
+        return reader.IsDBNull(ordinal)
+            ? null
+            : new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(ordinal), DateTimeKind.Utc));
     }
 
-    private SqliteConnection CreateConnection()
-    {
-        return new SqliteConnection($"Data Source={_databasePath}");
-    }
-
-    private static async Task EnsureDatabaseAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task EnsureDatabaseAsync(DbConnection connection, CancellationToken cancellationToken)
     {
         await using var command = connection.CreateCommand();
         command.CommandText = """
             CREATE TABLE IF NOT EXISTS JobQueue (
-                Id TEXT PRIMARY KEY,
-                CorrelationId TEXT NULL,
-                Kind TEXT NOT NULL,
-                Title TEXT NOT NULL,
-                Status TEXT NOT NULL,
-                Progress INTEGER NOT NULL,
-                Phase TEXT NULL,
+                Id VARCHAR(32) PRIMARY KEY,
+                CorrelationId VARCHAR(128) NULL,
+                Kind VARCHAR(64) NOT NULL,
+                Title VARCHAR(512) NOT NULL,
+                Status VARCHAR(32) NOT NULL,
+                Progress INT NOT NULL,
+                Phase VARCHAR(128) NULL,
                 Summary TEXT NULL,
                 ErrorMessage TEXT NULL,
-                CreatedAt TEXT NOT NULL,
-                StartedAt TEXT NULL,
-                FinishedAt TEXT NULL,
-                Logs TEXT NULL
+                CreatedAt DATETIME(6) NOT NULL,
+                StartedAt DATETIME(6) NULL,
+                FinishedAt DATETIME(6) NULL,
+                Logs LONGTEXT NULL,
+                INDEX IX_JobQueue_CreatedAt (CreatedAt),
+                INDEX IX_JobQueue_FinishedAt (FinishedAt)
             );
             CREATE TABLE IF NOT EXISTS JobCache (
-                CacheKey TEXT PRIMARY KEY,
-                Value TEXT NOT NULL,
-                ExpiresAt TEXT NOT NULL
+                CacheKey VARCHAR(255) PRIMARY KEY,
+                Value LONGTEXT NOT NULL,
+                ExpiresAt DATETIME(6) NOT NULL,
+                INDEX IX_JobCache_ExpiresAt (ExpiresAt)
             );
             """;
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private void PersistJobSafe(JobQueueWorkItem job)
+    private void QueuePersistence(JobQueueWorkItem job)
     {
-        try
+        if (!_persistenceChannel.Writer.TryWrite(job))
         {
-            using var connection = CreateConnection();
-            connection.Open();
-            using var command = connection.CreateCommand();
+            _logger.LogDebug("Job persistence queue is full; a later status update will persist job {JobId}", job.Id);
+        }
+    }
+
+    private async Task PersistenceLoopAsync(CancellationToken cancellationToken)
+    {
+        await foreach (var job in _persistenceChannel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+        {
+            try
+            {
+                await PersistJobAsync(job, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Unable to persist job {JobId}", job.Id);
+            }
+        }
+    }
+
+    private async Task PersistJobAsync(JobQueueWorkItem job, CancellationToken cancellationToken)
+    {
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var connection = dbContext.Database.GetDbConnection();
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await using var command = connection.CreateCommand();
             command.CommandText = """
                 INSERT INTO JobQueue (Id, CorrelationId, Kind, Title, Status, Progress, Phase, Summary, ErrorMessage, CreatedAt, StartedAt, FinishedAt, Logs)
-                VALUES ($id, $correlationId, $kind, $title, $status, $progress, $phase, $summary, $errorMessage, $createdAt, $startedAt, $finishedAt, $logs)
-                ON CONFLICT(Id) DO UPDATE SET
-                    CorrelationId = excluded.CorrelationId,
-                    Kind = excluded.Kind,
-                    Title = excluded.Title,
-                    Status = excluded.Status,
-                    Progress = excluded.Progress,
-                    Phase = excluded.Phase,
-                    Summary = excluded.Summary,
-                    ErrorMessage = excluded.ErrorMessage,
-                    StartedAt = excluded.StartedAt,
-                    FinishedAt = excluded.FinishedAt,
-                    Logs = excluded.Logs;
+                VALUES (@id, @correlationId, @kind, @title, @status, @progress, @phase, @summary, @errorMessage, @createdAt, @startedAt, @finishedAt, @logs)
+                ON DUPLICATE KEY UPDATE
+                    CorrelationId = VALUES(CorrelationId), Kind = VALUES(Kind), Title = VALUES(Title),
+                    Status = VALUES(Status), Progress = VALUES(Progress), Phase = VALUES(Phase),
+                    Summary = VALUES(Summary), ErrorMessage = VALUES(ErrorMessage),
+                    StartedAt = VALUES(StartedAt), FinishedAt = VALUES(FinishedAt), Logs = VALUES(Logs);
                 """;
-            command.Parameters.AddWithValue("$id", job.Id);
-            command.Parameters.AddWithValue("$correlationId", (object?)job.CorrelationId ?? DBNull.Value);
-            command.Parameters.AddWithValue("$kind", job.Kind);
-            command.Parameters.AddWithValue("$title", job.Title);
-            command.Parameters.AddWithValue("$status", job.Status);
-            command.Parameters.AddWithValue("$progress", job.Progress);
-            command.Parameters.AddWithValue("$phase", job.Phase);
-            command.Parameters.AddWithValue("$summary", job.Summary);
-            command.Parameters.AddWithValue("$errorMessage", (object?)job.ErrorMessage ?? DBNull.Value);
-            command.Parameters.AddWithValue("$createdAt", job.CreatedAt.ToString("O", CultureInfo.InvariantCulture));
-            command.Parameters.AddWithValue("$startedAt", job.StartedAt?.ToString("O", CultureInfo.InvariantCulture) ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$finishedAt", job.FinishedAt?.ToString("O", CultureInfo.InvariantCulture) ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$logs", JsonSerializer.Serialize(job.Logs.ToArray(), JsonOptions));
-            command.ExecuteNonQuery();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "Unable to persist job {JobId}", job.Id);
-        }
+            AddParameter(command, "@id", job.Id);
+            AddParameter(command, "@correlationId", job.CorrelationId);
+            AddParameter(command, "@kind", job.Kind);
+            AddParameter(command, "@title", job.Title);
+            AddParameter(command, "@status", job.Status);
+            AddParameter(command, "@progress", job.Progress);
+            AddParameter(command, "@phase", job.Phase);
+            AddParameter(command, "@summary", job.Summary);
+            AddParameter(command, "@errorMessage", job.ErrorMessage);
+            AddParameter(command, "@createdAt", job.CreatedAt.UtcDateTime);
+            AddParameter(command, "@startedAt", job.StartedAt?.UtcDateTime);
+            AddParameter(command, "@finishedAt", job.FinishedAt?.UtcDateTime);
+            AddParameter(command, "@logs", JsonSerializer.Serialize(job.Logs.ToArray(), JsonOptions));
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task CleanupDatabaseAsync(CancellationToken cancellationToken)
     {
-        var cutoff = DateTimeOffset.UtcNow.AddDays(-7).ToString("O", CultureInfo.InvariantCulture);
-        var now = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture);
-        await using var connection = CreateConnection();
+        var cutoff = DateTime.UtcNow.AddDays(-7);
+        var now = DateTime.UtcNow;
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var connection = dbContext.Database.GetDbConnection();
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = """
             DELETE FROM JobQueue
             WHERE FinishedAt IS NOT NULL
-              AND FinishedAt < $cutoff;
+              AND FinishedAt < @cutoff;
             DELETE FROM JobCache
-            WHERE ExpiresAt < $now;
+            WHERE ExpiresAt < @now;
             """;
-        command.Parameters.AddWithValue("$cutoff", cutoff);
-        command.Parameters.AddWithValue("$now", now);
+        AddParameter(command, "@cutoff", cutoff);
+        AddParameter(command, "@now", now);
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void AddParameter(DbCommand command, string name, object? value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+        command.Parameters.Add(parameter);
     }
 
     private sealed class JobQueueWorkItem

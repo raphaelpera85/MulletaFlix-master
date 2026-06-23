@@ -78,17 +78,21 @@ namespace MediaBrowser.Controller.Entities.TV
 
         public override string CreatePresentationUniqueKey()
         {
+            string presentationUniqueKey;
+
             if (LibraryManager.GetLibraryOptions(this).EnableAutomaticSeriesGrouping)
             {
                 var userdatakeys = GetUserDataKeys();
 
                 if (userdatakeys.Count > 1)
                 {
-                    return AddLibrariesToPresentationUniqueKey(userdatakeys[0]);
+                    presentationUniqueKey = AddLibrariesToPresentationUniqueKey(userdatakeys[0]);
+                    return NormalizePresentationUniqueKey(presentationUniqueKey);
                 }
             }
 
-            return base.CreatePresentationUniqueKey();
+            presentationUniqueKey = base.CreatePresentationUniqueKey();
+            return NormalizePresentationUniqueKey(presentationUniqueKey);
         }
 
         private string AddLibrariesToPresentationUniqueKey(string key)

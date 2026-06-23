@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace MulletaFlix.Server.Implementations.Billing;
 

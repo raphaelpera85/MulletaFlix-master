@@ -7,5 +7,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
     public class PluginConfiguration : BasePluginConfiguration
     {
         public bool CastAndCrew { get; set; }
+
+        public string OmdbApiKey { get; set; }
     }
 }

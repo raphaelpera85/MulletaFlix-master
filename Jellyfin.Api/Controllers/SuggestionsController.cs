@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using MulletaFlix.Api.Caching;
 using MulletaFlix.Api.Extensions;
 using MulletaFlix.Api.Helpers;
 using MulletaFlix.Api.ModelBinders;
@@ -29,6 +30,7 @@ public class SuggestionsController : BaseMulletaFlixApiController
     private readonly IDtoService _dtoService;
     private readonly IUserManager _userManager;
     private readonly ILibraryManager _libraryManager;
+    private readonly ItemsResponseCache _itemsResponseCache;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SuggestionsController"/> class.
@@ -36,14 +38,17 @@ public class SuggestionsController : BaseMulletaFlixApiController
     /// <param name="dtoService">Instance of the <see cref="IDtoService"/> interface.</param>
     /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
+    /// <param name="itemsResponseCache">Instance of the <see cref="ItemsResponseCache"/>.</param>
     public SuggestionsController(
         IDtoService dtoService,
         IUserManager userManager,
-        ILibraryManager libraryManager)
+        ILibraryManager libraryManager,
+        ItemsResponseCache itemsResponseCache)
     {
         _dtoService = dtoService;
         _userManager = userManager;
         _libraryManager = libraryManager;
+        _itemsResponseCache = itemsResponseCache;
     }
 
     /// <summary>
@@ -79,7 +84,7 @@ public class SuggestionsController : BaseMulletaFlixApiController
         }
 
         var dtoOptions = new DtoOptions();
-        var result = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
+        var query = new InternalItemsQuery(user)
         {
             OrderBy = new[] { (ItemSortBy.Random, SortOrder.Descending) },
             MediaTypes = mediaType,
@@ -90,14 +95,25 @@ public class SuggestionsController : BaseMulletaFlixApiController
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = enableTotalRecordCount,
             Recursive = true
-        });
+        };
+
+        var cacheKey = ItemsResponseCache.BuildCacheKey(query);
+        if (ItemsResponseCache.IsCacheable(query) && _itemsResponseCache.TryGet(cacheKey, out var cached))
+            return cached;
+
+        var result = _libraryManager.GetItemsResult(query);
 
         var dtoList = _dtoService.GetBaseItemDtos(result.Items, dtoOptions, user);
 
-        return new QueryResult<BaseItemDto>(
+        var response = new QueryResult<BaseItemDto>(
             startIndex,
             result.TotalRecordCount,
             dtoList);
+
+        if (ItemsResponseCache.IsCacheable(query))
+            _itemsResponseCache.Set(cacheKey, response);
+
+        return response;
     }
 
     /// <summary>

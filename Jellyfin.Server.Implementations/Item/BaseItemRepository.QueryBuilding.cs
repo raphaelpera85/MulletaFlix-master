@@ -1,4 +1,4 @@
-﻿#pragma warning disable RS0030 // Do not use banned APIs
+#pragma warning disable RS0030 // Do not use banned APIs
 #pragma warning disable CA1304 // Specify CultureInfo
 #pragma warning disable CA1311 // Specify a culture or use an invariant version
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
@@ -7,15 +7,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Querying;
+using Microsoft.EntityFrameworkCore;
 using MulletaFlix.Data.Enums;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Enums;
 using MulletaFlix.Extensions;
-using MediaBrowser.Controller.Entities;
-using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Querying;
-using Microsoft.EntityFrameworkCore;
 using BaseItemEntity = MulletaFlix.Database.Implementations.Entities.BaseItemEntity;
 
 namespace MulletaFlix.Server.Implementations.Item;

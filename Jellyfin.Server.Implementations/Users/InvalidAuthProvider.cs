@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
-using MulletaFlix.Database.Implementations.Entities;
+using System.Threading.Tasks;
 using MediaBrowser.Controller.Authentication;
+using MulletaFlix.Database.Implementations.Entities;
 
 namespace MulletaFlix.Server.Implementations.Users
 {

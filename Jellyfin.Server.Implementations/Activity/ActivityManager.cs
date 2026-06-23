@@ -1,8 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using MediaBrowser.Model.Activity;
+using MediaBrowser.Model.Querying;
+using Microsoft.EntityFrameworkCore;
 using MulletaFlix.Data.Enums;
 using MulletaFlix.Data.Events;
 using MulletaFlix.Data.Queries;
@@ -10,9 +13,6 @@ using MulletaFlix.Database.Implementations;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Enums;
 using MulletaFlix.Extensions;
-using MediaBrowser.Model.Activity;
-using MediaBrowser.Model.Querying;
-using Microsoft.EntityFrameworkCore;
 
 namespace MulletaFlix.Server.Implementations.Activity;
 
@@ -112,6 +112,8 @@ public class ActivityManager : IActivityManager
             {
                 entries = entries.Where(e => e.ActivityLog.LogSeverity == query.Severity);
             }
+
+            entries = entries.AsNoTracking();
 
             return new QueryResult<ActivityLogEntry>(
                 query.Skip,

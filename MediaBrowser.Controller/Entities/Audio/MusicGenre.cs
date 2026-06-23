@@ -47,7 +47,7 @@ namespace MediaBrowser.Controller.Entities.Audio
 
         public override string CreatePresentationUniqueKey()
         {
-            return GetUserDataKeys()[0];
+            return NormalizePresentationUniqueKey(GetUserDataKeys()[0]);
         }
 
         public override double GetDefaultPrimaryImageAspectRatio()
