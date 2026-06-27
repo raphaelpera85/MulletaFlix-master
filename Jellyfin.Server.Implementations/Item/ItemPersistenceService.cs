@@ -70,7 +70,8 @@ public class ItemPersistenceService : IItemPersistenceService
         }
 
         var extraIds = context.BaseItems
-            .Where(e => e.OwnerId.HasValue && descendantIds.Contains(e.OwnerId.Value))
+            .Where(e => e.OwnerId.HasValue)
+            .WhereOneOrMany(descendantIds.ToList(), e => e.OwnerId!.Value)
             .Select(e => e.Id)
             .ToArray();
 
@@ -103,10 +104,13 @@ public class ItemPersistenceService : IItemPersistenceService
         {
             var dupItemIds = duplicateRows.Select(d => d.ItemId).Distinct().ToList();
             var candidates = context.UserData
-                .Where(ud => dupItemIds.Contains(ud.ItemId))
+                .WhereOneOrMany(dupItemIds, ud => ud.ItemId)
                 .ToList();
+            var duplicateKeys = duplicateRows
+                .Select(d => (d.ItemId, d.UserId, d.CustomDataKey))
+                .ToHashSet();
             var toDelete = candidates
-                .Where(ud => duplicateRows.Any(k => k.ItemId == ud.ItemId && k.UserId == ud.UserId && k.CustomDataKey == ud.CustomDataKey))
+                .Where(ud => duplicateKeys.Contains((ud.ItemId, ud.UserId, ud.CustomDataKey)))
                 .ToList();
             if (toDelete.Count > 0)
             {
@@ -151,7 +155,7 @@ public class ItemPersistenceService : IItemPersistenceService
         context.PeopleBaseItemMap.WhereOneOrMany(relatedItems, e => e.ItemId).ExecuteDelete();
         context.Peoples.WhereOneOrMany(query, e => e.Id).Where(e => e.BaseItems!.Count == 0).ExecuteDelete();
         context.TrickplayInfos.WhereOneOrMany(relatedItems, e => e.ItemId).ExecuteDelete();
-        context.SaveChangesAsync(default).GetAwaiter().GetResult();
+        context.SaveChanges();
         transaction.Commit();
     }
 
@@ -162,7 +166,7 @@ public class ItemPersistenceService : IItemPersistenceService
         using var transaction = context.Database.BeginTransaction();
 
         context.ItemValuesMap.Where(e => e.ItemValue.Type == ItemValueType.InheritedTags).ExecuteDelete();
-        context.SaveChangesAsync(default).GetAwaiter().GetResult();
+        context.SaveChanges();
 
         transaction.Commit();
     }
@@ -188,6 +192,35 @@ public class ItemPersistenceService : IItemPersistenceService
                 .ConfigureAwait(false))
             {
                 _logger.LogWarning("Unable to save ImageInfo for non existing BaseItem");
+                return;
+            }
+
+            var existingImages = await context.BaseItemImageInfos
+                .Where(e => e.ItemId == item.Id)
+                .ToArrayAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            bool hasChanges = existingImages.Length != images.Length;
+            if (!hasChanges)
+            {
+                for (int i = 0; i < images.Length; i++)
+                {
+                    var newImg = images[i];
+                    var oldImg = existingImages.FirstOrDefault(e => e.ImageType == newImg.ImageType && e.Path == newImg.Path);
+                    if (oldImg == null
+                        || oldImg.Width != newImg.Width
+                        || oldImg.Height != newImg.Height
+                        || oldImg.DateModified != newImg.DateModified
+                        || !NullableSequenceEqual(oldImg.Blurhash, newImg.Blurhash))
+                    {
+                        hasChanges = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!hasChanges)
+            {
                 return;
             }
 
@@ -292,151 +325,18 @@ public class ItemPersistenceService : IItemPersistenceService
         var ids = tuples.Select(f => f.Item.Id).ToArray();
         var existingItems = context.BaseItems.Where(e => Enumerable.Contains(ids, e.Id)).Select(f => f.Id).ToHashSet();
 
-        foreach (var item in tuples)
-        {
-            var entity = BaseItemMapper.Map(item.Item, _appHost);
-            entity.TopParentId = item.TopParent?.Id;
+        // 1. Save Base Item Entities
+        SaveBaseItemEntities(context, tuples, existingItems);
 
-            if (!existingItems.Contains(entity.Id))
-            {
-                context.BaseItems.Add(entity);
-            }
-            else
-            {
-                context.BaseItemProviders.Where(e => e.ItemId == entity.Id).ExecuteDelete();
-                context.BaseItemImageInfos.Where(e => e.ItemId == entity.Id).ExecuteDelete();
-                context.BaseItemMetadataFields.Where(e => e.ItemId == entity.Id).ExecuteDelete();
+        // 2. Save Item Values Maps
+        SaveItemValues(context, tuples, ids);
 
-                if (entity.Images is { Count: > 0 })
-                {
-                    context.BaseItemImageInfos.AddRange(entity.Images);
-                }
+        // 3. Save Ancestor IDs
+        SaveAncestorIds(context, tuples);
 
-                if (entity.LockedFields is { Count: > 0 })
-                {
-                    context.BaseItemMetadataFields.AddRange(entity.LockedFields);
-                }
+        context.SaveChanges();
 
-                context.BaseItems.Attach(entity).State = EntityState.Modified;
-            }
-        }
-
-        var itemValueMaps = tuples
-            .Select(e => (e.Item, Values: GetItemValuesToSave(e.Item, e.InheritedTags)))
-            .ToArray();
-        var allListedItemValues = itemValueMaps
-            .SelectMany(f => f.Values)
-            .Distinct(ItemValueKeyComparer)
-            .ToArray();
-
-        var types = allListedItemValues.Select(e => e.MagicNumber).Distinct().ToArray();
-        var values = allListedItemValues.Select(e => e.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        var allListedItemValuesSet = allListedItemValues.ToHashSet(ItemValueKeyComparer);
-
-        var existingValues = context.ItemValues
-            .Where(e => Enumerable.Contains(types, e.Type) && Enumerable.Contains(values, e.Value))
-            .AsEnumerable()
-            .Where(e => allListedItemValuesSet.Contains((e.Type, e.Value)))
-            .DistinctBy(e => (e.Type, e.Value), ItemValueKeyComparer)
-            .ToArray();
-        var missingItemValues = allListedItemValues.Except(existingValues.Select(f => (MagicNumber: f.Type, f.Value)), ItemValueKeyComparer).Select(f => new ItemValue()
-        {
-            CleanValue = f.Value.GetCleanValue(),
-            ItemValueId = Guid.NewGuid(),
-            Type = f.MagicNumber,
-            Value = f.Value
-        }).ToArray();
-        context.ItemValues.AddRange(missingItemValues);
-
-        var itemValuesStore = existingValues.Concat(missingItemValues).ToArray();
-        var valueMap = itemValueMaps
-            .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStore.First(g => g.Type == e.MagicNumber && string.Equals(g.Value, e.Value, StringComparison.OrdinalIgnoreCase))).DistinctBy(e => e.ItemValueId).ToArray()))
-            .ToArray();
-
-        var mappedValues = context.ItemValuesMap.Where(e => Enumerable.Contains(ids, e.ItemId)).ToList();
-
-        foreach (var item in valueMap)
-        {
-            var itemMappedValues = mappedValues.Where(e => e.ItemId == item.Item.Id).ToList();
-            foreach (var itemValue in item.Values)
-            {
-                var existingItem = itemMappedValues.FirstOrDefault(f => f.ItemValueId == itemValue.ItemValueId);
-                if (existingItem is null)
-                {
-                    context.ItemValuesMap.Add(new ItemValueMap()
-                    {
-                        Item = null!,
-                        ItemId = item.Item.Id,
-                        ItemValue = null!,
-                        ItemValueId = itemValue.ItemValueId
-                    });
-                }
-                else
-                {
-                    itemMappedValues.Remove(existingItem);
-                }
-            }
-
-            context.ItemValuesMap.RemoveRange(itemMappedValues);
-        }
-
-        var itemsWithAncestors = tuples
-            .Where(t => t.Item.SupportsAncestors && t.AncestorIds != null)
-            .Select(t => t.Item.Id)
-            .ToList();
-
-        var allExistingAncestorIds = itemsWithAncestors.Count > 0
-            ? context.AncestorIds
-                .Where(e => itemsWithAncestors.Contains(e.ItemId))
-                .ToList()
-                .GroupBy(e => e.ItemId)
-                .ToDictionary(g => g.Key, g => g.ToList())
-            : new Dictionary<Guid, List<AncestorId>>();
-
-        var allRequestedAncestorIds = tuples
-            .Where(t => t.Item.SupportsAncestors && t.AncestorIds != null)
-            .SelectMany(t => t.AncestorIds!)
-            .Distinct()
-            .ToList();
-
-        var validAncestorIdsSet = allRequestedAncestorIds.Count > 0
-            ? context.BaseItems
-                .Where(e => allRequestedAncestorIds.Contains(e.Id))
-                .Select(f => f.Id)
-                .ToHashSet()
-            : new HashSet<Guid>();
-
-        foreach (var item in tuples)
-        {
-            if (item.Item.SupportsAncestors && item.AncestorIds != null)
-            {
-                var existingAncestorIds = allExistingAncestorIds.GetValueOrDefault(item.Item.Id) ?? new List<AncestorId>();
-                var validAncestorIds = item.AncestorIds.Where(id => validAncestorIdsSet.Contains(id)).ToArray();
-                foreach (var ancestorId in validAncestorIds)
-                {
-                    var existingAncestorId = existingAncestorIds.FirstOrDefault(e => e.ParentItemId == ancestorId);
-                    if (existingAncestorId is null)
-                    {
-                        context.AncestorIds.Add(new AncestorId()
-                        {
-                            ParentItemId = ancestorId,
-                            ItemId = item.Item.Id,
-                            Item = null!,
-                            ParentItem = null!
-                        });
-                    }
-                    else
-                    {
-                        existingAncestorIds.Remove(existingAncestorId);
-                    }
-                }
-
-                context.AncestorIds.RemoveRange(existingAncestorIds);
-            }
-        }
-
-        context.SaveChangesAsync(default).GetAwaiter().GetResult();
-
+        // 4. Save Linked Children (for Folders and Videos)
         var folderIds = tuples
             .Where(t => t.Item is Folder)
             .Select(t => t.Item.Id)
@@ -447,232 +347,12 @@ public class ItemPersistenceService : IItemPersistenceService
             .Select(t => t.Item.Id)
             .ToList();
 
-        var allLinkedChildrenByParent = new Dictionary<Guid, List<LinkedChildEntity>>();
         if (folderIds.Count > 0 || videoIds.Count > 0)
         {
-            var allParentIds = folderIds.Concat(videoIds).Distinct().ToList();
-            var allLinkedChildren = context.LinkedChildren
-                .Where(e => allParentIds.Contains(e.ParentId))
-                .ToList();
-
-            allLinkedChildrenByParent = allLinkedChildren
-                .GroupBy(e => e.ParentId)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            SaveLinkedChildren(context, tuples, folderIds, videoIds);
         }
 
-        foreach (var item in tuples)
-        {
-            if (item.Item is Folder folder)
-            {
-                var existingLinkedChildren = allLinkedChildrenByParent.GetValueOrDefault(item.Item.Id)?.ToList() ?? new List<LinkedChildEntity>();
-                if (folder.LinkedChildren.Length > 0)
-                {
-#pragma warning disable CS0618 // Type or member is obsolete - legacy path resolution for old data
-                    var pathsToResolve = folder.LinkedChildren
-                        .Where(lc => (!lc.ItemId.HasValue || lc.ItemId.Value.IsEmpty()) && !string.IsNullOrEmpty(lc.Path))
-                        .Select(lc => lc.Path)
-                        .Distinct()
-                        .ToList();
-
-                    var pathToIdMap = pathsToResolve.Count > 0
-                        ? context.BaseItems
-                            .Where(e => e.Path != null && pathsToResolve.Contains(e.Path))
-                            .Select(e => new { e.Path, e.Id })
-                            .GroupBy(e => e.Path!)
-                            .ToDictionary(g => g.Key, g => g.First().Id)
-                        : [];
-
-                    var resolvedChildren = new List<(LinkedChild Child, Guid ChildId)>();
-                    foreach (var linkedChild in folder.LinkedChildren)
-                    {
-                        var childItemId = linkedChild.ItemId;
-                        if (!childItemId.HasValue || childItemId.Value.IsEmpty())
-                        {
-                            if (!string.IsNullOrEmpty(linkedChild.Path) && pathToIdMap.TryGetValue(linkedChild.Path, out var resolvedId))
-                            {
-                                childItemId = resolvedId;
-                            }
-                        }
-#pragma warning restore CS0618
-
-                        if (childItemId.HasValue && !childItemId.Value.IsEmpty())
-                        {
-                            resolvedChildren.Add((linkedChild, childItemId.Value));
-                        }
-                    }
-
-                    resolvedChildren = resolvedChildren
-                        .GroupBy(c => c.ChildId)
-                        .Select(g => g.Last())
-                        .ToList();
-
-                    var childIdsToCheck = resolvedChildren.Select(c => c.ChildId).ToList();
-                    var existingChildIds = childIdsToCheck.Count > 0
-                        ? context.BaseItems
-                            .Where(e => childIdsToCheck.Contains(e.Id))
-                            .Select(e => e.Id)
-                            .ToHashSet()
-                        : [];
-
-                    var isPlaylist = folder is Playlist;
-                    var sortOrder = 0;
-                    foreach (var (linkedChild, childId) in resolvedChildren)
-                    {
-                        if (!existingChildIds.Contains(childId))
-                        {
-                            _logger.LogWarning(
-                                "Skipping LinkedChild for parent {ParentName} ({ParentId}): child item {ChildId} does not exist in database",
-                                item.Item.Name,
-                                item.Item.Id,
-                                childId);
-                            continue;
-                        }
-
-                        var existingLink = existingLinkedChildren.FirstOrDefault(e => e.ChildId == childId);
-                        if (existingLink is null)
-                        {
-                            context.LinkedChildren.Add(new LinkedChildEntity()
-                            {
-                                ParentId = item.Item.Id,
-                                ChildId = childId,
-                                ChildType = (DbLinkedChildType)linkedChild.Type,
-                                SortOrder = isPlaylist ? sortOrder : null
-                            });
-                        }
-                        else
-                        {
-                            existingLink.SortOrder = isPlaylist ? sortOrder : null;
-                            existingLink.ChildType = (DbLinkedChildType)linkedChild.Type;
-                            existingLinkedChildren.Remove(existingLink);
-                        }
-
-                        sortOrder++;
-                    }
-                }
-
-                if (existingLinkedChildren.Count > 0)
-                {
-                    context.LinkedChildren.RemoveRange(existingLinkedChildren);
-                }
-            }
-
-            if (item.Item is Video video)
-            {
-                var existingLinkedChildren = (allLinkedChildrenByParent.GetValueOrDefault(video.Id) ?? new List<LinkedChildEntity>())
-                    .Where(e => (int)e.ChildType == 2 || (int)e.ChildType == 3)
-                    .ToList();
-
-                var newLinkedChildren = new List<(Guid ChildId, LinkedChildType Type)>();
-
-                if (video.LocalAlternateVersions.Length > 0)
-                {
-                    var pathsToResolve = video.LocalAlternateVersions.Where(p => !string.IsNullOrEmpty(p)).ToList();
-                    if (pathsToResolve.Count > 0)
-                    {
-                        var pathToIdMap = context.BaseItems
-                            .Where(e => e.Path != null && pathsToResolve.Contains(e.Path))
-                            .Select(e => new { e.Path, e.Id })
-                            .GroupBy(e => e.Path!)
-                            .ToDictionary(g => g.Key, g => g.First().Id);
-
-                        foreach (var path in pathsToResolve)
-                        {
-                            if (pathToIdMap.TryGetValue(path, out var childId))
-                            {
-                                newLinkedChildren.Add((childId, LinkedChildType.LocalAlternateVersion));
-                            }
-                        }
-                    }
-                }
-
-                if (video.LinkedAlternateVersions.Length > 0)
-                {
-                    foreach (var linkedChild in video.LinkedAlternateVersions)
-                    {
-                        if (linkedChild.ItemId.HasValue && !linkedChild.ItemId.Value.IsEmpty())
-                        {
-                            newLinkedChildren.Add((linkedChild.ItemId.Value, LinkedChildType.LinkedAlternateVersion));
-                        }
-                    }
-                }
-
-                newLinkedChildren = newLinkedChildren
-                    .GroupBy(c => c.ChildId)
-                    .Select(g => g.Last())
-                    .ToList();
-
-                var childIdsToCheck = newLinkedChildren.Select(c => c.ChildId).ToList();
-                var existingChildIds = childIdsToCheck.Count > 0
-                    ? context.BaseItems
-                        .Where(e => childIdsToCheck.Contains(e.Id))
-                        .Select(e => e.Id)
-                        .ToHashSet()
-                    : [];
-
-                int sortOrder = 0;
-                foreach (var (childId, childType) in newLinkedChildren)
-                {
-                    if (!existingChildIds.Contains(childId))
-                    {
-                        _logger.LogWarning(
-                            "Skipping alternate version for video {VideoName} ({VideoId}): child item {ChildId} does not exist in database",
-                            video.Name,
-                            video.Id,
-                            childId);
-                        continue;
-                    }
-
-                    var existingLink = existingLinkedChildren.FirstOrDefault(e => e.ChildId == childId);
-                    if (existingLink is null)
-                    {
-                        context.LinkedChildren.Add(new LinkedChildEntity
-                        {
-                            ParentId = video.Id,
-                            ChildId = childId,
-                            ChildType = (DbLinkedChildType)childType,
-                            SortOrder = sortOrder
-                        });
-                    }
-                    else
-                    {
-                        existingLink.ChildType = (DbLinkedChildType)childType;
-                        existingLink.SortOrder = sortOrder;
-                        existingLinkedChildren.Remove(existingLink);
-                    }
-
-                    sortOrder++;
-                }
-
-                if (existingLinkedChildren.Count > 0)
-                {
-                    var orphanedLocalVersionIds = existingLinkedChildren
-                        .Where(e => e.ChildType == DbLinkedChildType.LocalAlternateVersion)
-                        .Select(e => e.ChildId)
-                        .ToList();
-
-                    context.LinkedChildren.RemoveRange(existingLinkedChildren);
-
-                    if (orphanedLocalVersionIds.Count > 0)
-                    {
-                        var orphanedItems = context.BaseItems
-                            .Where(e => orphanedLocalVersionIds.Contains(e.Id) && e.OwnerId == video.Id)
-                            .ToList();
-
-                        if (orphanedItems.Count > 0)
-                        {
-                            _logger.LogInformation(
-                                "Deleting {Count} orphaned LocalAlternateVersion items for video {VideoName} ({VideoId})",
-                                orphanedItems.Count,
-                                video.Name,
-                                video.Id);
-                            context.BaseItems.RemoveRange(orphanedItems);
-                        }
-                    }
-                }
-            }
-        }
-
-        context.SaveChangesAsync(default).GetAwaiter().GetResult();
+        context.SaveChanges();
         transaction.Commit();
     }
 
@@ -708,6 +388,617 @@ public class ItemPersistenceService : IItemPersistenceService
         return list;
     }
 
+    internal static Dictionary<(ItemValueType MagicNumber, string Value), ItemValue> CreateItemValueLookup(IEnumerable<ItemValue> itemValues)
+    {
+        var lookup = new Dictionary<(ItemValueType MagicNumber, string Value), ItemValue>(ItemValueKeyComparer);
+
+        foreach (var itemValue in itemValues)
+        {
+            lookup[(itemValue.Type, itemValue.Value)] = itemValue;
+        }
+
+        return lookup;
+    }
+
+    internal static Dictionary<Guid, Dictionary<Guid, ItemValueMap>> CreateItemValueMapLookup(IEnumerable<ItemValueMap> mappedValues)
+    {
+        var lookup = new Dictionary<Guid, Dictionary<Guid, ItemValueMap>>();
+
+        foreach (var mappedValue in mappedValues)
+        {
+            if (!lookup.TryGetValue(mappedValue.ItemId, out var itemLookup))
+            {
+                itemLookup = new Dictionary<Guid, ItemValueMap>();
+                lookup[mappedValue.ItemId] = itemLookup;
+            }
+
+            itemLookup[mappedValue.ItemValueId] = mappedValue;
+        }
+
+        return lookup;
+    }
+
+    internal static Dictionary<Guid, Dictionary<Guid, AncestorId>> CreateAncestorLookup(IEnumerable<AncestorId> ancestorIds)
+    {
+        var lookup = new Dictionary<Guid, Dictionary<Guid, AncestorId>>();
+
+        foreach (var ancestorId in ancestorIds)
+        {
+            if (!lookup.TryGetValue(ancestorId.ItemId, out var itemLookup))
+            {
+                itemLookup = new Dictionary<Guid, AncestorId>();
+                lookup[ancestorId.ItemId] = itemLookup;
+            }
+
+            itemLookup[ancestorId.ParentItemId] = ancestorId;
+        }
+
+        return lookup;
+    }
+
+    internal static Dictionary<Guid, LinkedChildEntity> CreateLinkedChildLookup(IEnumerable<LinkedChildEntity> linkedChildren)
+    {
+        var lookup = new Dictionary<Guid, LinkedChildEntity>();
+
+        foreach (var linkedChild in linkedChildren)
+        {
+            if (!lookup.ContainsKey(linkedChild.ChildId))
+            {
+                lookup[linkedChild.ChildId] = linkedChild;
+            }
+        }
+
+        return lookup;
+    }
+
+    private void SaveBaseItemEntities(
+        MulletaFlixDbContext context,
+        List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)> tuples,
+        HashSet<Guid> existingItems)
+    {
+        var existingIdsList = existingItems.ToList();
+        var existingProviders = existingIdsList.Count > 0
+            ? context.BaseItemProviders
+                .WhereOneOrMany(existingIdsList, e => e.ItemId)
+                .ToList()
+                .GroupBy(e => e.ItemId)
+                .ToDictionary(g => g.Key, g => g.ToList())
+            : new Dictionary<Guid, List<BaseItemProvider>>();
+
+        var existingMetadataFields = existingIdsList.Count > 0
+            ? context.BaseItemMetadataFields
+                .WhereOneOrMany(existingIdsList, e => e.ItemId)
+                .ToList()
+                .GroupBy(e => e.ItemId)
+                .ToDictionary(g => g.Key, g => g.ToList())
+            : new Dictionary<Guid, List<BaseItemMetadataField>>();
+
+        foreach (var item in tuples)
+        {
+            var entity = BaseItemMapper.Map(item.Item, _appHost);
+            entity.TopParentId = item.TopParent?.Id;
+
+            if (!existingItems.Contains(entity.Id))
+            {
+                context.BaseItems.Add(entity);
+            }
+            else
+            {
+                // Check if Providers changed
+                var currentProviders = entity.Provider ?? new List<BaseItemProvider>();
+                var oldProviders = existingProviders.GetValueOrDefault(entity.Id) ?? new List<BaseItemProvider>();
+                bool providersChanged = currentProviders.Count != oldProviders.Count ||
+                    currentProviders.Any(cp => !oldProviders.Any(op => op.ProviderId == cp.ProviderId && op.ProviderValue == cp.ProviderValue));
+
+                if (providersChanged)
+                {
+                    context.BaseItemProviders.Where(e => e.ItemId == entity.Id).ExecuteDelete();
+                    if (currentProviders.Count > 0)
+                    {
+                        context.BaseItemProviders.AddRange(currentProviders);
+                    }
+                }
+
+                // Check if Images changed (only touch if entity.Images is explicitly defined/not null)
+                if (entity.Images is not null)
+                {
+                    context.BaseItemImageInfos.Where(e => e.ItemId == entity.Id).ExecuteDelete();
+                    if (entity.Images.Count > 0)
+                    {
+                        context.BaseItemImageInfos.AddRange(entity.Images);
+                    }
+                }
+
+                // Check if LockedFields changed
+                var currentLockedFields = entity.LockedFields ?? new List<BaseItemMetadataField>();
+                var oldLockedFields = existingMetadataFields.GetValueOrDefault(entity.Id) ?? new List<BaseItemMetadataField>();
+                bool lockedFieldsChanged = currentLockedFields.Count != oldLockedFields.Count ||
+                    currentLockedFields.Any(cf => !oldLockedFields.Any(of => of.Id == cf.Id));
+
+                if (lockedFieldsChanged)
+                {
+                    context.BaseItemMetadataFields.Where(e => e.ItemId == entity.Id).ExecuteDelete();
+                    if (currentLockedFields.Count > 0)
+                    {
+                        context.BaseItemMetadataFields.AddRange(currentLockedFields);
+                    }
+                }
+
+                context.BaseItems.Attach(entity).State = EntityState.Modified;
+            }
+        }
+    }
+
+    private void SaveItemValues(
+        MulletaFlixDbContext context,
+        List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)> tuples,
+        Guid[] ids)
+    {
+        var itemValueMaps = tuples
+            .Select(e => (e.Item, Values: GetItemValuesToSave(e.Item, e.InheritedTags)))
+            .ToArray();
+        var allListedItemValues = itemValueMaps
+            .SelectMany(f => f.Values)
+            .Distinct(ItemValueKeyComparer)
+            .ToArray();
+
+        var types = allListedItemValues.Select(e => e.MagicNumber).Distinct().ToArray();
+        var values = allListedItemValues.Select(e => e.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var allListedItemValuesSet = allListedItemValues.ToHashSet(ItemValueKeyComparer);
+
+        var existingValues = context.ItemValues
+            .Where(e => Enumerable.Contains(types, e.Type) && Enumerable.Contains(values, e.Value))
+            .AsEnumerable()
+            .Where(e => allListedItemValuesSet.Contains((e.Type, e.Value)))
+            .DistinctBy(e => (e.Type, e.Value), ItemValueKeyComparer)
+            .ToArray();
+        var missingItemValues = allListedItemValues.Except(existingValues.Select(f => (MagicNumber: f.Type, f.Value)), ItemValueKeyComparer).Select(f => new ItemValue()
+        {
+            CleanValue = f.Value.GetCleanValue(),
+            ItemValueId = Guid.NewGuid(),
+            Type = f.MagicNumber,
+            Value = f.Value
+        }).ToArray();
+        context.ItemValues.AddRange(missingItemValues);
+
+        var itemValuesStore = existingValues.Concat(missingItemValues).ToArray();
+        var itemValuesStoreLookup = CreateItemValueLookup(itemValuesStore);
+        var valueMap = itemValueMaps
+            .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStoreLookup[(e.MagicNumber, e.Value)]).DistinctBy(e => e.ItemValueId).ToArray()))
+            .ToArray();
+
+        var mappedValues = context.ItemValuesMap.Where(e => Enumerable.Contains(ids, e.ItemId)).ToList();
+        var mappedValuesByItemId = CreateItemValueMapLookup(mappedValues);
+
+        foreach (var item in valueMap)
+        {
+            var itemMappedValues = mappedValuesByItemId.GetValueOrDefault(item.Item.Id);
+            foreach (var itemValue in item.Values)
+            {
+                if (itemMappedValues is null || !itemMappedValues.Remove(itemValue.ItemValueId, out _))
+                {
+                    context.ItemValuesMap.Add(new ItemValueMap()
+                    {
+                        Item = null!,
+                        ItemId = item.Item.Id,
+                        ItemValue = null!,
+                        ItemValueId = itemValue.ItemValueId
+                    });
+                }
+            }
+
+            if (itemMappedValues is not null && itemMappedValues.Count > 0)
+            {
+                context.ItemValuesMap.RemoveRange(itemMappedValues.Values);
+            }
+        }
+    }
+
+    private void SaveAncestorIds(
+        MulletaFlixDbContext context,
+        List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)> tuples)
+    {
+        var itemsWithAncestors = tuples
+            .Where(t => t.Item.SupportsAncestors && t.AncestorIds != null)
+            .Select(t => t.Item.Id)
+            .ToList();
+
+        var allExistingAncestorIds = itemsWithAncestors.Count > 0
+            ? context.AncestorIds
+                .Where(e => itemsWithAncestors.Contains(e.ItemId))
+                .ToList()
+            : [];
+        var existingAncestorIdsByItemId = CreateAncestorLookup(allExistingAncestorIds);
+
+        var allRequestedAncestorIds = tuples
+            .Where(t => t.Item.SupportsAncestors && t.AncestorIds != null)
+            .SelectMany(t => t.AncestorIds!)
+            .Distinct()
+            .ToList();
+
+        var validAncestorIdsSet = allRequestedAncestorIds.Count > 0
+            ? context.BaseItems
+                .Where(e => allRequestedAncestorIds.Contains(e.Id))
+                .Select(f => f.Id)
+                .ToHashSet()
+            : new HashSet<Guid>();
+
+        foreach (var item in tuples)
+        {
+            if (item.Item.SupportsAncestors && item.AncestorIds != null)
+            {
+                var validAncestorIds = item.AncestorIds.Where(id => validAncestorIdsSet.Contains(id)).ToArray();
+                var existingAncestorIds = existingAncestorIdsByItemId.GetValueOrDefault(item.Item.Id);
+                foreach (var ancestorId in validAncestorIds)
+                {
+                    if (existingAncestorIds is null || !existingAncestorIds.Remove(ancestorId, out _))
+                    {
+                        context.AncestorIds.Add(new AncestorId()
+                        {
+                            ParentItemId = ancestorId,
+                            ItemId = item.Item.Id,
+                            Item = null!,
+                            ParentItem = null!
+                        });
+                    }
+                }
+
+                if (existingAncestorIds is not null && existingAncestorIds.Count > 0)
+                {
+                    context.AncestorIds.RemoveRange(existingAncestorIds.Values);
+                }
+            }
+        }
+    }
+
+    private void SaveLinkedChildren(
+        MulletaFlixDbContext context,
+        List<(BaseItemDto Item, List<Guid>? AncestorIds, BaseItemDto TopParent, IEnumerable<string> UserDataKey, List<string> InheritedTags)> tuples,
+        List<Guid> folderIds,
+        List<Guid> videoIds)
+    {
+        var allParentIds = folderIds.Concat(videoIds).Distinct().ToList();
+        var allLinkedChildren = allParentIds.Count > 0
+            ? context.LinkedChildren
+                .Where(e => allParentIds.Contains(e.ParentId))
+                .ToList()
+            : new List<LinkedChildEntity>();
+
+        var allLinkedChildrenByParent = allLinkedChildren
+            .GroupBy(e => e.ParentId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // 1. Batch path resolution
+        var allFolderPathsToResolve = tuples
+            .Where(t => t.Item is Folder)
+            .SelectMany(t => ((Folder)t.Item).LinkedChildren)
+            .Where(lc => (!lc.ItemId.HasValue || lc.ItemId.Value.IsEmpty()) && !string.IsNullOrEmpty(lc.Path))
+            .Select(lc => lc.Path)
+            .Distinct();
+
+        var allVideoPathsToResolve = tuples
+            .Where(t => t.Item is Video)
+            .SelectMany(t => ((Video)t.Item).LocalAlternateVersions)
+            .Where(p => !string.IsNullOrEmpty(p))
+            .Distinct();
+
+        var allPathsToResolve = allFolderPathsToResolve
+            .Concat(allVideoPathsToResolve)
+            .Distinct()
+            .ToList();
+
+        var pathToIdMap = allPathsToResolve.Count > 0
+            ? context.BaseItems
+                .Where(e => e.Path != null && allPathsToResolve.Contains(e.Path))
+                .Select(e => new { e.Path, e.Id })
+                .GroupBy(e => e.Path!)
+                .ToDictionary(g => g.Key, g => g.First().Id)
+            : new Dictionary<string, Guid>();
+
+        // 2. Collect all child IDs to check
+        var allChildIdsToCheck = new HashSet<Guid>();
+        foreach (var item in tuples)
+        {
+            if (item.Item is Folder folder)
+            {
+                foreach (var linkedChild in folder.LinkedChildren)
+                {
+                    var childId = linkedChild.ItemId;
+                    if ((!childId.HasValue || childId.Value.IsEmpty()) && !string.IsNullOrEmpty(linkedChild.Path))
+                    {
+                        if (pathToIdMap.TryGetValue(linkedChild.Path, out var resolvedId))
+                        {
+                            childId = resolvedId;
+                        }
+                    }
+                    if (childId.HasValue && !childId.Value.IsEmpty())
+                    {
+                        allChildIdsToCheck.Add(childId.Value);
+                    }
+                }
+            }
+            else if (item.Item is Video video)
+            {
+                foreach (var path in video.LocalAlternateVersions)
+                {
+                    if (!string.IsNullOrEmpty(path) && pathToIdMap.TryGetValue(path, out var childId))
+                    {
+                        allChildIdsToCheck.Add(childId);
+                    }
+                }
+                foreach (var linkedChild in video.LinkedAlternateVersions)
+                {
+                    if (linkedChild.ItemId.HasValue && !linkedChild.ItemId.Value.IsEmpty())
+                    {
+                        allChildIdsToCheck.Add(linkedChild.ItemId.Value);
+                    }
+                }
+            }
+        }
+
+        // 3. Batch query existence of all child IDs
+        var allExistingChildIds = allChildIdsToCheck.Count > 0
+            ? context.BaseItems
+                .WhereOneOrMany(allChildIdsToCheck.ToList(), e => e.Id)
+                .Select(e => e.Id)
+                .ToHashSet()
+            : new HashSet<Guid>();
+
+        // 4. Batch query all potential orphaned local version items
+        var allOrphanedLocalVersionIds = new HashSet<Guid>();
+        foreach (var item in tuples)
+        {
+            if (item.Item is Video video)
+            {
+                var existingLinkedChildren = (allLinkedChildrenByParent.GetValueOrDefault(video.Id) ?? new List<LinkedChildEntity>())
+                    .Where(e => (int)e.ChildType == 2 || (int)e.ChildType == 3)
+                    .ToList();
+
+                var newLinkedChildren = new List<Guid>();
+                if (video.LocalAlternateVersions.Length > 0)
+                {
+                    foreach (var path in video.LocalAlternateVersions)
+                    {
+                        if (!string.IsNullOrEmpty(path) && pathToIdMap.TryGetValue(path, out var childId))
+                        {
+                            newLinkedChildren.Add(childId);
+                        }
+                    }
+                }
+                if (video.LinkedAlternateVersions.Length > 0)
+                {
+                    foreach (var linkedChild in video.LinkedAlternateVersions)
+                    {
+                        if (linkedChild.ItemId.HasValue && !linkedChild.ItemId.Value.IsEmpty())
+                        {
+                            newLinkedChildren.Add(linkedChild.ItemId.Value);
+                        }
+                    }
+                }
+
+                var newLinkedChildrenSet = newLinkedChildren.ToHashSet();
+                foreach (var existingLink in existingLinkedChildren)
+                {
+                    if (!newLinkedChildrenSet.Contains(existingLink.ChildId))
+                    {
+                        if (existingLink.ChildType == DbLinkedChildType.LocalAlternateVersion)
+                        {
+                            allOrphanedLocalVersionIds.Add(existingLink.ChildId);
+                        }
+                    }
+                }
+            }
+        }
+
+        var orphanedItems = allOrphanedLocalVersionIds.Count > 0
+            ? context.BaseItems
+                .WhereOneOrMany(allOrphanedLocalVersionIds.ToList(), e => e.Id)
+                .Where(e => e.OwnerId.HasValue)
+                .ToDictionary(e => (e.Id, e.OwnerId!.Value), e => e)
+            : new Dictionary<(Guid Id, Guid OwnerId), BaseItemEntity>();
+
+        // 5. Process Folder Linked Children
+        foreach (var item in tuples)
+        {
+            if (item.Item is Folder folder)
+            {
+                var existingLinkedChildren = allLinkedChildrenByParent.GetValueOrDefault(item.Item.Id)?.ToList() ?? new List<LinkedChildEntity>();
+                var existingLinkedChildrenByChildId = CreateLinkedChildLookup(existingLinkedChildren);
+                var matchedLinkedChildren = new HashSet<LinkedChildEntity>();
+                if (folder.LinkedChildren.Length > 0)
+                {
+                    var resolvedChildren = new List<(LinkedChild Child, Guid ChildId)>();
+                    foreach (var linkedChild in folder.LinkedChildren)
+                    {
+                        var childItemId = linkedChild.ItemId;
+                        if (!childItemId.HasValue || childItemId.Value.IsEmpty())
+                        {
+                            if (!string.IsNullOrEmpty(linkedChild.Path) && pathToIdMap.TryGetValue(linkedChild.Path, out var resolvedId))
+                            {
+                                childItemId = resolvedId;
+                            }
+                        }
+
+                        if (childItemId.HasValue && !childItemId.Value.IsEmpty())
+                        {
+                            resolvedChildren.Add((linkedChild, childItemId.Value));
+                        }
+                    }
+
+                    resolvedChildren = resolvedChildren
+                        .GroupBy(c => c.ChildId)
+                        .Select(g => g.Last())
+                        .ToList();
+
+                    var isPlaylist = folder is Playlist;
+                    var sortOrder = 0;
+                    foreach (var (linkedChild, childId) in resolvedChildren)
+                    {
+                        if (!allExistingChildIds.Contains(childId))
+                        {
+                            _logger.LogWarning(
+                                "Skipping LinkedChild for parent {ParentName} ({ParentId}): child item {ChildId} does not exist in database",
+                                item.Item.Name,
+                                item.Item.Id,
+                                childId);
+                            continue;
+                        }
+
+                        if (!existingLinkedChildrenByChildId.Remove(childId, out var existingLink))
+                        {
+                            context.LinkedChildren.Add(new LinkedChildEntity()
+                            {
+                                ParentId = item.Item.Id,
+                                ChildId = childId,
+                                ChildType = (DbLinkedChildType)linkedChild.Type,
+                                SortOrder = isPlaylist ? sortOrder : null
+                            });
+                        }
+                        else
+                        {
+                            existingLink.SortOrder = isPlaylist ? sortOrder : null;
+                            existingLink.ChildType = (DbLinkedChildType)linkedChild.Type;
+                            matchedLinkedChildren.Add(existingLink);
+                        }
+
+                        sortOrder++;
+                    }
+                }
+
+                if (existingLinkedChildren.Count > 0)
+                {
+                    var linkedChildrenToRemove = existingLinkedChildren
+                        .Where(e => !matchedLinkedChildren.Contains(e))
+                        .ToList();
+
+                    if (linkedChildrenToRemove.Count > 0)
+                    {
+                        context.LinkedChildren.RemoveRange(linkedChildrenToRemove);
+                    }
+                }
+            }
+
+            // 6. Process Video Linked Children
+            if (item.Item is Video video)
+            {
+                var existingLinkedChildren = (allLinkedChildrenByParent.GetValueOrDefault(video.Id) ?? new List<LinkedChildEntity>())
+                    .Where(e => (int)e.ChildType == 2 || (int)e.ChildType == 3)
+                    .ToList();
+                var existingLinkedChildrenByChildId = CreateLinkedChildLookup(existingLinkedChildren);
+                var matchedLinkedChildren = new HashSet<LinkedChildEntity>();
+
+                var newLinkedChildren = new List<(Guid ChildId, LinkedChildType Type)>();
+
+                if (video.LocalAlternateVersions.Length > 0)
+                {
+                    foreach (var path in video.LocalAlternateVersions)
+                    {
+                        if (!string.IsNullOrEmpty(path) && pathToIdMap.TryGetValue(path, out var childId))
+                        {
+                            newLinkedChildren.Add((childId, LinkedChildType.LocalAlternateVersion));
+                        }
+                    }
+                }
+
+                if (video.LinkedAlternateVersions.Length > 0)
+                {
+                    foreach (var linkedChild in video.LinkedAlternateVersions)
+                    {
+                        if (linkedChild.ItemId.HasValue && !linkedChild.ItemId.Value.IsEmpty())
+                        {
+                            newLinkedChildren.Add((linkedChild.ItemId.Value, LinkedChildType.LinkedAlternateVersion));
+                        }
+                    }
+                }
+
+                newLinkedChildren = newLinkedChildren
+                    .GroupBy(c => c.ChildId)
+                    .Select(g => g.Last())
+                    .ToList();
+
+                int sortOrder = 0;
+                foreach (var (childId, childType) in newLinkedChildren)
+                {
+                    if (!allExistingChildIds.Contains(childId))
+                    {
+                        _logger.LogWarning(
+                            "Skipping alternate version for video {VideoName} ({VideoId}): child item {ChildId} does not exist in database",
+                            video.Name,
+                            video.Id,
+                            childId);
+                        continue;
+                    }
+
+                    if (!existingLinkedChildrenByChildId.Remove(childId, out var existingLink))
+                    {
+                        context.LinkedChildren.Add(new LinkedChildEntity
+                        {
+                            ParentId = video.Id,
+                            ChildId = childId,
+                            ChildType = (DbLinkedChildType)childType,
+                            SortOrder = sortOrder
+                        });
+                    }
+                    else
+                    {
+                        existingLink.ChildType = (DbLinkedChildType)childType;
+                        existingLink.SortOrder = sortOrder;
+                        matchedLinkedChildren.Add(existingLink);
+                    }
+
+                    sortOrder++;
+                }
+
+                if (existingLinkedChildren.Count > 0)
+                {
+                    var remainingLinkedChildren = existingLinkedChildren
+                        .Where(e => !matchedLinkedChildren.Contains(e))
+                        .ToList();
+
+                    if (remainingLinkedChildren.Count > 0)
+                    {
+                        context.LinkedChildren.RemoveRange(remainingLinkedChildren);
+                    }
+
+                    var orphanedItemsToRemove = new List<BaseItemEntity>();
+                    foreach (var remaining in remainingLinkedChildren)
+                    {
+                        if (remaining.ChildType == DbLinkedChildType.LocalAlternateVersion &&
+                            orphanedItems.TryGetValue((remaining.ChildId, video.Id), out var orphanedItem))
+                        {
+                            orphanedItemsToRemove.Add(orphanedItem);
+                        }
+                    }
+
+                    if (orphanedItemsToRemove.Count > 0)
+                    {
+                        _logger.LogInformation(
+                            "Deleting {Count} orphaned LocalAlternateVersion items for video {VideoName} ({VideoId})",
+                            orphanedItemsToRemove.Count,
+                            video.Name,
+                            video.Id);
+                        context.BaseItems.RemoveRange(orphanedItemsToRemove);
+                    }
+                }
+            }
+        }
+    }
+
+    private static bool NullableSequenceEqual(byte[]? a, byte[]? b)
+    {
+        if (a == null && b == null)
+        {
+            return true;
+        }
+
+        if (a == null || b == null)
+        {
+            return false;
+        }
+
+        return a.SequenceEqual(b);
+    }
+
     private sealed class ItemValueKeyEqualityComparer : IEqualityComparer<(ItemValueType MagicNumber, string Value)>
     {
         public bool Equals((ItemValueType MagicNumber, string Value) x, (ItemValueType MagicNumber, string Value) y)
@@ -721,4 +1012,3 @@ public class ItemPersistenceService : IItemPersistenceService
         }
     }
 }
-
