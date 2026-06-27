@@ -103,7 +103,7 @@ Os principais riscos encontrados são:
 
 ## Plano Por Sprint
 
-### Sprint 0 - Baseline e Instrumentação
+### Sprint 0 - Baseline e Instrumentação [CONCLUÍDA]
 
 Objetivo: medir antes de mexer.
 
@@ -127,7 +127,7 @@ Ganho esperado:
 - Não entrega ganho direto de produção.
 - Reduz risco de regressão e define linha de base para os sprints seguintes.
 
-### Sprint 1 - Consultas Quentes
+### Sprint 1 - Consultas Quentes [CONCLUÍDA]
 
 Objetivo: reduzir latência e memória em listagens, reconhecimento de mídia e "latest/next up".
 
@@ -157,7 +157,7 @@ Ganho esperado:
 - Reconhecimento de mídia: melhora estimada de 10% a 30% em bibliotecas com muitos arquivos externos e streams auxiliares.
 - Download de metadata: melhora estimada de 15% a 40% quando há muitos providers ou imagens remotas.
 
-### Sprint 2 - Persistência e Escrita
+### Sprint 2 - Persistência e Escrita [CONCLUÍDA]
 
 Objetivo: reduzir custo de save/delete, diminuir risco de lock contention e acelerar persistência de metadata.
 
@@ -186,7 +186,7 @@ Ganho esperado:
 - Menos bloqueio de thread e menor chance de travamento sob carga concorrente.
 - Refresh de metadata: melhora estimada de 10% a 25% por reduzir regravações e chamadas desnecessárias.
 
-### Sprint 3 - Startup e Bootstrap
+### Sprint 3 - Startup e Bootstrap [EM ANDAMENTO]
 
 Objetivo: melhorar tempo de boot e reduzir acoplamento operacional.
 
