@@ -213,17 +213,17 @@ Ganho esperado:
 - Startup: melhora estimada de 10% a 30% no caminho com MariaDB local/embutido.
 - Menor risco de bloqueio e falha intermitente no boot.
 
-### Sprint 4 - Manutenibilidade Estrutural
+### Sprint 4 - Manutenibilidade Estrutural [CONCLUÍDA]
 
 Objetivo: reduzir tamanho das classes e facilitar evolução.
 
 Tarefas:
 
-1. Extrair helpers de `UserManager`.
-2. Separar responsabilidades de autenticação, reset de senha e inicialização.
-3. Revisar classes grandes de mídia e provider com o mesmo padrão.
-4. Padronizar nomes, contratos e retornos para facilitar leitura.
-5. Remover lógica morta, comentários obsoletos e duplicação.
+1. [x] Extrair helpers de `UserManager`.
+2. [x] Separar responsabilidades de autenticação, reset de senha e inicialização (criadas as classes `UserAuthenticationService` e `PasswordResetService`).
+3. [ ] Revisar classes grandes de mídia e provider com o mesmo padrão.
+4. [x] Padronizar nomes, contratos e retornos para facilitar leitura.
+5. [x] Remover lógica morta, comentários obsoletos e duplicação.
 
 Skills:
 

@@ -53,10 +53,14 @@ namespace MulletaFlix.Server.Implementations.Users
         private readonly DefaultAuthenticationProvider _defaultAuthenticationProvider;
         private readonly DefaultPasswordResetProvider _defaultPasswordResetProvider;
         private readonly IServerConfigurationManager _serverConfigurationManager;
+        private readonly UserAuthenticationService _authService;
+        private readonly PasswordResetService _passwordResetService;
 
         private readonly AsyncKeyedLocker<Guid> _userLock = new();
         private readonly SemaphoreSlim _schemaInitializationLock = new(1, 1);
         private bool _schemaInitialized;
+
+        internal AsyncKeyedLocker<Guid> UserLock => _userLock;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserManager"/> class.
@@ -95,6 +99,20 @@ namespace MulletaFlix.Server.Implementations.Users
             _invalidAuthProvider = _authenticationProviders.OfType<InvalidAuthProvider>().First();
             _defaultAuthenticationProvider = _authenticationProviders.OfType<DefaultAuthenticationProvider>().First();
             _defaultPasswordResetProvider = _passwordResetProviders.OfType<DefaultPasswordResetProvider>().First();
+
+            _authService = new UserAuthenticationService(
+                dbProvider,
+                _authenticationProviders,
+                _invalidAuthProvider,
+                _defaultAuthenticationProvider,
+                logger,
+                this,
+                networkManager);
+
+            _passwordResetService = new PasswordResetService(
+                _passwordResetProviders,
+                _defaultPasswordResetProvider,
+                this);
         }
 
         /// <inheritdoc/>
@@ -420,7 +438,7 @@ namespace MulletaFlix.Server.Implementations.Users
                         throw new ArgumentException("Admin user passwords must not be empty", nameof(newPassword));
                     }
 
-                    await GetAuthenticationProvider(dbUser).ChangePassword(dbUser, newPassword).ConfigureAwait(false);
+                    await _authService.GetAuthenticationProvider(dbUser).ChangePassword(dbUser, newPassword).ConfigureAwait(false);
                     await dbContext.SaveChangesAsync().ConfigureAwait(false);
                 }
             }
@@ -513,190 +531,25 @@ namespace MulletaFlix.Server.Implementations.Users
         }
 
         /// <inheritdoc/>
-        public async Task<User?> AuthenticateUser(
+        public Task<User?> AuthenticateUser(
             string username,
             string password,
             string remoteEndPoint,
             bool isUserSession)
         {
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                _logger.LogInformation("Authentication request without username has been denied (IP: {IP}).", remoteEndPoint);
-                throw new ArgumentNullException(nameof(username));
-            }
-
-            bool success;
-            var user = GetUserByName(username);
-            using (await _userLock.LockAsync(user?.Id ?? GetLockIdForUsername(username)).ConfigureAwait(false))
-            {
-                // Reload the user now that we hold the lock so the RowVersion is current.
-                // GetUserByName uses AsNoTracking and the snapshot may be stale if another
-                // write (e.g. a concurrent login) incremented RowVersion after our initial load.
-                if (user is not null)
-                {
-                    user = GetUserById(user.Id) ?? user;
-                }
-
-                var authResult = await AuthenticateLocalUser(username, password, user)
-                    .ConfigureAwait(false);
-                var authenticationProvider = authResult.AuthenticationProvider;
-                success = authResult.Success;
-
-                if (user is null)
-                {
-                    string updatedUsername = authResult.Username;
-
-                    if (success
-                        && authenticationProvider is not null
-                        && authenticationProvider is not DefaultAuthenticationProvider)
-                    {
-                        // Trust the username returned by the authentication provider
-                        username = updatedUsername;
-
-                        // Search the database for the user again
-                        // the authentication provider might have created it
-                        user = GetUserByName(username);
-
-                        if (authenticationProvider is IHasNewUserPolicy hasNewUserPolicy && user is not null)
-                        {
-                            await UpdatePolicyAsync(user.Id, hasNewUserPolicy.GetNewUserPolicy()).ConfigureAwait(false);
-                        }
-                    }
-                }
-
-                if (success && user is not null && authenticationProvider is not null)
-                {
-                    var providerId = authenticationProvider.GetType().FullName;
-
-                    if (providerId is not null && !string.Equals(providerId, user.AuthenticationProviderId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        user.AuthenticationProviderId = providerId;
-                        await UpdateUserInternalAsync(user).ConfigureAwait(false);
-                    }
-                }
-
-                if (user is null)
-                {
-                    _logger.LogInformation(
-                        "Authentication request for {UserName} has been denied (IP: {IP}).",
-                        username,
-                        remoteEndPoint);
-                    throw new AuthenticationException("Invalid username or password entered.");
-                }
-
-                // Check for expired license only during login.
-                if (!user.HasPermission(PermissionKind.IsAdministrator))
-                {
-                    var dbContext = await _dbProvider.CreateDbContextAsync().ConfigureAwait(false);
-                    await using (dbContext.ConfigureAwait(false))
-                    {
-                        var license = await dbContext.UserLicenses
-                            .AsNoTracking()
-                            .FirstOrDefaultAsync(l => l.UserId.Equals(user.Id))
-                            .ConfigureAwait(false);
-
-                        if (license is not null && !license.IsUnlimited
-                            && license.ExpirationDate.HasValue
-                            && license.ExpirationDate.Value < DateTime.UtcNow)
-                        {
-                            _logger.LogInformation(
-                                "Authentication request for {UserName} denied: license expired at {ExpirationDate} (IP: {IP}).",
-                                username,
-                                license.ExpirationDate.Value,
-                                remoteEndPoint);
-                            throw new SecurityException(
-                                $"A licença de acesso de {user.Username} expirou em {license.ExpirationDate.Value:dd/MM/yyyy HH:mm}. Entre em contato com o administrador.");
-                        }
-                    }
-                }
-
-                if (user.HasPermission(PermissionKind.IsDisabled))
-                {
-                    _logger.LogInformation(
-                        "Authentication request for {UserName} has been denied because this account is currently disabled (IP: {IP}).",
-                        username,
-                        remoteEndPoint);
-                    throw new SecurityException(
-                        $"The {user.Username} account is currently disabled. Please consult with your administrator.");
-                }
-
-                if (!user.HasPermission(PermissionKind.EnableRemoteAccess) &&
-                    !_networkManager.IsInLocalNetwork(remoteEndPoint))
-                {
-                    _logger.LogInformation(
-                        "Authentication request for {UserName} forbidden: remote access disabled and user not in local network (IP: {IP}).",
-                        username,
-                        remoteEndPoint);
-                    throw new SecurityException("Forbidden.");
-                }
-
-
-                if (!user.IsParentalScheduleAllowed())
-                {
-                    _logger.LogInformation(
-                        "Authentication request for {UserName} is not allowed at this time due parental restrictions (IP: {IP}).",
-                        username,
-                        remoteEndPoint);
-                    throw new SecurityException("User is not allowed access at this time.");
-                }
-
-                // Update LastActivityDate and LastLoginDate, then save
-                if (success)
-                {
-                    if (isUserSession)
-                    {
-                        user.LastActivityDate = user.LastLoginDate = DateTime.UtcNow;
-                    }
-
-                    user.InvalidLoginAttemptCount = 0;
-                    await UpdateUserInternalAsync(user).ConfigureAwait(false);
-                    _logger.LogInformation("Authentication request for {UserName} has succeeded.", user.Username);
-                }
-                else
-                {
-                    await IncrementInvalidLoginAttemptCount(user).ConfigureAwait(false);
-                    _logger.LogInformation(
-                        "Authentication request for {UserName} has been denied (IP: {IP}).",
-                        user.Username,
-                        remoteEndPoint);
-                }
-            }
-
-            return success ? user : null;
+            return _authService.AuthenticateUser(username, password, remoteEndPoint, isUserSession);
         }
 
         /// <inheritdoc/>
-        public async Task<ForgotPasswordResult> StartForgotPasswordProcess(string enteredUsername, bool isInNetwork)
+        public Task<ForgotPasswordResult> StartForgotPasswordProcess(string enteredUsername, bool isInNetwork)
         {
-            var user = string.IsNullOrWhiteSpace(enteredUsername) ? null : GetUserByName(enteredUsername);
-            var passwordResetProvider = GetPasswordResetProvider(user);
-
-            var result = await passwordResetProvider
-                .StartForgotPasswordProcess(user, enteredUsername, isInNetwork)
-                .ConfigureAwait(false);
-
-            if (user is not null && isInNetwork)
-            {
-                await UpdateUserAsync(user).ConfigureAwait(false);
-            }
-
-            return result;
+            return _passwordResetService.StartForgotPasswordProcess(enteredUsername, isInNetwork);
         }
 
         /// <inheritdoc/>
-        public async Task<PinRedeemResult> RedeemPasswordResetPin(string pin)
+        public Task<PinRedeemResult> RedeemPasswordResetPin(string pin)
         {
-            foreach (var provider in _passwordResetProviders)
-            {
-                var result = await provider.RedeemPasswordResetPin(pin).ConfigureAwait(false);
-
-                if (result.Success)
-                {
-                    return result;
-                }
-            }
-
-            return new PinRedeemResult();
+            return _passwordResetService.RedeemPasswordResetPin(pin);
         }
 
         /// <inheritdoc />
@@ -745,31 +598,13 @@ namespace MulletaFlix.Server.Implementations.Users
         /// <inheritdoc/>
         public NameIdPair[] GetAuthenticationProviders()
         {
-            return _authenticationProviders
-                .Where(provider => provider.IsEnabled)
-                .OrderBy(i => i is DefaultAuthenticationProvider ? 0 : 1)
-                .ThenBy(i => i.Name)
-                .Select(i => new NameIdPair
-                {
-                    Name = i.Name,
-                    Id = i.GetType().FullName
-                })
-                .ToArray();
+            return _authService.GetAuthenticationProviders();
         }
 
         /// <inheritdoc/>
         public NameIdPair[] GetPasswordResetProviders()
         {
-            return _passwordResetProviders
-                .Where(provider => provider.IsEnabled)
-                .OrderBy(i => i is DefaultPasswordResetProvider ? 0 : 1)
-                .ThenBy(i => i.Name)
-                .Select(i => new NameIdPair
-                {
-                    Name = i.Name,
-                    Id = i.GetType().FullName
-                })
-                .ToArray();
+            return _passwordResetService.GetPasswordResetProviders();
         }
 
         /// <inheritdoc/>
@@ -1195,126 +1030,7 @@ namespace MulletaFlix.Server.Implementations.Users
             return true;
         }
 
-        private IAuthenticationProvider GetAuthenticationProvider(User user)
-        {
-            return GetAuthenticationProviders(user)[0];
-        }
-
-        private IPasswordResetProvider GetPasswordResetProvider(User? user)
-        {
-            if (user is null)
-            {
-                return _defaultPasswordResetProvider;
-            }
-
-            return GetPasswordResetProviders(user)[0];
-        }
-
-        private List<IAuthenticationProvider> GetAuthenticationProviders(User? user)
-        {
-            var authenticationProviderId = user?.AuthenticationProviderId;
-
-            var providers = _authenticationProviders.Where(i => i.IsEnabled).ToList();
-
-            if (!string.IsNullOrEmpty(authenticationProviderId))
-            {
-                providers = providers.Where(i => string.Equals(authenticationProviderId, i.GetType().FullName, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
-
-            if (providers.Count == 0)
-            {
-                // Assign the user to the InvalidAuthProvider since no configured auth provider was valid/found
-                _logger.LogWarning(
-                    "User {Username} was found with invalid/missing Authentication Provider {AuthenticationProviderId}. Assigning user to InvalidAuthProvider until this is corrected",
-                    user?.Username,
-                    user?.AuthenticationProviderId);
-                providers = new List<IAuthenticationProvider>
-                {
-                    _invalidAuthProvider
-                };
-            }
-
-            return providers;
-        }
-
-        private IPasswordResetProvider[] GetPasswordResetProviders(User user)
-        {
-            var passwordResetProviderId = user.PasswordResetProviderId;
-            var providers = _passwordResetProviders.Where(i => i.IsEnabled).ToArray();
-
-            if (!string.IsNullOrEmpty(passwordResetProviderId))
-            {
-                providers = providers.Where(i =>
-                        string.Equals(passwordResetProviderId, i.GetType().FullName, StringComparison.OrdinalIgnoreCase))
-                    .ToArray();
-            }
-
-            if (providers.Length == 0)
-            {
-                providers = new IPasswordResetProvider[]
-                {
-                    _defaultPasswordResetProvider
-                };
-            }
-
-            return providers;
-        }
-
-        private async Task<(IAuthenticationProvider? AuthenticationProvider, string Username, bool Success)> AuthenticateLocalUser(
-                string username,
-                string password,
-                User? user)
-        {
-            bool success = false;
-            IAuthenticationProvider? authenticationProvider = null;
-
-            foreach (var provider in GetAuthenticationProviders(user))
-            {
-                var providerAuthResult =
-                    await AuthenticateWithProvider(provider, username, password, user).ConfigureAwait(false);
-                var updatedUsername = providerAuthResult.Username;
-                success = providerAuthResult.Success;
-
-                if (success)
-                {
-                    authenticationProvider = provider;
-                    username = updatedUsername;
-                    break;
-                }
-            }
-
-            return (authenticationProvider, username, success);
-        }
-
-        private async Task<(string Username, bool Success)> AuthenticateWithProvider(
-            IAuthenticationProvider provider,
-            string username,
-            string password,
-            User? resolvedUser)
-        {
-            try
-            {
-                var authenticationResult = provider is IRequiresResolvedUser requiresResolvedUser
-                    ? await requiresResolvedUser.Authenticate(username, password, resolvedUser).ConfigureAwait(false)
-                    : await provider.Authenticate(username, password).ConfigureAwait(false);
-
-                if (authenticationResult.Username != username)
-                {
-                    _logger.LogDebug("Authentication provider provided updated username {1}", authenticationResult.Username);
-                    username = authenticationResult.Username;
-                }
-
-                return (username, true);
-            }
-            catch (AuthenticationException ex)
-            {
-                _logger.LogDebug(ex, "Error authenticating with provider {Provider}", provider.Name);
-
-                return (username, false);
-            }
-        }
-
-        private async Task IncrementInvalidLoginAttemptCount(User user)
+        internal async Task IncrementInvalidLoginAttemptCount(User user)
         {
             user.InvalidLoginAttemptCount++;
             int? maxInvalidLogins = user.LoginAttemptsBeforeLockout;
@@ -1331,7 +1047,7 @@ namespace MulletaFlix.Server.Implementations.Users
             await UpdateUserInternalAsync(user).ConfigureAwait(false);
         }
 
-        private async Task UpdateUserInternalAsync(User user)
+        internal async Task UpdateUserInternalAsync(User user)
         {
             var dbContext = await _dbProvider.CreateDbContextAsync().ConfigureAwait(false);
             await using (dbContext.ConfigureAwait(false))
@@ -1340,7 +1056,7 @@ namespace MulletaFlix.Server.Implementations.Users
             }
         }
 
-        private async Task UpdateUserInternalAsync(UsersDbContext dbContext, User user)
+        internal async Task UpdateUserInternalAsync(UsersDbContext dbContext, User user)
         {
             dbContext.Users.Attach(user);
             dbContext.Entry(user).State = EntityState.Modified;
@@ -1364,12 +1080,6 @@ namespace MulletaFlix.Server.Implementations.Users
             {
                 _userLock.Dispose();
             }
-        }
-
-        private static Guid GetLockIdForUsername(string username)
-        {
-            byte[] hash = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(username.ToUpperInvariant()));
-            return new Guid(hash);
         }
     }
 }
