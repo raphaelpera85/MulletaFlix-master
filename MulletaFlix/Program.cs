@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -145,7 +145,7 @@ namespace MulletaFlix.Server
             StartupHelpers.PerformStaticInitialization();
 
             // Iniciar o MariaDB Embutido
-            MariaDbProcessManager.StartMariaDb(appPaths, _logger);
+            await MariaDbProcessManager.StartMariaDbAsync(appPaths, _logger).ConfigureAwait(false);
 
             await ApplyStartupMigrationAsync(appPaths, startupConfig, options).ConfigureAwait(false);
 

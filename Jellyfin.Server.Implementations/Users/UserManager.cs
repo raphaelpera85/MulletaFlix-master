@@ -103,7 +103,10 @@ namespace MulletaFlix.Server.Implementations.Users
         /// <inheritdoc/>
         public IEnumerable<User> GetUsers()
         {
-            EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            if (!_schemaInitialized)
+            {
+                EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            }
             using var dbContext = _dbProvider.CreateDbContext();
             return UserQuery(dbContext)
                 .ToArray();
@@ -112,7 +115,10 @@ namespace MulletaFlix.Server.Implementations.Users
         /// <inheritdoc/>
         public IEnumerable<Guid> GetUsersIds()
         {
-            EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            if (!_schemaInitialized)
+            {
+                EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            }
             using var dbContext = _dbProvider.CreateDbContext();
             return dbContext.Users
                 .AsNoTracking()
@@ -134,7 +140,10 @@ namespace MulletaFlix.Server.Implementations.Users
                 throw new ArgumentException("Guid can't be empty", nameof(id));
             }
 
-            EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            if (!_schemaInitialized)
+            {
+                EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            }
             using var dbContext = _dbProvider.CreateDbContext();
             return UserQuery(dbContext)
                 .FirstOrDefault(user => user.Id == id);
@@ -216,7 +225,10 @@ namespace MulletaFlix.Server.Implementations.Users
                 throw new ArgumentException("Invalid username", nameof(name));
             }
 
-            EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            if (!_schemaInitialized)
+            {
+                EnsureSchemaCreatedAsync().GetAwaiter().GetResult();
+            }
             using var dbContext = _dbProvider.CreateDbContext();
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
             return UserQuery(dbContext)
@@ -515,7 +527,7 @@ namespace MulletaFlix.Server.Implementations.Users
 
             bool success;
             var user = GetUserByName(username);
-            using (await _userLock.LockAsync(user?.Id ?? Guid.Empty).ConfigureAwait(false))
+            using (await _userLock.LockAsync(user?.Id ?? GetLockIdForUsername(username)).ConfigureAwait(false))
             {
                 // Reload the user now that we hold the lock so the RowVersion is current.
                 // GetUserByName uses AsNoTracking and the snapshot may be stale if another
@@ -1352,6 +1364,12 @@ namespace MulletaFlix.Server.Implementations.Users
             {
                 _userLock.Dispose();
             }
+        }
+
+        private static Guid GetLockIdForUsername(string username)
+        {
+            byte[] hash = System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(username.ToUpperInvariant()));
+            return new Guid(hash);
         }
     }
 }

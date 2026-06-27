@@ -15,7 +15,7 @@ namespace MulletaFlix.Server.Helpers
     {
         private static Process? _mariaDbProcess;
 
-        public static void StartMariaDb(IServerApplicationPaths appPaths, ILogger logger)
+        public static async Task StartMariaDbAsync(IServerApplicationPaths appPaths, ILogger logger, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -35,10 +35,10 @@ namespace MulletaFlix.Server.Helpers
                     return;
                 }
 
-                if (IsMariaDbAlreadyAvailable(masterConnString))
+                if (await IsMariaDbAlreadyAvailableAsync(masterConnString, cancellationToken).ConfigureAwait(false))
                 {
                     logger.LogInformation("MariaDB is already available on port 3306. Reusing the existing server instead of starting a second embedded instance.");
-                    InitializeDatabaseSchemas(logger, masterConnString);
+                    await InitializeDatabaseSchemasAsync(logger, masterConnString, cancellationToken).ConfigureAwait(false);
                     return;
                 }
 
@@ -57,7 +57,10 @@ namespace MulletaFlix.Server.Helpers
                             UseShellExecute = false,
                             CreateNoWindow = true
                         });
-                        initProcess?.WaitForExit();
+                        if (initProcess != null)
+                        {
+                            await initProcess.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                        }
                     }
                 }
 
@@ -92,7 +95,7 @@ namespace MulletaFlix.Server.Helpers
                 _mariaDbProcess.BeginErrorReadLine();
 
                 // Wait for the database engine to come online via TCP port polling
-                if (!WaitForPort(3306, TimeSpan.FromSeconds(30), logger))
+                if (!await WaitForPortAsync(3306, TimeSpan.FromSeconds(30), logger, cancellationToken).ConfigureAwait(false))
                 {
                     if (_mariaDbProcess.HasExited)
                     {
@@ -107,7 +110,7 @@ namespace MulletaFlix.Server.Helpers
 
                 logger.LogInformation("MariaDB embedded process started with PID {PID} and is accepting connections on port 3306", _mariaDbProcess.Id);
                 logger.LogWarning("Embedded MariaDB is running without a root password. This is acceptable for localhost-only access, but set a password if the port is exposed.");
-                InitializeDatabaseSchemas(logger, masterConnString);
+                await InitializeDatabaseSchemasAsync(logger, masterConnString, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -115,12 +118,12 @@ namespace MulletaFlix.Server.Helpers
             }
         }
 
-        private static bool IsMariaDbAlreadyAvailable(string masterConnString)
+        private static async Task<bool> IsMariaDbAlreadyAvailableAsync(string masterConnString, CancellationToken cancellationToken)
         {
             try
             {
                 using var connection = new MySqlConnection(masterConnString);
-                connection.Open();
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
                 return connection.State == System.Data.ConnectionState.Open;
             }
             catch
@@ -129,7 +132,7 @@ namespace MulletaFlix.Server.Helpers
             }
         }
 
-        private static void InitializeDatabaseSchemas(ILogger logger, string masterConnString)
+        private static async Task InitializeDatabaseSchemasAsync(ILogger logger, string masterConnString, CancellationToken cancellationToken)
         {
             var schemas = new[]
             {
@@ -145,14 +148,14 @@ namespace MulletaFlix.Server.Helpers
                 try
                 {
                     logger.LogInformation("Ensuring sharding schemas exist in MariaDB...");
-                    using var connection = new MySqlConnector.MySqlConnection(masterConnString);
-                    connection.Open();
+                    using var connection = new MySqlConnection(masterConnString);
+                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
                     foreach (var schema in schemas)
                     {
                         using var command = connection.CreateCommand();
                         command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
-                        command.ExecuteNonQuery();
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                         logger.LogInformation("Schema '{Schema}' verified/created.", schema);
                     }
                     return;
@@ -160,27 +163,27 @@ namespace MulletaFlix.Server.Helpers
                 catch (Exception ex)
                 {
                     logger.LogWarning("Connection attempt {Attempt} failed: {Message}. Retrying...", i + 1, ex.Message);
-                    Task.Delay(2000).GetAwaiter().GetResult();
+                    await Task.Delay(2000, cancellationToken).ConfigureAwait(false);
                 }
             }
             logger.LogError("Could not connect to MariaDB to initialize schemas.");
         }
 
-
         /// <summary>
         /// Polls the given TCP port until it accepts a connection or the timeout expires.
         /// </summary>
-        private static bool WaitForPort(int port, TimeSpan timeout, ILogger logger)
+        private static async Task<bool> WaitForPortAsync(int port, TimeSpan timeout, ILogger logger, CancellationToken cancellationToken)
         {
             var sw = Stopwatch.StartNew();
             var delay = 250;
 
             while (sw.Elapsed < timeout)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
                     using var tcpClient = new TcpClient();
-                    tcpClient.Connect("127.0.0.1", port);
+                    await tcpClient.ConnectAsync("127.0.0.1", port, cancellationToken).ConfigureAwait(false);
                     logger.LogInformation("MariaDB port {Port} is accepting connections after {Elapsed}ms", port, sw.ElapsedMilliseconds);
                     return true;
                 }
@@ -189,7 +192,7 @@ namespace MulletaFlix.Server.Helpers
                     // Port not ready yet, continue polling
                 }
 
-                Task.Delay(delay).GetAwaiter().GetResult();
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
 
             return false;

@@ -28,10 +28,10 @@ Se esta conversa ficar sem tokens e for necessario continuar em outra IA, a prox
 
 ## Sprint Atual
 
-- Sprint atual: `Sprint 3 - Startup e bootstrap`
+- Sprint atual: `Sprint 4 - Testes e integracao`
 - Status da sprint atual: `planejada / pendente de início`
-- Sprints concluídas: `Sprint 0 - Baseline e instrumentacao`, `Sprint 1 - Consultas quentes e midia` e `Sprint 2 - Persistencia e escrita`
-- Sprints pendentes: `Sprint 3` e `Sprint 4`
+- Sprints concluídas: `Sprint 0 - Baseline e instrumentacao`, `Sprint 1 - Consultas quentes e midia`, `Sprint 2 - Persistencia e escrita` e `Sprint 3 - Startup e bootstrap`
+- Sprints pendentes: `Sprint 4`
 
 ## Status Atual
 
@@ -40,7 +40,8 @@ Se esta conversa ficar sem tokens e for necessario continuar em outra IA, a prox
 - [x] Suíte de testes de providers validada com sucesso.
 - [x] Sprint 1 concluída com sucesso (incluindo fechamento de `ProbeProvider.HasChanged` e cortes de performance).
 - [x] Sprint 2 concluída com sucesso (refatorações de batching, remoção de queries N+1, otimização de `DeleteItem` e `SaveImagesAsync` no `ItemPersistenceService`).
-- [ ] Sprints 3 e 4 ainda estao planejadas e nao concluídas.
+- [x] Sprint 3 concluída com sucesso (portabilidade e bootstrap do MariaDB assíncrono, remoção de polling de porta bloqueante e fast-path de schema bypass no `UserManager`).
+- [ ] Sprint 4 ainda está planejada e nao concluída.
 
 ## Skills utilizadas nesta auditoria
 
@@ -227,19 +228,22 @@ Objetivo: melhorar boot e reduzir acoplamento operacional.
 
 Tarefas:
 
-- [ ] Remover polling bloqueante de `MariaDbProcessManager`.
-- [ ] Separar inicializacao de processo e criacao de schema.
-- [ ] Tornar bootstrap de DB externo e local mais explicito.
-- [ ] Revisar `UserManager` para nao bloquear caminhos frequentes.
-- [ ] Cobrir boot com DB pre-existente e schema ausente.
+- [x] Remover polling bloqueante de `MariaDbProcessManager`.
+- [x] Separar inicializacao de processo e criacao de schema.
+- [x] Tornar bootstrap de DB externo e local mais explicito.
+- [x] Revisar `UserManager` para nao bloquear caminhos frequentes.
+- [x] Cobrir boot com DB pre-existente e schema ausente.
 
 Concluido:
 
-- [ ] Nao iniciado.
+- [x] Conversão da inicialização do MariaDB portátil para fluxos totalmente assíncronos (`StartMariaDbAsync`, `InitializeDatabaseSchemasAsync`, `WaitForPortAsync`) e await real.
+- [x] Otimização da concorrência de logins de usuários inexistentes via hashing MD5 de username para a chave de lock, evitando serialização de requests.
+- [x] Implementação do fast-path bypass de validação de schemas em consultas síncronas (`GetUsers`, `GetUsersIds`, `GetUserById`, `GetUserByName`) no `UserManager`.
+- [x] Validação completa de toda a suíte de testes (560/560 testes aprovados, incluindo os testes de concorrência de autenticação que anteriormente expiravam).
 
 Pendente:
 
-- [ ] Tudo listado acima.
+- [ ] Nenhuma (Sprint 3 totalmente concluída).
 
 Skills:
 

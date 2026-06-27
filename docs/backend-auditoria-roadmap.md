@@ -186,7 +186,7 @@ Ganho esperado:
 - Menos bloqueio de thread e menor chance de travamento sob carga concorrente.
 - Refresh de metadata: melhora estimada de 10% a 25% por reduzir regravações e chamadas desnecessárias.
 
-### Sprint 3 - Startup e Bootstrap [EM ANDAMENTO]
+### Sprint 3 - Startup e Bootstrap [CONCLUÍDO]
 
 Objetivo: melhorar tempo de boot e reduzir acoplamento operacional.
 
