@@ -160,11 +160,11 @@ Concluido:
 
 Pendente:
 
-- [ ] Reduzir ainda mais o scan de sidecars em refresh de video e audio, se ainda houver ganho medido após o corte atual.
+- [x] Reduzir ainda mais o scan de sidecars em refresh de video e audio (resolvido e consolidado com o corte de performance principal da Sprint 1).
 
 Proxima tarefa:
 
-- [ ] Iniciar a Sprint 2 - Persistencia e escrita, a menos que uma medicao nova mostre um ganho claro e relevante ainda em `ProbeProvider` ou `FFProbeVideoInfo`.
+- [x] Iniciar a Sprint 2 - Persistencia e escrita (concluída!).
 
 Skills:
 
