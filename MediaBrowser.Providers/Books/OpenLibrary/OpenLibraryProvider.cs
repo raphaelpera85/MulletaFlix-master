@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -123,7 +123,7 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
         {
             var result = new MetadataResult<Book>();
             var cleanIsbn = isbn.Replace("-", string.Empty, StringComparison.Ordinal).Replace(" ", string.Empty, StringComparison.Ordinal);
-            var url = $"https://openlibrary.org/api/books?bibkeys=ISBN:{cleanIsbn}&format=json&jscmd=data";
+            var url = $"https://openlibrary.org/api/books?bibkeys=ISBN:{Uri.EscapeDataString(cleanIsbn)}&format=json&jscmd=data";
 
             try
             {
@@ -156,8 +156,8 @@ namespace MediaBrowser.Providers.Books.OpenLibrary
             var normalizedId = NormalizeOpenLibraryId(olId);
             var isWorkId = normalizedId.EndsWith('W');
             var url = isWorkId
-                ? $"https://openlibrary.org/works/{normalizedId}.json"
-                : $"https://openlibrary.org/api/books?bibkeys=OLID:{normalizedId}&format=json&jscmd=data";
+                ? $"https://openlibrary.org/works/{Uri.EscapeDataString(normalizedId)}.json"
+                : $"https://openlibrary.org/api/books?bibkeys=OLID:{Uri.EscapeDataString(normalizedId)}&format=json&jscmd=data";
 
             try
             {
