@@ -13,9 +13,10 @@ Escopo: backend `MulletaFlix-master`, com foco em performance, manutencao, boots
 Se esta conversa ficar sem tokens e for necessario continuar em outra IA, a proxima instancia deve receber este contexto minimo:
 
 - O projeto principal e o backend do `MulletaFlix-master`.
-- A sprint atual e `Sprint 1 - Consultas quentes e midia`.
+- A sprint atual e `Sprint 5 - Home, detalhe e refresh sob demanda`.
 - O que ja foi concluido inclui `UserManager`, `ItemPersistenceService`, `BaseItemRepository.Querying`, `MetadataService`, `ProviderManager`, `MediaInfoResolver`, `FFProbeVideoInfo` e partes de `ProbeProvider`.
-- O que ainda falta nesta rodada inclui o fechamento de `ProbeProvider.HasChanged` e novos cortes de performance em reconhecimento de midia e download de metadata.
+- O que ja foi corrigido nesta rodada inclui o erro de `requestIdleCallback` no `imageLoader`, que estava bloqueando a renderizacao da home e da pagina de detalhe.
+- O que ainda falta nesta rodada inclui medir o impacto do refresh sob demanda em background, validar no navegador o carregamento de metadados/imagens, revisar a pagina de dispositivos do dashboard sob carga e continuar os cortes de performance em reconhecimento de midia e download de metadata.
 - Toda a documentacao e todo o codigo devem continuar em `utf-8`.
 - Os testes de providers já foram executados com sucesso e devem ser mantidos como referencia de regressao.
 - A cada tarefa concluida, a documentacao deve ser atualizada com:
@@ -25,13 +26,14 @@ Se esta conversa ficar sem tokens e for necessario continuar em outra IA, a prox
   - qualquer risco ou bloqueio novo.
 - Esse update de documentacao deve acontecer antes de trocar de IA, para que outra instancia possa continuar sem perder contexto.
 - Se houver troca de IA de ida e volta, a documentacao deve servir como fonte unica do estado atual do trabalho.
+- Sempre marcar o que foi concluido com `[x]` e o que falta com `[ ]`, para que outra IA saiba exatamente onde continuar.
 
 ## Sprint Atual
 
-- Sprint atual: nenhuma (todas as sprints planejadas foram concluídas)
-- Status da sprint atual: `concluída`
+- Sprint atual: `Sprint 5 - Home, detalhe e refresh sob demanda`
+- Status da sprint atual: `em andamento`
 - Sprints concluídas: `Sprint 0 - Baseline e instrumentacao`, `Sprint 1 - Consultas quentes e midia`, `Sprint 2 - Persistencia e escrita`, `Sprint 3 - Startup e bootstrap` e `Sprint 4 - Manutenibilidade estrutural`
-- Sprints pendentes: nenhuma
+- Sprints pendentes: `Sprint 5 - Home, detalhe e refresh sob demanda`
 
 ## Status Atual
 
@@ -47,6 +49,14 @@ Se esta conversa ficar sem tokens e for necessario continuar em outra IA, a prox
   - Correção: aplicação de `Uri.EscapeDataString` nos parâmetros ISBN e OLID interpolados nas URLs de consulta à API externa do OpenLibrary.
   - Build verde (0 erros) e testes unitários/providers aprovados (4/4 OpenLibrary, 560/560 Implementations).
   - Testes de integração com falhas pré-existentes (401 Unauthorized no `AuthHelper`) não relacionadas à alteração.
+
+- [x] Corrigido o fluxo de detalhe para revalidar metadados e imagens sob demanda antes de montar o DTO em `GetItem`.
+- [x] Criado `OnDemandMetadataRefreshPolicy` para centralizar a decisao de refresh por completude e recencia.
+- [x] Ajustado `GetLatestMedia` para tentar completar itens incompletos ou desatualizados antes de montar os cards da home.
+- [x] Teste unitario da politica de refresh aprovado com 3 casos de regressao.
+- [x] Revisao do fluxo de frontend da home e da pagina de detalhe feita; nao apareceu bug obvio de fetch, entao o ajuste principal ficou no backend.
+- [ ] Medir o impacto real de latencia do refresh sob demanda na home e no detalhe.
+- [ ] Validar no navegador se as artes, overview e metadados reaparecem nas midias recentemente adicionadas.
 
 ## Skills utilizadas nesta auditoria
 
@@ -303,6 +313,70 @@ Ganho esperado:
 - Ganho direto de performance: baixo, 0% a 10%.
 - Ganho forte em manutencao e velocidade de entrega futura.
 
+### Sprint 5 - Home, detalhe e refresh sob demanda
+
+Objetivo: corrigir a exibicao de midias recentes, metadados e imagens sem perder o controle de performance.
+
+Tarefas:
+
+- [x] Auditar o fluxo da home e da pagina de detalhe no backend e no frontend.
+- [x] Centralizar a decisao de refresh sob demanda em `OnDemandMetadataRefreshPolicy`.
+- [x] Revalidar metadados e imagens no `GetItem` antes de montar o DTO.
+- [x] Revalidar itens incompletos ou desatualizados no `GetLatestMedia`.
+- [x] Criar teste unitario da politica de refresh.
+- [x] Enfileirar o refresh sob demanda em background com `MulletaFlixJobQueue` para remover custo da request.
+
+Concluido:
+
+- [x] O backend agora tenta completar itens sem overview ou imagem primaria antes de responder o detalhe.
+- [x] O fluxo de cards recentes tambem ganhou refresh sob demanda para melhorar a chance de mostrar arte e metadados atualizados.
+- [x] A validacao do frontend nao mostrou bug obvio no fetch; o problema principal ficou concentrado no backend.
+- [x] O refresh sob demanda saiu da request path e passou a ser processado em background com deduplicacao curta por item.
+- [x] Corrigido o bug de `requestIdleCallback` em `imageLoader`, que interrompia `lazyChildren()` e impedia home e detalhe de terminar de renderizar.
+- [x] Blindado o `reload()` da pagina de detalhe com `finally` para liberar o loading mesmo se alguma etapa falhar.
+- [x] Otimizado o carrossel da home para pedir imagens menos pesadas em listas `overflow`, reduzindo o custo de download e decode das thumbs.
+- [x] Corrigido o carregamento da pagina de dispositivos do dashboard para nao bloquear a renderizacao em `useUsersDetails`.
+- [x] O backend de devices passou a tolerar referencia de usuario ausente sem derrubar a lista inteira.
+- [x] Teste de regressao `DeviceManagerTests` aprovado.
+- [x] Build de producao do frontend validado com sucesso.
+- [x] Corrigido o carregamento da pagina `Atividade` do dashboard para nao bloquear a tabela em `useUsersDetails`.
+- [x] Build de producao do frontend validado novamente apos o ajuste de `Atividade`.
+- [x] Corrigida a pagina `NFO` do dashboard para nao depender de usuarios como bloqueio de carregamento.
+- [x] Corrigida a persistencia de `BaseItemProvider`, `LockedFields`, `Images` e `TrailerTypes` para nao anexar o grafo completo com entidades duplicadas durante refresh de metadados.
+- [x] Teste de regressao `ItemPersistenceServiceTests` aprovado.
+
+Pendente:
+
+- [ ] Medir o impacto de tempo de resposta da home e do detalhe com o refresh novo.
+- [ ] Validar a experiencia final no navegador com midias novas, metadados e imagens.
+- [ ] Medir o impacto do ajuste da pagina de dispositivos apos remover a dependencia de usuarios.
+- [ ] Medir o impacto do ajuste da pagina de `Atividade` apos remover a dependencia de usuarios.
+- [ ] Validar se a pagina `NFO` segue funcional mesmo quando a carga de usuarios falha.
+- [ ] Confirmar nos logs que o refresh de metadados nao volta a acusar `BaseItemProvider` duplicado nem repetir erro ao persistir `TrailerTypes`.
+- [ ] Se a home continuar vazia, instrumentar `itemsContainer.refreshItems()` para registrar falhas de query e diferenciar erro de API de lista realmente vazia.
+- [ ] Fechar a proxima sprint apenas depois de confirmar no navegador que `Minha midia`, `recentemente adicionadas` e a tela de detalhe carregam sem erro de console.
+
+Skills:
+
+- `dotnet-backend`
+- `dotnet-architect`
+- `dotnet-backend-patterns`
+- `code-review-and-quality`
+- `code-review-excellence`
+- `backend-development-feature-development`
+- `caveman`
+- `cavecrew`
+
+Prioridade: P0.
+
+Ganho esperado:
+
+- Melhor chance de carregar arte, overview e metadados nas primeiras respostas.
+- Reducao de chamados de suporte por item sem imagem ou sem metadata na tela.
+- Impacto de performance agora tende a ser menor na request e maior no processamento em segundo plano.
+- A fila existente foi reutilizada para evitar duplicar infraestrutura de background.
+- A pagina de dispositivos deve aparecer mais cedo no dashboard e continuar funcional mesmo com usuarios antigos removidos do banco.
+
 ## Ordem recomendada
 
 1. Sprint 0
@@ -310,10 +384,11 @@ Ganho esperado:
 3. Sprint 2
 4. Sprint 3
 5. Sprint 4
+6. Sprint 5
 
 ## Prioridade consolidada
 
-1. `P0`: consultas quentes, reconhecimento de midia, download de metadata e persistencia em lote.
+1. `P0`: consultas quentes, reconhecimento de midia, download de metadata, refresh sob demanda da home/detalhe e persistencia em lote.
 2. `P1`: startup, bootstrap e reducao de bloqueios.
 3. `P2`: refatoracao estrutural e simplificacao de classes grandes.
 

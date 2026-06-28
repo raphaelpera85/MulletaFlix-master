@@ -11,6 +11,7 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
 using MediaBrowser.Model.Session;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MulletaFlix.Data;
 using MulletaFlix.Data.Dtos;
 using MulletaFlix.Data.Events;
@@ -30,6 +31,7 @@ namespace MulletaFlix.Server.Implementations.Devices
     {
         private readonly IDbContextFactory<MulletaFlixDbContext> _dbProvider;
         private readonly IUserManager _userManager;
+        private readonly ILogger<DeviceManager> _logger;
         private readonly ConcurrentDictionary<string, ClientCapabilities> _capabilitiesMap = new();
         private readonly ConcurrentDictionary<int, Device> _devices;
         private readonly ConcurrentDictionary<string, DeviceOptions> _deviceOptions;
@@ -39,10 +41,15 @@ namespace MulletaFlix.Server.Implementations.Devices
         /// </summary>
         /// <param name="dbProvider">The database provider.</param>
         /// <param name="userManager">The user manager.</param>
-        public DeviceManager(IDbContextFactory<MulletaFlixDbContext> dbProvider, IUserManager userManager)
+        /// <param name="logger">The logger.</param>
+        public DeviceManager(
+            IDbContextFactory<MulletaFlixDbContext> dbProvider,
+            IUserManager userManager,
+            ILogger<DeviceManager> logger)
         {
             _dbProvider = dbProvider;
             _userManager = userManager;
+            _logger = logger;
             _devices = new ConcurrentDictionary<int, Device>();
             _deviceOptions = new ConcurrentDictionary<string, DeviceOptions>();
 
@@ -249,7 +256,12 @@ namespace MulletaFlix.Server.Implementations.Devices
         private DeviceInfo ToDeviceInfo(Device authInfo, DeviceOptions? options = null)
         {
             var caps = GetCapabilities(authInfo.DeviceId);
-            var user = _userManager.GetUserById(authInfo.UserId) ?? throw new ResourceNotFoundException("User with UserId " + authInfo.UserId + " not found");
+            var user = _userManager.GetUserById(authInfo.UserId);
+
+            if (user is null)
+            {
+                _logger.LogDebug("Skipping missing user reference {UserId} while building device {DeviceId}", authInfo.UserId, authInfo.DeviceId);
+            }
 
             return new()
             {
@@ -257,7 +269,7 @@ namespace MulletaFlix.Server.Implementations.Devices
                 AppVersion = authInfo.AppVersion,
                 Id = authInfo.DeviceId,
                 LastUserId = authInfo.UserId,
-                LastUserName = user.Username,
+                LastUserName = user?.Username,
                 Name = authInfo.DeviceName,
                 DateLastActivity = authInfo.DateLastActivity,
                 IconUrl = caps.IconUrl,
@@ -309,4 +321,3 @@ namespace MulletaFlix.Server.Implementations.Devices
         }
     }
 }
-

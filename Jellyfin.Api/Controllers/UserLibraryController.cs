@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Api.Extensions;
 using MulletaFlix.Api.Helpers;
+using MulletaFlix.Api.Jobs;
 using MulletaFlix.Api.ModelBinders;
 using MulletaFlix.Data.Enums;
 using MulletaFlix.Database.Implementations.Entities;
@@ -34,12 +36,14 @@ namespace MulletaFlix.Api.Controllers;
 [Tags("Library")]
 public class UserLibraryController : BaseMulletaFlixApiController
 {
+    private static readonly ConcurrentDictionary<Guid, byte> PendingOnDemandMetadataRefreshes = new();
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataRepository;
     private readonly ILibraryManager _libraryManager;
     private readonly IDtoService _dtoService;
     private readonly IUserViewManager _userViewManager;
     private readonly IFileSystem _fileSystem;
+    private readonly IJobQueue _jobQueue;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserLibraryController"/> class.
@@ -50,13 +54,15 @@ public class UserLibraryController : BaseMulletaFlixApiController
     /// <param name="dtoService">Instance of the <see cref="IDtoService"/> interface.</param>
     /// <param name="userViewManager">Instance of the <see cref="IUserViewManager"/> interface.</param>
     /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
+    /// <param name="jobQueue">Instance of the <see cref="IJobQueue"/> interface.</param>
     public UserLibraryController(
         IUserManager userManager,
         IUserDataManager userDataRepository,
         ILibraryManager libraryManager,
         IDtoService dtoService,
         IUserViewManager userViewManager,
-        IFileSystem fileSystem)
+        IFileSystem fileSystem,
+        IJobQueue jobQueue)
     {
         _userManager = userManager;
         _userDataRepository = userDataRepository;
@@ -64,6 +70,7 @@ public class UserLibraryController : BaseMulletaFlixApiController
         _dtoService = dtoService;
         _userViewManager = userViewManager;
         _fileSystem = fileSystem;
+        _jobQueue = jobQueue;
     }
 
     /// <summary>
@@ -94,6 +101,8 @@ public class UserLibraryController : BaseMulletaFlixApiController
             return NotFound();
         }
 
+        // Refresh stale or incomplete metadata before building the DTO so the detail page
+        // can render overview, artwork and related fields without waiting for a manual scan.
         await RefreshItemOnDemandIfNeeded(item).ConfigureAwait(false);
 
         var dtoOptions = new DtoOptions();
@@ -591,6 +600,8 @@ public class UserLibraryController : BaseMulletaFlixApiController
             childCounts[i] = childCount;
         }
 
+        await Task.WhenAll(resolvedItems.Select(RefreshItemOnDemandIfNeeded)).ConfigureAwait(false);
+
         // Fetch DTOs without visibility check since we've already done that in GetLatestItems and restore child counts afterwards
         var dtos = await _dtoService.GetBaseItemDtosAsync(resolvedItems, dtoOptions, user, skipVisibilityCheck: true).ConfigureAwait(false);
         for (int i = 0; i < dtos.Count; i++)
@@ -649,25 +660,57 @@ public class UserLibraryController : BaseMulletaFlixApiController
             limit,
             groupItems);
 
-    private async Task RefreshItemOnDemandIfNeeded(BaseItem item)
+    private Task RefreshItemOnDemandIfNeeded(BaseItem item)
     {
-        if (item is Person)
+        if (!OnDemandMetadataRefreshPolicy.ShouldRefresh(item, DateTime.UtcNow))
         {
-            var hasMetadata = !string.IsNullOrWhiteSpace(item.Overview) && item.HasImage(ImageType.Primary);
-            var performFullRefresh = !hasMetadata && (DateTime.UtcNow - item.DateLastRefreshed).TotalDays >= 3;
-
-            if (performFullRefresh)
-            {
-                var options = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
-                {
-                    MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
-                    ImageRefreshMode = MetadataRefreshMode.FullRefresh,
-                    ForceSave = true
-                };
-
-                await item.RefreshMetadata(options, CancellationToken.None).ConfigureAwait(false);
-            }
+            return Task.CompletedTask;
         }
+
+        if (!PendingOnDemandMetadataRefreshes.TryAdd(item.Id, 0))
+        {
+            return Task.CompletedTask;
+        }
+
+        var correlationId = $"metadata-refresh-{item.Id:N}";
+        var job = _jobQueue.Enqueue(
+            "MetadataRefresh",
+            $"Atualizacao de metadata: {item.Name}",
+            async (cancellationToken, progress) =>
+            {
+                try
+                {
+                    if (!OnDemandMetadataRefreshPolicy.ShouldRefresh(item, DateTime.UtcNow))
+                    {
+                        progress.Report(new JobQueueProgress(100, "Ignorado", "Metadata e imagem ja estavam atualizadas."));
+                        return;
+                    }
+
+                    progress.Report(new JobQueueProgress(10, "Preparando", "Iniciando refresh sob demanda."));
+
+                    var options = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
+                    {
+                        MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
+                        ImageRefreshMode = MetadataRefreshMode.FullRefresh,
+                        ForceSave = true
+                    };
+
+                    await item.RefreshMetadata(options, cancellationToken).ConfigureAwait(false);
+                    progress.Report(new JobQueueProgress(100, "Concluido", "Refresh sob demanda finalizado."));
+                }
+                finally
+                {
+                    PendingOnDemandMetadataRefreshes.TryRemove(item.Id, out _);
+                }
+            },
+            correlationId);
+
+        if (string.Equals(job.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+        {
+            PendingOnDemandMetadataRefreshes.TryRemove(item.Id, out _);
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -713,4 +756,3 @@ public class UserLibraryController : BaseMulletaFlixApiController
         return _userDataRepository.GetUserDataDto(item, user);
     }
 }
-

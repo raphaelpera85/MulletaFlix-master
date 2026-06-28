@@ -484,49 +484,72 @@ public class ItemPersistenceService : IItemPersistenceService
             }
             else
             {
+                var currentProviders = entity.Provider?.ToArray() ?? [];
+                var currentLockedFields = entity.LockedFields?.ToArray();
+                var currentImages = entity.Images?.ToArray();
+                var currentTrailerTypes = entity.TrailerTypes?.ToArray();
+
+                ClearTrackedNavigationProperties(entity);
+
                 // Check if Providers changed
-                var currentProviders = entity.Provider ?? new List<BaseItemProvider>();
                 var oldProviders = existingProviders.GetValueOrDefault(entity.Id) ?? new List<BaseItemProvider>();
-                bool providersChanged = currentProviders.Count != oldProviders.Count ||
+                bool providersChanged = currentProviders.Length != oldProviders.Count ||
                     currentProviders.Any(cp => !oldProviders.Any(op => op.ProviderId == cp.ProviderId && op.ProviderValue == cp.ProviderValue));
 
                 if (providersChanged)
                 {
                     context.BaseItemProviders.Where(e => e.ItemId == entity.Id).ExecuteDelete();
-                    if (currentProviders.Count > 0)
+                    if (currentProviders.Length > 0)
                     {
                         context.BaseItemProviders.AddRange(currentProviders);
                     }
                 }
 
                 // Check if Images changed (only touch if entity.Images is explicitly defined/not null)
-                if (entity.Images is not null)
+                if (currentImages is not null)
                 {
                     context.BaseItemImageInfos.Where(e => e.ItemId == entity.Id).ExecuteDelete();
-                    if (entity.Images.Count > 0)
+                    if (currentImages.Length > 0)
                     {
-                        context.BaseItemImageInfos.AddRange(entity.Images);
+                        context.BaseItemImageInfos.AddRange(currentImages);
                     }
                 }
 
                 // Check if LockedFields changed
-                var currentLockedFields = entity.LockedFields ?? new List<BaseItemMetadataField>();
                 var oldLockedFields = existingMetadataFields.GetValueOrDefault(entity.Id) ?? new List<BaseItemMetadataField>();
-                bool lockedFieldsChanged = currentLockedFields.Count != oldLockedFields.Count ||
-                    currentLockedFields.Any(cf => !oldLockedFields.Any(of => of.Id == cf.Id));
+                bool lockedFieldsChanged = currentLockedFields is not null &&
+                    (currentLockedFields.Length != oldLockedFields.Count ||
+                    currentLockedFields.Any(cf => !oldLockedFields.Any(of => of.Id == cf.Id)));
 
                 if (lockedFieldsChanged)
                 {
                     context.BaseItemMetadataFields.Where(e => e.ItemId == entity.Id).ExecuteDelete();
-                    if (currentLockedFields.Count > 0)
+                    if (currentLockedFields.Length > 0)
                     {
                         context.BaseItemMetadataFields.AddRange(currentLockedFields);
+                    }
+                }
+
+                if (currentTrailerTypes is not null)
+                {
+                    context.BaseItemTrailerTypes.Where(e => e.ItemId == entity.Id).ExecuteDelete();
+                    if (currentTrailerTypes.Length > 0)
+                    {
+                        context.BaseItemTrailerTypes.AddRange(currentTrailerTypes);
                     }
                 }
 
                 context.BaseItems.Attach(entity).State = EntityState.Modified;
             }
         }
+    }
+
+    internal static void ClearTrackedNavigationProperties(BaseItemEntity entity)
+    {
+        entity.Provider = null;
+        entity.LockedFields = null;
+        entity.Images = null;
+        entity.TrailerTypes = null;
     }
 
     private void SaveItemValues(

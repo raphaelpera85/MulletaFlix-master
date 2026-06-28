@@ -60,6 +60,7 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
             ["SeriesMetadata"] = new(6, 6),
             ["BookMetadata"] = new(2, 2),
             ["ChannelMetadata"] = new(4, 4),
+            ["MetadataRefresh"] = new(2, 2),
             ["ImagePrewarm"] = new(4, 4),
             ["Maintenance"] = new(1, 1)
         };
@@ -365,6 +366,7 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
         {
             "BookMetadata" => TimeSpan.FromMilliseconds(500),
             "ChannelMetadata" => TimeSpan.FromMilliseconds(300),
+            "MetadataRefresh" => TimeSpan.FromMilliseconds(150),
             "MovieMetadata" or "SeriesMetadata" => TimeSpan.FromMilliseconds(100),
             _ => TimeSpan.FromMilliseconds(50)
         };
@@ -544,33 +546,33 @@ public sealed class MulletaFlixJobQueue : BackgroundService, IJobQueue
 
     private async Task PersistJobAsync(JobQueueWorkItem job, CancellationToken cancellationToken)
     {
-            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-            var connection = dbContext.Database.GetDbConnection();
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            await using var command = connection.CreateCommand();
-            command.CommandText = """
-                INSERT INTO JobQueue (Id, CorrelationId, Kind, Title, Status, Progress, Phase, Summary, ErrorMessage, CreatedAt, StartedAt, FinishedAt, Logs)
-                VALUES (@id, @correlationId, @kind, @title, @status, @progress, @phase, @summary, @errorMessage, @createdAt, @startedAt, @finishedAt, @logs)
-                ON DUPLICATE KEY UPDATE
-                    CorrelationId = VALUES(CorrelationId), Kind = VALUES(Kind), Title = VALUES(Title),
-                    Status = VALUES(Status), Progress = VALUES(Progress), Phase = VALUES(Phase),
-                    Summary = VALUES(Summary), ErrorMessage = VALUES(ErrorMessage),
-                    StartedAt = VALUES(StartedAt), FinishedAt = VALUES(FinishedAt), Logs = VALUES(Logs);
-                """;
-            AddParameter(command, "@id", job.Id);
-            AddParameter(command, "@correlationId", job.CorrelationId);
-            AddParameter(command, "@kind", job.Kind);
-            AddParameter(command, "@title", job.Title);
-            AddParameter(command, "@status", job.Status);
-            AddParameter(command, "@progress", job.Progress);
-            AddParameter(command, "@phase", job.Phase);
-            AddParameter(command, "@summary", job.Summary);
-            AddParameter(command, "@errorMessage", job.ErrorMessage);
-            AddParameter(command, "@createdAt", job.CreatedAt.UtcDateTime);
-            AddParameter(command, "@startedAt", job.StartedAt?.UtcDateTime);
-            AddParameter(command, "@finishedAt", job.FinishedAt?.UtcDateTime);
-            AddParameter(command, "@logs", JsonSerializer.Serialize(job.Logs.ToArray(), JsonOptions));
-            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var connection = dbContext.Database.GetDbConnection();
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO JobQueue (Id, CorrelationId, Kind, Title, Status, Progress, Phase, Summary, ErrorMessage, CreatedAt, StartedAt, FinishedAt, Logs)
+            VALUES (@id, @correlationId, @kind, @title, @status, @progress, @phase, @summary, @errorMessage, @createdAt, @startedAt, @finishedAt, @logs)
+            ON DUPLICATE KEY UPDATE
+                CorrelationId = VALUES(CorrelationId), Kind = VALUES(Kind), Title = VALUES(Title),
+                Status = VALUES(Status), Progress = VALUES(Progress), Phase = VALUES(Phase),
+                Summary = VALUES(Summary), ErrorMessage = VALUES(ErrorMessage),
+                StartedAt = VALUES(StartedAt), FinishedAt = VALUES(FinishedAt), Logs = VALUES(Logs);
+            """;
+        AddParameter(command, "@id", job.Id);
+        AddParameter(command, "@correlationId", job.CorrelationId);
+        AddParameter(command, "@kind", job.Kind);
+        AddParameter(command, "@title", job.Title);
+        AddParameter(command, "@status", job.Status);
+        AddParameter(command, "@progress", job.Progress);
+        AddParameter(command, "@phase", job.Phase);
+        AddParameter(command, "@summary", job.Summary);
+        AddParameter(command, "@errorMessage", job.ErrorMessage);
+        AddParameter(command, "@createdAt", job.CreatedAt.UtcDateTime);
+        AddParameter(command, "@startedAt", job.StartedAt?.UtcDateTime);
+        AddParameter(command, "@finishedAt", job.FinishedAt?.UtcDateTime);
+        AddParameter(command, "@logs", JsonSerializer.Serialize(job.Logs.ToArray(), JsonOptions));
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task CleanupDatabaseAsync(CancellationToken cancellationToken)
