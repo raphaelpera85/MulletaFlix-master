@@ -401,11 +401,13 @@ public sealed partial class BaseItemRepository
         }
 
         // Step 6: Fetch the Season/Series entities we decided to return
-        var entities = entitiesToFetch.Count > 0
+        var entityIds = entitiesToFetch.ToList();
+        var entities = entityIds.Count > 0
             ? ApplyNavigations(
-                    context.BaseItems.AsNoTracking().Where(e => entitiesToFetch.Contains(e.Id)),
+                    context.BaseItems.AsNoTracking().WhereOneOrMany(entityIds, e => e.Id),
                     filter)
-                .AsSingleQuery()
+                .AsSplitQuery()
+                .AsEnumerable()
                 .ToDictionary(e => e.Id)
             : [];
 
@@ -563,4 +565,3 @@ public sealed partial class BaseItemRepository
         };
     }
 }
-

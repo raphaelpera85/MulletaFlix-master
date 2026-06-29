@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Mime;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -41,6 +42,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
     [ApiExplorerSettings(IgnoreApi = true)]
     public class MidiaStorageOnlineController : ControllerBase
     {
+        private const int MaxMovieFolderNameLength = 50;
+        private const int MaxMovieFileStemLength = 60;
+        private const int MaxSeriesShowNameLength = 50;
+        private const int MaxSeasonFolderNameLength = 24;
+        private const int MaxEpisodeFileStemLength = 60;
+
         // BG-1: bounded parallelism â€” ProcessorCount*2 vs old 256
         private static readonly int _maxParallelism = Math.Max(4, Environment.ProcessorCount * 2);
 
@@ -972,8 +979,9 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 {
                     if (entry.Type == "Filme")
                     {
-                        var name = SanitizeName(entry.Name);
-                        var relPath = Path.Combine("Filmes", name, name + ".strm");
+                        var name = TrimPathSegment(SanitizeName(entry.Name), MaxMovieFolderNameLength);
+                        var fileName = TrimPathSegment(SanitizeName(entry.Name), MaxMovieFileStemLength);
+                        var relPath = Path.Combine("Filmes", name, fileName + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
                         var newUrl = entry.Url.Trim();
 
@@ -1001,10 +1009,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     }
                     else if (entry.Type == "Serie")
                     {
-                        var showName = SanitizeName(entry.ShowName);
-                        var name = SanitizeName(entry.Name);
-                        var seasonFolder = SanitizeName(entry.Season);
-                        var relPath = Path.Combine("Series", showName, seasonFolder, name + ".strm");
+                        var showName = TrimPathSegment(SanitizeName(entry.ShowName), MaxSeriesShowNameLength);
+                        var seasonFolder = TrimPathSegment(SanitizeName(entry.Season), MaxSeasonFolderNameLength);
+                        var fileName = TrimPathSegment(SanitizeName(entry.Name), MaxEpisodeFileStemLength);
+                        var relPath = Path.Combine("Series", showName, seasonFolder, fileName + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
                         var newUrl = entry.Url.Trim();
 
@@ -1227,6 +1235,19 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
             }
             return Regex.Replace(sb.ToString().TrimEnd('.', ' '), @"\s+", " ").Trim();
+        }
+
+        private static string TrimPathSegment(string value, int maxLength)
+        {
+            value = string.IsNullOrWhiteSpace(value) ? "_" : value.Trim();
+            if (value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)))[..10];
+            var prefixLength = Math.Max(1, maxLength - hash.Length - 1);
+            return value[..prefixLength].TrimEnd() + "_" + hash;
         }
 
         private static async Task<bool> HasSameContentAsync(string filePath, string expectedContent, CancellationToken ct)
@@ -1641,4 +1662,3 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
         }
     }
 }
-

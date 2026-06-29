@@ -6,6 +6,7 @@ using MulletaFlix.Api.Extensions;
 using MulletaFlix.Api.Helpers;
 using MulletaFlix.Api.ModelBinders;
 using MulletaFlix.Data.Enums;
+using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Enums;
 using MulletaFlix.Extensions;
 using MediaBrowser.Controller.Dto;
@@ -347,19 +348,97 @@ public class TvShowsController : BaseMulletaFlixApiController
             return NotFound();
         }
 
-        var seasons = item.GetItemList(new InternalItemsQuery(user)
-        {
-            IsMissing = isMissing,
-            IsSpecialSeason = isSpecialSeason,
-            AdjacentTo = adjacentTo
-        });
-
         var dtoOptions = new DtoOptions { Fields = fields }
             .AddAdditionalDtoOptions(enableImages, enableUserData, imageTypeLimit, enableImageTypes);
 
-        var returnItems = _dtoService.GetBaseItemDtos(seasons, dtoOptions, user);
+        var seasons = item.GetSeasons(user, dtoOptions)
+            .OfType<Season>()
+            .Where(season => !isSpecialSeason.HasValue || (season.IndexNumber == 0) == isSpecialSeason.Value)
+            .Cast<BaseItem>()
+            .ToList();
+
+        var returnItems = _dtoService.GetBaseItemDtos(seasons, dtoOptions, user).ToList();
+
+        if (returnItems.Count == 0)
+        {
+            var shouldIncludeMissingEpisodes = (user is not null && user.DisplayMissingEpisodes) || User.GetIsApiKey();
+            var episodes = item.GetEpisodes(user, dtoOptions, shouldIncludeMissingEpisodes)
+                .OfType<Episode>()
+                .ToList();
+
+            returnItems = CreateSyntheticSeasonDtos(item, episodes, dtoOptions, user, isSpecialSeason);
+        }
 
         return new QueryResult<BaseItemDto>(returnItems);
+    }
+
+    private List<BaseItemDto> CreateSyntheticSeasonDtos(
+        Series series,
+        IReadOnlyCollection<Episode> episodes,
+        DtoOptions dtoOptions,
+        User? user,
+        bool? isSpecialSeason)
+    {
+        if (episodes.Count == 0)
+        {
+            return [];
+        }
+
+        var episodeDtos = _dtoService.GetBaseItemDtos(episodes.Cast<BaseItem>().ToList(), dtoOptions, user)
+            .Where(dto => dto.SeasonId.HasValue || dto.ParentId.HasValue || dto.ParentIndexNumber.HasValue)
+            .ToList();
+
+        return episodeDtos
+            .GroupBy(dto => new
+            {
+                SeasonId = dto.SeasonId ?? dto.ParentId ?? dto.Id,
+                SeasonNumber = dto.ParentIndexNumber ?? 0
+            })
+            .Where(group => !isSpecialSeason.HasValue || (group.Key.SeasonNumber == 0) == isSpecialSeason.Value)
+            .OrderBy(group => group.Key.SeasonNumber)
+            .Select(group =>
+            {
+                var first = group
+                    .OrderBy(dto => dto.IndexNumber ?? int.MaxValue)
+                    .ThenBy(dto => dto.Name)
+                    .First();
+
+                var seasonNumber = group.Key.SeasonNumber;
+                var seasonName = !string.IsNullOrWhiteSpace(first.SeasonName)
+                    ? first.SeasonName
+                    : seasonNumber == 0
+                        ? "Specials"
+                        : $"Season {seasonNumber}";
+
+                return new BaseItemDto
+                {
+                    Id = group.Key.SeasonId,
+                    Name = seasonName,
+                    SeasonName = seasonName,
+                    SeriesId = series.Id,
+                    SeriesName = series.Name,
+                    Type = BaseItemKind.Season,
+                    IsFolder = true,
+                    IndexNumber = seasonNumber,
+                    ChildCount = group.Count(),
+                    RecursiveItemCount = group.Count(),
+                    ServerId = first.ServerId,
+                    ImageTags = first.ImageTags,
+                    BackdropImageTags = first.BackdropImageTags,
+                    PrimaryImageAspectRatio = first.PrimaryImageAspectRatio,
+                    ParentBackdropItemId = first.ParentBackdropItemId,
+                    ParentBackdropImageTags = first.ParentBackdropImageTags,
+                    ParentThumbItemId = first.ParentThumbItemId,
+                    ParentThumbImageTag = first.ParentThumbImageTag,
+                    ParentLogoItemId = first.ParentLogoItemId,
+                    ParentLogoImageTag = first.ParentLogoImageTag,
+                    ParentArtItemId = first.ParentArtItemId,
+                    ParentArtImageTag = first.ParentArtImageTag,
+                    SeriesPrimaryImageTag = first.SeriesPrimaryImageTag,
+                    UserData = first.UserData
+                };
+            })
+            .ToList();
     }
 
     /// <summary>
@@ -386,4 +465,3 @@ public class TvShowsController : BaseMulletaFlixApiController
         return items;
     }
 }
-

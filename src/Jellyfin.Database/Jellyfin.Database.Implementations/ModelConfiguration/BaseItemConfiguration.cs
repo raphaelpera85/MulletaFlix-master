@@ -20,6 +20,7 @@ public class BaseItemConfiguration : IEntityTypeConfiguration<BaseItemEntity>
         builder.Property(e => e.SortName).HasMaxLength(255);
         builder.Property(e => e.CleanName).HasMaxLength(255);
         builder.Property(e => e.MediaType).HasMaxLength(100);
+        builder.Property(e => e.Path).HasMaxLength(512);
         // TODO: See rant in entity file.
         // builder.HasOne(e => e.Parent).WithMany(e => e.DirectChildren).HasForeignKey(e => e.ParentId);
         // builder.HasOne(e => e.TopParent).WithMany(e => e.AllChildren).HasForeignKey(e => e.TopParentId);
@@ -91,4 +92,3 @@ public class BaseItemConfiguration : IEntityTypeConfiguration<BaseItemEntity>
         });
     }
 }
-

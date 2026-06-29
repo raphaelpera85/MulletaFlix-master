@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller;
@@ -459,6 +460,7 @@ public class ItemPersistenceService : IItemPersistenceService
         var existingIdsList = existingItems.ToList();
         var existingProviders = existingIdsList.Count > 0
             ? context.BaseItemProviders
+                .AsNoTracking()
                 .WhereOneOrMany(existingIdsList, e => e.ItemId)
                 .ToList()
                 .GroupBy(e => e.ItemId)
@@ -467,6 +469,7 @@ public class ItemPersistenceService : IItemPersistenceService
 
         var existingMetadataFields = existingIdsList.Count > 0
             ? context.BaseItemMetadataFields
+                .AsNoTracking()
                 .WhereOneOrMany(existingIdsList, e => e.ItemId)
                 .ToList()
                 .GroupBy(e => e.ItemId)
@@ -569,22 +572,17 @@ public class ItemPersistenceService : IItemPersistenceService
         var values = allListedItemValues.Select(e => e.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var allListedItemValuesSet = allListedItemValues.ToHashSet(ItemValueKeyComparer);
 
+        InsertItemValuesIgnoreDuplicates(context, allListedItemValues);
+
         var existingValues = context.ItemValues
+            .AsNoTracking()
             .Where(e => Enumerable.Contains(types, e.Type) && Enumerable.Contains(values, e.Value))
             .AsEnumerable()
             .Where(e => allListedItemValuesSet.Contains((e.Type, e.Value)))
             .DistinctBy(e => (e.Type, e.Value), ItemValueKeyComparer)
             .ToArray();
-        var missingItemValues = allListedItemValues.Except(existingValues.Select(f => (MagicNumber: f.Type, f.Value)), ItemValueKeyComparer).Select(f => new ItemValue()
-        {
-            CleanValue = f.Value.GetCleanValue(),
-            ItemValueId = Guid.NewGuid(),
-            Type = f.MagicNumber,
-            Value = f.Value
-        }).ToArray();
-        context.ItemValues.AddRange(missingItemValues);
 
-        var itemValuesStore = existingValues.Concat(missingItemValues).ToArray();
+        var itemValuesStore = existingValues;
         var itemValuesStoreLookup = CreateItemValueLookup(itemValuesStore);
         var valueMap = itemValueMaps
             .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStoreLookup[(e.MagicNumber, e.Value)]).DistinctBy(e => e.ItemValueId).ToArray()))
@@ -615,6 +613,36 @@ public class ItemPersistenceService : IItemPersistenceService
                 context.ItemValuesMap.RemoveRange(itemMappedValues.Values);
             }
         }
+    }
+
+    private static void InsertItemValuesIgnoreDuplicates(
+        MulletaFlixDbContext context,
+        IReadOnlyList<(ItemValueType MagicNumber, string Value)> allListedItemValues)
+    {
+        if (allListedItemValues.Count == 0)
+        {
+            return;
+        }
+
+        var commandText = new StringBuilder("INSERT IGNORE INTO `ItemValues` (`ItemValueId`, `Type`, `Value`, `CleanValue`) VALUES ");
+        var parameters = new List<object>(allListedItemValues.Count * 4);
+
+        for (var index = 0; index < allListedItemValues.Count; index++)
+        {
+            if (index > 0)
+            {
+                commandText.Append(", ");
+            }
+
+            var value = allListedItemValues[index];
+            commandText.Append("(@p").Append(index).Append("_id, @p").Append(index).Append("_type, @p").Append(index).Append("_value, @p").Append(index).Append("_cleanValue)");
+            parameters.Add(new MySqlParameter($"@p{index}_id", MySqlDbType.VarChar) { Value = Guid.NewGuid().ToString() });
+            parameters.Add(new MySqlParameter($"@p{index}_type", MySqlDbType.Int32) { Value = (int)value.MagicNumber });
+            parameters.Add(new MySqlParameter($"@p{index}_value", MySqlDbType.VarChar) { Value = value.Value });
+            parameters.Add(new MySqlParameter($"@p{index}_cleanValue", MySqlDbType.VarChar) { Value = value.Value.GetCleanValue() });
+        }
+
+        context.Database.ExecuteSqlRaw(commandText.ToString(), parameters.ToArray());
     }
 
     private void SaveAncestorIds(

@@ -325,6 +325,7 @@ Tarefas:
 - [x] Revalidar itens incompletos ou desatualizados no `GetLatestMedia`.
 - [x] Criar teste unitario da politica de refresh.
 - [x] Enfileirar o refresh sob demanda em background com `MulletaFlixJobQueue` para remover custo da request.
+- [x] Reduzir o custo do `GetLatestTvShowItems` trocando o carregamento final de entidades para `AsSplitQuery` por ids materializados.
 
 Concluido:
 
@@ -336,6 +337,13 @@ Concluido:
 - [x] Blindado o `reload()` da pagina de detalhe com `finally` para liberar o loading mesmo se alguma etapa falhar.
 - [x] Otimizado o carrossel da home para pedir imagens menos pesadas em listas `overflow`, reduzindo o custo de download e decode das thumbs.
 - [x] Corrigido o carregamento da pagina de dispositivos do dashboard para nao bloquear a renderizacao em `useUsersDetails`.
+- [x] Otimizado o caminho de series recentemente adicionadas no backend (`GetLatestTvShowItems`) para evitar `SingleQuery` com multiplas colecoes e reduzir a latencia da home.
+- [x] Ajustado o frontend da home para `tvshows` pedir `Backdrop` e voltar a priorizar `Thumb`, reduzindo fallback lento de imagem nas series recentemente adicionadas.
+
+Proximas tarefas:
+
+- [ ] Validar no servidor instalado se a secao de series recentemente adicionadas voltou ao mesmo patamar de filmes.
+- [ ] Medir a diferenca real de tempo da home com e sem varredura/refresh de metadata em andamento.
 - [x] O backend de devices passou a tolerar referencia de usuario ausente sem derrubar a lista inteira.
 - [x] Teste de regressao `DeviceManagerTests` aprovado.
 - [x] Build de producao do frontend validado com sucesso.
@@ -344,6 +352,8 @@ Concluido:
 - [x] Corrigida a pagina `NFO` do dashboard para nao depender de usuarios como bloqueio de carregamento.
 - [x] Corrigida a persistencia de `BaseItemProvider`, `LockedFields`, `Images` e `TrailerTypes` para nao anexar o grafo completo com entidades duplicadas durante refresh de metadados.
 - [x] Teste de regressao `ItemPersistenceServiceTests` aprovado.
+- [x] A gravacao de `ItemValues` passou a usar `INSERT IGNORE` para eliminar conflitos recorrentes de indice unico durante refresh concorrente.
+- [x] Validacao da frente `ItemPersistenceService` aprovada em `Jellyfin.Server.Implementations.Tests`.
 
 Pendente:
 
@@ -353,6 +363,8 @@ Pendente:
 - [ ] Medir o impacto do ajuste da pagina de `Atividade` apos remover a dependencia de usuarios.
 - [ ] Validar se a pagina `NFO` segue funcional mesmo quando a carga de usuarios falha.
 - [ ] Confirmar nos logs que o refresh de metadados nao volta a acusar `BaseItemProvider` duplicado nem repetir erro ao persistir `TrailerTypes`.
+- [ ] Confirmar em stage que o erro `Duplicate entry '3-Sky Atlantic' for key 'IX_ItemValues_Type_Value'` nao volta a aparecer sob carga.
+- [ ] Medir o impacto da troca para `INSERT IGNORE` na taxa de sucesso do refresh concorrente.
 - [ ] Se a home continuar vazia, instrumentar `itemsContainer.refreshItems()` para registrar falhas de query e diferenciar erro de API de lista realmente vazia.
 - [ ] Fechar a proxima sprint apenas depois de confirmar no navegador que `Minha midia`, `recentemente adicionadas` e a tela de detalhe carregam sem erro de console.
 
