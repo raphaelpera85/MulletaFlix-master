@@ -5,14 +5,14 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 {
     internal static class MidiaStorageOnlineStreamProxy
     {
+        private const string ProxyPath = "/MidiaStorageOnline/stream";
         private static string _localBaseUrl = "http://localhost:8096";
+
         internal static string LocalBaseUrl
         {
             get => _localBaseUrl;
             set => _localBaseUrl = value?.TrimEnd('/') ?? "http://localhost:8096";
         }
-
-        private const string ProxyPath = "/MidiaStorageOnline/stream";
 
         internal static string BuildProxyUrl(string rawUrl)
         {

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -32,6 +33,8 @@ namespace MediaBrowser.XbmcMetadata.Savers
         public const string DateAddedFormat = "yyyy-MM-dd HH:mm:ss";
 
         public const string YouTubeWatchUrl = "https://www.youtube.com/watch?v=";
+
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> _pathLocks = new(StringComparer.OrdinalIgnoreCase);
 
         private static readonly HashSet<string> _commonTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -189,16 +192,26 @@ namespace MediaBrowser.XbmcMetadata.Savers
         public async Task SaveAsync(BaseItem item, CancellationToken cancellationToken)
         {
             var path = GetSavePath(item);
+            var pathLock = _pathLocks.GetOrAdd(path, _ => new SemaphoreSlim(1, 1));
 
-            using (var memoryStream = new MemoryStream())
+            await pathLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            try
             {
-                Save(item, memoryStream, path);
+                using (var memoryStream = new MemoryStream())
+                {
+                    Save(item, memoryStream, path);
 
-                memoryStream.Position = 0;
+                    memoryStream.Position = 0;
 
-                cancellationToken.ThrowIfCancellationRequested();
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                await SaveToFileAsync(memoryStream, path, cancellationToken).ConfigureAwait(false);
+                    await SaveToFileAsync(memoryStream, path, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                pathLock.Release();
             }
         }
 
@@ -208,34 +221,107 @@ namespace MediaBrowser.XbmcMetadata.Savers
             Directory.CreateDirectory(directory);
 
             // Compare byte-for-byte before proceeding.
-            if (File.Exists(path) && await stream.IsFileIdenticalAsync(path, cancellationToken).ConfigureAwait(false))
+            var shouldSave = true;
+            if (File.Exists(path))
+            {
+                try
+                {
+                    shouldSave = !await stream.IsFileIdenticalAsync(path, cancellationToken).ConfigureAwait(false);
+                }
+                catch (IOException)
+                {
+                    // ponytail: if something else is holding the file, skip the compare and keep going to a temp write.
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // ponytail: same as above; treat a locked compare target as a transient condition.
+                }
+            }
+
+            if (!shouldSave)
             {
                 return; // Don't save since .nfo is unchanged.
             }
 
             stream.Position = 0;
 
-            // On Windows, saving the file will fail if the file is hidden or readonly
-            FileSystem.SetAttributes(path, false, false);
-
-            var fileStreamOptions = new FileStreamOptions()
+            var tempPath = Path.Combine(directory, Path.GetRandomFileName() + ".tmp");
+            try
             {
-                Mode = FileMode.Create,
-                Access = FileAccess.Write,
-                Share = FileShare.None,
-                PreallocationSize = stream.Length,
-                Options = FileOptions.Asynchronous
-            };
+                // ponytail: write to a temp file first so the destination stays locked for the shortest time possible.
+                var fileStreamOptions = new FileStreamOptions()
+                {
+                    Mode = FileMode.Create,
+                    Access = FileAccess.Write,
+                    Share = FileShare.None,
+                    PreallocationSize = stream.Length,
+                    Options = FileOptions.Asynchronous
+                };
 
-            var filestream = new FileStream(path, fileStreamOptions);
-            await using (filestream.ConfigureAwait(false))
+                await using (var tempStream = new FileStream(tempPath, fileStreamOptions))
+                {
+                    await stream.CopyToAsync(tempStream, cancellationToken).ConfigureAwait(false);
+                }
+
+                await ReplaceWithRetryAsync(tempPath, path, cancellationToken).ConfigureAwait(false);
+            }
+            finally
             {
-                await stream.CopyToAsync(filestream, cancellationToken).ConfigureAwait(false);
+                TryDelete(tempPath);
             }
 
             if (ConfigurationManager.Configuration.SaveMetadataHidden)
             {
                 SetHidden(path, true);
+            }
+        }
+
+        private async Task ReplaceWithRetryAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken)
+        {
+            const int maxAttempts = 3;
+
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    if (File.Exists(destinationPath))
+                    {
+                        FileSystem.SetAttributes(destinationPath, false, false);
+                    }
+
+                    File.Move(sourcePath, destinationPath, true);
+                    return;
+                }
+                catch (IOException ex) when (attempt < maxAttempts)
+                {
+                    Logger.LogWarning(ex, "Retrying NFO write to {Path} after file lock", destinationPath);
+                    await Task.Delay(TimeSpan.FromMilliseconds(100 * attempt), cancellationToken).ConfigureAwait(false);
+                }
+                catch (UnauthorizedAccessException ex) when (attempt < maxAttempts)
+                {
+                    Logger.LogWarning(ex, "Retrying NFO write to {Path} after access denied", destinationPath);
+                    await Task.Delay(TimeSpan.FromMilliseconds(100 * attempt), cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            // ponytail: if the file is still locked after a few tries, don't kill the sync job.
+            Logger.LogWarning("Skipping NFO write to {Path} because it is still locked", destinationPath);
+        }
+
+        private static void TryDelete(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // ignore cleanup noise
             }
         }
 
@@ -1061,4 +1147,3 @@ namespace MediaBrowser.XbmcMetadata.Savers
         }
     }
 }
-

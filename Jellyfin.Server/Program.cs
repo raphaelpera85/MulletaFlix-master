@@ -25,7 +25,6 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -159,7 +158,8 @@ namespace MulletaFlix.Server
                     await _setupServer.StopAsync().ConfigureAwait(false);
                     await _setupServer.RunAsync().ConfigureAwait(false);
                 }
-            } while (_restartOnShutdown);
+            }
+            while (_restartOnShutdown);
 
             _setupServer.Dispose();
 
@@ -222,8 +222,6 @@ namespace MulletaFlix.Server
 
                 // Re-use the host service provider in the app host since ASP.NET doesn't allow a custom service collection.
                 appHost.ServiceProvider = _MulletaFlixHost.Services;
-                PrepareDatabaseProvider(appHost.ServiceProvider);
-
                 if (!string.IsNullOrWhiteSpace(_restoreFromBackup))
                 {
                     await appHost.ServiceProvider.GetService<IBackupService>()!.RestoreBackupAsync(_restoreFromBackup).ConfigureAwait(false);
@@ -232,15 +230,15 @@ namespace MulletaFlix.Server
                     return;
                 }
 
-                var MulletaFlixMigrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(appHost.ServiceProvider);
-                await MulletaFlixMigrationService.PrepareSystemForMigration(_logger).ConfigureAwait(false);
-                await MulletaFlixMigrationService.MigrateStepAsync(MulletaFlixMigrationStageTypes.CoreInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
+                var migrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(appHost.ServiceProvider);
+                await migrationService.PrepareSystemForMigration(_logger).ConfigureAwait(false);
+                await migrationService.MigrateStepAsync(MulletaFlixMigrationStageTypes.CoreInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
 
                 await appHost.InitializeServices(startupConfig).ConfigureAwait(false);
                 _appHost = appHost;
 
-                await MulletaFlixMigrationService.MigrateStepAsync(MulletaFlixMigrationStageTypes.AppInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
-                await MulletaFlixMigrationService.CleanupSystemAfterMigration(_logger).ConfigureAwait(false);
+                await migrationService.MigrateStepAsync(MulletaFlixMigrationStageTypes.AppInitialisation, appHost.ServiceProvider).ConfigureAwait(false);
+                await migrationService.CleanupSystemAfterMigration(_logger).ConfigureAwait(false);
                 try
                 {
                     configurationCompleted = true;
@@ -345,11 +343,9 @@ namespace MulletaFlix.Server
             migrationStartupServiceProvider.AddSingleton(migrationStartupServiceProvider);
             var startupService = migrationStartupServiceProvider.BuildServiceProvider();
 
-            PrepareDatabaseProvider(startupService);
-
-            var MulletaFlixMigrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(startupService);
-            await MulletaFlixMigrationService.CheckFirstTimeRunOrMigration(appPaths, startupOptions).ConfigureAwait(false);
-            await MulletaFlixMigrationService.MigrateStepAsync(Migrations.Stages.MulletaFlixMigrationStageTypes.PreInitialisation, startupService).ConfigureAwait(false);
+            var migrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(startupService);
+            await migrationService.CheckFirstTimeRunOrMigration(appPaths, startupOptions).ConfigureAwait(false);
+            await migrationService.MigrateStepAsync(Migrations.Stages.MulletaFlixMigrationStageTypes.PreInitialisation, startupService).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -359,12 +355,12 @@ namespace MulletaFlix.Server
         /// Not intended to be used other then by MulletaFlix and its tests.
         /// </remarks>
         /// <param name="serviceProvider">The service provider.</param>
-        /// <param name="MulletaFlixMigrationStage">The stage to run.</param>
+        /// <param name="migrationStage">The stage to run.</param>
         /// <returns>A task.</returns>
-        public static async Task ApplyCoreMigrationsAsync(IServiceProvider serviceProvider, Migrations.Stages.MulletaFlixMigrationStageTypes MulletaFlixMigrationStage)
+        public static async Task ApplyCoreMigrationsAsync(IServiceProvider serviceProvider, Migrations.Stages.MulletaFlixMigrationStageTypes migrationStage)
         {
-            var MulletaFlixMigrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(serviceProvider, _migrationLogger!);
-            await MulletaFlixMigrationService.MigrateStepAsync(MulletaFlixMigrationStage, serviceProvider).ConfigureAwait(false);
+            var migrationService = ActivatorUtilities.CreateInstance<MulletaFlixMigrationService>(serviceProvider, _migrationLogger!);
+            await migrationService.MigrateStepAsync(migrationStage, serviceProvider).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -401,13 +397,5 @@ namespace MulletaFlix.Server
                 .AddEnvironmentVariables("MulletaFlix_")
                 .AddInMemoryCollection(commandLineOpts.ConvertToConfig());
         }
-
-        private static void PrepareDatabaseProvider(IServiceProvider services)
-        {
-            var factory = services.GetRequiredService<IDbContextFactory<MulletaFlixDbContext>>();
-            var provider = services.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.DbContextFactory = factory;
-        }
     }
 }
-

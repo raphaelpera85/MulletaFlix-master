@@ -80,7 +80,8 @@ public class MigrateKeyframeData : IDatabaseMigrationRoutine
             }
 
             _logger.LogInformation("Checked: {Count} - Imported: {Items} - Time: {Time}", offset, itemCount, sw.Elapsed);
-        } while (offset < records);
+        }
+        while (offset < records);
 
         context.SaveChanges();
         transaction.Commit();
@@ -167,4 +168,3 @@ public class MigrateKeyframeData : IDatabaseMigrationRoutine
         return false;
     }
 }
-

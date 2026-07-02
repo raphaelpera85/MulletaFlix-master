@@ -42,11 +42,11 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
     [ApiExplorerSettings(IgnoreApi = true)]
     public class MidiaStorageOnlineController : ControllerBase
     {
-        private const int MaxMovieFolderNameLength = 50;
-        private const int MaxMovieFileStemLength = 60;
-        private const int MaxSeriesShowNameLength = 50;
-        private const int MaxSeasonFolderNameLength = 24;
-        private const int MaxEpisodeFileStemLength = 60;
+        private const int MaxMovieFolderNameLength = 96;
+        private const int MaxMovieFileStemLength = 120;
+        private const int MaxSeriesShowNameLength = 96;
+        private const int MaxSeasonFolderNameLength = 48;
+        private const int MaxEpisodeFileStemLength = 120;
 
         // BG-1: bounded parallelism â€” ProcessorCount*2 vs old 256
         private static readonly int _maxParallelism = Math.Max(4, Environment.ProcessorCount * 2);
@@ -62,6 +62,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfigurationManager _configurationManager;
         private readonly IServerApplicationHost _serverApplicationHost;
+        private readonly ILibraryMonitor _libraryMonitor;
         private readonly ITunerHostManager _tunerHostManager;
         private readonly ILibraryManager _libraryManager;
         private readonly IActivityManager _activityManager;
@@ -71,6 +72,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             IHttpClientFactory httpClientFactory,
             IConfigurationManager configurationManager,
             IServerApplicationHost serverApplicationHost,
+            ILibraryMonitor libraryMonitor,
             ITunerHostManager tunerHostManager,
             ILibraryManager libraryManager,
             IActivityManager activityManager,
@@ -79,6 +81,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             _httpClientFactory = httpClientFactory;
             _configurationManager = configurationManager;
             _serverApplicationHost = serverApplicationHost;
+            _libraryMonitor = libraryMonitor;
             _tunerHostManager = tunerHostManager;
             _libraryManager = libraryManager;
             _activityManager = activityManager;
@@ -933,10 +936,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
                 Directory.CreateDirectory(moviesPath);
                 Directory.CreateDirectory(seriesPath);
+                _libraryMonitor.ReportFileSystemChangeBeginning(strmPath);
 
-                // Count upfront to create libraries before file processing
-                int entryMovieCount = entries.Count(e => e.Type == "Filme");
-                int entrySeriesCount = entries.Count(e => e.Type == "Serie");
+                try
+                {
+                    // Count upfront to create libraries before file processing
+                    int entryMovieCount = entries.Count(e => e.Type == "Filme");
+                    int entrySeriesCount = entries.Count(e => e.Type == "Serie");
 
                 var existingLibs = _libraryManager.GetVirtualFolders().Select(v => v.Name).ToHashSet();
 
@@ -964,22 +970,23 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     Log($"Biblioteca 'Series' criada apontando para {seriesPath}");
                 }
 
-                var manifest = force ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) : LoadManifest();
-                var newManifest = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                var createdDirs = new System.Collections.Concurrent.ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+                    var manifest = force ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) : LoadManifest();
+                    var newManifest = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    var createdDirs = new System.Collections.Concurrent.ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
-                var totalSynced = 0;
-                int movieCount = 0, seriesCount = 0, skippedCount = 0;
+                    var totalSynced = 0;
+                    int movieCount = 0, seriesCount = 0, skippedCount = 0;
 
                 // Loop paralelo somente para filmes e series
-                var movieAndSeriesEntries = entries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
+                    var movieAndSeriesEntries = entries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
 
                 // BG-1: bounded parallelism
                 await Parallel.ForEachAsync(movieAndSeriesEntries, new ParallelOptions { MaxDegreeOfParallelism = _maxParallelism }, async (entry, ct) =>
                 {
                     if (entry.Type == "Filme")
                     {
-                        var name = TrimPathSegment(SanitizeName(entry.Name), MaxMovieFolderNameLength);
+                        var name = TruncatePathSegment(SanitizeName(entry.Name), MaxMovieFolderNameLength);
+                        // ponytail: hash only the .strm name to keep folder names readable and still avoid collisions.
                         var fileName = TrimPathSegment(SanitizeName(entry.Name), MaxMovieFileStemLength);
                         var relPath = Path.Combine("Filmes", name, fileName + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
@@ -998,19 +1005,15 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         {
                             Directory.CreateDirectory(dir);
                         }
-                        var fileParentDir = Path.GetDirectoryName(filePath);
-                        if (!string.IsNullOrWhiteSpace(fileParentDir))
-                        {
-                            Directory.CreateDirectory(fileParentDir);
-                        }
                         await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
                         Interlocked.Increment(ref totalSynced);
                         Interlocked.Increment(ref movieCount);
                     }
                     else if (entry.Type == "Serie")
                     {
-                        var showName = TrimPathSegment(SanitizeName(entry.ShowName), MaxSeriesShowNameLength);
-                        var seasonFolder = TrimPathSegment(SanitizeName(entry.Season), MaxSeasonFolderNameLength);
+                        var showName = TruncatePathSegment(SanitizeName(entry.ShowName), MaxSeriesShowNameLength);
+                        var seasonFolder = TruncatePathSegment(SanitizeName(entry.Season), MaxSeasonFolderNameLength);
+                        // ponytail: hash only the .strm name to keep folder names readable and still avoid collisions.
                         var fileName = TrimPathSegment(SanitizeName(entry.Name), MaxEpisodeFileStemLength);
                         var relPath = Path.Combine("Series", showName, seasonFolder, fileName + ".strm");
                         var filePath = Path.Combine(strmPath, relPath);
@@ -1028,11 +1031,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         if (createdDirs.TryAdd(dir, 0))
                         {
                             Directory.CreateDirectory(dir);
-                        }
-                        var fileParentDir = Path.GetDirectoryName(filePath);
-                        if (!string.IsNullOrWhiteSpace(fileParentDir))
-                        {
-                            Directory.CreateDirectory(fileParentDir);
                         }
                         await System.IO.File.WriteAllTextAsync(filePath, newUrl, ct).ConfigureAwait(false);
                         Interlocked.Increment(ref totalSynced);
@@ -1076,8 +1074,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 config.LastSyncError = null;
                 SaveConfig(config);
 
-                await UpdateLiveTvChannelItemsAsync(channelEntries, ct).ConfigureAwait(false);
-
                 Log($"Sync OK em {sw.Elapsed.TotalSeconds:F1}s: {totalSynced} salvos, {skippedCount} ignorados, {deletedCount} deletados, canais M3U {canaisM3u.Length / 1024}KB");
 
                 await _activityManager.CreateAsync(new ActivityLog(
@@ -1098,6 +1094,19 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     canaisKb = canaisM3u.Length / 1024,
                     message = $"{totalSynced} .strm salvos, {skippedCount} ignorados, {deletedCount} deletados. Canais disponiveis no Dashboard > TV ao Vivo."
                 });
+                }
+                finally
+                {
+                    _libraryMonitor.ReportFileSystemChangeComplete(strmPath, true);
+                    try
+                    {
+                        await UpdateLiveTvChannelItemsAsync(channelEntries, ct).ConfigureAwait(false);
+                    }
+                    catch (Exception refreshEx)
+                    {
+                        Log($"Falha ao atualizar canais Live TV após o sync: {refreshEx.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1250,15 +1259,25 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             return value[..prefixLength].TrimEnd() + "_" + hash;
         }
 
-        private static async Task<bool> HasSameContentAsync(string filePath, string expectedContent, CancellationToken ct)
+        private static string TruncatePathSegment(string value, int maxLength)
         {
-            if (!System.IO.File.Exists(filePath))
-            {
-                return false;
-            }
+            value = string.IsNullOrWhiteSpace(value) ? "_" : value.Trim();
+            return value.Length <= maxLength ? value : value[..maxLength].TrimEnd();
+        }
 
-            var currentContent = await System.IO.File.ReadAllTextAsync(filePath, ct).ConfigureAwait(false);
-            return string.Equals(currentContent.Trim(), expectedContent.Trim(), StringComparison.Ordinal);
+        private static string BuildLegacyMovieRelativePath(M3uEntry entry, int folderMaxLength, int fileMaxLength)
+        {
+            var name = TrimPathSegment(SanitizeName(entry.Name), folderMaxLength);
+            var fileName = TrimPathSegment(SanitizeName(entry.Name), fileMaxLength);
+            return Path.Combine("Filmes", name, fileName + ".strm");
+        }
+
+        private static string BuildLegacySeriesRelativePath(M3uEntry entry, int showMaxLength, int seasonMaxLength, int fileMaxLength)
+        {
+            var showName = TrimPathSegment(SanitizeName(entry.ShowName), showMaxLength);
+            var seasonFolder = TrimPathSegment(SanitizeName(entry.Season), seasonMaxLength);
+            var fileName = TrimPathSegment(SanitizeName(entry.Name), fileMaxLength);
+            return Path.Combine("Series", showName, seasonFolder, fileName + ".strm");
         }
 
         private static string BuildEntryDedupKey(M3uEntry entry)

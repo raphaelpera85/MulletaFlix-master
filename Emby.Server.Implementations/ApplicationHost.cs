@@ -12,6 +12,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Emby.Naming.Common;
 using Emby.Naming.Video;
@@ -26,6 +27,7 @@ using Emby.Server.Implementations.Dto;
 using Emby.Server.Implementations.HttpServer.Security;
 using Emby.Server.Implementations.IO;
 using Emby.Server.Implementations.Library;
+using Emby.Server.Implementations.MediaEncoding;
 using Emby.Server.Implementations.Library.SimilarItems;
 using Emby.Server.Implementations.Localization;
 using Emby.Server.Implementations.Playlists;
@@ -121,6 +123,7 @@ namespace Emby.Server.Implementations
         /// <summary>
         /// The disposable parts.
         /// </summary>
+        private static int _runtimeStatsCollectorStarted;
         private readonly ConcurrentBag<IDisposable> _disposableParts = new();
         private readonly DeviceId _deviceId;
 
@@ -425,6 +428,8 @@ namespace Emby.Server.Implementations
                 throw new FfmpegException("Failed to find valid ffmpeg");
             }
 
+            Resolve<HardwareDetectionService>()?.Run();
+
             Logger.LogInformation("ServerId: {ServerId}", SystemId);
             Logger.LogInformation("Core startup complete");
             CoreStartupHasCompleted = true;
@@ -441,8 +446,12 @@ namespace Emby.Server.Implementations
 
             NetManager = new NetworkManager(ConfigurationManager, _startupConfig, LoggerFactory.CreateLogger<NetworkManager>());
 
-            // Keep runtime stats always available for the stage gate.
-            _disposableParts.Add(DotNetRuntimeStatsBuilder.Default().StartCollecting());
+            if (Environment.GetEnvironmentVariable("MulletaFlix_DISABLE_RUNTIME_METRICS") != "true"
+                && Interlocked.Exchange(ref _runtimeStatsCollectorStarted, 1) == 0)
+            {
+                // ponytail: one collector per process; test hosts restart in-process.
+                _disposableParts.Add(DotNetRuntimeStatsBuilder.Default().StartCollecting());
+            }
 
             var networkConfiguration = ConfigurationManager.GetNetworkConfiguration();
             HttpPort = networkConfiguration.InternalHttpPort;
@@ -528,6 +537,7 @@ namespace Emby.Server.Implementations
             serviceCollection.AddSingleton<IItemTypeLookup, ItemTypeLookup>();
 
             serviceCollection.AddSingleton<IMediaEncoder, MediaBrowser.MediaEncoding.Encoder.MediaEncoder>();
+            serviceCollection.AddSingleton<HardwareDetectionService>();
             serviceCollection.AddSingleton<EncodingHelper>();
             serviceCollection.AddSingleton<IPathManager, PathManager>();
             serviceCollection.AddSingleton<IExternalDataManager, ExternalDataManager>();

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
@@ -27,10 +28,14 @@ namespace MulletaFlix.Server.Integration.Tests
 
         public IEnumerable<PluginPageInfo> GetPages()
         {
+            string resourcePath = GetType().Assembly
+                .GetManifestResourceNames()
+                .Single(name => name.EndsWith(".TestPage.html", StringComparison.Ordinal));
+
             yield return new PluginPageInfo
             {
                 Name = Name,
-                EmbeddedResourcePath = GetType().Namespace + ".TestPage.html"
+                EmbeddedResourcePath = resourcePath
             };
 
             yield return new PluginPageInfo
@@ -41,4 +46,3 @@ namespace MulletaFlix.Server.Integration.Tests
         }
     }
 }
-

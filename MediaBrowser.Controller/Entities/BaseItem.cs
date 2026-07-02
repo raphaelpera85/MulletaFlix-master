@@ -1580,7 +1580,30 @@ namespace MediaBrowser.Controller.Entities
                 lang = ConfigurationManager.Configuration.PreferredMetadataLanguage;
             }
 
+            lang = NormalizePreferredMetadataLanguage(lang, GetPreferredMetadataCountryCode());
+
             return lang;
+        }
+
+        private static string NormalizePreferredMetadataLanguage(string? language, string? countryCode)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+            {
+                return string.Empty;
+            }
+
+            if (!string.Equals(countryCode, "BR", StringComparison.OrdinalIgnoreCase))
+            {
+                return language;
+            }
+
+            if (string.Equals(language, "pt", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(language, "pt-PT", StringComparison.OrdinalIgnoreCase))
+            {
+                return "pt-BR";
+            }
+
+            return language;
         }
 
         /// <summary>
@@ -2800,4 +2823,3 @@ namespace MediaBrowser.Controller.Entities
         public override int GetHashCode() => HashCode.Combine(Id);
     }
 }
-

@@ -13,17 +13,11 @@ namespace MulletaFlix.Database.Implementations;
 public interface IMulletaFlixDatabaseProvider
 {
     /// <summary>
-    /// Gets or Sets the Database Factory when initialisaition is done.
-    /// </summary>
-    IDbContextFactory<MulletaFlixDbContext>? DbContextFactory { get; set; }
-
-    /// <summary>
     /// Initialises MulletaFlixs EFCore database access.
     /// </summary>
     /// <param name="options">The EFCore database options.</param>
     /// <param name="databaseConfiguration">The MulletaFlix database options.</param>
-    /// <param name="schemaName">Optional schema/database name for multi-schema providers.</param>
-    void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration, string schemaName = "");
+    void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration);
 
     /// <summary>
     /// Will be invoked when EFCore wants to build its model.
@@ -82,4 +76,3 @@ public interface IMulletaFlixDatabaseProvider
     /// <returns>A Task.</returns>
     Task PurgeDatabase(MulletaFlixDbContext dbContext, IEnumerable<string>? tableNames);
 }
-

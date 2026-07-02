@@ -1077,7 +1077,7 @@ namespace MediaBrowser.Providers.Manager
                 else
                 {
                     var diff = Math.Abs(queryYear.Value - result.ProductionYear.Value);
-                    score += Math.Max(0, 30 - diff * 5);
+                    score += Math.Max(0, 30 - (diff * 5));
                 }
             }
 

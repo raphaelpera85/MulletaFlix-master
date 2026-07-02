@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
+using System.Reflection;
 using MulletaFlix.Api.Attributes;
 using MulletaFlix.Api.Models;
 using MediaBrowser.Common.Api;
@@ -84,7 +85,7 @@ public class DashboardController : BaseMulletaFlixApiController
 
         IPlugin plugin = altPage.Item2;
         string resourcePath = altPage.Item1.EmbeddedResourcePath;
-        Stream? stream = plugin.GetType().Assembly.GetManifestResourceStream(resourcePath);
+        Stream? stream = GetPluginResourceStream(plugin, resourcePath);
         if (stream is null)
         {
             _logger.LogError("Failed to get resource {Resource} from plugin {Plugin}", resourcePath, plugin.Name);
@@ -92,6 +93,18 @@ public class DashboardController : BaseMulletaFlixApiController
         }
 
         return File(stream, MimeTypes.GetMimeType(resourcePath));
+    }
+
+    private static Stream? GetPluginResourceStream(IPlugin plugin, string resourcePath)
+    {
+        var stream = plugin.GetType().Assembly.GetManifestResourceStream(resourcePath);
+        if (stream is not null || string.IsNullOrWhiteSpace(plugin.AssemblyFilePath) || !System.IO.File.Exists(plugin.AssemblyFilePath))
+        {
+            return stream;
+        }
+
+        var assembly = Assembly.LoadFrom(plugin.AssemblyFilePath);
+        return assembly.GetManifestResourceStream(resourcePath);
     }
 
     private IEnumerable<ConfigurationPageInfo> GetConfigPages(LocalPlugin plugin)
@@ -114,4 +127,3 @@ public class DashboardController : BaseMulletaFlixApiController
         return _pluginManager.Plugins.SelectMany(GetPluginPages);
     }
 }
-

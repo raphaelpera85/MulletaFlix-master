@@ -122,11 +122,11 @@ public class RefreshInternalDateModified : IDatabaseMigrationRoutine
             }
 
             _logger.LogInformation("Checked: {Count} - Refreshed: {Items} - Time: {Time}", offset, itemCount, sw.Elapsed);
-        } while (offset < records);
+        }
+        while (offset < records);
 
         context.SaveChanges();
 
         _logger.LogInformation("Refreshed DateModified for {Count} items in {Time}", itemCount, sw.Elapsed);
     }
 }
-

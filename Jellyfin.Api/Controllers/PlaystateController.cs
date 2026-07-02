@@ -60,6 +60,11 @@ public class PlaystateController : BaseMulletaFlixApiController
         _transcodeManager = transcodeManager;
     }
 
+    private bool UserExists(Guid userId)
+    {
+        return _userManager.GetUserById(userId) is not null;
+    }
+
     /// <summary>
     /// Marks an item as played for user.
     /// </summary>
@@ -126,7 +131,14 @@ public class PlaystateController : BaseMulletaFlixApiController
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId,
         [FromQuery, ModelBinder(typeof(LegacyDateTimeModelBinder))] DateTime? datePlayed)
-        => MarkPlayedItem(userId, itemId, datePlayed);
+    {
+        if (!UserExists(userId))
+        {
+            return Task.FromResult<ActionResult<UserItemDataDto?>>(NotFound());
+        }
+
+        return MarkPlayedItem(userId, itemId, datePlayed);
+    }
 
     /// <summary>
     /// Marks an item as unplayed for user.
@@ -190,7 +202,14 @@ public class PlaystateController : BaseMulletaFlixApiController
     public Task<ActionResult<UserItemDataDto?>> MarkUnplayedItemLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => MarkUnplayedItem(userId, itemId);
+    {
+        if (!UserExists(userId))
+        {
+            return Task.FromResult<ActionResult<UserItemDataDto?>>(NotFound());
+        }
+
+        return MarkUnplayedItem(userId, itemId);
+    }
 
     /// <summary>
     /// Reports playback has started within a session.
@@ -538,4 +557,3 @@ public class PlaystateController : BaseMulletaFlixApiController
         return method;
     }
 }
-

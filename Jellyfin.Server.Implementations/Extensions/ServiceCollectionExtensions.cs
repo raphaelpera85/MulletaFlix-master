@@ -37,7 +37,6 @@ public static class ServiceCollectionExtensions
                 continue;
             }
 
-            var provider = providerType;
             items[keyAttribute.DatabaseProviderKey] = (services) => (IMulletaFlixDatabaseProvider)ActivatorUtilities.CreateInstance(services, providerType);
         }
 
@@ -154,7 +153,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddPooledDbContextFactory<MulletaFlixDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_users");
+            provider.Initialise(opt, efCoreConfiguration);
             var lockingBehavior = serviceProvider.GetRequiredService<IEntityFrameworkCoreLockingBehavior>();
             lockingBehavior.Initialise(opt);
         });
@@ -162,40 +161,39 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddPooledDbContextFactory<UsersDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_users");
+            provider.Initialise(opt, efCoreConfiguration);
         });
 
         serviceCollection.AddPooledDbContextFactory<MoviesDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_movies");
+            provider.Initialise(opt, efCoreConfiguration);
         });
 
         serviceCollection.AddPooledDbContextFactory<SeriesDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_series");
+            provider.Initialise(opt, efCoreConfiguration);
         });
 
         serviceCollection.AddPooledDbContextFactory<ChannelsDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_channels");
+            provider.Initialise(opt, efCoreConfiguration);
         });
 
         serviceCollection.AddPooledDbContextFactory<BooksDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_books");
+            provider.Initialise(opt, efCoreConfiguration);
         });
 
         serviceCollection.AddPooledDbContextFactory<SystemDbContext>((serviceProvider, opt) =>
         {
             var provider = serviceProvider.GetRequiredService<IMulletaFlixDatabaseProvider>();
-            provider.Initialise(opt, efCoreConfiguration, "mulletaflix_users");
+            provider.Initialise(opt, efCoreConfiguration);
         });
 
         return serviceCollection;
     }
 }
-

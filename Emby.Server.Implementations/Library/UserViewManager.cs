@@ -342,8 +342,6 @@ namespace Emby.Server.Implementations.Library
             return _libraryManager.GetShadowView(parent, viewType, sortName);
         }
 
-
-
         public async Task<List<Tuple<BaseItem, List<BaseItem>>>> GetLatestItemsAsync(LatestItemsQuery request, DtoOptions options)
         {
             var libraryItems = await GetItemsForLatestItemsAsync(request.User, request, options).ConfigureAwait(false);
@@ -377,8 +375,6 @@ namespace Emby.Server.Implementations.Library
 
             return list;
         }
-
-
 
         private async Task<IReadOnlyList<BaseItem>> GetItemsForLatestItemsAsync(User user, LatestItemsQuery request, DtoOptions options)
         {
@@ -548,4 +544,3 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
-

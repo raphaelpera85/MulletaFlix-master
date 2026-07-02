@@ -17,6 +17,13 @@
 
   <ItemGroup>
     <Compile Include="..\SharedVersion.cs" />
+    <Compile Include="..\Jellyfin.Server\Program.cs" Link="Program.cs" />
+    <Compile Include="..\Jellyfin.Server\Startup.cs" Link="Startup.cs" />
+    <Compile Include="..\Jellyfin.Server\Helpers\StartupHelpers.cs" Link="Helpers\StartupHelpers.cs" />
+    <Compile Include="..\Jellyfin.Server\ServerSetupApp\SetupServer.cs" Link="ServerSetupApp\SetupServer.cs" />
+    <Compile Include="..\Jellyfin.Server\ServerSetupApp\StartupLogger.cs" Link="ServerSetupApp\StartupLogger.cs" />
+    <Compile Include="..\Jellyfin.Server\ServerSetupApp\StartupLoggerOfCategory.cs" Link="ServerSetupApp\StartupLoggerOfCategory.cs" />
+    <Compile Include="..\Jellyfin.Server\Helpers\MariaDbProcessManager.cs" Link="Helpers\MariaDbProcessManager.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -89,10 +96,9 @@
     <None Update="wwwroot\api-docs\MulletaFlix.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="ServerSetupApp/index.mstemplate.html">
+    <None Include="..\Jellyfin.Server\ServerSetupApp\index.mstemplate.html" Link="ServerSetupApp/index.mstemplate.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
 </Project>
-

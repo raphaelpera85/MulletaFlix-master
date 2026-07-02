@@ -314,6 +314,11 @@ namespace Emby.Server.Implementations.Images
                 return null;
             }
 
+            if (!File.Exists(image))
+            {
+                return null;
+            }
+
             var ext = Path.GetExtension(image);
 
             var outputPath = Path.ChangeExtension(outputPathWithoutExtension, ext);

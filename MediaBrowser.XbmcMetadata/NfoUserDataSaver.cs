@@ -6,7 +6,6 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.XbmcMetadata.Configuration;
-using MediaBrowser.XbmcMetadata.Savers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -55,7 +54,7 @@ public sealed class NfoUserDataSaver : IHostedService
         return Task.CompletedTask;
     }
 
-    private async void OnUserDataSaved(object? sender, UserDataSaveEventArgs e)
+    private void OnUserDataSaved(object? sender, UserDataSaveEventArgs e)
     {
         if (e.SaveReason is not (UserDataSaveReason.PlaybackFinished
             or UserDataSaveReason.TogglePlayed or UserDataSaveReason.UpdateUserRating))
@@ -69,19 +68,9 @@ public sealed class NfoUserDataSaver : IHostedService
         }
 
         var item = e.Item;
-        if (!item.IsFileProtocol || !item.SupportsLocalMetadata)
-        {
-            return;
-        }
-
-        try
-        {
-            await _providerManager.SaveMetadataAsync(item, ItemUpdateType.MetadataDownload, [BaseNfoSaver.SaverName])
-                .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving metadata for {Path}", item.Path ?? item.Name);
-        }
+        // NFO generation is handled by the normal metadata scan/import pipeline.
+        // This event handler intentionally avoids writing metadata here to prevent
+        // file locks during plugin synchronization.
+        _logger.LogDebug("Deferred NFO save for {Path}; metadata scan will handle it.", item.Path ?? item.Name);
     }
 }

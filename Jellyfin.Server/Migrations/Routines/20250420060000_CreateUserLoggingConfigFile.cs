@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MediaBrowser.Common.Configuration;
 using System.Text.Json.Nodes;
+using MediaBrowser.Common.Configuration;
 
 namespace MulletaFlix.Server.Migrations.Routines
 {
@@ -74,4 +74,3 @@ namespace MulletaFlix.Server.Migrations.Routines
         }
     }
 }
-

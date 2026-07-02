@@ -3,13 +3,15 @@ using System.Data.Common;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace MulletaFlix.Server.Implementations.Billing;
 
 public static class DomainSchemaInitializer
 {
-    public static async Task EnsureDomainTablesAsync(DbContext dbContext, string schemaName, CancellationToken ct)
+    public static async Task EnsureDomainTablesAsync(DbContext dbContext, CancellationToken ct)
     {
         var providerName = dbContext.Database.ProviderName ?? string.Empty;
         if (!providerName.Contains("MySql", StringComparison.OrdinalIgnoreCase) &&
@@ -18,38 +20,38 @@ public static class DomainSchemaInitializer
             return;
         }
 
-        var tables = schemaName switch
+        var databaseName = DatabaseNames.Main;
+        var tables = dbContext switch
         {
-            "mulletaflix_movies" => new[]
+            MoviesDbContext => new[]
             {
                 ("Movies", MoviesTableSql()),
                 ("MovieMetadata", MovieMetadataTableSql()),
                 ("MovieUserData", MovieUserDataTableSql())
             },
-            "mulletaflix_series" => new[]
+            SeriesDbContext => new[]
             {
                 ("Series", SeriesTableSql()),
                 ("Seasons", SeasonsTableSql()),
                 ("Episodes", EpisodesTableSql()),
                 ("SeriesUserData", SeriesUserDataTableSql())
             },
-            "mulletaflix_channels" => new[]
+            ChannelsDbContext => new[]
             {
                 ("Channels", ChannelsTableSql()),
                 ("Programs", ProgramsTableSql())
             },
-            "mulletaflix_books" => new[]
+            BooksDbContext => new[]
             {
                 ("Books", BooksTableSql()),
                 ("BookUserData", BookUserDataTableSql())
             },
-            "mulletaflix_system" => Array.Empty<(string TableName, string Sql)>(), // Uses mullettaflix_users schema via SystemDbContext
             _ => Array.Empty<(string TableName, string Sql)>()
         };
 
         foreach (var (tableName, sql) in tables)
         {
-            if (await TableExistsAsync(dbContext, schemaName, tableName, ct).ConfigureAwait(false))
+            if (await TableExistsAsync(dbContext, databaseName, tableName, ct).ConfigureAwait(false))
             {
                 continue;
             }

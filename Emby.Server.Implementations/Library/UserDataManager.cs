@@ -58,21 +58,26 @@ namespace Emby.Server.Implementations.Library
 
             var lockIndex = item.Id.GetHashCode() & 7;
             var saveLock = _saveUserDataLocks[lockIndex];
-            saveLock.WaitAsync(cancellationToken).GetAwaiter().GetResult();
+            saveLock.Wait(cancellationToken);
             try
             {
-                var keys = item.GetUserDataKeys();
+                var keys = item.GetUserDataKeys().Distinct(StringComparer.Ordinal).ToArray();
 
                 using var dbContext = _repository.CreateDbContext();
                 using var transaction = dbContext.Database.BeginTransaction();
+                var existingEntries = dbContext.UserData
+                    .Where(f => f.ItemId == item.Id && f.UserId == user.Id)
+                    .ToList()
+                    .Where(f => keys.Contains(f.CustomDataKey))
+                    .ToDictionary(f => f.CustomDataKey, StringComparer.Ordinal);
 
                 foreach (var key in keys)
                 {
                     userData.Key = key;
                     var userDataEntry = Map(userData, user.Id, item.Id);
-                    if (dbContext.UserData.Any(f => f.ItemId == userDataEntry.ItemId && f.UserId == userDataEntry.UserId && f.CustomDataKey == userDataEntry.CustomDataKey))
+                    if (existingEntries.TryGetValue(key, out var existingEntry))
                     {
-                        dbContext.UserData.Attach(userDataEntry).State = EntityState.Modified;
+                        ApplyUserData(existingEntry, userDataEntry);
                     }
                     else
                     {
@@ -80,7 +85,7 @@ namespace Emby.Server.Implementations.Library
                     }
                 }
 
-                dbContext.SaveChangesAsync(cancellationToken).GetAwaiter().GetResult();
+                dbContext.SaveChanges();
                 transaction.Commit();
 
                 var userId = user.InternalId;
@@ -90,7 +95,7 @@ namespace Emby.Server.Implementations.Library
 
                 UserDataSaved?.Invoke(this, new UserDataSaveEventArgs
                 {
-                    Keys = keys,
+                    Keys = keys.ToList(),
                     UserData = userData,
                     SaveReason = reason,
                     UserId = user.Id,
@@ -169,6 +174,19 @@ namespace Emby.Server.Implementations.Library
                 UserId = userId,
                 SubtitleStreamIndex = dto.SubtitleStreamIndex,
             };
+        }
+
+        private static void ApplyUserData(UserData target, UserData source)
+        {
+            target.AudioStreamIndex = source.AudioStreamIndex;
+            target.IsFavorite = source.IsFavorite;
+            target.LastPlayedDate = source.LastPlayedDate;
+            target.Likes = source.Likes;
+            target.PlaybackPositionTicks = source.PlaybackPositionTicks;
+            target.PlayCount = source.PlayCount;
+            target.Played = source.Played;
+            target.Rating = source.Rating;
+            target.SubtitleStreamIndex = source.SubtitleStreamIndex;
         }
 
         private static UserItemData Map(UserData dto)
@@ -399,4 +417,3 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
-

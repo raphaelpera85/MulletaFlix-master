@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using Emby.Server.Implementations;
@@ -53,6 +54,7 @@ namespace MulletaFlix.Server.Integration.Tests
         {
             // Skip ffmpeg check for testing
             Environment.SetEnvironmentVariable("MulletaFlix_FFMPEG__NOVALIDATION", "true");
+            Environment.SetEnvironmentVariable("MulletaFlix_DISABLE_RUNTIME_METRICS", "true");
             // Specify the startup command line options
             var commandLineOpts = new StartupOptions();
 
@@ -75,6 +77,8 @@ namespace MulletaFlix.Server.Integration.Tests
 
             // Create a copy of the application configuration to use for startup
             var startupConfig = Program.CreateAppConfiguration(commandLineOpts, appPaths);
+
+            MariaDbProcessManager.StartMariaDbAsync(appPaths, NullLogger.Instance).GetAwaiter().GetResult();
 
             ILoggerFactory loggerFactory = new SerilogLoggerFactory();
 
@@ -130,6 +134,7 @@ namespace MulletaFlix.Server.Integration.Tests
                 disposable.Dispose();
             }
 
+            MariaDbProcessManager.StopMariaDb(NullLogger.Instance);
             _disposableComponents.Clear();
 
             base.Dispose(disposing);
@@ -192,4 +197,3 @@ namespace MulletaFlix.Server.Integration.Tests
         }
     }
 }
-

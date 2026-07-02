@@ -11,7 +11,6 @@ using Emby.Server.Implementations.Localization;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Timeout;
-using Polly.Timeout;
 using MulletaFlix.Api.Middleware;
 using MulletaFlix.Api.Jobs;
 using MulletaFlix.Database.Implementations;
@@ -21,7 +20,6 @@ using MulletaFlix.MediaEncoding.Hls.Extensions;
 using MulletaFlix.Networking;
 using MulletaFlix.Networking.HappyEyeballs;
 using MulletaFlix.Server.Extensions;
-using MulletaFlix.Server.HealthChecks;
 using MulletaFlix.Server.Implementations.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -142,7 +140,7 @@ namespace MulletaFlix.Server
             });
 
             services.AddHealthChecks()
-                .AddCheck<DbContextFactoryHealthCheck<MulletaFlixDbContext>>(nameof(MulletaFlixDbContext));
+                .AddDbContextCheck<MulletaFlixDbContext>(nameof(MulletaFlixDbContext));
 
             services.AddHlsPlaylistGenerator();
             services.AddLiveTvServices();

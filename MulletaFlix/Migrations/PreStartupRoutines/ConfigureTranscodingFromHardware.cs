@@ -47,95 +47,7 @@ public sealed class ConfigureTranscodingFromHardware : IMigrationRoutine
     /// <inheritdoc />
     public void Perform()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            _logger.LogDebug("Skipping transcoding hardware detection on non-Windows startup.");
-            return;
-        }
-
-        var encodingPath = Path.Combine(_applicationPaths.ConfigurationDirectoryPath, "encoding.xml");
-        if (!File.Exists(encodingPath))
-        {
-            _logger.LogDebug("Encoding configuration file not found, skipping hardware-aware transcoding setup: {Path}", encodingPath);
-            return;
-        }
-
-        var hardware = DetectHardware();
-        if (hardware is null)
-        {
-            _logger.LogWarning("No GPU or CPU information was detected, leaving transcoding configuration unchanged.");
-            return;
-        }
-
-        EncodingOptions? encodingOptions;
-        try
-        {
-            var serializer = new XmlSerializer(typeof(EncodingOptions));
-            using var xmlReader = XmlReader.Create(encodingPath);
-            encodingOptions = (EncodingOptions?)serializer.Deserialize(xmlReader);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to read transcoding configuration from {Path}", encodingPath);
-            return;
-        }
-
-        if (encodingOptions is null)
-        {
-            _logger.LogWarning("Encoding configuration could not be loaded from {Path}", encodingPath);
-            return;
-        }
-
-        var changed = ApplyRecommendedProfile(encodingOptions, hardware.Value);
-        if (!changed)
-        {
-            if (hardware.Value.IsGpu)
-            {
-                _logger.LogInformation(
-                    "GPU detected: {Name}. Transcoding configuration already matches the recommended profile: {Profile}",
-                    hardware.Value.Name,
-                    hardware.Value.HardwareAccelerationType);
-            }
-            else
-            {
-                _logger.LogInformation(
-                    "CPU detected: {Name}. Transcoding configuration already matches the recommended profile: software",
-                    hardware.Value.Name);
-            }
-
-            return;
-        }
-
-        try
-        {
-            var serializer = new XmlSerializer(typeof(EncodingOptions));
-            var xmlWriterSettings = new XmlWriterSettings
-            {
-                Indent = true
-            };
-
-            using var xmlWriter = XmlWriter.Create(encodingPath, xmlWriterSettings);
-            serializer.Serialize(xmlWriter, encodingOptions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to write transcoding configuration to {Path}", encodingPath);
-            return;
-        }
-
-        if (hardware.Value.IsGpu)
-        {
-            _logger.LogInformation(
-                "GPU detected: {Name}. Transcoding profile updated to {Profile}.",
-                hardware.Value.Name,
-                hardware.Value.HardwareAccelerationType);
-        }
-        else
-        {
-            _logger.LogInformation(
-                "CPU detected: {Name}. Transcoding profile updated for software fallback.",
-                hardware.Value.Name);
-        }
+        _logger.LogDebug("Hardware transcoding pre-start routine is disabled; detection runs after FFmpeg validation during core startup.");
     }
 
     private static HardwareDetection? DetectHardware()
@@ -511,4 +423,3 @@ public sealed class ConfigureTranscodingFromHardware : IMigrationRoutine
         HardwareAccelerationType HardwareAccelerationType,
         bool SupportsAv1Encoding);
 }
-

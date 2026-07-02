@@ -46,10 +46,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
     private string MysqlPath => string.IsNullOrEmpty(ToolsDir) ? "mysql" : Path.Combine(ToolsDir, "mysql.exe");
 
     /// <inheritdoc/>
-    public IDbContextFactory<MulletaFlixDbContext>? DbContextFactory { get; set; }
-
-    /// <inheritdoc/>
-    public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration, string schemaName = "")
+    public void Initialise(DbContextOptionsBuilder options, DatabaseConfigurationOptions databaseConfiguration)
     {
         var opts = databaseConfiguration.CustomProviderOptions?.Options;
         _server = GetOption(opts, "server", e => e, () => "localhost");
@@ -77,9 +74,8 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
             ? $"Server={_server};Port={_port};User ID={_user};Password={_password};CharSet=utf8mb4;Pooling=True;Minimum Pool Size=10;Maximum Pool Size=200;Connection Idle Timeout=300;Connection Lifetime=1800;Default Command Timeout=120;"
             : DefaultConnectionString;
 
-        var schema = !string.IsNullOrEmpty(schemaName) ? schemaName : "mulletaflix_users";
-        connString = ApplySchema(connString, schema);
-        _logger.LogInformation("MySQL: {Schema}", schema);
+        connString = ApplySchema(connString, DatabaseNames.Main);
+        _logger.LogInformation("MySQL database: {Database}", DatabaseNames.Main);
 
         var versionStr = GetOption(opts, "server-version", e => e, () => "11.4.2");
         var serverVersion = new MariaDbServerVersion(new Version(versionStr));
@@ -87,7 +83,7 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         options.UseMySql(connString, serverVersion, mySqlOptions =>
         {
             mySqlOptions.MigrationsAssembly(GetType().Assembly.GetName().Name);
-            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (schema, table) => schema ?? "mulletaflix_users");
+            mySqlOptions.SchemaBehavior(Pomelo.EntityFrameworkCore.MySql.Infrastructure.MySqlSchemaBehavior.Translate, (schema, table) => schema ?? DatabaseNames.Main);
         });
     }
 
@@ -205,20 +201,14 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
 
         try
         {
-            var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-                "mulletaflix_channels", "mulletaflix_books" };
+            var result = await RunProcessAsync(MysqlPath,
+                $"-h {_server} -P {_port} {BuildUserCredentialArguments()} {DatabaseNames.Main} -e \"ANALYZE TABLE `{DatabaseNames.Main}`.`Movies`;\"",
+                cancellationToken).ConfigureAwait(false);
 
-            foreach (var schema in schemas)
-            {
-                var result = await RunProcessAsync(MysqlPath,
-                    $"-h {_server} -P {_port} {BuildUserCredentialArguments()} {schema} -e \"ANALYZE TABLE `{schema}`.`Movies`;\"",
-                    cancellationToken).ConfigureAwait(false);
-
-                _logger.LogInformation(
-                    "Optimization result for {Schema}: {Result}",
-                    schema,
-                    string.IsNullOrEmpty(result) ? "OK" : result);
-            }
+            _logger.LogInformation(
+                "Optimization result for {Database}: {Result}",
+                DatabaseNames.Main,
+                string.IsNullOrEmpty(result) ? "OK" : result);
         }
         catch (Exception ex)
         {
@@ -262,18 +252,12 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         var backupFolder = GetBackupFolder();
         Directory.CreateDirectory(backupFolder);
 
-        var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books" };
+        var outputFile = Path.Combine(backupFolder, $"{key}_{DatabaseNames.Main}.sql");
+        _logger.LogInformation("Backing up {Database} to {File}", DatabaseNames.Main, outputFile);
 
-        foreach (var schema in schemas)
-        {
-            var outputFile = Path.Combine(backupFolder, $"{key}_{schema}.sql");
-            _logger.LogInformation("Backing up {Schema} to {File}", schema, outputFile);
-
-            await RunProcessAsync(MysqldumpPath,
-                $"-h {_server} -P {_port} {BuildUserCredentialArguments()} --databases {schema} --routines --triggers --single-transaction --quick --result-file=\"{outputFile}\"",
-                cancellationToken).ConfigureAwait(false);
-        }
+        await RunProcessAsync(MysqldumpPath,
+            $"-h {_server} -P {_port} {BuildUserCredentialArguments()} --databases {DatabaseNames.Main} --routines --triggers --single-transaction --quick --result-file=\"{outputFile}\"",
+            cancellationToken).ConfigureAwait(false);
 
         return key;
     }
@@ -282,25 +266,19 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
     {
         var backupFolder = GetBackupFolder();
 
-        var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books" };
-
-        foreach (var schema in schemas)
+        var inputFile = Path.Combine(backupFolder, $"{key}_{DatabaseNames.Main}.sql");
+        if (!File.Exists(inputFile))
         {
-            var inputFile = Path.Combine(backupFolder, $"{key}_{schema}.sql");
-            if (!File.Exists(inputFile))
-            {
-                _logger.LogWarning("Backup file not found for {Schema}: {File}", schema, inputFile);
-                continue;
-            }
-
-            _logger.LogInformation("Restoring {Schema} from {File}", schema, inputFile);
-
-            await RunProcessWithInputFileAsync(MysqlPath,
-                $"-h {_server} -P {_port} {BuildUserCredentialArguments()} {schema}",
-                inputFile,
-                cancellationToken).ConfigureAwait(false);
+            _logger.LogWarning("Backup file not found for {Database}: {File}", DatabaseNames.Main, inputFile);
+            return;
         }
+
+        _logger.LogInformation("Restoring {Database} from {File}", DatabaseNames.Main, inputFile);
+
+        await RunProcessWithInputFileAsync(MysqlPath,
+            $"-h {_server} -P {_port} {BuildUserCredentialArguments()} {DatabaseNames.Main}",
+            inputFile,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public Task DeleteBackup(string key)
@@ -308,16 +286,10 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         var backupFolder = GetBackupFolder();
         if (!Directory.Exists(backupFolder)) return Task.CompletedTask;
 
-        var schemas = new[] { "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series",
-            "mulletaflix_channels", "mulletaflix_books" };
-
-        foreach (var schema in schemas)
+        var file = Path.Combine(backupFolder, $"{key}_{DatabaseNames.Main}.sql");
+        if (File.Exists(file))
         {
-            var file = Path.Combine(backupFolder, $"{key}_{schema}.sql");
-            if (File.Exists(file))
-            {
-                try { File.Delete(file); } catch (Exception ex) { _logger.LogWarning(ex, "Failed to delete backup {File}", file); }
-            }
+            try { File.Delete(file); } catch (Exception ex) { _logger.LogWarning(ex, "Failed to delete backup {File}", file); }
         }
 
         return Task.CompletedTask;

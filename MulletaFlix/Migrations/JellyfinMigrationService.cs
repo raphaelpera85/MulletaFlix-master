@@ -498,7 +498,7 @@ internal class MulletaFlixMigrationService
         var moviesCtx = await _moviesDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
         await using (moviesCtx.ConfigureAwait(false))
         {
-            await DomainSchemaInitializer.EnsureDomainTablesAsync(moviesCtx, "mulletaflix_movies", CancellationToken.None)
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(moviesCtx, CancellationToken.None)
                 .ConfigureAwait(false);
             logger.LogInformation("Movies schema initialized.");
         }
@@ -506,7 +506,7 @@ internal class MulletaFlixMigrationService
         var seriesCtx = await _seriesDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
         await using (seriesCtx.ConfigureAwait(false))
         {
-            await DomainSchemaInitializer.EnsureDomainTablesAsync(seriesCtx, "mulletaflix_series", CancellationToken.None)
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(seriesCtx, CancellationToken.None)
                 .ConfigureAwait(false);
             logger.LogInformation("Series schema initialized.");
         }
@@ -514,7 +514,7 @@ internal class MulletaFlixMigrationService
         var channelsCtx = await _channelsDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
         await using (channelsCtx.ConfigureAwait(false))
         {
-            await DomainSchemaInitializer.EnsureDomainTablesAsync(channelsCtx, "mulletaflix_channels", CancellationToken.None)
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(channelsCtx, CancellationToken.None)
                 .ConfigureAwait(false);
             logger.LogInformation("Channels schema initialized.");
         }
@@ -522,7 +522,7 @@ internal class MulletaFlixMigrationService
         var booksCtx = await _booksDbContextFactory.CreateDbContextAsync().ConfigureAwait(false);
         await using (booksCtx.ConfigureAwait(false))
         {
-            await DomainSchemaInitializer.EnsureDomainTablesAsync(booksCtx, "mulletaflix_books", CancellationToken.None)
+            await DomainSchemaInitializer.EnsureDomainTablesAsync(booksCtx, CancellationToken.None)
                 .ConfigureAwait(false);
             logger.LogInformation("Books schema initialized.");
         }
@@ -570,4 +570,3 @@ internal class MulletaFlixMigrationService
         }
     }
 }
-

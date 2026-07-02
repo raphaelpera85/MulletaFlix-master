@@ -479,7 +479,11 @@ namespace Emby.Server.Implementations.Library.Resolvers.Movies
                     movie.IsInMixedFolder = false;
                     if (collectionType == CollectionType.movies || collectionType is null)
                     {
-                        movie.Name = Path.GetFileName(movie.ContainingFolderPath);
+                        // For streamed .strm entries, keep the file-derived title so hashed folder names do not leak into the UI.
+                        if (!string.Equals(Path.GetExtension(movie.Path), ".strm", StringComparison.OrdinalIgnoreCase))
+                        {
+                            movie.Name = Path.GetFileName(movie.ContainingFolderPath);
+                        }
                     }
 
                     return movie;
@@ -591,4 +595,3 @@ namespace Emby.Server.Implementations.Library.Resolvers.Movies
         }
     }
 }
-

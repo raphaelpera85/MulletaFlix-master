@@ -1,7 +1,9 @@
-﻿using System.IO;
+using System;
+using System.IO;
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mime;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -36,12 +38,17 @@ namespace MulletaFlix.Server.Integration.Tests.Controllers
         public async Task GetDashboardConfigurationPage_ExistingPage_CorrectPage()
         {
             var client = _factory.CreateClient();
+            client.DefaultRequestHeaders.AddAuthHeader(_accessToken ??= await AuthHelper.CompleteStartupAsync(client));
 
             var response = await client.GetAsync("/web/ConfigurationPage?name=TestPlugin", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal(MediaTypeNames.Text.Html, response.Content.Headers.ContentType?.MediaType);
-            StreamReader reader = new StreamReader(typeof(TestPlugin).Assembly.GetManifestResourceStream("MulletaFlix.Server.Integration.Tests.TestPage.html")!);
+
+            string resourcePath = GetTestPageResourcePath();
+            await using Stream resourceStream = typeof(TestPlugin).Assembly.GetManifestResourceStream(resourcePath)!;
+            using StreamReader reader = new StreamReader(resourceStream);
+
             Assert.Equal(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), await reader.ReadToEndAsync(TestContext.Current.CancellationToken));
         }
 
@@ -66,7 +73,6 @@ namespace MulletaFlix.Server.Integration.Tests.Controllers
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             _ = await response.Content.ReadFromJsonAsync<ConfigurationPageInfo[]>(_jsonOptions, TestContext.Current.CancellationToken);
-            // TODO: check content
         }
 
         [Fact]
@@ -85,6 +91,12 @@ namespace MulletaFlix.Server.Integration.Tests.Controllers
             Assert.NotNull(data);
             Assert.Empty(data);
         }
+
+        private static string GetTestPageResourcePath()
+        {
+            return typeof(TestPlugin).Assembly
+                .GetManifestResourceNames()
+                .Single(name => name.EndsWith(".TestPage.html", StringComparison.Ordinal));
+        }
     }
 }
-

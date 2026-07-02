@@ -73,6 +73,11 @@ public class UserLibraryController : BaseMulletaFlixApiController
         _jobQueue = jobQueue;
     }
 
+    private bool UserExists(Guid userId)
+    {
+        return _userManager.GetUserById(userId) is not null;
+    }
+
     /// <summary>
     /// Gets an item from a user's library.
     /// </summary>
@@ -124,7 +129,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     public Task<ActionResult<BaseItemDto>> GetItemLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => GetItem(userId, itemId);
+    {
+        if (!UserExists(userId))
+        {
+            return Task.FromResult<ActionResult<BaseItemDto>>(NotFound());
+        }
+
+        return GetItem(userId, itemId);
+    }
 
     /// <summary>
     /// Gets the root folder from a user's library.
@@ -160,7 +172,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<ActionResult<BaseItemDto>> GetRootFolderLegacy(
         [FromRoute, Required] Guid userId)
-        => await GetRootFolder(userId).ConfigureAwait(false);
+    {
+        if (!UserExists(userId))
+        {
+            return NotFound();
+        }
+
+        return await GetRootFolder(userId).ConfigureAwait(false);
+    }
 
     /// <summary>
     /// Gets intros to play before the main media item plays.
@@ -211,7 +230,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     public Task<ActionResult<QueryResult<BaseItemDto>>> GetIntrosLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => GetIntros(userId, itemId);
+    {
+        if (!UserExists(userId))
+        {
+            return Task.FromResult<ActionResult<QueryResult<BaseItemDto>>>(NotFound());
+        }
+
+        return GetIntros(userId, itemId);
+    }
 
     /// <summary>
     /// Marks an item as a favorite.
@@ -259,7 +285,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     public ActionResult<UserItemDataDto> MarkFavoriteItemLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => MarkFavoriteItem(userId, itemId);
+    {
+        if (!UserExists(userId))
+        {
+            return NotFound();
+        }
+
+        return MarkFavoriteItem(userId, itemId);
+    }
 
     /// <summary>
     /// Unmarks item as a favorite.
@@ -307,7 +340,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     public ActionResult<UserItemDataDto> UnmarkFavoriteItemLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => UnmarkFavoriteItem(userId, itemId);
+    {
+        if (!UserExists(userId))
+        {
+            return NotFound();
+        }
+
+        return UnmarkFavoriteItem(userId, itemId);
+    }
 
     /// <summary>
     /// Deletes a user's saved personal rating for an item.
@@ -355,7 +395,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     public ActionResult<UserItemDataDto?> DeleteUserItemRatingLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => DeleteUserItemRating(userId, itemId);
+    {
+        if (!UserExists(userId))
+        {
+            return NotFound();
+        }
+
+        return DeleteUserItemRating(userId, itemId);
+    }
 
     /// <summary>
     /// Updates a user's rating for an item.
@@ -407,7 +454,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId,
         [FromQuery] bool? likes)
-        => UpdateUserItemRating(userId, itemId, likes);
+    {
+        if (!UserExists(userId))
+        {
+            return NotFound();
+        }
+
+        return UpdateUserItemRating(userId, itemId, likes);
+    }
 
     /// <summary>
     /// Gets local trailers for an item.
@@ -464,7 +518,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetLocalTrailersLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => await GetLocalTrailers(userId, itemId).ConfigureAwait(false);
+    {
+        if (!UserExists(userId))
+        {
+            return NotFound();
+        }
+
+        return await GetLocalTrailers(userId, itemId).ConfigureAwait(false);
+    }
 
     /// <summary>
     /// Gets special features for an item.
@@ -517,7 +578,14 @@ public class UserLibraryController : BaseMulletaFlixApiController
     public async Task<ActionResult<IEnumerable<BaseItemDto>>> GetSpecialFeaturesLegacy(
         [FromRoute, Required] Guid userId,
         [FromRoute, Required] Guid itemId)
-        => await GetSpecialFeatures(userId, itemId).ConfigureAwait(false);
+    {
+        if (!UserExists(userId))
+        {
+            return NotFound();
+        }
+
+        return await GetSpecialFeatures(userId, itemId).ConfigureAwait(false);
+    }
 
     /// <summary>
     /// Gets latest media.
@@ -647,7 +715,13 @@ public class UserLibraryController : BaseMulletaFlixApiController
         [FromQuery] bool? enableUserData,
         [FromQuery] int limit = 20,
         [FromQuery] bool groupItems = true)
-        => GetLatestMedia(
+    {
+        if (!UserExists(userId))
+        {
+            return Task.FromResult<ActionResult<IEnumerable<BaseItemDto>>>(NotFound());
+        }
+
+        return GetLatestMedia(
             userId,
             parentId,
             fields,
@@ -659,6 +733,7 @@ public class UserLibraryController : BaseMulletaFlixApiController
             enableUserData,
             limit,
             groupItems);
+    }
 
     private Task RefreshItemOnDemandIfNeeded(BaseItem item)
     {

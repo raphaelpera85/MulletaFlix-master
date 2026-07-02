@@ -100,7 +100,8 @@ public class MoveTrickplayFiles : IMigrationRoutine
             previousCount = trickplayInfos.Count;
 
             _logger.LogInformation("Checked: {Checked} - Moved: {Count} - Time: {Time}", offset, itemCount, sw.Elapsed);
-        } while (previousCount == Limit);
+        }
+        while (previousCount == Limit);
 
         _logger.LogInformation("Moved {Count} items in {Time}", itemCount, sw.Elapsed);
     }
@@ -128,4 +129,3 @@ public class MoveTrickplayFiles : IMigrationRoutine
         return Path.Combine(path, subdirectory);
     }
 }
-
