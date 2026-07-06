@@ -4,10 +4,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Jellyfin.Database.Implementations</AssemblyName>
     <RootNamespace>Jellyfin.Database.Implementations</RootNamespace>
-    <AssemblyVersion>10.11.0.0</AssemblyVersion>
-    <FileVersion>10.11.0.0</FileVersion>
-    <Version>10.11.0</Version>
+    <AssemblyVersion>10.11.8.0</AssemblyVersion>
+    <FileVersion>10.11.8.0</FileVersion>
+    <Version>10.11.8</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Jellyfin.Database\Jellyfin.Database.Implementations\Jellyfin.Database.Implementations.csproj" />
+  </ItemGroup>
 
 </Project>

@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Extensions.Json;
@@ -30,6 +31,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
     public class OmdbItemProvider : IRemoteMetadataProvider<Series, SeriesInfo>,
         IRemoteMetadataProvider<Movie, MovieInfo>, IRemoteMetadataProvider<Trailer, TrailerInfo>, IHasOrder
     {
+        private static readonly Regex ImdbTitleIdRegex = new(@"/title/(tt\d{7,8})/", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILibraryManager _libraryManager;
         private readonly JsonSerializerOptions _jsonOptions;
@@ -103,6 +105,11 @@ namespace MediaBrowser.Providers.Plugins.Omdb
                 {
                     urlQuery.Append("&Season=").Append(searchInfo.ParentIndexNumber.Value);
                 }
+            }
+
+            if (string.IsNullOrWhiteSpace(imdbId))
+            {
+                imdbId = await GetImdbIdFromImdbSearch(searchInfo, cancellationToken).ConfigureAwait(false);
             }
 
             if (string.IsNullOrWhiteSpace(imdbId))
@@ -241,9 +248,89 @@ namespace MediaBrowser.Providers.Plugins.Omdb
 
         private async Task<string> GetImdbId(ItemLookupInfo info, CancellationToken cancellationToken)
         {
+            var imdbSearchId = await GetImdbIdFromImdbSearch(info, cancellationToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(imdbSearchId))
+            {
+                return imdbSearchId;
+            }
+
             var results = await GetSearchResultsInternal(info, false, cancellationToken).ConfigureAwait(false);
             var first = results.FirstOrDefault();
             return first?.GetProviderId(MetadataProvider.Imdb);
+        }
+
+        private async Task<string> GetImdbIdFromImdbSearch(ItemLookupInfo info, CancellationToken cancellationToken)
+        {
+            var searchTypes = GetImdbTitleTypes(info);
+            if (searchTypes.Length == 0)
+            {
+                return null;
+            }
+
+            foreach (var searchName in GetImdbSearchNames(info))
+            {
+                foreach (var titleType in searchTypes)
+                {
+                    var url = $"https://www.imdb.com/search/title/?title={WebUtility.UrlEncode(searchName)}&title_type={titleType}";
+                    using var response = await _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        continue;
+                    }
+
+                    var html = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                    var match = ImdbTitleIdRegex.Match(html);
+                    if (match.Success)
+                    {
+                        return match.Groups[1].Value;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static string[] GetImdbTitleTypes(ItemLookupInfo info)
+        {
+            return info switch
+            {
+                EpisodeInfo => ["tv_episode", "tv_series"],
+                SeriesInfo => ["tv_series"],
+                TrailerInfo => ["tv_movie", "feature"],
+                _ => ["feature", "tv_movie"]
+            };
+        }
+
+        private IEnumerable<string> GetImdbSearchNames(ItemLookupInfo info)
+        {
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            AddSearchName(names, info.OriginalTitle, info.Year);
+            AddSearchName(names, info.Name, info.Year);
+
+            if (!string.IsNullOrWhiteSpace(info.Name))
+            {
+                var parsedName = _libraryManager.ParseName(info.Name);
+                AddSearchName(names, parsedName.Name, info.Year ?? parsedName.Year);
+            }
+
+            return names;
+        }
+
+        private static void AddSearchName(HashSet<string> names, string? name, int? year)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            var searchName = name.Trim();
+            if (year.HasValue)
+            {
+                searchName = string.Concat(searchName, " ", year.Value.ToString(CultureInfo.InvariantCulture));
+            }
+
+            names.Add(searchName);
         }
 
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
@@ -310,4 +397,3 @@ namespace MediaBrowser.Providers.Plugins.Omdb
         }
     }
 }
-

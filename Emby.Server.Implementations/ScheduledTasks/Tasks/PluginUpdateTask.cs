@@ -74,51 +74,62 @@ public class PluginUpdateTask : IScheduledTask, IConfigurableScheduledTask
     /// <inheritdoc />
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
-        progress.Report(0);
-
-        var packageFetchTask = _installationManager.GetAvailablePluginUpdates(cancellationToken);
-        var packagesToInstall = (await packageFetchTask.ConfigureAwait(false)).ToList();
-
-        progress.Report(10);
-
-        var numComplete = 0;
-
-        foreach (var package in packagesToInstall)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            progress.Report(0);
 
-            try
+            var packageFetchTask = _installationManager.GetAvailablePluginUpdates(cancellationToken);
+            var packagesToInstall = (await packageFetchTask.ConfigureAwait(false)).ToList();
+
+            progress.Report(10);
+
+            var numComplete = 0;
+
+            foreach (var package in packagesToInstall)
             {
-                await _installationManager.InstallPackage(package, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // InstallPackage has its own inner cancellation token, so only throw this if it's ours
-                if (cancellationToken.IsCancellationRequested)
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
                 {
-                    throw;
+                    await _installationManager.InstallPackage(package, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // InstallPackage has its own inner cancellation token, so only throw this if it's ours
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    _logger.LogError(ex, "Error downloading {Name}", package.Name);
+                }
+                catch (IOException ex)
+                {
+                    _logger.LogError(ex, "Error updating {Name}", package.Name);
+                }
+                catch (InvalidDataException ex)
+                {
+                    _logger.LogError(ex, "Error updating {Name}", package.Name);
+                }
+
+                // Update progress
+                lock (progress)
+                {
+                    progress.Report((90.0 * ++numComplete / packagesToInstall.Count) + 10);
                 }
             }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "Error downloading {Name}", package.Name);
-            }
-            catch (IOException ex)
-            {
-                _logger.LogError(ex, "Error updating {Name}", package.Name);
-            }
-            catch (InvalidDataException ex)
-            {
-                _logger.LogError(ex, "Error updating {Name}", package.Name);
-            }
 
-            // Update progress
-            lock (progress)
-            {
-                progress.Report((90.0 * ++numComplete / packagesToInstall.Count) + 10);
-            }
+            progress.Report(100);
         }
-
-        progress.Report(100);
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Plugin update task failed; continuing server startup.");
+        }
     }
 }

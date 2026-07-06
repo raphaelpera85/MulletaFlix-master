@@ -1,4 +1,5 @@
-﻿using MediaBrowser.Providers.Plugins.Tmdb;
+using System.Linq;
+using MediaBrowser.Providers.Plugins.Tmdb;
 using Xunit;
 
 namespace MulletaFlix.Providers.Tests.Tmdb
@@ -34,6 +35,21 @@ namespace MulletaFlix.Providers.Tests.Tmdb
         {
             Assert.Equal(expected, TmdbUtils.AdjustImageLanguage(imageLanguage, requestLanguage));
         }
+
+        [Fact]
+        public static void BuildSearchNameVariants_StripsLeadingArticles_AndDiacritics()
+        {
+            var variants = TmdbUtils.BuildSearchNameVariants("A Fada dos Dentes").ToArray();
+
+            Assert.Equal(new[] { "A Fada dos Dentes", "Fada dos Dentes" }, variants);
+        }
+
+        [Fact]
+        public static void BuildSearchNameVariants_IncludesDiacriticsFreeVariant()
+        {
+            var variants = TmdbUtils.BuildSearchNameVariants("Árvore").ToArray();
+
+            Assert.Equal(new[] { "Árvore", "Arvore" }, variants);
+        }
     }
 }
-

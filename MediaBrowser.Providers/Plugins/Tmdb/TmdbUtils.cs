@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using MulletaFlix.Data.Enums;
+using MulletaFlix.Extensions;
 using MediaBrowser.Model.Entities;
 using TMDbLib.Objects.General;
 
@@ -60,6 +61,75 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         {
             // TMDb expects a space separated list of words make sure that is the case
             return NonWordRegex().Replace(name, " ");
+        }
+
+        /// <summary>
+        /// Builds ordered title variants for TMDb search requests.
+        /// </summary>
+        /// <param name="name">The source title.</param>
+        /// <returns>The ordered search variants.</returns>
+        public static IEnumerable<string> BuildSearchNameVariants(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                yield break;
+            }
+
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var variants = new[]
+            {
+                name,
+                CleanName(name),
+                CleanName(name).RemoveDiacritics()
+            };
+
+            foreach (var variant in variants)
+            {
+                foreach (var normalizedVariant in ExpandSearchVariant(variant))
+                {
+                    if (!string.IsNullOrWhiteSpace(normalizedVariant) && seen.Add(normalizedVariant))
+                    {
+                        yield return normalizedVariant;
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<string> ExpandSearchVariant(string name)
+        {
+            var normalized = Regex.Replace(name, @"\s+", " ", RegexOptions.CultureInvariant).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                yield break;
+            }
+
+            yield return normalized;
+
+            var withoutLeadingArticle = RemoveLeadingPortugueseArticle(normalized);
+            if (!string.Equals(withoutLeadingArticle, normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return withoutLeadingArticle;
+            }
+        }
+
+        private static string RemoveLeadingPortugueseArticle(string name)
+        {
+            var firstSpace = name.IndexOf(' ', StringComparison.Ordinal);
+            if (firstSpace <= 0 || firstSpace == name.Length - 1)
+            {
+                return name;
+            }
+
+            var firstWord = name[..firstSpace];
+            if (!string.Equals(firstWord, "a", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(firstWord, "o", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(firstWord, "as", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(firstWord, "os", StringComparison.OrdinalIgnoreCase))
+            {
+                return name;
+            }
+
+            return name[(firstSpace + 1)..];
         }
 
         /// <summary>
@@ -214,4 +284,3 @@ namespace MediaBrowser.Providers.Plugins.Tmdb
         }
     }
 }
-

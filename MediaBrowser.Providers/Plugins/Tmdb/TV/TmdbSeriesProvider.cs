@@ -110,8 +110,17 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                 }
             }
 
-            var tvSearchResults = await _tmdbClientManager.SearchSeriesAsync(searchInfo.Name, searchInfo.MetadataLanguage, searchInfo.MetadataCountryCode, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+            IReadOnlyList<SearchTv>? tvSearchResults = null;
+            foreach (var searchName in TmdbUtils.BuildSearchNameVariants(searchInfo.Name))
+            {
+                tvSearchResults = await _tmdbClientManager.SearchSeriesAsync(searchName, searchInfo.MetadataLanguage, searchInfo.MetadataCountryCode, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+                if (tvSearchResults is { Count: > 0 })
+                {
+                    break;
+                }
+            }
+
             if (tvSearchResults is null)
             {
                 return [];
@@ -201,12 +210,15 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
                 // ParseName is required here.
                 // Caller provides the filename with extension stripped and NOT the parsed filename
                 var parsedName = _libraryManager.ParseName(info.Name);
-                var cleanedName = TmdbUtils.CleanName(parsedName.Name);
-                var searchResults = await _tmdbClientManager.SearchSeriesAsync(cleanedName, info.MetadataLanguage, info.MetadataCountryCode, info.Year ?? parsedName.Year ?? 0, cancellationToken).ConfigureAwait(false);
-
-                if (searchResults?.Count > 0)
+                foreach (var searchName in TmdbUtils.BuildSearchNameVariants(parsedName.Name))
                 {
-                    tmdbId = searchResults[0].Id.ToString(CultureInfo.InvariantCulture);
+                    var searchResults = await _tmdbClientManager.SearchSeriesAsync(searchName, info.MetadataLanguage, info.MetadataCountryCode, info.Year ?? parsedName.Year ?? 0, cancellationToken).ConfigureAwait(false);
+
+                    if (searchResults?.Count > 0)
+                    {
+                        tmdbId = searchResults[0].Id.ToString(CultureInfo.InvariantCulture);
+                        break;
+                    }
                 }
             }
 
@@ -426,4 +438,3 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
         }
     }
 }
-

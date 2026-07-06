@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using MulletaFlix.Data.Events;
 using MulletaFlix.Extensions;
 using MulletaFlix.Extensions.Json;
+using Emby.Server.Implementations.Plugins;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Common.Plugins;
@@ -98,79 +99,73 @@ namespace Emby.Server.Implementations.Updates
         /// <inheritdoc />
         public async Task<PackageInfo[]> GetPackages(string manifestName, string manifest, bool filterIncompatible, CancellationToken cancellationToken = default)
         {
-            try
+            Exception? lastError = null;
+
+            foreach (var candidateManifest in BootstrapPluginCatalog.GetManifestCandidates(manifest))
             {
-                PackageInfo[]? packages = await _httpClientFactory.CreateClient(NamedClient.Default)
-                        .GetFromJsonAsync<PackageInfo[]>(new Uri(manifest), _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
-
-                if (packages is null)
+                try
                 {
-                    return Array.Empty<PackageInfo>();
-                }
+                    PackageInfo[]? packages = await _httpClientFactory.CreateClient(NamedClient.Default)
+                            .GetFromJsonAsync<PackageInfo[]>(new Uri(candidateManifest), _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
 
-                var minimumVersion = new Version(0, 0, 0, 1);
-                // Store the repository and repository url with each version, as they may be spread apart.
-                foreach (var entry in packages)
-                {
-                    for (int a = entry.Versions.Count - 1; a >= 0; a--)
+                    if (packages is null)
                     {
-                        var ver = entry.Versions[a];
-                        ver.RepositoryName = manifestName;
-                        ver.RepositoryUrl = manifest;
-
-                        if (!filterIncompatible)
-                        {
-                            continue;
-                        }
-
-                        if (!Version.TryParse(ver.TargetAbi, out var targetAbi))
-                        {
-                            targetAbi = minimumVersion;
-                        }
-
-                        // Only show plugins that are greater than or equal to targetAbi.
-                        if (_applicationHost.ApplicationVersion >= targetAbi)
-                        {
-                            continue;
-                        }
-
-                        // Not compatible with this version so remove it.
-                        entry.Versions.Remove(ver);
+                        return Array.Empty<PackageInfo>();
                     }
-                }
 
-                return packages;
+                    var minimumVersion = new Version(0, 0, 0, 1);
+                    // Store the repository and repository url with each version, as they may be spread apart.
+                    foreach (var entry in packages)
+                    {
+                        for (int a = entry.Versions.Count - 1; a >= 0; a--)
+                        {
+                            var ver = entry.Versions[a];
+                            ver.RepositoryName = manifestName;
+                            ver.RepositoryUrl = manifest;
+
+                            if (!filterIncompatible)
+                            {
+                                continue;
+                            }
+
+                            if (!Version.TryParse(ver.TargetAbi, out var targetAbi))
+                            {
+                                targetAbi = minimumVersion;
+                            }
+
+                            // Only show plugins that are greater than or equal to targetAbi.
+                            if (_applicationHost.ApplicationVersion >= targetAbi)
+                            {
+                                continue;
+                            }
+
+                            // Not compatible with this version so remove it.
+                            entry.Versions.Remove(ver);
+                        }
+                    }
+
+                    return packages;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (ex is IOException
+                    or JsonException
+                    or UriFormatException
+                    or NotSupportedException
+                    or HttpRequestException)
+                {
+                    lastError = ex;
+                }
             }
-            catch (IOException ex)
+
+            if (lastError is not null)
             {
-                _logger.LogError(ex, "Cannot locate the plugin manifest {Manifest}", manifest);
-                return Array.Empty<PackageInfo>();
+                _logger.LogError(lastError, "Unable to load the plugin manifest from any candidate derived from {Manifest}.", manifest);
             }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to deserialize the plugin manifest retrieved from {Manifest}", manifest);
-                return Array.Empty<PackageInfo>();
-            }
-            catch (UriFormatException ex)
-            {
-                _logger.LogError(ex, "The URL configured for the plugin repository manifest URL is not valid: {Manifest}", manifest);
-                return Array.Empty<PackageInfo>();
-            }
-            catch (NotSupportedException ex)
-            {
-                _logger.LogError(ex, "The URL scheme configured for the plugin repository is not supported: {Manifest}", manifest);
-                return Array.Empty<PackageInfo>();
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "An error occurred while accessing the plugin manifest: {Manifest}", manifest);
-                return Array.Empty<PackageInfo>();
-            }
-            catch (OperationCanceledException ex)
-            {
-                _logger.LogError(ex, "The request to the plugin manifest timed out or was cancelled: {Manifest}", manifest);
-                return Array.Empty<PackageInfo>();
-            }
+
+            return Array.Empty<PackageInfo>();
         }
 
         /// <inheritdoc />
@@ -181,44 +176,55 @@ namespace Emby.Server.Implementations.Updates
             {
                 if (repository.Enabled && repository.Url is not null)
                 {
-                    // Where repositories have the same content, the details from the first is taken.
-                    foreach (var package in await GetPackages(repository.Name ?? "Unnamed Repo", repository.Url, true, cancellationToken).ConfigureAwait(true))
+                    try
                     {
-                        var existing = FilterPackages(result, package.Name, package.Id).FirstOrDefault();
-
-                        // Remove invalid versions from the valid package.
-                        for (var i = package.Versions.Count - 1; i >= 0; i--)
+                        // Where repositories have the same content, the details from the first is taken.
+                        foreach (var package in await GetPackages(repository.Name ?? "Unnamed Repo", repository.Url, true, cancellationToken).ConfigureAwait(true))
                         {
-                            var version = package.Versions[i];
+                            var existing = FilterPackages(result, package.Name, package.Id).FirstOrDefault();
 
-                            var plugin = _pluginManager.GetPlugin(package.Id, version.VersionNumber);
-                            if (plugin is not null)
+                            // Remove invalid versions from the valid package.
+                            for (var i = package.Versions.Count - 1; i >= 0; i--)
                             {
-                                await _pluginManager.PopulateManifest(package, version.VersionNumber, plugin.Path, plugin.Manifest.Status).ConfigureAwait(false);
+                                var version = package.Versions[i];
+
+                                var plugin = _pluginManager.GetPlugin(package.Id, version.VersionNumber);
+                                if (plugin is not null)
+                                {
+                                    await _pluginManager.PopulateManifest(package, version.VersionNumber, plugin.Path, plugin.Manifest.Status).ConfigureAwait(false);
+                                }
+
+                                // Remove versions with a target ABI greater than the current application version.
+                                if (Version.TryParse(version.TargetAbi, out var targetAbi) && _applicationHost.ApplicationVersion < targetAbi)
+                                {
+                                    package.Versions.RemoveAt(i);
+                                }
                             }
 
-                            // Remove versions with a target ABI greater than the current application version.
-                            if (Version.TryParse(version.TargetAbi, out var targetAbi) && _applicationHost.ApplicationVersion < targetAbi)
+                            // Don't add a package that doesn't have any compatible versions.
+                            if (package.Versions.Count == 0)
                             {
-                                package.Versions.RemoveAt(i);
+                                continue;
+                            }
+
+                            if (existing is not null)
+                            {
+                                // Assumption is both lists are ordered, so slot these into the correct place.
+                                MergeSortedList(existing.Versions, package.Versions);
+                            }
+                            else
+                            {
+                                result.Add(package);
                             }
                         }
-
-                        // Don't add a package that doesn't have any compatible versions.
-                        if (package.Versions.Count == 0)
-                        {
-                            continue;
-                        }
-
-                        if (existing is not null)
-                        {
-                            // Assumption is both lists are ordered, so slot these into the correct place.
-                            MergeSortedList(existing.Versions, package.Versions);
-                        }
-                        else
-                        {
-                            result.Add(package);
-                        }
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Skipping plugin repository {RepositoryName} ({RepositoryUrl})", repository.Name ?? "Unnamed Repo", repository.Url);
                     }
                 }
             }
@@ -589,4 +595,3 @@ namespace Emby.Server.Implementations.Updates
         }
     }
 }
-

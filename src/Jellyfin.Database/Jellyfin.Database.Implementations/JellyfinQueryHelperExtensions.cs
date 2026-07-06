@@ -120,11 +120,19 @@ public static class MulletaFlixQueryHelperExtensions
     /// <returns>A Query.</returns>
     public static Expression<Func<TEntity, bool>> OneOrManyExpressionBuilder<TEntity, TProperty>(this IList<TProperty> oneOf, Expression<Func<TEntity, TProperty>> property)
     {
+        if (oneOf.Count == 0)
+        {
+            return _ => false;
+        }
+
+        // ponytail: snapshot the incoming list so EF does not capture a mutable collection instance.
+        var values = oneOf.ToArray();
+
         var parameter = Expression.Parameter(typeof(TEntity), "item");
         property = ParameterReplacer.Replace<Func<TEntity, TProperty>, Func<TEntity, TProperty>>(property, property.Parameters[0], parameter);
-        if (oneOf.Count == 1)
+        if (values.Length == 1)
         {
-            var value = oneOf[0];
+            var value = values[0];
             if (typeof(TProperty).IsValueType)
             {
                 return Expression.Lambda<Func<TEntity, bool>>(Expression.Equal(property.Body, Expression.Constant(value)), parameter);
@@ -137,16 +145,16 @@ public static class MulletaFlixQueryHelperExtensions
 
         var containsMethodInfo = _containsQueryCache.GetOrAdd(typeof(TProperty), static (key) => _containsMethodGenericCache.MakeGenericMethod(key));
 
-        if (oneOf.Count < 4) // arbitrary value choosen.
+        if (values.Length < 4) // arbitrary value choosen.
         {
             // if we have 3 or fewer values to check against its faster to do a IN(const,const,const) lookup
-            return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Constant(oneOf), property.Body), parameter);
+            return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Constant(values), property.Body), parameter);
         }
 
         // MariaDB/Pomelo currently does not support the primitive-collection parameter
         // translation path emitted by EF.Parameter(...) in this codebase. Keep the
         // list as a constant so the provider can translate it as a regular IN (...) clause.
-        return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Constant(oneOf), property.Body), parameter);
+        return Expression.Lambda<Func<TEntity, bool>>(Expression.Call(null, containsMethodInfo, Expression.Constant(values), property.Body), parameter);
     }
 
     internal static class ParameterReplacer
@@ -194,4 +202,3 @@ public static class MulletaFlixQueryHelperExtensions
         }
     }
 }
-

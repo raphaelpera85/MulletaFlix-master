@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoFixture;
@@ -34,6 +36,23 @@ namespace MulletaFlix.Server.Implementations.Tests.Plugins
             Directory.CreateDirectory(_pluginPath);
 
             _options = GetTestSerializerOptions();
+        }
+
+        [Fact]
+        public void BootstrapPluginCatalog_DefaultPluginRepositories_DoNotIncludeGetAvatar()
+        {
+            var catalogType = typeof(PluginManager).Assembly.GetType("Emby.Server.Implementations.Plugins.BootstrapPluginCatalog", throwOnError: true);
+            var repositories = (Array?)catalogType!.GetField("DefaultPluginRepositories", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null);
+
+            Assert.DoesNotContain(repositories!.Cast<object>(), repository =>
+            {
+                var repositoryType = repository.GetType();
+                var name = (string?)repositoryType.GetProperty("Name")?.GetValue(repository);
+                var url = (string?)repositoryType.GetProperty("Url")?.GetValue(repository);
+
+                return name?.Contains("GetAvatar", StringComparison.OrdinalIgnoreCase) == true
+                    || url?.Contains("GetAvatar", StringComparison.OrdinalIgnoreCase) == true;
+            });
         }
 
         [Fact]
@@ -337,4 +356,3 @@ namespace MulletaFlix.Server.Implementations.Tests.Plugins
         }
     }
 }
-

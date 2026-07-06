@@ -104,6 +104,57 @@ public sealed class LibraryStructureControllerTests : IClassFixture<MulletaFlixA
     }
 
     [Fact]
+    [Priority(-2)]
+    public async Task UpdateLibraryOptions_PreservesExplicitMetadataLanguage_ForBrazil()
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.AddAuthHeader(_accessToken ??= await AuthHelper.CompleteStartupAsync(client));
+
+        var createBody = new AddVirtualFolderDto()
+        {
+            LibraryOptions = new LibraryOptions()
+            {
+                Enabled = false
+            }
+        };
+
+        using var createResponse = await client.PostAsJsonAsync("Library/VirtualFolders?name=test-language&refreshLibrary=true", createBody, _jsonOptions, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.NoContent, createResponse.StatusCode);
+
+        await Task.Delay(2000, TestContext.Current.CancellationToken).ConfigureAwait(true);
+
+        using var response = await client.GetAsync("Library/VirtualFolders", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var library = await response.Content.ReadFromJsonAsAsyncEnumerable<VirtualFolderInfo>(_jsonOptions, TestContext.Current.CancellationToken)
+            .FirstOrDefaultAsync(x => string.Equals(x?.Name, "test-language", StringComparison.Ordinal), TestContext.Current.CancellationToken);
+        Assert.NotNull(library);
+
+        var options = library.LibraryOptions;
+        Assert.NotNull(options);
+        options.MetadataCountryCode = "BR";
+        options.PreferredMetadataLanguage = "en";
+
+        var body = new UpdateLibraryOptionsDto()
+        {
+            Id = Guid.Parse(library.ItemId),
+            LibraryOptions = options
+        };
+
+        using var response2 = await client.PostAsJsonAsync("Library/VirtualFolders/LibraryOptions", body, _jsonOptions, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.NoContent, response2.StatusCode);
+
+        using var response3 = await client.GetAsync("Library/VirtualFolders", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response3.StatusCode);
+
+        var updatedLibrary = await response3.Content.ReadFromJsonAsAsyncEnumerable<VirtualFolderInfo>(_jsonOptions, TestContext.Current.CancellationToken)
+            .FirstOrDefaultAsync(x => string.Equals(x?.Name, "test-language", StringComparison.Ordinal), TestContext.Current.CancellationToken);
+        Assert.NotNull(updatedLibrary);
+        Assert.Equal("BR", updatedLibrary.LibraryOptions?.MetadataCountryCode);
+        Assert.Equal("en", updatedLibrary.LibraryOptions?.PreferredMetadataLanguage);
+    }
+
+    [Fact]
     [Priority(1)]
     public async Task DeleteLibrary_Invalid_NotFound()
     {
@@ -125,4 +176,3 @@ public sealed class LibraryStructureControllerTests : IClassFixture<MulletaFlixA
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 }
-

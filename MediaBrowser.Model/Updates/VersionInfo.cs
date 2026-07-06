@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using SysVersion = System.Version;
 
@@ -61,6 +63,12 @@ namespace MediaBrowser.Model.Updates
         /// <value>The timestamp.</value>
         [JsonPropertyName("timestamp")]
         public string? Timestamp { get; set; }
+
+        /// <summary>
+        /// Gets or sets the plugin dependencies.
+        /// </summary>
+        [JsonPropertyName("dependencies")]
+        public IList<Guid> Dependencies { get; set; } = Array.Empty<Guid>();
 
         /// <summary>
         /// Gets or sets the repository name.

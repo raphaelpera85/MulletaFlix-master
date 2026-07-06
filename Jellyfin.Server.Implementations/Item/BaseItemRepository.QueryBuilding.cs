@@ -216,9 +216,12 @@ public sealed partial class BaseItemRepository
     /// <inheritdoc />
     public IQueryable<BaseItemEntity> ApplyNavigations(IQueryable<BaseItemEntity> dbQuery, InternalItemsQuery filter)
     {
+        var collectionIncludeCount = 0;
+
         if (filter.TrailerTypes.Length > 0 || filter.IncludeItemTypes.Contains(BaseItemKind.Trailer))
         {
             dbQuery = dbQuery.Include(e => e.TrailerTypes);
+            collectionIncludeCount++;
         }
 
         if (filter.DtoOptions.ContainsField(ItemFields.ProviderIds))
@@ -234,11 +237,13 @@ public sealed partial class BaseItemRepository
         if (filter.DtoOptions.EnableUserData)
         {
             dbQuery = dbQuery.Include(e => e.UserData);
+            collectionIncludeCount++;
         }
 
         if (filter.DtoOptions.EnableImages)
         {
             dbQuery = dbQuery.Include(e => e.Images);
+            collectionIncludeCount++;
         }
 
         // Include LinkedChildEntities for container types and videos that use them
@@ -256,11 +261,19 @@ public sealed partial class BaseItemRepository
         if (filter.IncludeItemTypes.Length == 0 || filter.IncludeItemTypes.Any(linkedChildTypes.Contains))
         {
             dbQuery = dbQuery.Include(e => e.LinkedChildEntities);
+            collectionIncludeCount++;
         }
 
         if (filter.IncludeExtras)
         {
             dbQuery = dbQuery.Include(e => e.Extras);
+            collectionIncludeCount++;
+        }
+
+        if (collectionIncludeCount > 1)
+        {
+            // ponytail: split only when we have multiple collections; single-collection queries stay as-is.
+            dbQuery = dbQuery.AsSplitQuery();
         }
 
         return dbQuery;
@@ -555,4 +568,3 @@ public sealed partial class BaseItemRepository
             .Select(g => g.Key);
     }
 }
-

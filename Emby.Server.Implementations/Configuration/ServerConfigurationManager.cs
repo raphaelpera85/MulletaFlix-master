@@ -1,13 +1,16 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Emby.Server.Implementations.AppBase;
+using Emby.Server.Implementations.Plugins;
 using MulletaFlix.Data.Events;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Serialization;
+using MediaBrowser.Model.Updates;
 using Microsoft.Extensions.Logging;
 
 namespace Emby.Server.Implementations.Configuration
@@ -29,6 +32,7 @@ namespace Emby.Server.Implementations.Configuration
             IXmlSerializer xmlSerializer)
             : base(applicationPaths, loggerFactory, xmlSerializer)
         {
+            EnsureDefaultPluginRepositories();
             UpdateMetadataPath();
         }
 
@@ -79,6 +83,33 @@ namespace Emby.Server.Implementations.Configuration
             Directory.CreateDirectory(ApplicationPaths.InternalMetadataPath);
         }
 
+        private void EnsureDefaultPluginRepositories()
+        {
+            var configuration = Configuration;
+            var repositories = configuration.PluginRepositories.ToList();
+            var changed = false;
+
+            foreach (var repository in BootstrapPluginCatalog.DefaultPluginRepositories)
+            {
+                if (repositories.Any(existing => string.Equals(existing.Url, repository.Url, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                repositories.Add(repository);
+                changed = true;
+            }
+
+            if (!changed)
+            {
+                return;
+            }
+
+            configuration.PluginRepositories = repositories.ToArray();
+
+            SaveConfiguration();
+        }
+
         /// <summary>
         /// Replaces the configuration.
         /// </summary>
@@ -121,4 +152,3 @@ namespace Emby.Server.Implementations.Configuration
         }
     }
 }
-

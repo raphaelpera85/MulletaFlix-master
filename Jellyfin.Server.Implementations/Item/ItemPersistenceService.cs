@@ -395,10 +395,15 @@ public class ItemPersistenceService : IItemPersistenceService
 
         foreach (var itemValue in itemValues)
         {
-            lookup[(itemValue.Type, itemValue.Value)] = itemValue;
+            lookup[NormalizeItemValueKey(itemValue.Type, itemValue.CleanValue)] = itemValue;
         }
 
         return lookup;
+    }
+
+    private static (ItemValueType MagicNumber, string Value) NormalizeItemValueKey(ItemValueType magicNumber, string value)
+    {
+        return (magicNumber, value.GetCleanValue());
     }
 
     internal static Dictionary<Guid, Dictionary<Guid, ItemValueMap>> CreateItemValueMapLookup(IEnumerable<ItemValueMap> mappedValues)
@@ -569,23 +574,23 @@ public class ItemPersistenceService : IItemPersistenceService
             .ToArray();
 
         var types = allListedItemValues.Select(e => e.MagicNumber).Distinct().ToArray();
-        var values = allListedItemValues.Select(e => e.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var cleanValues = allListedItemValues.Select(e => e.Value.GetCleanValue()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var allListedItemValuesSet = allListedItemValues.ToHashSet(ItemValueKeyComparer);
 
         InsertItemValuesIgnoreDuplicates(context, allListedItemValues);
 
         var existingValues = context.ItemValues
             .AsNoTracking()
-            .Where(e => Enumerable.Contains(types, e.Type) && Enumerable.Contains(values, e.Value))
+            .Where(e => Enumerable.Contains(types, e.Type) && Enumerable.Contains(cleanValues, e.CleanValue))
             .AsEnumerable()
-            .Where(e => allListedItemValuesSet.Contains((e.Type, e.Value)))
-            .DistinctBy(e => (e.Type, e.Value), ItemValueKeyComparer)
+            .Where(e => allListedItemValuesSet.Contains((e.Type, e.CleanValue)))
+            .DistinctBy(e => (e.Type, e.CleanValue), ItemValueKeyComparer)
             .ToArray();
 
         var itemValuesStore = existingValues;
         var itemValuesStoreLookup = CreateItemValueLookup(itemValuesStore);
         var valueMap = itemValueMaps
-            .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStoreLookup[(e.MagicNumber, e.Value)]).DistinctBy(e => e.ItemValueId).ToArray()))
+            .Select(f => (f.Item, Values: f.Values.Select(e => itemValuesStoreLookup[NormalizeItemValueKey(e.MagicNumber, e.Value)]).DistinctBy(e => e.ItemValueId).ToArray()))
             .ToArray();
 
         var mappedValues = context.ItemValuesMap.Where(e => Enumerable.Contains(ids, e.ItemId)).ToList();
@@ -1054,12 +1059,18 @@ public class ItemPersistenceService : IItemPersistenceService
     {
         public bool Equals((ItemValueType MagicNumber, string Value) x, (ItemValueType MagicNumber, string Value) y)
         {
-            return x.MagicNumber == y.MagicNumber && string.Equals(x.Value, y.Value, StringComparison.OrdinalIgnoreCase);
+            return x.MagicNumber == y.MagicNumber
+                && string.Equals(NormalizeValue(x.Value), NormalizeValue(y.Value), StringComparison.OrdinalIgnoreCase);
         }
 
         public int GetHashCode((ItemValueType MagicNumber, string Value) obj)
         {
-            return HashCode.Combine(obj.MagicNumber, StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Value));
+            return HashCode.Combine(obj.MagicNumber, StringComparer.OrdinalIgnoreCase.GetHashCode(NormalizeValue(obj.Value)));
+        }
+
+        private static string NormalizeValue(string value)
+        {
+            return value.GetCleanValue();
         }
     }
 }

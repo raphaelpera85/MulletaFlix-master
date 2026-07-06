@@ -1,0 +1,26 @@
+using System.Runtime.CompilerServices;
+using MulletaFlix.Database.Implementations.Entities;
+using MulletaFlix.Database.Implementations.Enums;
+
+[assembly: TypeForwardedTo(typeof(AccessSchedule))]
+[assembly: TypeForwardedTo(typeof(BaseItemImageInfo))]
+[assembly: TypeForwardedTo(typeof(DisplayPreferences))]
+[assembly: TypeForwardedTo(typeof(HomeSection))]
+[assembly: TypeForwardedTo(typeof(ImageInfo))]
+[assembly: TypeForwardedTo(typeof(ImageInfoImageType))]
+[assembly: TypeForwardedTo(typeof(ItemDisplayPreferences))]
+[assembly: TypeForwardedTo(typeof(Permission))]
+[assembly: TypeForwardedTo(typeof(Preference))]
+[assembly: TypeForwardedTo(typeof(User))]
+[assembly: TypeForwardedTo(typeof(UserLicense))]
+[assembly: TypeForwardedTo(typeof(ChromecastVersion))]
+[assembly: TypeForwardedTo(typeof(DynamicDayOfWeek))]
+[assembly: TypeForwardedTo(typeof(HomeSectionType))]
+[assembly: TypeForwardedTo(typeof(IndexingKind))]
+[assembly: TypeForwardedTo(typeof(PermissionKind))]
+[assembly: TypeForwardedTo(typeof(PreferenceKind))]
+[assembly: TypeForwardedTo(typeof(ScrollDirection))]
+[assembly: TypeForwardedTo(typeof(SortOrder))]
+[assembly: TypeForwardedTo(typeof(SubtitlePlaybackMode))]
+[assembly: TypeForwardedTo(typeof(SyncPlayUserAccessType))]
+[assembly: TypeForwardedTo(typeof(ViewType))]

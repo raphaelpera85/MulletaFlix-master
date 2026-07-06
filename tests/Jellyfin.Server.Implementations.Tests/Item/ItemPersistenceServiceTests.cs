@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
+using MediaBrowser.Model.Entities;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Server.Implementations.Item;
-using MediaBrowser.Model.Entities;
 using Xunit;
 
 namespace Jellyfin.Server.Implementations.Tests.Item;
@@ -22,6 +22,24 @@ public class ItemPersistenceServiceTests
         var distinctValues = values.Distinct(ItemPersistenceService.ItemValueKeyComparer).ToArray();
 
         Assert.Equal(2, distinctValues.Length);
+    }
+
+    [Fact]
+    public void CreateItemValueLookup_UsesCleanValueForKeys()
+    {
+        var lookup = ItemPersistenceService.CreateItemValueLookup(
+            new[]
+            {
+                new ItemValue
+                {
+                    ItemValueId = Guid.NewGuid(),
+                    Type = ItemValueType.Studios,
+                    Value = "Pathé",
+                    CleanValue = "pathe"
+                }
+            });
+
+        Assert.True(lookup.ContainsKey((ItemValueType.Studios, "Pathe")));
     }
 
     [Fact]

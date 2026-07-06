@@ -4,10 +4,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Emby.Server.Implementations.Library;
 using MulletaFlix.Extensions.Json;
@@ -81,7 +83,9 @@ namespace Emby.Server.Implementations.Plugins
             _config = config;
             _appHost = appHost;
             _minimumVersion = new Version(0, 0, 0, 1);
-            _plugins = Directory.Exists(_pluginsPath) ? DiscoverPlugins().ToList() : new List<LocalPlugin>();
+            var plugins = Directory.Exists(_pluginsPath) ? DiscoverPlugins().ToList() : new List<LocalPlugin>();
+            EnsureBootstrapPluginsInstalledAsync(plugins).GetAwaiter().GetResult();
+            _plugins = Directory.Exists(_pluginsPath) ? DiscoverPlugins().ToList() : plugins;
 
             _assemblyLoadContexts = new List<AssemblyLoadContext>();
         }
@@ -958,6 +962,199 @@ namespace Emby.Server.Implementations.Plugins
             plugin.Manifest.Status = PluginStatus.Restart;
             plugin.Manifest.AutoUpdate = false;
         }
+
+        private async Task EnsureBootstrapPluginsInstalledAsync(IReadOnlyCollection<LocalPlugin> existingPlugins)
+        {
+            var repositoryPackages = new Dictionary<string, PackageInfo[]>(StringComparer.OrdinalIgnoreCase);
+
+            using var client = new HttpClient();
+
+            foreach (var bootstrapRepository in BootstrapPluginCatalog.BootstrapRepositories)
+            {
+                var repository = _config.PluginRepositories.FirstOrDefault(r => r.Enabled
+                    && !string.IsNullOrWhiteSpace(r.Url)
+                    && BootstrapPluginCatalog.MatchesRepositoryUrl(r.Url, bootstrapRepository.Url));
+                if (repository?.Url is null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    foreach (var candidateManifest in BootstrapPluginCatalog.GetManifestCandidates(repository.Url))
+                    {
+                        try
+                        {
+                            repositoryPackages[bootstrapRepository.Url] = await client.GetFromJsonAsync<PackageInfo[]>(candidateManifest, JsonDefaults.Options).ConfigureAwait(false)
+                                ?? Array.Empty<PackageInfo>();
+                            break;
+                        }
+                        catch (Exception ex) when (ex is IOException
+                            or JsonException
+                            or UriFormatException
+                            or NotSupportedException
+                            or HttpRequestException)
+                        {
+                            _logger.LogDebug(ex, "Unable to load bootstrap manifest candidate {CandidateManifest}.", candidateManifest);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Unable to load bootstrap plugin manifest from {RepositoryUrl}.", repository.Url);
+                }
+            }
+
+            if (repositoryPackages.Count == 0)
+            {
+                return;
+            }
+
+            var packageIndex = repositoryPackages.Values
+                .SelectMany(packages => packages)
+                .GroupBy(package => package.Id)
+                .ToDictionary(group => group.Key, group => group.First());
+
+            var installedIds = existingPlugins.Select(plugin => plugin.Id).ToHashSet();
+            var processingIds = new HashSet<Guid>();
+
+            foreach (var bootstrapRepository in BootstrapPluginCatalog.BootstrapRepositories)
+            {
+                foreach (var pluginId in bootstrapRepository.PluginIds)
+                {
+                    await EnsureBootstrapPluginInstalledAsync(
+                            pluginId,
+                            packageIndex,
+                            client,
+                            installedIds,
+                            processingIds)
+                        .ConfigureAwait(false);
+                }
+            }
+        }
+
+        private async Task EnsureBootstrapPluginInstalledAsync(
+            Guid pluginId,
+            IReadOnlyDictionary<Guid, PackageInfo> packageIndex,
+            HttpClient client,
+            HashSet<Guid> installedIds,
+            HashSet<Guid> processingIds)
+        {
+            if (installedIds.Contains(pluginId) || !processingIds.Add(pluginId))
+            {
+                return;
+            }
+
+            try
+            {
+                if (!packageIndex.TryGetValue(pluginId, out var package))
+                {
+                    _logger.LogWarning("Bootstrap plugin {PluginId} was not present in the configured repositories.", pluginId);
+                    return;
+                }
+
+                var version = SelectCompatibleVersion(package);
+                if (version is null || string.IsNullOrEmpty(version.SourceUrl))
+                {
+                    _logger.LogWarning("Bootstrap plugin {PluginName} has no compatible version for server {Version}.", package.Name, _appVersion);
+                    return;
+                }
+
+                foreach (var dependencyId in version.Dependencies.Where(id => id != Guid.Empty))
+                {
+                    if (!installedIds.Contains(dependencyId))
+                    {
+                        await EnsureBootstrapPluginInstalledAsync(
+                                dependencyId,
+                                packageIndex,
+                                client,
+                                installedIds,
+                                processingIds)
+                            .ConfigureAwait(false);
+                    }
+
+                    if (!installedIds.Contains(dependencyId))
+                    {
+                        _logger.LogWarning(
+                            "Skipping bootstrap plugin {PluginName} because dependency {DependencyId} could not be installed.",
+                            package.Name,
+                            dependencyId);
+                        return;
+                    }
+                }
+
+                if (!string.Equals(Path.GetExtension(version.SourceUrl), ".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("Bootstrap plugin {PluginName} package is not a zip archive.", package.Name);
+                    return;
+                }
+
+                var targetDir = Path.Combine(_pluginsPath, package.Name + "_" + version.VersionNumber);
+                Directory.CreateDirectory(_pluginsPath);
+
+                if (Directory.Exists(targetDir))
+                {
+                    Directory.Delete(targetDir, true);
+                }
+
+                var bytes = await client.GetByteArrayAsync(version.SourceUrl).ConfigureAwait(false);
+
+                if (!string.IsNullOrEmpty(version.Checksum))
+                {
+                    var hash = Convert.ToHexString(MD5.HashData(bytes));
+                    if (!string.Equals(version.Checksum, hash, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogError(
+                            "Bootstrap plugin {PluginName} checksum mismatch. Expected {Expected}, got {Received}.",
+                            package.Name,
+                            version.Checksum,
+                            hash);
+                        return;
+                    }
+                }
+
+                using var archiveStream = new MemoryStream(bytes);
+                System.IO.Compression.ZipFile.ExtractToDirectory(archiveStream, targetDir, true);
+
+                var manifest = new PluginManifest
+                {
+                    Category = package.Category,
+                    Changelog = version.Changelog ?? string.Empty,
+                    Description = package.Description,
+                    Id = package.Id,
+                    Name = package.Name,
+                    Overview = package.Overview,
+                    Owner = package.Owner,
+                    TargetAbi = version.TargetAbi ?? string.Empty,
+                    Timestamp = string.IsNullOrEmpty(version.Timestamp)
+                        ? DateTime.MinValue
+                        : DateTime.Parse(version.Timestamp, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal),
+                    Version = version.VersionNumber.ToString(),
+                    Status = PluginStatus.Active,
+                    AutoUpdate = true
+                };
+
+                SaveManifest(manifest, targetDir);
+                installedIds.Add(pluginId);
+                _logger.LogInformation("Bootstrapped plugin {PluginName} {PluginVersion}.", package.Name, version.VersionNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to bootstrap plugin {PluginId}.", pluginId);
+            }
+            finally
+            {
+                processingIds.Remove(pluginId);
+            }
+        }
+
+        private VersionInfo? SelectCompatibleVersion(PackageInfo package)
+        {
+            return package.Versions
+                .Where(version => string.IsNullOrEmpty(version.TargetAbi) || (Version.TryParse(version.TargetAbi, out var targetAbi) && targetAbi <= _appVersion))
+                .OrderByDescending(version => version.VersionNumber)
+                .FirstOrDefault();
+        }
+
     }
 }
-
