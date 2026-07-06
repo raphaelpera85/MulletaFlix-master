@@ -80,7 +80,7 @@ public sealed class BaseItemRepositoryLatestTvShowTests : IDisposable
     }
 
     [Fact]
-    public void GetLatestItemList_TvShows_PreservesSeasonSeriesAndEpisodeSelection()
+    public void GetLatestItemList_TvShows_ReturnsSeriesContainersInLatestOrder()
     {
         var now = new DateTime(2026, 6, 27, 12, 0, 0, DateTimeKind.Utc);
 
@@ -139,12 +139,48 @@ public sealed class BaseItemRepositoryLatestTvShowTests : IDisposable
             CollectionType.tvshows);
 
         Assert.Equal(3, result.Count);
-        Assert.IsType<Season>(result[0]);
-        Assert.Equal(seasonA1.Id, result[0].Id);
         Assert.IsType<Series>(result[1]);
+        Assert.IsType<Series>(result[0]);
+        Assert.IsType<Series>(result[2]);
+        Assert.Equal(seriesA.Id, result[0].Id);
         Assert.Equal(seriesB.Id, result[1].Id);
-        Assert.IsType<Episode>(result[2]);
-        Assert.Equal(seriesCEpisodes[0].Id, result[2].Id);
+        Assert.Equal(seriesC.Id, result[2].Id);
+    }
+
+    [Fact]
+    public void GetLatestItemList_TvShows_DoesNotMergeDifferentSeriesWithTheSameName()
+    {
+        var now = new DateTime(2026, 6, 27, 12, 0, 0, DateTimeKind.Utc);
+
+        var sharedSeriesName = "Shared Series";
+        var seriesA = CreateSeries(sharedSeriesName);
+        var seasonA = CreateSeason(seriesA, $"{sharedSeriesName} - Season 1");
+        var episodeA = CreateEpisode(sharedSeriesName, seriesA, seasonA, now.AddHours(-1));
+
+        var seriesB = CreateSeries(sharedSeriesName);
+        var seasonB = CreateSeason(seriesB, $"{sharedSeriesName} - Season 1");
+        var episodeB = CreateEpisode(sharedSeriesName, seriesB, seasonB, now.AddHours(-2));
+
+        _context.BaseItems.AddRange(
+            seriesA,
+            seasonA,
+            episodeA,
+            seriesB,
+            seasonB,
+            episodeB);
+        _context.SaveChanges();
+
+        var result = _repository.GetLatestItemList(
+            new InternalItemsQuery
+            {
+                Limit = 2
+            },
+            CollectionType.tvshows);
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, item => Assert.IsType<Series>(item));
+        Assert.Contains(result, item => item.Id == seriesA.Id);
+        Assert.Contains(result, item => item.Id == seriesB.Id);
     }
 
     private static BaseItemEntity CreateSeries(string name)

@@ -1700,6 +1700,11 @@ namespace Emby.Server.Implementations.Dto
                 return null;
             }
 
+            if (imageInfo.Width > 0 && imageInfo.Height > 0)
+            {
+                return (double)imageInfo.Width / imageInfo.Height;
+            }
+
             if (!imageInfo.IsLocalFile)
             {
                 return item.GetDefaultPrimaryImageAspectRatio();
@@ -1724,4 +1729,3 @@ namespace Emby.Server.Implementations.Dto
         }
     }
 }
-

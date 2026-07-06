@@ -204,20 +204,12 @@ public sealed partial class BaseItemRepository
     /// Gets the latest TV show items with smart Season/Series container selection.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// This method implements intelligent container selection for TV shows in the "Latest" section.
-    /// Instead of always showing individual episodes, it analyzes recent additions and may return
-    /// a Season or Series container when multiple related episodes were recently added.
-    /// </para>
-    /// <para>
-    /// The selection logic is:
-    /// <list type="bullet">
-    ///     <item>If recent episodes span multiple seasons â†’ return the Series</item>
-    ///     <item>If multiple recent episodes are from one season AND the series has multiple seasons â†’ return the Season</item>
-    ///     <item>If multiple recent episodes are from one season AND the series has only one season â†’ return the Series</item>
-    ///     <item>Otherwise â†’ return the most recent Episode</item>
-    /// </list>
-    /// </para>
+    /// <summary>
+    /// Gets the latest TV show items.
+    /// </summary>
+    /// <remarks>
+    /// ponytail: latest TV home only needs the series container; keep the heavier
+    /// season/episode smart grouping out of the hot path.
     /// </remarks>
     /// <param name="context">The database context.</param>
     /// <param name="baseQuery">The base query with filters already applied.</param>
@@ -226,14 +218,10 @@ public sealed partial class BaseItemRepository
     /// <returns>A list of BaseItemDto representing the latest TV content.</returns>
     private IReadOnlyList<BaseItemDto> GetLatestTvShowItems(MulletaFlixDbContext context, IQueryable<BaseItemEntity> baseQuery, InternalItemsQuery filter, int? limit)
     {
-        // Episodes added within this window are considered "recently added together"
-        const double RecentAdditionWindowHours = 24.0;
-
-        // Step 1: Find the top N series with recently added content, ordered by most recent addition
         var topSeriesWithDates = baseQuery
-            .Where(e => e.SeriesName != null)
-            .GroupBy(e => e.SeriesName)
-            .Select(g => new { SeriesName = g.Key!, MaxDate = g.Max(e => e.DateCreated) })
+            .Where(e => e.SeriesId.HasValue)
+            .GroupBy(e => e.SeriesId!.Value)
+            .Select(g => new { SeriesId = g.Key, MaxDate = g.Max(e => e.DateCreated) })
             .OrderByDescending(g => g.MaxDate);
 
         if (limit.HasValue)
@@ -241,213 +229,24 @@ public sealed partial class BaseItemRepository
             topSeriesWithDates = topSeriesWithDates.Take(limit.Value).OrderByDescending(g => g.MaxDate);
         }
 
-        // Materialize series names and cutoff to avoid embedding the GroupBy+OrderBy
-        // expression tree as a subquery inside the episode query.
-        var topSeriesData = topSeriesWithDates
-            .Select(g => new { g.SeriesName, g.MaxDate })
-            .ToList();
-        var topSeriesNames = topSeriesData.Select(g => g.SeriesName).ToList();
-
-        // Compute a global date cutoff: the oldest series' max date minus the window.
-        // Episodes before this cutoff cannot be in any series' "recent additions" window,
-        // so we can safely exclude them to avoid loading ancient episodes.
-        var globalCutoff = topSeriesData.Count > 0
-            ? topSeriesData.Min(g => g.MaxDate)?.AddHours(-RecentAdditionWindowHours)
-            : null;
-
-        // Restrict to episodes of the top series, optionally bounded by the global cutoff.
-        var episodeQuery = baseQuery.Where(e => e.SeriesName != null && topSeriesNames.Contains(e.SeriesName));
-        if (globalCutoff is not null)
+        var topSeriesData = topSeriesWithDates.ToList();
+        if (topSeriesData.Count == 0)
         {
-            episodeQuery = episodeQuery.Where(e => e.DateCreated >= globalCutoff);
+            return [];
         }
 
-        // Lightweight projection: only the columns needed for the in-memory analysis below.
-        var allEpisodes = episodeQuery
-            .OrderByDescending(e => e.DateCreated)
-            .ThenByDescending(e => e.Id)
-            .Select(e => new { e.Id, e.SeriesName, e.DateCreated, e.SeasonId, e.SeriesId })
-            .AsEnumerable();
+        var topSeriesIds = topSeriesData.Select(g => g.SeriesId).ToList();
+        var seriesEntities = ApplyNavigations(
+                context.BaseItems.AsNoTracking().WhereOneOrMany(topSeriesIds, e => e.Id),
+                filter)
+            .AsSplitQuery()
+            .AsEnumerable()
+            .ToDictionary(e => e.Id);
 
-        // Collect all season/series IDs we'll need to look up for count information
-        var allSeasonIds = new HashSet<Guid>();
-        var allSeriesIds = new HashSet<Guid>();
-
-        // Analysis data for each series: recent episode count, season IDs, and the most recent episode ID
-        var analysisData = new List<(
-            int RecentEpisodeCount,
-            List<Guid> SeasonIds,
-            Guid? FirstRecentSeriesId,
-            DateTime MaxDate,
-            Guid MostRecentEpisodeId)>();
-
-        // Step 3: Analyze each series to identify recent additions within the time window
-        foreach (var group in allEpisodes.GroupBy(e => e.SeriesName))
-        {
-            var episodes = group.ToList();
-            var mostRecentDate = episodes[0].DateCreated ?? DateTime.MinValue;
-            var recentCutoff = mostRecentDate.AddHours(-RecentAdditionWindowHours);
-
-            // Find episodes added within the recent window
-            var recentEpisodeCount = 0;
-            var seasonIdSet = new HashSet<Guid>();
-            Guid? firstRecentSeriesId = null;
-
-            foreach (var ep in episodes)
-            {
-                if (ep.DateCreated >= recentCutoff)
-                {
-                    recentEpisodeCount++;
-                    if (ep.SeasonId.HasValue)
-                    {
-                        seasonIdSet.Add(ep.SeasonId.Value);
-                    }
-
-                    firstRecentSeriesId ??= ep.SeriesId;
-                }
-            }
-
-            var seasonIds = seasonIdSet.ToList();
-            analysisData.Add((recentEpisodeCount, seasonIds, firstRecentSeriesId, mostRecentDate, episodes[0].Id));
-
-            // Track all unique season/series IDs for batch lookups
-            foreach (var sid in seasonIds)
-            {
-                allSeasonIds.Add(sid);
-            }
-
-            if (firstRecentSeriesId.HasValue)
-            {
-                allSeriesIds.Add(firstRecentSeriesId.Value);
-            }
-        }
-
-        // Step 4: Batch fetch counts - episodes per season and seasons per series
-        // These counts help determine whether to show Season or Series as the container
-        var episodeType = _itemTypeLookup.BaseItemKindNames[BaseItemKind.Episode];
-        var seasonType = _itemTypeLookup.BaseItemKindNames[BaseItemKind.Season];
-        var seasonEpisodeCounts = allSeasonIds.Count > 0
-            ? context.BaseItems
-                .AsNoTracking()
-                .Where(e => e.SeasonId.HasValue && allSeasonIds.Contains(e.SeasonId.Value) && e.Type == episodeType)
-                .GroupBy(e => e.SeasonId!.Value)
-                .Select(g => new { SeasonId = g.Key, Count = g.Count() })
-                .ToDictionary(x => x.SeasonId, x => x.Count)
-            : [];
-
-        var seriesSeasonCounts = allSeriesIds.Count > 0
-            ? context.BaseItems
-                .AsNoTracking()
-                .Where(e => e.SeriesId.HasValue && allSeriesIds.Contains(e.SeriesId.Value) && e.Type == seasonType)
-                .GroupBy(e => e.SeriesId!.Value)
-                .Select(g => new { SeriesId = g.Key, Count = g.Count() })
-                .ToDictionary(x => x.SeriesId, x => x.Count)
-            : [];
-
-        // Step 5: Apply the container selection logic for each series.
-        // For each series, decide which entity best represents the recent additions:
-        //   - 1 episode added â†’ show the Episode itself
-        //   - Multiple episodes in 1 season (multi-season series) â†’ show the Season
-        //   - Multiple episodes in 1 season (single-season series) â†’ show the Series
-        //   - Episodes across multiple seasons â†’ show the Series
-        var entitiesToFetch = new HashSet<Guid>();
-        var seriesResults = new List<(Guid? SeasonId, Guid? SeriesId, DateTime MaxDate, Guid MostRecentEpisodeId)>(analysisData.Count);
-
-        foreach (var (recentEpisodeCount, seasonIds, firstRecentSeriesId, maxDate, mostRecentEpisodeId) in analysisData)
-        {
-            Guid? seasonId = null;
-            Guid? seriesId = null;
-
-            if (seasonIds.Count == 1)
-            {
-                // All recent episodes are from a single season
-                var sid = seasonIds[0];
-                var totalEpisodes = seasonEpisodeCounts.GetValueOrDefault(sid, 0);
-                var totalSeasonsInSeries = firstRecentSeriesId.HasValue
-                    ? seriesSeasonCounts.GetValueOrDefault(firstRecentSeriesId.Value, 1)
-                    : 1;
-
-                // Check if multiple episodes were added, or if all episodes in the season were added
-                var hasMultipleOrAllEpisodes = recentEpisodeCount > 1 || recentEpisodeCount == totalEpisodes;
-
-                if (totalSeasonsInSeries > 1 && hasMultipleOrAllEpisodes)
-                {
-                    // Multi-season series with bulk additions: show the Season
-                    seasonId = sid;
-                    entitiesToFetch.Add(sid);
-                }
-                else if (hasMultipleOrAllEpisodes && firstRecentSeriesId.HasValue)
-                {
-                    // Single-season series with bulk additions: show the Series
-                    seriesId = firstRecentSeriesId;
-                    entitiesToFetch.Add(firstRecentSeriesId.Value);
-                }
-
-                // Otherwise: single episode, will fall through to show the Episode
-            }
-            else if (seasonIds.Count > 1 && firstRecentSeriesId.HasValue)
-            {
-                // Recent episodes span multiple seasons: show the Series
-                seriesId = firstRecentSeriesId;
-                entitiesToFetch.Add(seriesId!.Value);
-            }
-
-            if (seasonId is null && seriesId is null)
-            {
-                entitiesToFetch.Add(mostRecentEpisodeId);
-            }
-
-            seriesResults.Add((seasonId, seriesId, maxDate, mostRecentEpisodeId));
-        }
-
-        // Step 6: Fetch the Season/Series entities we decided to return
-        var entityIds = entitiesToFetch.ToList();
-        var entities = entityIds.Count > 0
-            ? ApplyNavigations(
-                    context.BaseItems.AsNoTracking().WhereOneOrMany(entityIds, e => e.Id),
-                    filter)
-                .AsSplitQuery()
-                .AsEnumerable()
-                .ToDictionary(e => e.Id)
-            : [];
-
-        // Step 7: Build final results, preferring Season > Series > Episode.
-        // All needed entities are already fetched in step 6 with navigation properties.
-        var results = new List<(BaseItemEntity Entity, DateTime MaxDate)>(seriesResults.Count);
-        foreach (var (seasonId, seriesId, maxDate, mostRecentEpisodeId) in seriesResults)
-        {
-            if (seasonId.HasValue && entities.TryGetValue(seasonId.Value, out var seasonEntity))
-            {
-                results.Add((seasonEntity, maxDate));
-                continue;
-            }
-
-            if (seriesId.HasValue && entities.TryGetValue(seriesId.Value, out var seriesEntity))
-            {
-                results.Add((seriesEntity, maxDate));
-                continue;
-            }
-
-            if (entities.TryGetValue(mostRecentEpisodeId, out var episodeEntity))
-            {
-                results.Add((episodeEntity, maxDate));
-            }
-        }
-
-        var finalResults = results
-            .OrderByDescending(r => r.MaxDate)
-            .ThenByDescending(r => r.Entity.Id);
-
-        if (limit.HasValue)
-        {
-            finalResults = finalResults
-            .Take(limit.Value)
-            .OrderByDescending(r => r.MaxDate)
-            .ThenByDescending(r => r.Entity.Id);
-        }
-
-        return finalResults
-            .Select(r => DeserializeBaseItem(r.Entity, filter.SkipDeserialization))
+        return topSeriesData
+            .Where(g => seriesEntities.ContainsKey(g.SeriesId))
+            .Select(g => seriesEntities[g.SeriesId])
+            .Select(e => DeserializeBaseItem(e, filter.SkipDeserialization))
             .Where(dto => dto is not null)
             .ToArray()!;
     }
@@ -565,3 +364,5 @@ public sealed partial class BaseItemRepository
         };
     }
 }
+
+

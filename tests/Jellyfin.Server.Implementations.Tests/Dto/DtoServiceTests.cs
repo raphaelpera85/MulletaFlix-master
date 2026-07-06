@@ -20,15 +20,16 @@ namespace MulletaFlix.Server.Implementations.Tests.Dto;
 public class DtoServiceTests
 {
     private readonly Mock<ILibraryManager> _libraryManagerMock;
+    private readonly Mock<IImageProcessor> _imageProcessorMock;
     private readonly DtoService _dtoService;
 
     public DtoServiceTests()
     {
         _libraryManagerMock = new Mock<ILibraryManager>();
 
-        var imageProcessor = new Mock<IImageProcessor>();
+        _imageProcessorMock = new Mock<IImageProcessor>();
         // Deterministic tag derived from the image so each item gets a distinct, assertable tag.
-        imageProcessor
+        _imageProcessorMock
             .Setup(x => x.GetImageCacheTag(It.IsAny<BaseItem>(), It.IsAny<ItemImageInfo>()))
             .Returns((BaseItem _, ItemImageInfo image) => "tag:" + image.Path);
 
@@ -42,7 +43,7 @@ public class DtoServiceTests
             NullLogger<DtoService>.Instance,
             _libraryManagerMock.Object,
             new Mock<IUserDataManager>().Object,
-            imageProcessor.Object,
+            _imageProcessorMock.Object,
             new Mock<IProviderManager>().Object,
             new Mock<IRecordingsManager>().Object,
             appHost.Object,
@@ -101,6 +102,30 @@ public class DtoServiceTests
         Assert.Null(dto.ParentPrimaryImageItemId);
     }
 
+    [Fact]
+    public void GetBaseItemDto_UsesStoredPrimaryImageDimensions_WithoutReadingFile()
+    {
+        var season = new Season { Id = Guid.NewGuid(), Name = "Season" };
+        season.SetImage(
+            new ItemImageInfo
+            {
+                Type = ImageType.Primary,
+                Path = "C:\\images\\season.jpg",
+                Width = 300,
+                Height = 450
+            },
+            0);
+
+        _imageProcessorMock
+            .Setup(x => x.GetImageDimensions(It.IsAny<BaseItem>(), It.IsAny<ItemImageInfo>()))
+            .Throws(new InvalidOperationException("Should not read the image file when dimensions are cached."));
+
+        var aspectRatio = _dtoService.GetPrimaryImageAspectRatio(season);
+
+        Assert.Equal(300d / 450d, aspectRatio);
+        _imageProcessorMock.Verify(x => x.GetImageDimensions(It.IsAny<BaseItem>(), It.IsAny<ItemImageInfo>()), Times.Never);
+    }
+
     private (Episode Episode, Season Season, Series Series) BuildEpisode(bool seasonHasPoster)
     {
         // Non-local (http) paths keep aspect-ratio resolution off the image processor and on the
@@ -129,4 +154,3 @@ public class DtoServiceTests
         return (episode, season, series);
     }
 }
-

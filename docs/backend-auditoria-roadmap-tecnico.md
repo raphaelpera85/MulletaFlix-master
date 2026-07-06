@@ -55,8 +55,30 @@ Se esta conversa ficar sem tokens e for necessario continuar em outra IA, a prox
 - [x] Ajustado `GetLatestMedia` para tentar completar itens incompletos ou desatualizados antes de montar os cards da home.
 - [x] Teste unitario da politica de refresh aprovado com 3 casos de regressao.
 - [x] Revisao do fluxo de frontend da home e da pagina de detalhe feita; nao apareceu bug obvio de fetch, entao o ajuste principal ficou no backend.
+- [x] Corrigido o `GetLatestTvShowItems` para agrupar por `SeriesId`, nao por `SeriesName`, e adicionado indice composto `Type, SeriesId, DateCreated`.
+- [x] Adicionado indice em `UserData` para o `NextUp` (`UserId, Played, LastPlayedDate`).
+- [x] Evitado leitura de arquivo para `PrimaryImageAspectRatio` quando `ItemImageInfo.Width/Height` ja estao persistidos.
 - [ ] Medir o impacto real de latencia do refresh sob demanda na home e no detalhe.
 - [ ] Validar no navegador se as artes, overview e metadados reaparecem nas midias recentemente adicionadas.
+
+## Todo Prioritario Por Ganho
+
+1. P0 - Medir a home real com banco grande:
+   - comparar `LatestMedia` de filmes e series com `EXPLAIN ANALYZE`;
+   - confirmar se o custo saiu de SQL e ficou em DTO/imagem.
+   - ganho esperado: muito alto se ainda existir scan ou sort caro.
+2. P1 - Fechar `NextUp`:
+   - validar o impacto do novo indice em `UserData`;
+   - revisar se `GetNextUpSeriesKeys` ainda materializa mais do que precisa.
+   - ganho esperado: alto em bibliotecas com muitas series.
+3. P2 - Cortar custo de DTO/imagem:
+   - revisar `DtoService` e `UpdateImagesAsync` para evitar trabalho repetido em items recentes;
+   - medir se o gargalo restante esta em blurhash, dimensoes ou carga de imagem.
+   - ganho esperado: medio.
+4. P3 - Refino de home no cliente:
+   - manter as imagens fora da viewport em lazy load;
+   - evitar refetch desnecessario em navegacao entre paginas.
+   - ganho esperado: baixo a medio, mas barato de manter.
 
 ## Skills utilizadas nesta auditoria
 

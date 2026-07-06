@@ -23,4 +23,3 @@ public class UserDataConfiguration : IEntityTypeConfiguration<UserData>
         builder.HasOne(e => e.Item).WithMany(e => e.UserData);
     }
 }
-

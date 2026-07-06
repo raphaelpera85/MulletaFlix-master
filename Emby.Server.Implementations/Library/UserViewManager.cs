@@ -504,7 +504,7 @@ namespace Emby.Server.Implementations.Library
                 IsFolder = includeItemTypes.Length == 0 ? false : null,
                 ExcludeItemTypes = excludeItemTypes,
                 IsVirtualItem = false,
-                Limit = limit * 2,
+                Limit = request.GroupItems ? limit * 2 : limit,
                 IsPlayed = isPlayed,
                 DtoOptions = options,
                 MediaTypes = mediaTypes

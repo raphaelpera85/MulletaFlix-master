@@ -79,6 +79,8 @@ public class BaseItemConfiguration : IEntityTypeConfiguration<BaseItemEntity>
         // Latest TV: episode count per season, season count per series
         builder.HasIndex(e => e.SeasonId);
         builder.HasIndex(e => e.SeriesId);
+        // Latest TV home: group episodes by series while still honoring the item filters.
+        builder.HasIndex(e => new { e.TopParentId, e.Type, e.IsVirtualItem, e.SeriesId, e.DateCreated });
 
         // Items/Counts: SELECT Type, COUNT(*) GROUP BY Type filtered by TopParentId.
         builder.HasIndex(e => new { e.TopParentId, e.Type, e.IsVirtualItem })

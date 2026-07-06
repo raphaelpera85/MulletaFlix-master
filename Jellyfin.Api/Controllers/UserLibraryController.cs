@@ -668,8 +668,6 @@ public class UserLibraryController : BaseMulletaFlixApiController
             childCounts[i] = childCount;
         }
 
-        await Task.WhenAll(resolvedItems.Select(RefreshItemOnDemandIfNeeded)).ConfigureAwait(false);
-
         // Fetch DTOs without visibility check since we've already done that in GetLatestItems and restore child counts afterwards
         var dtos = await _dtoService.GetBaseItemDtosAsync(resolvedItems, dtoOptions, user, skipVisibilityCheck: true).ConfigureAwait(false);
         for (int i = 0; i < dtos.Count; i++)
