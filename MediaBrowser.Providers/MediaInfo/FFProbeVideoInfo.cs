@@ -1,4 +1,4 @@
-﻿#pragma warning disable CA1068, CS1591
+#pragma warning disable CA1068, CS1591
 
 using System;
 using System.Collections.Generic;
@@ -84,7 +84,7 @@ namespace MediaBrowser.Providers.MediaInfo
 
             Model.MediaInfo.MediaInfo? mediaInfoResult = null;
 
-            if (!item.IsShortcut || options.EnableRemoteContentProbe)
+            if (!item.IsShortcut || options.EnableRemoteContentProbe || item.GetMediaStreams().Count == 0)
             {
                 if (item.VideoType == VideoType.Dvd)
                 {

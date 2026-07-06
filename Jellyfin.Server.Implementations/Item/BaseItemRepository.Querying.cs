@@ -201,16 +201,8 @@ public sealed partial class BaseItemRepository
     }
 
     /// <summary>
-    /// Gets the latest TV show items with smart Season/Series container selection.
-    /// </summary>
-    /// <remarks>
-    /// <summary>
     /// Gets the latest TV show items.
     /// </summary>
-    /// <remarks>
-    /// ponytail: latest TV home only needs the series container; keep the heavier
-    /// season/episode smart grouping out of the hot path.
-    /// </remarks>
     /// <param name="context">The database context.</param>
     /// <param name="baseQuery">The base query with filters already applied.</param>
     /// <param name="filter">The query filter options.</param>
@@ -218,34 +210,38 @@ public sealed partial class BaseItemRepository
     /// <returns>A list of BaseItemDto representing the latest TV content.</returns>
     private IReadOnlyList<BaseItemDto> GetLatestTvShowItems(MulletaFlixDbContext context, IQueryable<BaseItemEntity> baseQuery, InternalItemsQuery filter, int? limit)
     {
-        var topSeriesWithDates = baseQuery
+        // ponytail: stream the newest episodes first and stop after we have one series per card.
+        var seriesIds = new HashSet<Guid>();
+        var topSeriesIds = baseQuery
             .Where(e => e.SeriesId.HasValue)
-            .GroupBy(e => e.SeriesId!.Value)
-            .Select(g => new { SeriesId = g.Key, MaxDate = g.Max(e => e.DateCreated) })
-            .OrderByDescending(g => g.MaxDate);
+            .OrderByDescending(e => e.DateCreated)
+            .ThenByDescending(e => e.Id)
+            .Select(e => new { e.SeriesId, e.DateCreated })
+            .AsEnumerable()
+            .Where(e => e.SeriesId.HasValue && seriesIds.Add(e.SeriesId.Value))
+            .Select(e => e.SeriesId!.Value);
 
         if (limit.HasValue)
         {
-            topSeriesWithDates = topSeriesWithDates.Take(limit.Value).OrderByDescending(g => g.MaxDate);
+            topSeriesIds = topSeriesIds.Take(limit.Value);
         }
 
-        var topSeriesData = topSeriesWithDates.ToList();
-        if (topSeriesData.Count == 0)
+        var orderedSeriesIds = topSeriesIds.ToList();
+        if (orderedSeriesIds.Count == 0)
         {
             return [];
         }
 
-        var topSeriesIds = topSeriesData.Select(g => g.SeriesId).ToList();
         var seriesEntities = ApplyNavigations(
-                context.BaseItems.AsNoTracking().WhereOneOrMany(topSeriesIds, e => e.Id),
+                context.BaseItems.AsNoTracking().WhereOneOrMany(orderedSeriesIds, e => e.Id),
                 filter)
             .AsSplitQuery()
             .AsEnumerable()
             .ToDictionary(e => e.Id);
 
-        return topSeriesData
-            .Where(g => seriesEntities.ContainsKey(g.SeriesId))
-            .Select(g => seriesEntities[g.SeriesId])
+        return orderedSeriesIds
+            .Where(seriesEntities.ContainsKey)
+            .Select(id => seriesEntities[id])
             .Select(e => DeserializeBaseItem(e, filter.SkipDeserialization))
             .Where(dto => dto is not null)
             .ToArray()!;

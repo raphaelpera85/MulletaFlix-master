@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -92,7 +92,7 @@ namespace MediaBrowser.Providers.MediaInfo
             var path = item.Path;
             var protocol = item.PathProtocol ?? MediaProtocol.File;
 
-            if (!item.IsShortcut || options.EnableRemoteContentProbe)
+            if (!item.IsShortcut || options.EnableRemoteContentProbe || item.GetMediaStreams().Count == 0)
             {
                 if (item.IsShortcut)
                 {

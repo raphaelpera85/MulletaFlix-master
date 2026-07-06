@@ -393,8 +393,6 @@ namespace Jellyfin.Database.Implementations.Migrations
                     b.HasIndex("TopParentId", "Type", "IsVirtualItem")
                         .HasFilter("\"PrimaryVersionId\" IS NULL AND (\"OwnerId\" IS NULL OR \"ExtraType\" IS NOT NULL)");
 
-                    b.HasIndex("TopParentId", "Type", "IsVirtualItem", "SeriesId", "DateCreated");
-
                     b.HasIndex("Type", "TopParentId", "Id");
 
                     b.HasIndex("Type", "TopParentId", "PresentationUniqueKey");

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using MulletaFlix.Api.Constants;
@@ -85,7 +85,8 @@ public class ItemRefreshController : BaseMulletaFlixApiController
                 || replaceAllMetadata,
             IsAutomated = false,
             RemoveOldMetadata = replaceAllMetadata,
-            RegenerateTrickplay = regenerateTrickplay
+            RegenerateTrickplay = regenerateTrickplay,
+            EnableRemoteContentProbe = item.IsShortcut && metadataRefreshMode == MetadataRefreshMode.FullRefresh
         };
 
         _providerManager.QueueRefresh(item.Id, refreshOptions, RefreshPriority.High);
