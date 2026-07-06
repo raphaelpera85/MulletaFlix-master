@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 #pragma warning disable CS1591
 
@@ -21,11 +21,11 @@ namespace MediaBrowser.Controller.Providers
     /// </summary>
     public interface IProviderManager
     {
-        event EventHandler<GenericEventArgs<BaseItem>> RefreshStarted;
+        event EventHandler<Jellyfin.Data.Events.GenericEventArgs<BaseItem>> RefreshStarted;
 
-        event EventHandler<GenericEventArgs<BaseItem>> RefreshCompleted;
+        event EventHandler<Jellyfin.Data.Events.GenericEventArgs<BaseItem>> RefreshCompleted;
 
-        event EventHandler<GenericEventArgs<Tuple<BaseItem, double>>> RefreshProgress;
+        event EventHandler<Jellyfin.Data.Events.GenericEventArgs<Tuple<BaseItem, double>>> RefreshProgress;
 
         /// <summary>
         /// Queues the refresh.

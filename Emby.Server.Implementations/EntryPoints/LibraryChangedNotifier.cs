@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
@@ -97,7 +97,7 @@ public sealed class LibraryChangedNotifier : IHostedService, IDisposable
         return Task.CompletedTask;
     }
 
-    private void OnProviderRefreshProgress(object? sender, GenericEventArgs<Tuple<BaseItem, double>> e)
+    private void OnProviderRefreshProgress(object? sender, Jellyfin.Data.Events.GenericEventArgs<Tuple<BaseItem, double>> e)
     {
         var item = e.Argument.Item1;
 
@@ -150,12 +150,12 @@ public sealed class LibraryChangedNotifier : IHostedService, IDisposable
         }
     }
 
-    private void OnProviderRefreshStarted(object? sender, GenericEventArgs<BaseItem> e)
-        => OnProviderRefreshProgress(sender, new GenericEventArgs<Tuple<BaseItem, double>>(new Tuple<BaseItem, double>(e.Argument, 0)));
+    private void OnProviderRefreshStarted(object? sender, Jellyfin.Data.Events.GenericEventArgs<BaseItem> e)
+        => OnProviderRefreshProgress(sender, new Jellyfin.Data.Events.GenericEventArgs<Tuple<BaseItem, double>>(new Tuple<BaseItem, double>(e.Argument, 0)));
 
-    private void OnProviderRefreshCompleted(object? sender, GenericEventArgs<BaseItem> e)
+    private void OnProviderRefreshCompleted(object? sender, Jellyfin.Data.Events.GenericEventArgs<BaseItem> e)
     {
-        OnProviderRefreshProgress(sender, new GenericEventArgs<Tuple<BaseItem, double>>(new Tuple<BaseItem, double>(e.Argument, 100)));
+        OnProviderRefreshProgress(sender, new Jellyfin.Data.Events.GenericEventArgs<Tuple<BaseItem, double>>(new Tuple<BaseItem, double>(e.Argument, 100)));
 
         _lastProgressMessageTimes.TryRemove(e.Argument.Id, out _);
     }

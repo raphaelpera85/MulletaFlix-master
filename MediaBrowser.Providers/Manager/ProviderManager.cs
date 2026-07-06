@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
@@ -140,13 +140,13 @@ namespace MediaBrowser.Providers.Manager
         }
 
         /// <inheritdoc/>
-        public event EventHandler<GenericEventArgs<BaseItem>>? RefreshStarted;
+        public event EventHandler<Jellyfin.Data.Events.GenericEventArgs<BaseItem>>? RefreshStarted;
 
         /// <inheritdoc/>
-        public event EventHandler<GenericEventArgs<BaseItem>>? RefreshCompleted;
+        public event EventHandler<Jellyfin.Data.Events.GenericEventArgs<BaseItem>>? RefreshCompleted;
 
         /// <inheritdoc/>
-        public event EventHandler<GenericEventArgs<Tuple<BaseItem, double>>>? RefreshProgress;
+        public event EventHandler<Jellyfin.Data.Events.GenericEventArgs<Tuple<BaseItem, double>>>? RefreshProgress;
 
         /// <inheritdoc/>
         public void AddParts(
@@ -1184,7 +1184,7 @@ namespace MediaBrowser.Providers.Manager
             _activeRefreshes[item.Id] = 0;
             try
             {
-                RefreshStarted?.Invoke(this, new GenericEventArgs<BaseItem>(item));
+                RefreshStarted?.Invoke(this, new Jellyfin.Data.Events.GenericEventArgs<BaseItem>(item));
             }
             catch (Exception ex)
             {
@@ -1201,7 +1201,7 @@ namespace MediaBrowser.Providers.Manager
 
             try
             {
-                RefreshCompleted?.Invoke(this, new GenericEventArgs<BaseItem>(item));
+                RefreshCompleted?.Invoke(this, new Jellyfin.Data.Events.GenericEventArgs<BaseItem>(item));
             }
             catch (Exception ex)
             {
@@ -1237,7 +1237,7 @@ namespace MediaBrowser.Providers.Manager
 
             try
             {
-                RefreshProgress?.Invoke(this, new GenericEventArgs<Tuple<BaseItem, double>>(new Tuple<BaseItem, double>(item, progress)));
+                RefreshProgress?.Invoke(this, new Jellyfin.Data.Events.GenericEventArgs<Tuple<BaseItem, double>>(new Tuple<BaseItem, double>(item, progress)));
             }
             catch (Exception ex)
             {

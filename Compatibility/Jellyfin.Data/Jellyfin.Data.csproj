@@ -10,4 +10,8 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Jellyfin.Data\Jellyfin.Data.csproj" />
+  </ItemGroup>
+
 </Project>

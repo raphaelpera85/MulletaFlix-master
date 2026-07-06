@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 
-namespace MulletaFlix.Data.Events
+namespace Jellyfin.Data.Events
 {
     /// <summary>
     /// Provides a generic EventArgs subclass that can hold any kind of object.
+    /// This exists for plugin compatibility.
     /// </summary>
     /// <typeparam name="T">The type of this event.</typeparam>
     public class GenericEventArgs<T> : EventArgs
@@ -22,6 +23,24 @@ namespace MulletaFlix.Data.Events
         /// </summary>
         /// <value>The argument.</value>
         public T Argument { get; }
+    }
+}
+
+namespace MulletaFlix.Data.Events
+{
+    /// <summary>
+    /// Provides a generic EventArgs subclass that can hold any kind of object.
+    /// </summary>
+    /// <typeparam name="T">The type of this event.</typeparam>
+    public class GenericEventArgs<T> : Jellyfin.Data.Events.GenericEventArgs<T>
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GenericEventArgs{T}"/> class.
+        /// </summary>
+        /// <param name="arg">The argument.</param>
+        public GenericEventArgs(T arg) : base(arg)
+        {
+        }
     }
 }
 
