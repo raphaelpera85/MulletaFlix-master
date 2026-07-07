@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
@@ -234,7 +234,7 @@ public sealed class SetupServer : IDisposable
                                             var sysInfo = new PublicSystemInfo
                                             {
                                                 Version = jfApplicationHost.ApplicationVersionString,
-                                                ProductName = jfApplicationHost.Name,
+                                                ProductName = "Jellyfin Server",
                                                 Id = jfApplicationHost.SystemId,
                                                 ServerName = jfApplicationHost.FriendlyName,
                                                 LocalAddress = jfApplicationHost.GetSmartApiUrl(context.Request),

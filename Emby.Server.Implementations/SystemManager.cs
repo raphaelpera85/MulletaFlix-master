@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using MulletaFlix.Server.Implementations.StorageHelpers;
@@ -60,7 +60,7 @@ public class SystemManager : ISystemManager
             HasPendingRestart = _applicationHost.HasPendingRestart,
             IsShuttingDown = _applicationLifetime.ApplicationStopping.IsCancellationRequested,
             Version = _applicationHost.ApplicationVersionString,
-            ProductName = _applicationHost.Name,
+            ProductName = "Jellyfin Server",
             WebSocketPortNumber = _applicationHost.HttpPort,
             CompletedInstallations = _installationManager.CompletedInstallations.ToArray(),
             Id = _applicationHost.SystemId,
@@ -114,7 +114,7 @@ public class SystemManager : ISystemManager
         return new PublicSystemInfo
         {
             Version = _applicationHost.ApplicationVersionString,
-            ProductName = _applicationHost.Name,
+            ProductName = "Jellyfin Server",
             Id = _applicationHost.SystemId,
             ServerName = _applicationHost.FriendlyName,
             LocalAddress = _applicationHost.GetSmartApiUrl(request),
