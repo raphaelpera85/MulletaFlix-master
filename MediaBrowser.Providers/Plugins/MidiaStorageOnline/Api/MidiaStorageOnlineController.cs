@@ -952,7 +952,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         new LibraryOptions
                         {
                             PathInfos = new[] { new MediaPathInfo(moviesPath) },
-                            PreferredMetadataLanguage = "pt",
+                            PreferredMetadataLanguage = "pt-BR",
                             MetadataCountryCode = "BR"
                         }, true).ConfigureAwait(false);
                     Log($"Biblioteca 'Filmes' criada apontando para {moviesPath}");
@@ -964,7 +964,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         new LibraryOptions
                         {
                             PathInfos = new[] { new MediaPathInfo(seriesPath) },
-                            PreferredMetadataLanguage = "pt",
+                            PreferredMetadataLanguage = "pt-BR",
                             MetadataCountryCode = "BR"
                         }, true).ConfigureAwait(false);
                     Log($"Biblioteca 'Series' criada apontando para {seriesPath}");

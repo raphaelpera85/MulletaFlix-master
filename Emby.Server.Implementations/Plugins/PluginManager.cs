@@ -228,16 +228,13 @@ namespace Emby.Server.Implementations.Plugins
             foreach (var pluginServiceRegistrator in _appHost.GetExportTypes<IPluginServiceRegistrator>())
             {
                 var plugin = GetPluginByAssembly(pluginServiceRegistrator.Assembly);
-                if (plugin is null)
+                if (plugin is not null)
                 {
-                    _logger.LogError("Unable to find plugin in assembly {Assembly}", pluginServiceRegistrator.Assembly.FullName);
-                    continue;
-                }
-
-                UpdatePluginSupersededStatus(plugin);
-                if (!plugin.IsEnabledAndSupported)
-                {
-                    continue;
+                    UpdatePluginSupersededStatus(plugin);
+                    if (!plugin.IsEnabledAndSupported)
+                    {
+                        continue;
+                    }
                 }
 
                 try
@@ -250,7 +247,7 @@ namespace Emby.Server.Implementations.Plugins
 #pragma warning restore CA1031 // Do not catch general exception types
                 {
                     _logger.LogError(ex, "Error registering plugin services from {Assembly}.", pluginServiceRegistrator.Assembly.FullName);
-                    if (ChangePluginState(plugin, PluginStatus.Malfunctioned))
+                    if (plugin is not null && ChangePluginState(plugin, PluginStatus.Malfunctioned))
                     {
                         _logger.LogInformation("Disabling plugin {Path}", plugin.Path);
                     }

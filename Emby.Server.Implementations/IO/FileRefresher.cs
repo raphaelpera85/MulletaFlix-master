@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -129,30 +130,36 @@ namespace Emby.Server.Implementations.IO
 
         private void ProcessPathChanges(List<string> paths)
         {
-            IEnumerable<BaseItem> itemsToRefresh = paths
+            var itemsToRefresh = paths
                 .Distinct()
                 .Select(GetAffectedBaseItem)
-                .Where(item => item is not null)
-                .DistinctBy(x => x!.Id)!;  // Removed null values in the previous .Where()
+                .Where(item => item is not null && item is not AggregateFolder)
+                .DistinctBy(x => x!.Id)
+                .ToList();
 
-            foreach (var item in itemsToRefresh)
+            if (itemsToRefresh.Count == 0)
             {
-                if (item is AggregateFolder)
-                {
-                    continue;
-                }
-
-                _logger.LogInformation("{Name} ({Path}) will be refreshed.", item.Name, item.Path);
-
-                try
-                {
-                    item.ChangedExternally();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error refreshing {Name}", item.Name);
-                }
+                return;
             }
+
+            _logger.LogInformation("Processing {Count} file change(s) in parallel", itemsToRefresh.Count);
+
+            Parallel.ForEach(
+                itemsToRefresh,
+                new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
+                item =>
+                {
+                    _logger.LogInformation("{Name} ({Path}) will be refreshed.", item!.Name, item.Path);
+
+                    try
+                    {
+                        item.ChangedExternally();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error refreshing {Name}", item.Name);
+                    }
+                });
         }
 
         /// <summary>

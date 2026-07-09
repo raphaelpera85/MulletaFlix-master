@@ -314,13 +314,23 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                         if (!existingLibs.Contains("Filmes") && entryMovieCount > 0)
                         {
                             await _libraryManager.AddVirtualFolder("Filmes", CollectionTypeOptions.movies,
-                                new LibraryOptions { PathInfos = new[] { new MediaPathInfo(moviesPath) } }, true).ConfigureAwait(false);
+                                new LibraryOptions
+                                {
+                                    PathInfos = new[] { new MediaPathInfo(moviesPath) },
+                                    PreferredMetadataLanguage = "pt-BR",
+                                    MetadataCountryCode = "BR"
+                                }, true).ConfigureAwait(false);
                             Log("Biblioteca 'Filmes' criada");
                         }
                         if (!existingLibs.Contains("Series") && entrySeriesCount > 0)
                         {
                             await _libraryManager.AddVirtualFolder("Series", CollectionTypeOptions.tvshows,
-                                new LibraryOptions { PathInfos = new[] { new MediaPathInfo(seriesPath) } }, true).ConfigureAwait(false);
+                                new LibraryOptions
+                                {
+                                    PathInfos = new[] { new MediaPathInfo(seriesPath) },
+                                    PreferredMetadataLanguage = "pt-BR",
+                                    MetadataCountryCode = "BR"
+                                }, true).ConfigureAwait(false);
                             Log("Biblioteca 'Series' criada");
                         }
                     }

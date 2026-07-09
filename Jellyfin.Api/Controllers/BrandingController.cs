@@ -37,6 +37,7 @@ public class BrandingController : BaseMulletaFlixApiController
         {
             LoginDisclaimer = brandingOptions.LoginDisclaimer,
             CustomCss = brandingOptions.CustomCss,
+            DefaultTheme = brandingOptions.DefaultTheme,
             SplashscreenEnabled = brandingOptions.SplashscreenEnabled
         };
 
@@ -63,4 +64,3 @@ public class BrandingController : BaseMulletaFlixApiController
         return options.CustomCss ?? string.Empty;
     }
 }
-

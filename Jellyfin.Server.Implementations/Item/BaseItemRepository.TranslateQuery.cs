@@ -953,13 +953,13 @@ public sealed partial class BaseItemRepository
         if (filter.ExcludeItemIds.Length > 0)
         {
             baseQuery = baseQuery
-                .Where(e => !filter.ExcludeItemIds.Contains(e.Id));
+                .Where(e => !Enumerable.Contains(filter.ExcludeItemIds, e.Id));
         }
 
         if (filter.ExcludeProviderIds is not null && filter.ExcludeProviderIds.Count > 0)
         {
             var exclude = filter.ExcludeProviderIds.Select(e => $"{e.Key}:{e.Value}").ToArray();
-            baseQuery = baseQuery.Where(e => e.Provider!.Select(f => f.ProviderId + ":" + f.ProviderValue)!.All(f => !exclude.Contains(f)));
+            baseQuery = baseQuery.Where(e => e.Provider!.Select(f => f.ProviderId + ":" + f.ProviderValue)!.All(f => !Enumerable.Contains(exclude, f)));
         }
 
         if (filter.HasAnyProviderId is not null && filter.HasAnyProviderId.Count > 0)
@@ -968,13 +968,13 @@ public sealed partial class BaseItemRepository
             var includeAny = filter.HasAnyProviderId.Where(e => string.IsNullOrEmpty(e.Value)).Select(e => e.Key).ToArray();
             if (includeAny.Length > 0)
             {
-                baseQuery = baseQuery.Where(e => e.Provider!.Any(f => includeAny.Contains(f.ProviderId)));
+                baseQuery = baseQuery.Where(e => e.Provider!.Any(f => Enumerable.Contains(includeAny, f.ProviderId)));
             }
 
             var includeSelected = filter.HasAnyProviderId.Where(e => !string.IsNullOrEmpty(e.Value)).Select(e => $"{e.Key}:{e.Value}").ToArray();
             if (includeSelected.Length > 0)
             {
-                baseQuery = baseQuery.Where(e => e.Provider!.Select(f => f.ProviderId + ":" + f.ProviderValue)!.Any(f => includeSelected.Contains(f)));
+                baseQuery = baseQuery.Where(e => e.Provider!.Select(f => f.ProviderId + ":" + f.ProviderValue)!.Any(f => Enumerable.Contains(includeSelected, f)));
             }
         }
 
@@ -985,7 +985,7 @@ public sealed partial class BaseItemRepository
                 .ToArray();
             if (includeAny.Length > 0)
             {
-                baseQuery = baseQuery.Where(e => e.Provider!.Select(f => f.ProviderId + ":" + f.ProviderValue)!.Any(f => includeAny.Contains(f)));
+                baseQuery = baseQuery.Where(e => e.Provider!.Select(f => f.ProviderId + ":" + f.ProviderValue)!.Any(f => Enumerable.Contains(includeAny, f)));
             }
         }
 
@@ -1038,7 +1038,7 @@ public sealed partial class BaseItemRepository
             var linkedChildAncestorIds = filter.LinkedChildAncestorIds;
             baseQuery = baseQuery.Where(e => context.LinkedChildren.Any(lc =>
                 lc.ParentId == e.Id
-                && lc.Child!.Parents!.Any(a => linkedChildAncestorIds.Contains(a.ParentItemId))));
+                && lc.Child!.Parents!.Any(a => Enumerable.Contains(linkedChildAncestorIds, a.ParentItemId))));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.AncestorWithPresentationUniqueKey))

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Emby.Server.Implementations;
 using Emby.Server.Implementations.Session;
+using Jellyfin.Plugin.GetAvatar;
 using MulletaFlix.Api.WebSocketListeners;
 using MulletaFlix.Database.Implementations;
 using MulletaFlix.Drawing;
@@ -120,6 +121,9 @@ namespace MulletaFlix.Server
             // MulletaFlix.Server
             yield return typeof(CoreAppHost).Assembly;
 
+            // GetAvatar is now shipped with the server source.
+            yield return typeof(Plugin).Assembly;
+
             // MulletaFlix.Database.Implementations
             yield return typeof(MulletaFlixDbContext).Assembly;
 
@@ -131,4 +135,3 @@ namespace MulletaFlix.Server
         }
     }
 }
-

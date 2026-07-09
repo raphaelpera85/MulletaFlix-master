@@ -26,17 +26,11 @@ namespace Emby.Server.Implementations.MediaEncoding
         private readonly IMediaEncoder _mediaEncoder;
         private readonly IApplicationPaths _appPaths;
 
-        private static readonly string[] DefaultHardwareDecodingCodecs =
-        [
-            "h264",
-            "vc1",
-            "hevc",
-            "mpeg4",
-            "mpeg2video",
-            "vp8",
-            "vp9",
-            "vp10"
-        ];
+        // Codecs de decodificacao por tipo de GPU
+        private static readonly string[] NvencDecodingCodecs = ["h264", "hevc", "mpeg2video", "mpeg4"];
+        private static readonly string[] QsvDecodingCodecs = ["h264", "hevc", "mpeg2video", "av1"];
+        private static readonly string[] AmfDecodingCodecs = ["h264", "hevc", "mpeg2video", "av1"];
+        private static readonly string[] VaapiDecodingCodecs = ["h264", "hevc", "mpeg2video", "av1"];
 
         // Presets otimizados por fabricante de GPU
         private const string PresetNvidiaFast = "fast";
@@ -52,16 +46,6 @@ namespace Emby.Server.Implementations.MediaEncoding
         private const int H265CrfHardware = 30;
         private const int H264CrfSoftware = 23;
         private const int H265CrfSoftware = 28;
-
-        // Codecs alternativos para decodificacao (caso os primarios falhem)
-        private static readonly string[] FallbackHardwareDecodingCodecs =
-        [
-            "h264",
-            "hevc",
-            "mpeg2video",
-            "vp8",
-            "vp9"
-        ];
 
         public HardwareDetectionService(
             ILogger<HardwareDetectionService> logger,
@@ -295,6 +279,19 @@ namespace Emby.Server.Implementations.MediaEncoding
                 // =========================================================
                 // --- SUB-FASE 6a: Aceleracao de hardware ATIVADA ---
                 // =========================================================
+
+                // Codecs de decodificacao especificos por tipo de GPU
+                var targetCodecs = GetDecodingCodecsForHardware(actualHwType);
+                if (options.HardwareDecodingCodecs is null
+                    || !options.HardwareDecodingCodecs.SequenceEqual(targetCodecs, StringComparer.OrdinalIgnoreCase))
+                {
+                    options.HardwareDecodingCodecs = targetCodecs;
+                    changes++;
+                    _logger.LogInformation(
+                        "CONFIG: HardwareDecodingCodecs configurados para {HwType}: {Codecs}",
+                        actualHwType,
+                        string.Join(", ", targetCodecs));
+                }
 
                 // EnableHardwareEncoding
                 if (ApplySetting(
@@ -633,17 +630,6 @@ namespace Emby.Server.Implementations.MediaEncoding
             // FASE 7: Configuracoes comuns (aplicam-se a todos os cenarios)
             // =========================================================
 
-            // Codecs de decodificacao de hardware
-            if (options.HardwareDecodingCodecs is null
-                || !options.HardwareDecodingCodecs.SequenceEqual(DefaultHardwareDecodingCodecs, StringComparer.OrdinalIgnoreCase))
-            {
-                options.HardwareDecodingCodecs = DefaultHardwareDecodingCodecs;
-                changes++;
-                _logger.LogInformation(
-                    "CONFIG: HardwareDecodingCodecs configurados: {Codecs}",
-                    string.Join(", ", DefaultHardwareDecodingCodecs));
-            }
-
             // Legendas
             if (ApplySetting(
                 !options.EnableSubtitleExtraction,
@@ -680,7 +666,7 @@ namespace Emby.Server.Implementations.MediaEncoding
             return changes;
         }
 
-        private static bool ApplySetting(
+        private bool ApplySetting(
             bool condition,
             Action applyAction,
             string logMessage)
@@ -694,10 +680,22 @@ namespace Emby.Server.Implementations.MediaEncoding
 
             if (logMessage is not null)
             {
-                // Log is done by caller when context is needed
+                _logger.LogInformation("{Message}", logMessage);
             }
 
             return true;
+        }
+
+        private static string[] GetDecodingCodecsForHardware(HardwareAccelerationType hwType)
+        {
+            return hwType switch
+            {
+                HardwareAccelerationType.nvenc => NvencDecodingCodecs,
+                HardwareAccelerationType.qsv => QsvDecodingCodecs,
+                HardwareAccelerationType.amf => AmfDecodingCodecs,
+                HardwareAccelerationType.vaapi => VaapiDecodingCodecs,
+                _ => NvencDecodingCodecs
+            };
         }
 
         private static string[] GetVideoControllerNames()

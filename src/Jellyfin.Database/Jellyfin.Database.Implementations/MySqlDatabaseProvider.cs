@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations.Contexts;
 using MulletaFlix.Database.Implementations.DbConfiguration;
+using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -188,6 +189,11 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
     public void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Per-schema entity configuration done by each DbContext's OnModelCreating
+        modelBuilder.Entity<BaseItemEntity>()
+            .HasIndex(e => new { e.CleanName, e.OriginalTitle })
+            .HasDatabaseName("IX_BaseItems_FullTextSearch")
+            .HasFilter("\"CleanName\" IS NOT NULL OR \"OriginalTitle\" IS NOT NULL")
+            .IsFullText(); // MySQL FULLTEXT index
     }
 
     /// <inheritdoc/>
@@ -330,5 +336,35 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
         }
 
         return $"`{identifier}`";
+    }
+
+    /// <inheritdoc/>
+    public IQueryable<BaseItemEntity> FullTextSearch(
+        MulletaFlixDbContext context,
+        string searchTerm,
+        Guid? userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return context.BaseItems.Where(i => false);
+        }
+
+        // Use MySQL full-text search with natural language mode
+        // The index was created on (CleanName, OriginalTitle) in BaseItemConfiguration
+        var sanitizedTerm = searchTerm.Trim().Replace("*", "", StringComparison.Ordinal).Replace("\"", "", StringComparison.Ordinal);
+
+        // Use natural language search for best relevance
+        var sql = """
+            SELECT i.* FROM `BaseItems` i
+            WHERE MATCH(i.`CleanName`, i.`OriginalTitle`) AGAINST(@term IN NATURAL LANGUAGE MODE)
+            AND (@userId IS NULL OR i.`OwnerId` = @userId OR i.`OwnerId` IS NULL)
+            ORDER BY MATCH(i.`CleanName`, i.`OriginalTitle`) AGAINST(@term IN NATURAL LANGUAGE MODE) DESC
+            """;
+
+        return context.BaseItems.FromSqlRaw(
+            sql,
+            new MySqlConnector.MySqlParameter("term", sanitizedTerm),
+            new MySqlConnector.MySqlParameter("userId", userId));
     }
 }

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using MulletaFlix.Data.Enums;
 using MulletaFlix.Database.Implementations.Entities;
 using MulletaFlix.Database.Implementations.Enums;
@@ -12,6 +13,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Querying;
 using MediaBrowser.Model.Search;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Emby.Server.Implementations.Library
 {
@@ -19,11 +21,39 @@ namespace Emby.Server.Implementations.Library
     {
         private readonly ILibraryManager _libraryManager;
         private readonly IUserManager _userManager;
+        private readonly IMemoryCache _cache;
+        private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
 
-        public SearchEngine(ILibraryManager libraryManager, IUserManager userManager)
+        public SearchEngine(ILibraryManager libraryManager, IUserManager userManager, IMemoryCache memoryCache)
         {
             _libraryManager = libraryManager;
             _userManager = userManager;
+            _cache = memoryCache;
+        }
+
+        private static string BuildCacheKey(SearchQuery query, Guid? userId)
+        {
+            var sb = new StringBuilder();
+            sb.Append(userId?.ToString() ?? "anon");
+            sb.Append('|');
+            sb.Append(query.SearchTerm.Trim().ToLowerInvariant());
+            sb.Append('|');
+            sb.Append(query.Limit.GetValueOrDefault());
+            sb.Append('|');
+            sb.Append(query.StartIndex.GetValueOrDefault());
+            sb.Append('|');
+            sb.Append(query.IncludeMedia ? '1' : '0');
+            sb.Append('|');
+            sb.Append(query.IncludePeople ? '1' : '0');
+            sb.Append('|');
+            sb.Append(query.IncludeGenres ? '1' : '0');
+            sb.Append('|');
+            sb.Append(query.IncludeStudios ? '1' : '0');
+            sb.Append('|');
+            sb.Append(query.IncludeArtists ? '1' : '0');
+            sb.Append('|');
+            sb.Append(query.ParentId?.ToString() ?? "n");
+            return sb.ToString();
         }
 
         public QueryResult<SearchHintInfo> GetSearchHints(SearchQuery query)
@@ -34,7 +64,15 @@ namespace Emby.Server.Implementations.Library
                 user = _userManager.GetUserById(query.UserId);
             }
 
-            return GetSearchHints(query, user);
+            var cacheKey = BuildCacheKey(query, user?.Id);
+            if (_cache.TryGetValue(cacheKey, out QueryResult<SearchHintInfo>? cached) && cached is not null)
+            {
+                return cached;
+            }
+
+            var result = GetSearchHints(query, user);
+            _cache.Set(cacheKey, result, CacheTtl);
+            return result;
         }
 
         private static void AddIfMissing(List<BaseItemKind> list, BaseItemKind value)

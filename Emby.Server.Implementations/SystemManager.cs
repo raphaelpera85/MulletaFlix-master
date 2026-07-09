@@ -60,7 +60,7 @@ public class SystemManager : ISystemManager
             HasPendingRestart = _applicationHost.HasPendingRestart,
             IsShuttingDown = _applicationLifetime.ApplicationStopping.IsCancellationRequested,
             Version = _applicationHost.ApplicationVersionString,
-            ProductName = "Jellyfin Server",
+            ProductName = "MulletaFlix",
             WebSocketPortNumber = _applicationHost.HttpPort,
             CompletedInstallations = _installationManager.CompletedInstallations.ToArray(),
             Id = _applicationHost.SystemId,
@@ -114,7 +114,7 @@ public class SystemManager : ISystemManager
         return new PublicSystemInfo
         {
             Version = _applicationHost.ApplicationVersionString,
-            ProductName = "Jellyfin Server",
+            ProductName = "MulletaFlix",
             Id = _applicationHost.SystemId,
             ServerName = _applicationHost.FriendlyName,
             LocalAddress = _applicationHost.GetSmartApiUrl(request),

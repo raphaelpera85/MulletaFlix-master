@@ -19,6 +19,11 @@ public class BrandingOptionsDto
     public string? CustomCss { get; set; }
 
     /// <summary>
+    /// Gets or sets the default theme for the server.
+    /// </summary>
+    public string? DefaultTheme { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to enable the splashscreen.
     /// </summary>
     public bool SplashscreenEnabled { get; set; } = false;

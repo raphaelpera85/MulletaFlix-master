@@ -111,6 +111,41 @@ namespace MulletaFlix.Server
             AppDomain.CurrentDomain.UnhandledException += (_, e)
                 => _logger.LogCritical((Exception)e.ExceptionObject, "Unhandled Exception");
 
+            // Redirect plugin references from Jellyfin.* to MulletaFlix.* assemblies
+            AppDomain.CurrentDomain.AssemblyResolve += (_, args) =>
+            {
+                var requestedName = new AssemblyName(args.Name);
+                if (requestedName.Name!.StartsWith("Jellyfin.", StringComparison.Ordinal))
+                {
+                    // First try to load the compatibility shim (Jellyfin.*.dll)
+                    var shimPath = Path.Combine(AppContext.BaseDirectory, requestedName.Name + ".dll");
+                    if (File.Exists(shimPath))
+                    {
+                        try
+                        {
+                            return Assembly.LoadFrom(shimPath);
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    // Fallback: redirect to MulletaFlix.* assembly
+                    var mappedName = "MulletaFlix." + requestedName.Name["Jellyfin.".Length..];
+                    var mappedAssemblyName = new AssemblyName(args.Name) { Name = mappedName };
+                    try
+                    {
+                        return Assembly.Load(mappedAssemblyName);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+
+                return null;
+            };
+
             _logger.LogInformation(
                 "MulletaFlix version: {Version}",
                 Assembly.GetEntryAssembly()!.GetName().Version!.ToString(3));

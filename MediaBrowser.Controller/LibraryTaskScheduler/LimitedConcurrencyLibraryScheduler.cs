@@ -186,7 +186,7 @@ public sealed class LimitedConcurrencyLibraryScheduler : ILimitedConcurrencyLibr
                 return;
             }
 
-            await item.Worker(item.Data).ConfigureAwait(true);
+            await item.Worker(item.Data).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

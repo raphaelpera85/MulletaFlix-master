@@ -180,7 +180,7 @@ public sealed partial class BaseItemRepository
             ? masterQuery
                 .GroupBy(e => e.PresentationUniqueKey)
                 .Select(g => g
-                    .OrderBy(e => filter.TopParentIds.Contains(e.TopParentId ?? Guid.Empty) ? 0 : 1)
+                    .OrderBy(e => Enumerable.Contains(filter.TopParentIds, e.TopParentId ?? Guid.Empty) ? 0 : 1)
                     .ThenBy(e => e.Id)
                     .First().Id)
             : masterQuery
@@ -272,15 +272,12 @@ public sealed partial class BaseItemRepository
         var musicArtistTypeName = _itemTypeLookup.BaseItemKindNames[BaseItemKind.MusicArtist];
         var audioTypeName = _itemTypeLookup.BaseItemKindNames[BaseItemKind.Audio];
         var trailerTypeName = _itemTypeLookup.BaseItemKindNames[BaseItemKind.Trailer];
-        var itemIds = itemCountQuery.Select(e => e.Id);
-
         // Rewrite query to avoid SelectMany on navigation properties (which requires SQL APPLY, not supported on SQLite)
-        // Instead, start from ItemValueMaps and join with BaseItems
+        // Instead, start from ItemValueMaps and join with itemCountQuery
         return context.ItemValuesMap
             .Where(ivm => itemValueTypes.Contains(ivm.ItemValue.Type))
-            .Where(ivm => itemIds.Contains(ivm.ItemId))
             .Join(
-                context.BaseItems,
+                itemCountQuery,
                 ivm => ivm.ItemId,
                 e => e.Id,
                 (ivm, e) => new { CleanName = ivm.ItemValue.CleanValue, e.Type })

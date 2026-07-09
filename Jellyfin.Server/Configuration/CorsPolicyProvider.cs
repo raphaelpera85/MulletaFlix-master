@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Configuration;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -30,12 +30,12 @@ namespace MulletaFlix.Server.Configuration
                 .AllowAnyMethod()
                 .AllowAnyHeader();
 
-            // No hosts configured or only default configured: restrict to same-origin.
+            // No hosts configured or only default configured.
             if (corsHosts.Length == 0
                 || (corsHosts.Length == 1
                     && string.Equals(corsHosts[0], CorsConstants.AnyOrigin, StringComparison.Ordinal)))
             {
-                builder.SetIsOriginAllowed(origin => new Uri(origin).IsLoopback);
+                builder.AllowAnyOrigin();
             }
             else
             {

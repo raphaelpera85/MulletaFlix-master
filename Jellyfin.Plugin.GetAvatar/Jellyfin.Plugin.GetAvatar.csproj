@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Jellyfin.Plugin.GetAvatar</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+<AssemblyVersion>1.6.3.0</AssemblyVersion>
+    <FileVersion>1.6.3.0</FileVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
+    <CodeAnalysisRuleSet>../jellyfin.ruleset</CodeAnalysisRuleSet>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaBrowser.Controller\MediaBrowser.Controller.csproj" />
+    <ProjectReference Include="..\Jellyfin.Data\Jellyfin.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="SmartAnalyzers.MultithreadingAnalyzer" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Configuration\Web\configPage.html" />
+    <EmbeddedResource Include="Configuration\Web\configPage.html" />
+    <None Remove="Configuration\Web\configPage.js" />
+    <EmbeddedResource Include="Configuration\Web\configPage.js" />
+    <None Remove="Configuration\Web\userAvatarPage.html" />
+    <EmbeddedResource Include="Configuration\Web\userAvatarPage.html" />
+    <None Remove="Configuration\Web\clientScript.js" />
+    <EmbeddedResource Include="Configuration\Web\clientScript.js" />
+    <EmbeddedResource Include="assets\banner.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="**/*.cs" Exclude="$(DefaultItemExcludes)" />
+  </ItemGroup>
+</Project>
+

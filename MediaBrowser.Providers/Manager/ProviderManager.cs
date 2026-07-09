@@ -67,6 +67,9 @@ namespace MediaBrowser.Providers.Manager
         private readonly CancellationTokenSource _disposeCancellationTokenSource = new();
         private readonly PriorityQueue<(Guid ItemId, MetadataRefreshOptions RefreshOptions), RefreshPriority> _refreshQueue = new();
         private readonly IMemoryCache _memoryCache;
+        private readonly SemaphoreSlim _refreshConcurrency = new(
+            Math.Max(1, Environment.ProcessorCount / 2),
+            Math.Max(1, Environment.ProcessorCount));
         private readonly IMediaSegmentManager _mediaSegmentManager;
         private readonly ISimilarItemsManager _similarItemsManager;
         private readonly AsyncKeyedLocker<string> _imageSaveLock = new(o =>
@@ -789,13 +792,13 @@ namespace MediaBrowser.Providers.Manager
                 return;
             }
 
-            foreach (var saver in applicableSavers)
+            var saveTasks = applicableSavers.Select(async saver =>
             {
                 _logger.LogDebug("Saving {Item} to {Saver}", item.Path ?? item.Name, saver.Name);
 
                 if (saver is IMetadataFileSaver fileSaver)
                 {
-                    string path;
+                    string? path = null;
 
                     try
                     {
@@ -804,7 +807,7 @@ namespace MediaBrowser.Providers.Manager
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error in {Saver} GetSavePath", saver.Name);
-                        continue;
+                        return;
                     }
 
                     try
@@ -834,7 +837,9 @@ namespace MediaBrowser.Providers.Manager
                         _logger.LogError(ex, "Error in metadata saver");
                     }
                 }
-            }
+            });
+
+            await Task.WhenAll(saveTasks).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1283,41 +1288,64 @@ namespace MediaBrowser.Providers.Manager
             var cancellationToken = _disposeCancellationTokenSource.Token;
 
             libraryManager.ClearIgnoreRuleCache();
-            while (_refreshQueue.TryDequeue(out var refreshItem, out _))
+
+            var tasks = new List<Task>();
+            try
             {
-                if (_disposed)
+                while (_refreshQueue.TryDequeue(out var refreshItem, out _))
+                {
+                    if (_disposed)
+                    {
+                        return;
+                    }
+
+                    await _refreshConcurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                    tasks.Add(ProcessRefreshItemAsync(refreshItem, libraryManager, cancellationToken));
+                }
+
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
+            finally
+            {
+                lock (_refreshQueueLock)
+                {
+                    _isProcessingRefreshQueue = false;
+                    libraryManager.ClearIgnoreRuleCache();
+                }
+            }
+        }
+
+        private async Task ProcessRefreshItemAsync(
+            (Guid ItemId, MetadataRefreshOptions RefreshOptions) refreshItem,
+            ILibraryManager libraryManager,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var item = libraryManager.GetItemById(refreshItem.ItemId);
+                if (item is null)
                 {
                     return;
                 }
 
-                try
-                {
-                    var item = libraryManager.GetItemById(refreshItem.ItemId);
-                    if (item is null)
-                    {
-                        continue;
-                    }
+                var task = item is MusicArtist artist
+                    ? RefreshArtist(artist, refreshItem.RefreshOptions, cancellationToken)
+                    : RefreshItem(item, refreshItem.RefreshOptions, cancellationToken);
 
-                    var task = item is MusicArtist artist
-                        ? RefreshArtist(artist, refreshItem.RefreshOptions, cancellationToken)
-                        : RefreshItem(item, refreshItem.RefreshOptions, cancellationToken);
-
-                    await task.ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error refreshing item");
-                }
+                await task.ConfigureAwait(false);
             }
-
-            lock (_refreshQueueLock)
+            catch (OperationCanceledException)
             {
-                _isProcessingRefreshQueue = false;
-                libraryManager.ClearIgnoreRuleCache();
+                // Cancellation is expected during shutdown
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing item {ItemId}", refreshItem.ItemId);
+            }
+            finally
+            {
+                _refreshConcurrency.Release();
             }
         }
 

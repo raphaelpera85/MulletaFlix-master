@@ -2,6 +2,7 @@
 #pragma warning disable CS1591
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -67,6 +68,16 @@ namespace MediaBrowser.MediaEncoding.Encoder
 
         // MediaEncoder is registered as a Singleton
         private readonly JsonSerializerOptions _jsonSerializerOptions;
+
+        private readonly ConcurrentDictionary<string, CachedMediaInfo> _probeCache = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly TimeSpan ProbeCacheTtl = TimeSpan.FromMinutes(30);
+
+        private sealed class CachedMediaInfo
+        {
+            public MediaInfo Result { get; set; } = null!;
+            public DateTime CachedAt { get; set; }
+            public DateTime LastWriteTime { get; set; }
+        }
 
         private List<string> _encoders = new List<string>();
         private List<string> _decoders = new List<string>();
@@ -460,20 +471,54 @@ namespace MediaBrowser.MediaEncoding.Encoder
         }
 
         /// <inheritdoc />
-        public Task<MediaInfo> GetMediaInfo(MediaInfoRequest request, CancellationToken cancellationToken)
+        public async Task<MediaInfo> GetMediaInfo(MediaInfoRequest request, CancellationToken cancellationToken)
         {
-            var extractChapters = request.ExtractChapters;
-            var extraArgs = GetExtraArguments(request);
+            if (request.MediaSource.Protocol != MediaProtocol.File)
+            {
+                var infoExtractChapters = request.ExtractChapters;
+                var infoExtraArgs = GetExtraArguments(request);
+                return await GetMediaInfoInternal(
+                    GetInputArgument(request.MediaSource.Path, request.MediaSource),
+                    request.MediaSource.Path,
+                    request.MediaSource.Protocol,
+                    infoExtractChapters,
+                    infoExtraArgs,
+                    request.MediaType == DlnaProfileType.Audio,
+                    request.MediaSource.VideoType,
+                    cancellationToken).ConfigureAwait(false);
+            }
 
-            return GetMediaInfoInternal(
-                GetInputArgument(request.MediaSource.Path, request.MediaSource),
-                request.MediaSource.Path,
+            var filePath = request.MediaSource.Path;
+            var lastWrite = File.GetLastWriteTimeUtc(filePath);
+            var cacheKey = filePath;
+
+            if (_probeCache.TryGetValue(cacheKey, out var cached)
+                && cached.LastWriteTime == lastWrite
+                && DateTime.UtcNow - cached.CachedAt < ProbeCacheTtl)
+            {
+                return cached.Result;
+            }
+
+            var cachedExtractChapters = request.ExtractChapters;
+            var cachedExtraArgs = GetExtraArguments(request);
+            var result = await GetMediaInfoInternal(
+                GetInputArgument(filePath, request.MediaSource),
+                filePath,
                 request.MediaSource.Protocol,
-                extractChapters,
-                extraArgs,
+                cachedExtractChapters,
+                cachedExtraArgs,
                 request.MediaType == DlnaProfileType.Audio,
                 request.MediaSource.VideoType,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
+
+            _probeCache[cacheKey] = new CachedMediaInfo
+            {
+                Result = result,
+                CachedAt = DateTime.UtcNow,
+                LastWriteTime = lastWrite
+            };
+
+            return result;
         }
 
         internal string GetExtraArguments(MediaInfoRequest request)

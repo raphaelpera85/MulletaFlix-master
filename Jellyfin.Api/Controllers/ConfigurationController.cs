@@ -145,6 +145,7 @@ public class ConfigurationController : BaseMulletaFlixApiController
         // Update only the properties from BrandingOptionsDto
         currentBranding.LoginDisclaimer = configuration.LoginDisclaimer;
         currentBranding.CustomCss = configuration.CustomCss;
+        currentBranding.DefaultTheme = configuration.DefaultTheme;
         currentBranding.SplashscreenEnabled = configuration.SplashscreenEnabled;
 
         _configurationManager.SaveConfiguration("branding", currentBranding);
@@ -152,4 +153,3 @@ public class ConfigurationController : BaseMulletaFlixApiController
         return NoContent();
     }
 }
-

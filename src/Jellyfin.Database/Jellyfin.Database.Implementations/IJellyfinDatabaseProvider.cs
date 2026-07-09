@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Database.Implementations.DbConfiguration;
+using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace MulletaFlix.Database.Implementations;
@@ -69,10 +71,24 @@ public interface IMulletaFlixDatabaseProvider
     Task DeleteBackup(string key);
 
     /// <summary>
-    /// Removes all contents from the database.
+    /// Runs a full-text search against BaseItems.
     /// </summary>
-    /// <param name="dbContext">The Database context.</param>
-    /// <param name="tableNames">The names of the tables to purge or null for all tables to be purged.</param>
-    /// <returns>A Task.</returns>
+    /// <param name="context">The database context.</param>
+    /// <param name="searchTerm">The search term.</param>
+    /// <param name="userId">Optional user ID for filtering.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Queryable of BaseItemEntity matching the search term.</returns>
+    IQueryable<BaseItemEntity> FullTextSearch(
+        MulletaFlixDbContext context,
+        string searchTerm,
+        Guid? userId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Purges all data from the database.
+    /// </summary>
+    /// <param name="dbContext">The database context.</param>
+    /// <param name="tableNames">The names of the tables to purge.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task PurgeDatabase(MulletaFlixDbContext dbContext, IEnumerable<string>? tableNames);
 }

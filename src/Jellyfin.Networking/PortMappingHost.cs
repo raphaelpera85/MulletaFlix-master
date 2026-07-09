@@ -17,7 +17,9 @@ namespace MulletaFlix.Networking;
 /// </summary>
 public sealed class PortMappingHost : IHostedService
 {
-    private static readonly TimeSpan DiscoveryTimeout = TimeSpan.FromSeconds(8);
+    private static readonly TimeSpan DiscoveryTimeout = TimeSpan.FromSeconds(15);
+    private const int MaxRetries = 3;
+    private static readonly TimeSpan RetryBaseDelay = TimeSpan.FromSeconds(3);
 
     private readonly ILogger<PortMappingHost> _logger;
     private readonly IConfigurationManager _configurationManager;
@@ -67,22 +69,37 @@ public sealed class PortMappingHost : IHostedService
             return;
         }
 
-        foreach (var portMapper in new[] { PortMapper.Upnp, PortMapper.Pmp })
+        for (int attempt = 1; attempt <= MaxRetries; attempt++)
         {
-            if (cancellationToken.IsCancellationRequested)
+            foreach (var portMapper in new[] { PortMapper.Upnp, PortMapper.Pmp })
             {
-                return;
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                if (await TryCreateMappingsAsync(portMapper, localAddress, cancellationToken).ConfigureAwait(false))
+                {
+                    return;
+                }
             }
 
-            if (await TryCreateMappingsAsync(portMapper, localAddress, cancellationToken).ConfigureAwait(false))
+            if (attempt < MaxRetries)
             {
-                return;
+                var delay = RetryBaseDelay * attempt;
+                _logger.LogInformation(
+                    "Port mapping attempt {Attempt}/{MaxRetries} failed. Retrying in {Delay}s...",
+                    attempt,
+                    MaxRetries,
+                    delay.TotalSeconds);
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
         }
 
         _logger.LogWarning(
-            "Automatic port mapping failed for HTTP {HttpPort} and HTTPS {HttpsPort}. " +
+            "Automatic port mapping failed after {MaxRetries} attempts for HTTP {HttpPort} and HTTPS {HttpsPort}. " +
             "If the internet connection uses CGNAT or the router blocks UPnP/PMP, the server cannot open the ports automatically.",
+            MaxRetries,
             config.PublicHttpPort,
             config.EnableHttps ? config.PublicHttpsPort : 0);
     }

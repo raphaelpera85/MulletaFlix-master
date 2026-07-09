@@ -269,7 +269,7 @@ namespace Jellyfin.Database.Implementations.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("OriginalTitle")
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Overview")
                         .HasColumnType("longtext");
@@ -383,6 +383,11 @@ namespace Jellyfin.Database.Implementations.Migrations
                     b.HasIndex("SeriesId");
 
                     b.HasIndex("SeriesName");
+
+                    b.HasIndex("CleanName", "OriginalTitle")
+                        .HasDatabaseName("IX_BaseItems_FullTextSearch")
+                        .HasFilter("\"CleanName\" IS NOT NULL OR \"OriginalTitle\" IS NOT NULL")
+                        .HasAnnotation("MySql:FullTextIndex", true);
 
                     b.HasIndex("ExtraType", "OwnerId");
 

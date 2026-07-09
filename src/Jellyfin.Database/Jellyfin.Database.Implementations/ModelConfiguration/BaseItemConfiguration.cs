@@ -32,8 +32,6 @@ public class BaseItemConfiguration : IEntityTypeConfiguration<BaseItemEntity>
         builder.HasMany(e => e.MediaStreams);
         builder.HasMany(e => e.Chapters);
         builder.HasMany(e => e.Provider);
-        builder.HasMany(e => e.Parents);
-        builder.HasMany(e => e.Children);
         builder.HasMany(e => e.DirectChildren).WithOne(e => e.DirectParent).HasForeignKey(e => e.ParentId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(e => e.Extras).WithOne(e => e.Owner).HasForeignKey(e => e.OwnerId).OnDelete(DeleteBehavior.NoAction);
         builder.HasMany(e => e.LockedFields);
@@ -82,6 +80,11 @@ public class BaseItemConfiguration : IEntityTypeConfiguration<BaseItemEntity>
         // Items/Counts: SELECT Type, COUNT(*) GROUP BY Type filtered by TopParentId.
         builder.HasIndex(e => new { e.TopParentId, e.Type, e.IsVirtualItem })
             .HasFilter("\"PrimaryVersionId\" IS NULL AND (\"OwnerId\" IS NULL OR \"ExtraType\" IS NOT NULL)");
+
+        // Full-text search index for CleanName and OriginalTitle
+        builder.HasIndex(e => new { e.CleanName, e.OriginalTitle })
+            .HasDatabaseName("IX_BaseItems_FullTextSearch")
+            .HasFilter("\"CleanName\" IS NOT NULL OR \"OriginalTitle\" IS NOT NULL");
 
         builder.HasData(new BaseItemEntity()
         {

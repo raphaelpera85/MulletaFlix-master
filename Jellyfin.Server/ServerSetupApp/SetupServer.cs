@@ -234,7 +234,7 @@ public sealed class SetupServer : IDisposable
                                             var sysInfo = new PublicSystemInfo
                                             {
                                                 Version = jfApplicationHost.ApplicationVersionString,
-                                                ProductName = "Jellyfin Server",
+                                                ProductName = "MulletaFlix",
                                                 Id = jfApplicationHost.SystemId,
                                                 ServerName = jfApplicationHost.FriendlyName,
                                                 LocalAddress = jfApplicationHost.GetSmartApiUrl(context.Request),

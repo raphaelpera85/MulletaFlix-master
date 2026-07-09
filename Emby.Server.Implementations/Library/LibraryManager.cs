@@ -1673,47 +1673,37 @@ namespace Emby.Server.Implementations.Library
         {
             var tasks = PostScanTasks.ToList();
 
-            var numComplete = 0;
             var numTasks = tasks.Count;
-
-            foreach (var task in tasks)
+            if (numTasks == 0)
             {
-                // Prevent access to modified closure
-                var currentNumComplete = numComplete;
+                return;
+            }
 
-                var innerProgress = new Progress<double>(pct =>
-                {
-                    double innerPercent = pct;
-                    innerPercent /= 100;
-                    innerPercent += currentNumComplete;
+            var semaphore = new SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2));
 
-                    innerPercent /= numTasks;
-                    innerPercent *= 100;
-
-                    progress.Report(innerPercent);
-                });
-
-                _logger.LogDebug("Running post-scan task {0}", task.GetType().Name);
-
+            var runningTasks = tasks.Select(async task =>
+            {
+                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    await task.Run(innerProgress, cancellationToken).ConfigureAwait(false);
+                    _logger.LogDebug("Running post-scan task {0}", task.GetType().Name);
+                    await task.Run(progress, cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
                     _logger.LogInformation("Post-scan task cancelled: {0}", task.GetType().Name);
-                    throw;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error running post-scan task");
                 }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
 
-                numComplete++;
-                double percent = numComplete;
-                percent /= numTasks;
-                progress.Report(percent * 100);
-            }
+            await Task.WhenAll(runningTasks).ConfigureAwait(false);
 
             _persistenceService.UpdateInheritedValues();
 

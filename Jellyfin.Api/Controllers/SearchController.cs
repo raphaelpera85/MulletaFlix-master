@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -33,6 +34,8 @@ public class SearchController : BaseMulletaFlixApiController
     private readonly ILibraryManager _libraryManager;
     private readonly IDtoService _dtoService;
     private readonly IImageProcessor _imageProcessor;
+    private static readonly ConcurrentDictionary<Guid, ImageCacheInfo> _imageCache = new();
+    private static readonly TimeSpan ImageCacheTtl = TimeSpan.FromMinutes(5);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SearchController"/> class.
@@ -51,6 +54,76 @@ public class SearchController : BaseMulletaFlixApiController
         _libraryManager = libraryManager;
         _dtoService = dtoService;
         _imageProcessor = imageProcessor;
+    }
+
+    private sealed class ImageCacheInfo
+    {
+        public string? PrimaryTag { get; set; }
+        public double? PrimaryAspectRatio { get; set; }
+        public string? ThumbTag { get; set; }
+        public string? ThumbItemId { get; set; }
+        public string? BackdropTag { get; set; }
+        public string? BackdropItemId { get; set; }
+        public DateTime CachedAt { get; set; }
+    }
+
+    private ImageCacheInfo GetOrAddImageCache(BaseItem item)
+    {
+        var now = DateTime.UtcNow;
+        return _imageCache.AddOrUpdate(
+            item.Id,
+            _ =>
+            {
+                return BuildImageCacheInfo(item);
+            },
+            (_, existing) =>
+            {
+                if (now - existing.CachedAt > ImageCacheTtl)
+                {
+                    return BuildImageCacheInfo(item);
+                }
+                return existing;
+            });
+
+        ImageCacheInfo BuildImageCacheInfo(BaseItem i)
+        {
+            var info = new ImageCacheInfo { CachedAt = now };
+            var primaryTag = _imageProcessor.GetImageCacheTag(i, ImageType.Primary);
+            if (primaryTag is not null)
+            {
+                info.PrimaryTag = primaryTag;
+                info.PrimaryAspectRatio = _dtoService.GetPrimaryImageAspectRatio(i);
+            }
+
+            var thumbItem = i.HasImage(ImageType.Thumb) ? i : null;
+            if (thumbItem is null && i is Episode)
+            {
+                thumbItem = GetParentWithImage<Series>(i, ImageType.Thumb);
+            }
+            thumbItem ??= GetParentWithImage<BaseItem>(i, ImageType.Thumb);
+            if (thumbItem is not null)
+            {
+                var thumbTag = _imageProcessor.GetImageCacheTag(thumbItem, ImageType.Thumb);
+                if (thumbTag is not null)
+                {
+                    info.ThumbTag = thumbTag;
+                    info.ThumbItemId = thumbItem.Id.ToString("N", CultureInfo.InvariantCulture);
+                }
+            }
+
+            var backdropItem = i.HasImage(ImageType.Backdrop) ? i : GetParentWithImage<BaseItem>(i, ImageType.Backdrop);
+            if (backdropItem is not null)
+            {
+                var backdropTag = _imageProcessor.GetImageCacheTag(backdropItem, ImageType.Backdrop);
+                if (backdropTag is not null)
+                {
+                    info.BackdropTag = backdropTag;
+                    info.BackdropItemId = backdropItem.Id.ToString("N", CultureInfo.InvariantCulture);
+                }
+            }
+
+            return info;
+        }
     }
 
     /// <summary>
@@ -151,7 +224,6 @@ public class SearchController : BaseMulletaFlixApiController
         };
 
 #pragma warning disable CS0618
-        // Kept for compatibility with older clients
         result.ItemId = result.Id;
 #pragma warning restore CS0618
 
@@ -160,16 +232,13 @@ public class SearchController : BaseMulletaFlixApiController
             result.IsFolder = true;
         }
 
-        var primaryImageTag = _imageProcessor.GetImageCacheTag(item, ImageType.Primary);
-
-        if (primaryImageTag is not null)
-        {
-            result.PrimaryImageTag = primaryImageTag;
-            result.PrimaryImageAspectRatio = _dtoService.GetPrimaryImageAspectRatio(item);
-        }
-
-        SetThumbImageInfo(result, item);
-        SetBackdropImageInfo(result, item);
+        var imgCache = GetOrAddImageCache(item);
+        result.PrimaryImageTag = imgCache.PrimaryTag;
+        result.PrimaryImageAspectRatio = imgCache.PrimaryAspectRatio;
+        result.ThumbImageTag = imgCache.ThumbTag;
+        result.ThumbImageItemId = imgCache.ThumbItemId;
+        result.BackdropImageTag = imgCache.BackdropTag;
+        result.BackdropImageItemId = imgCache.BackdropItemId;
 
         switch (item)
         {
@@ -184,7 +253,6 @@ public class SearchController : BaseMulletaFlixApiController
                 {
                     result.Status = series.Status.Value.ToString();
                 }
-
                 break;
             case MusicAlbum album:
                 result.Artists = album.Artists;
@@ -193,9 +261,7 @@ public class SearchController : BaseMulletaFlixApiController
             case Audio song:
                 result.AlbumArtist = song.AlbumArtists?.FirstOrDefault();
                 result.Artists = song.Artists;
-
                 MusicAlbum musicAlbum = song.AlbumEntity;
-
                 if (musicAlbum is not null)
                 {
                     result.Album = musicAlbum.Name;
@@ -205,7 +271,6 @@ public class SearchController : BaseMulletaFlixApiController
                 {
                     result.Album = song.Album;
                 }
-
                 break;
         }
 
@@ -216,46 +281,6 @@ public class SearchController : BaseMulletaFlixApiController
         }
 
         return result;
-    }
-
-    private void SetThumbImageInfo(SearchHint hint, BaseItem item)
-    {
-        var itemWithImage = item.HasImage(ImageType.Thumb) ? item : null;
-
-        if (itemWithImage is null && item is Episode)
-        {
-            itemWithImage = GetParentWithImage<Series>(item, ImageType.Thumb);
-        }
-
-        itemWithImage ??= GetParentWithImage<BaseItem>(item, ImageType.Thumb);
-
-        if (itemWithImage is not null)
-        {
-            var tag = _imageProcessor.GetImageCacheTag(itemWithImage, ImageType.Thumb);
-
-            if (tag is not null)
-            {
-                hint.ThumbImageTag = tag;
-                hint.ThumbImageItemId = itemWithImage.Id.ToString("N", CultureInfo.InvariantCulture);
-            }
-        }
-    }
-
-    private void SetBackdropImageInfo(SearchHint hint, BaseItem item)
-    {
-        var itemWithImage = (item.HasImage(ImageType.Backdrop) ? item : null)
-            ?? GetParentWithImage<BaseItem>(item, ImageType.Backdrop);
-
-        if (itemWithImage is not null)
-        {
-            var tag = _imageProcessor.GetImageCacheTag(itemWithImage, ImageType.Backdrop);
-
-            if (tag is not null)
-            {
-                hint.BackdropImageTag = tag;
-                hint.BackdropImageItemId = itemWithImage.Id.ToString("N", CultureInfo.InvariantCulture);
-            }
-        }
     }
 
     private T? GetParentWithImage<T>(BaseItem item, ImageType type)

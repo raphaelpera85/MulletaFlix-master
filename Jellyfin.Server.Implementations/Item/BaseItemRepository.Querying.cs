@@ -335,8 +335,7 @@ public sealed partial class BaseItemRepository
 
         var tags = context.ItemValuesMap
             .Where(ivm => ivm.ItemValue.Type == ItemValueType.Tags)
-            .Where(ivm => matchingItemIds.Contains(ivm.ItemId))
-            .Select(ivm => ivm.ItemValue)
+            .Join(baseQuery, ivm => ivm.ItemId, e => e.Id, (ivm, e) => ivm.ItemValue)
             .GroupBy(iv => iv.CleanValue)
             .Select(g => g.Min(iv => iv.Value))
             .OrderBy(t => t)
@@ -344,8 +343,7 @@ public sealed partial class BaseItemRepository
 
         var genres = context.ItemValuesMap
             .Where(ivm => ivm.ItemValue.Type == ItemValueType.Genre)
-            .Where(ivm => matchingItemIds.Contains(ivm.ItemId))
-            .Select(ivm => ivm.ItemValue)
+            .Join(baseQuery, ivm => ivm.ItemId, e => e.Id, (ivm, e) => ivm.ItemValue)
             .GroupBy(iv => iv.CleanValue)
             .Select(g => g.Min(iv => iv.Value))
             .OrderBy(g => g)
