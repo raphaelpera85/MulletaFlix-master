@@ -1,4 +1,4 @@
-﻿using MulletaFlix.LiveTv.Channels;
+using MulletaFlix.LiveTv.Channels;
 using MulletaFlix.LiveTv.Guide;
 using MulletaFlix.LiveTv.IO;
 using MulletaFlix.LiveTv.Listings;
@@ -44,6 +44,8 @@ public static class LiveTvServiceCollectionExtensions
         services.AddSingleton<IListingsProvider>(s => s.GetRequiredService<SchedulesDirect>());
         services.AddSingleton<ISchedulesDirectService>(s => s.GetRequiredService<SchedulesDirect>());
         services.AddSingleton<IListingsProvider, XmlTvListingsProvider>();
+        services.AddSingleton<IIptvOrgEpgSynchronizer, IptvOrgEpgSynchronizer>();
+        services.AddSingleton<IListingsProvider, IptvOrgListingsProvider>();
     }
 }
 

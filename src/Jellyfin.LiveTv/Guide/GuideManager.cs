@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using MulletaFlix.Data.Enums;
 using MulletaFlix.Extensions;
 using MulletaFlix.LiveTv.Configuration;
+using MulletaFlix.LiveTv.Listings;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -40,6 +41,7 @@ public class GuideManager : IGuideManager
     private readonly IRecordingsManager _recordingsManager;
     private readonly ISchedulesDirectService _schedulesDirectService;
     private readonly LiveTvDtoService _tvDtoService;
+    private readonly IIptvOrgEpgSynchronizer _iptvOrgSynchronizer;
 
     /// <summary>
     /// Amount of days images are pre-cached from external sources.
@@ -59,6 +61,7 @@ public class GuideManager : IGuideManager
     /// <param name="recordingsManager">The <see cref="IRecordingsManager"/>.</param>
     /// <param name="schedulesDirectService">The <see cref="ISchedulesDirectService"/>.</param>
     /// <param name="tvDtoService">The <see cref="LiveTvDtoService"/>.</param>
+    /// <param name="iptvOrgSynchronizer">The EPG synchronizer.</param>
     public GuideManager(
         ILogger<GuideManager> logger,
         IConfigurationManager config,
@@ -69,7 +72,8 @@ public class GuideManager : IGuideManager
         ITunerHostManager tunerHostManager,
         IRecordingsManager recordingsManager,
         ISchedulesDirectService schedulesDirectService,
-        LiveTvDtoService tvDtoService)
+        LiveTvDtoService tvDtoService,
+        IIptvOrgEpgSynchronizer iptvOrgSynchronizer)
     {
         _logger = logger;
         _config = config;
@@ -81,6 +85,7 @@ public class GuideManager : IGuideManager
         _recordingsManager = recordingsManager;
         _schedulesDirectService = schedulesDirectService;
         _tvDtoService = tvDtoService;
+        _iptvOrgSynchronizer = iptvOrgSynchronizer;
     }
 
     /// <inheritdoc />
@@ -104,6 +109,15 @@ public class GuideManager : IGuideManager
         await _recordingsManager.CreateRecordingFolders().ConfigureAwait(false);
 
         await _tunerHostManager.ScanForTunerDeviceChanges(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            await _iptvOrgSynchronizer.SynchronizeAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error synchronizing EPG from iptv-org");
+        }
 
         var numComplete = 0;
         double progressPerService = _liveTvManager.Services.Count == 0
