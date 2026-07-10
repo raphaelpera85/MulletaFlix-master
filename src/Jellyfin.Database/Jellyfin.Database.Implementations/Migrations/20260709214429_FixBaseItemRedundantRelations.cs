@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -24,8 +24,7 @@ namespace Jellyfin.Database.Implementations.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_BaseItems_FullTextSearch",
                 table: "BaseItems",
-                columns: new[] { "CleanName", "OriginalTitle" },
-                filter: "\"CleanName\" IS NOT NULL OR \"OriginalTitle\" IS NOT NULL")
+                columns: new[] { "CleanName", "OriginalTitle" })
                 .Annotation("MySql:FullTextIndex", true);
         }
 

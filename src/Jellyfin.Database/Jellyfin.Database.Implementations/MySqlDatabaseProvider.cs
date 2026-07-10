@@ -188,12 +188,8 @@ public sealed class MySqlDatabaseProvider : IMulletaFlixDatabaseProvider
     /// <inheritdoc/>
     public void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Per-schema entity configuration done by each DbContext's OnModelCreating
-        modelBuilder.Entity<BaseItemEntity>()
-            .HasIndex(e => new { e.CleanName, e.OriginalTitle })
-            .HasDatabaseName("IX_BaseItems_FullTextSearch")
-            .HasFilter("\"CleanName\" IS NOT NULL OR \"OriginalTitle\" IS NOT NULL")
-            .IsFullText(); // MySQL FULLTEXT index
+        // Index configuration is handled per-provider in BaseItemConfiguration.
+        // MySQL-specific FULLTEXT annotation is applied via migration annotation.
     }
 
     /// <inheritdoc/>
