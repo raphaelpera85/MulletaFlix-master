@@ -74,8 +74,13 @@ namespace MediaBrowser.MediaEncoding.Encoder
 
         // Separate cache for remote URLs (STRM files). Uses URL as key, no LastWriteTime check.
         // TTL matches local file cache (30 min) — covers typical viewing sessions.
-        // Cache is invalidated automatically on playback errors (see GetMediaInfo).
         private readonly ConcurrentDictionary<string, CachedMediaInfo> _remoteProbeCache = new(StringComparer.OrdinalIgnoreCase);
+
+        // Throttle concurrent FFprobe calls to remote URLs (STRM scan).
+        // Without this, the parallel scan (up to 32 items) floods the CDN with simultaneous
+        // FFprobe connections, causing the server to rate-limit and return empty streams/format.
+        // 3 concurrent remote probes is enough to keep throughput high without overwhelming the CDN.
+        private readonly SemaphoreSlim _remoteProbeThrottle = new(3, 3);
 
         private sealed class CachedMediaInfo
         {
@@ -497,15 +502,27 @@ namespace MediaBrowser.MediaEncoding.Encoder
 
                 var infoExtractChapters = request.ExtractChapters;
                 var infoExtraArgs = GetExtraArguments(request);
-                var remoteResult = await GetMediaInfoInternal(
-                    GetInputArgument(request.MediaSource.Path, request.MediaSource),
-                    request.MediaSource.Path,
-                    request.MediaSource.Protocol,
-                    infoExtractChapters,
-                    infoExtraArgs,
-                    request.MediaType == DlnaProfileType.Audio,
-                    request.MediaSource.VideoType,
-                    cancellationToken).ConfigureAwait(false);
+
+                // Throttle concurrent remote probes: the CDN rejects or returns null streams
+                // when too many FFprobe connections arrive simultaneously during a parallel scan.
+                await _remoteProbeThrottle.WaitAsync(cancellationToken).ConfigureAwait(false);
+                MediaInfo remoteResult;
+                try
+                {
+                    remoteResult = await GetMediaInfoInternal(
+                        GetInputArgument(request.MediaSource.Path, request.MediaSource),
+                        request.MediaSource.Path,
+                        request.MediaSource.Protocol,
+                        infoExtractChapters,
+                        infoExtraArgs,
+                        request.MediaType == DlnaProfileType.Audio,
+                        request.MediaSource.VideoType,
+                        cancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _remoteProbeThrottle.Release();
+                }
 
                 if (!string.IsNullOrEmpty(urlCacheKey))
                 {
