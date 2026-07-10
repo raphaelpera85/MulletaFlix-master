@@ -67,9 +67,11 @@ namespace MediaBrowser.Providers.Manager
         private readonly CancellationTokenSource _disposeCancellationTokenSource = new();
         private readonly PriorityQueue<(Guid ItemId, MetadataRefreshOptions RefreshOptions), RefreshPriority> _refreshQueue = new();
         private readonly IMemoryCache _memoryCache;
-        private readonly SemaphoreSlim _refreshConcurrency = new(
-            Math.Max(1, Environment.ProcessorCount / 2),
-            Math.Max(1, Environment.ProcessorCount));
+        // Metadata refresh is I/O-bound (HTTP to external APIs), not CPU-bound.
+        // Use 4× processor count (capped at 32) to keep HTTP connections saturated
+        // without overwhelming external provider rate limits.
+        private static readonly int _refreshConcurrencyCount = Math.Min(32, Math.Max(4, Environment.ProcessorCount * 4));
+        private readonly SemaphoreSlim _refreshConcurrency = new(_refreshConcurrencyCount, _refreshConcurrencyCount);
         private readonly IMediaSegmentManager _mediaSegmentManager;
         private readonly ISimilarItemsManager _similarItemsManager;
         private readonly AsyncKeyedLocker<string> _imageSaveLock = new(o =>
@@ -1292,14 +1294,15 @@ namespace MediaBrowser.Providers.Manager
             var tasks = new List<Task>();
             try
             {
+                // Drain the entire queue immediately, launching all items as tasks.
+                // Concurrency is gated inside ProcessRefreshItemAsync via _refreshConcurrency,
+                // allowing I/O idle time of one item to overlap with active processing of others.
                 while (_refreshQueue.TryDequeue(out var refreshItem, out _))
                 {
                     if (_disposed)
                     {
                         return;
                     }
-
-                    await _refreshConcurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
 
                     tasks.Add(ProcessRefreshItemAsync(refreshItem, libraryManager, cancellationToken));
                 }
@@ -1321,6 +1324,9 @@ namespace MediaBrowser.Providers.Manager
             ILibraryManager libraryManager,
             CancellationToken cancellationToken)
         {
+            // Gate concurrency here so the queue drain loop can launch all tasks immediately,
+            // overlapping I/O wait time across items.
+            await _refreshConcurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 var item = libraryManager.GetItemById(refreshItem.ItemId);
@@ -1367,12 +1373,14 @@ namespace MediaBrowser.Providers.Manager
 
         private async Task RefreshCollectionFolderChildren(MetadataRefreshOptions options, CollectionFolder collectionFolder, CancellationToken cancellationToken)
         {
-            foreach (var child in collectionFolder.GetPhysicalFolders())
+            // Refresh all physical sub-folders in parallel — each triggers independent I/O.
+            var folderTasks = collectionFolder.GetPhysicalFolders().Select(async child =>
             {
                 await child.RefreshMetadata(options, cancellationToken).ConfigureAwait(false);
-
                 await child.ValidateChildren(new Progress<double>(), options, cancellationToken: cancellationToken).ConfigureAwait(false);
-            }
+            });
+
+            await Task.WhenAll(folderTasks).ConfigureAwait(false);
         }
 
         private async Task RefreshArtist(MusicArtist item, MetadataRefreshOptions options, CancellationToken cancellationToken)

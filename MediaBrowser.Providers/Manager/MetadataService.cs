@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 #pragma warning disable CS1591
 
@@ -922,46 +922,71 @@ namespace MediaBrowser.Providers.Manager
                 MergeNewData(temp.Item, id);
             }
 
-            foreach (var provider in providers)
+            var providerList = providers.ToList();
+
+            // Fetch metadata from all remote providers concurrently — each call is an
+            // independent HTTP request. Results are collected in index order and merged
+            // sequentially to preserve provider priority semantics.
+            var fetchTasks = providerList.Select(async (provider, index) =>
             {
                 var providerName = provider.GetType().Name;
                 Logger.LogDebug("Running {Provider} for {Item}", providerName, logName);
-
                 try
                 {
                     var result = await provider.GetMetadata(id, cancellationToken).ConfigureAwait(false);
-
-                    if (result.HasMetadata)
-                    {
-                        result.Provider = provider.Name;
-
-                        var foundImageTypes = await SaveRemoteResultImages(item, result, options, provider.Name, cancellationToken).ConfigureAwait(false);
-                        if (foundImageTypes.Count > 0)
-                        {
-                            imageService.UpdateReplaceImages(options, foundImageTypes);
-                            refreshResult.UpdateType |= ItemUpdateType.ImageUpdate;
-                        }
-
-                        MergeData(result, temp, [], replaceData, false);
-                        MergeNewData(temp.Item, id);
-
-                        refreshResult.UpdateType |= ItemUpdateType.MetadataDownload;
-                    }
-                    else
-                    {
-                        Logger.LogDebug("{Provider} returned no metadata for {Item}", providerName, logName);
-                    }
+                    return (index, provider, result, error: (Exception?)null);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException ex)
                 {
-                    throw;
+                    return (index, provider, result: (MetadataResult<TItemType>?)null, error: (Exception)ex);
                 }
                 catch (Exception ex)
                 {
-                    refreshResult.Failures++;
-                    refreshResult.ErrorMessage = ex.Message;
                     Logger.LogError(ex, "Error in {Provider} for {Item}", provider.Name, logName);
+                    return (index, provider, result: (MetadataResult<TItemType>?)null, error: ex);
                 }
+            }).ToList();
+
+            var providerResults = await Task.WhenAll(fetchTasks).ConfigureAwait(false);
+
+            // Rethrow if any provider threw OperationCanceledException.
+            foreach (var (_, _, _, error) in providerResults)
+            {
+                if (error is OperationCanceledException cancelEx)
+                {
+                    throw cancelEx;
+                }
+            }
+
+            // Merge results in original provider priority order.
+            foreach (var (_, provider, result, error) in providerResults.OrderBy(r => r.index))
+            {
+                if (error is not null)
+                {
+                    refreshResult.Failures++;
+                    refreshResult.ErrorMessage = error.Message;
+                    continue;
+                }
+
+                if (result is null || !result.HasMetadata)
+                {
+                    Logger.LogDebug("{Provider} returned no metadata for {Item}", provider.GetType().Name, logName);
+                    continue;
+                }
+
+                result.Provider = provider.Name;
+
+                var foundImageTypes = await SaveRemoteResultImages(item, result, options, provider.Name, cancellationToken).ConfigureAwait(false);
+                if (foundImageTypes.Count > 0)
+                {
+                    imageService.UpdateReplaceImages(options, foundImageTypes);
+                    refreshResult.UpdateType |= ItemUpdateType.ImageUpdate;
+                }
+
+                MergeData(result, temp, [], replaceData, false);
+                MergeNewData(temp.Item, id);
+
+                refreshResult.UpdateType |= ItemUpdateType.MetadataDownload;
             }
 
             return refreshResult;
@@ -979,17 +1004,23 @@ namespace MediaBrowser.Providers.Manager
                 return [];
             }
 
-            var foundImageTypes = new List<ImageType>();
-            foreach (var remoteImage in result.RemoteImages)
+            // Filter images that need downloading before launching parallel tasks.
+            var imagesToDownload = result.RemoteImages
+                .Where(img => !item.ImageInfos.Any(x => x.Type == img.Type) || options.IsReplacingImage(img.Type))
+                .ToList();
+
+            if (imagesToDownload.Count == 0)
+            {
+                return [];
+            }
+
+            var foundImageTypes = new System.Collections.Concurrent.ConcurrentBag<ImageType>();
+
+            // Download all remote images concurrently — each is an independent HTTP request.
+            var downloadTasks = imagesToDownload.Select(async remoteImage =>
             {
                 try
                 {
-                    if (item.ImageInfos.Any(x => x.Type == remoteImage.Type)
-                        && !options.IsReplacingImage(remoteImage.Type))
-                    {
-                        continue;
-                    }
-
                     await ProviderManager.SaveImage(item, remoteImage.Url, remoteImage.Type, null, cancellationToken).ConfigureAwait(false);
                     foundImageTypes.Add(remoteImage.Type);
                 }
@@ -1002,9 +1033,11 @@ namespace MediaBrowser.Providers.Manager
                         providerName,
                         remoteImage.Url);
                 }
-            }
+            });
 
-            return foundImageTypes;
+            await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+
+            return [.. foundImageTypes];
         }
 
         private void MergeNewData(TItemType source, TIdType lookupInfo)

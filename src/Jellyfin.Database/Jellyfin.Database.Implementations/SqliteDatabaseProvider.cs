@@ -190,7 +190,8 @@ public sealed class SqliteDatabaseProvider : IMulletaFlixDatabaseProvider
         {
             File.Copy(_databasePath, backupPath, overwrite: true);
             _logger.LogInformation("SQLite backup created: {Path}", backupPath);
-            return DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+            return DateTime.UtcNow.ToString("yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture);
+
         }
         catch (Exception ex)
         {
