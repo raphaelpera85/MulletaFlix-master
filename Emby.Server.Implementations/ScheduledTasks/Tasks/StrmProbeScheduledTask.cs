@@ -103,6 +103,7 @@ namespace Emby.Server.Implementations.ScheduledTasks.Tasks
                 {
                     jobProgress.Report(new JobQueueProgress(0, "Preparando", $"Biblioteca: {totalLibraryItems} mídias. Preparando varredura."));
 
+                    var activeItems = new System.Collections.Concurrent.ConcurrentDictionary<string, string>();
                     using (var semaphore = new SemaphoreSlim(2, 2))
                     {
                         var processedCount = 0;
@@ -111,6 +112,28 @@ namespace Emby.Server.Implementations.ScheduledTasks.Tasks
                         var tasks = strmItems.Select(async item =>
                         {
                             await semaphore.WaitAsync(jobToken).ConfigureAwait(false);
+
+                            var itemDisplayName = System.IO.Path.GetFileNameWithoutExtension(item.Path);
+                            if (string.IsNullOrEmpty(itemDisplayName))
+                            {
+                                if (item is MediaBrowser.Controller.Entities.TV.Episode episode)
+                                {
+                                    var seriesName = episode.FindSeriesName();
+                                    itemDisplayName = !string.IsNullOrEmpty(seriesName) ? $"{seriesName} - {item.Name}" : item.Name;
+                                }
+                                else
+                                {
+                                    itemDisplayName = item.Name;
+                                }
+                            }
+
+                            activeItems.TryAdd(item.Id.ToString(), itemDisplayName);
+                            var activeList = string.Join(", ", activeItems.Values);
+                            jobProgress.Report(new JobQueueProgress(
+                                (int)((double)processedCount / total * 100),
+                                "Varrendo",
+                                $"Biblioteca: {totalLibraryItems} mídias. Probing STRMs: {processedCount} de {total} finalizados. Processando: {activeList}"));
+
                             try
                             {
                                 jobToken.ThrowIfCancellationRequested();
@@ -133,13 +156,20 @@ namespace Emby.Server.Implementations.ScheduledTasks.Tasks
                             }
                             finally
                             {
+                                activeItems.TryRemove(item.Id.ToString(), out _);
                                 semaphore.Release();
                                 var current = Interlocked.Increment(ref processedCount);
                                 var percent = (int)((double)current / total * 100);
+                                var remainingList = string.Join(", ", activeItems.Values);
+                                var progressMsg = $"Biblioteca: {totalLibraryItems} mídias. Probing STRMs: {current} de {total} finalizados.";
+                                if (!string.IsNullOrEmpty(remainingList))
+                                {
+                                    progressMsg += $" Processando: {remainingList}";
+                                }
                                 jobProgress.Report(new JobQueueProgress(
                                     percent,
                                     "Varrendo",
-                                    $"Biblioteca: {totalLibraryItems} mídias. Probing STRMs: {current} de {total} finalizados."));
+                                    progressMsg));
                             }
                         });
 

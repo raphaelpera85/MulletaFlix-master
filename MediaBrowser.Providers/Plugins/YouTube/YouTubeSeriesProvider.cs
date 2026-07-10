@@ -165,7 +165,7 @@ namespace MediaBrowser.Providers.Plugins.YouTube
                     {
                         ytId = ExtractYouTubeIdFromUrl(strmUrl);
                     }
-                    else
+                    else if (!IsVideoFileUrl(strmUrl))
                     {
                         // Direct Open Graph parsing for other short platforms (ReelShort, DramaBox, etc.)
                         return await GetOpenGraphMetadata(strmUrl, cancellationToken).ConfigureAwait(false);
@@ -322,6 +322,25 @@ namespace MediaBrowser.Providers.Plugins.YouTube
         private async Task<MetadataResult<Series>> GetOpenGraphMetadata(string url, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<Series>();
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                var ext = Path.GetExtension(uri.AbsolutePath);
+                if (!string.IsNullOrEmpty(ext))
+                {
+                    var mediaExtensions = new[]
+                    {
+                        ".mkv", ".mp4", ".avi", ".mov", ".flv", ".wmv", ".webm",
+                        ".ts", ".m3u8", ".mp3", ".wav", ".aac", ".ogg", ".m4a"
+                    };
+
+                    if (Array.Exists(mediaExtensions, e => string.Equals(e, ext, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        _logger.LogInformation("Skipping Open Graph metadata fetch for media URL: {Url}", url);
+                        return result;
+                    }
+                }
+            }
+
             try
             {
                 _logger.LogInformation("Fetching Open Graph metadata from: {Url}", url);
@@ -428,6 +447,36 @@ namespace MediaBrowser.Providers.Plugins.YouTube
             }
 
             return string.Empty;
+        }
+
+        private static bool IsVideoFileUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return false;
+            }
+
+            try
+            {
+                var uri = new Uri(url);
+                var path = uri.AbsolutePath;
+                return path.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".avi", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".ts", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".flv", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".wmv", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".aac", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <inheritdoc />

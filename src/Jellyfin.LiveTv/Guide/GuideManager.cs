@@ -110,6 +110,26 @@ public class GuideManager : IGuideManager
 
         await _tunerHostManager.ScanForTunerDeviceChanges(cancellationToken).ConfigureAwait(false);
 
+        // Auto-register iptv-org listings provider if tuners exist but it is not configured.
+        var config = _config.GetLiveTvConfiguration();
+        if (config.TunerHosts.Length > 0)
+        {
+            var hasIptvOrg = config.ListingProviders.Any(p => string.Equals(p.Type, "iptvorg", StringComparison.OrdinalIgnoreCase));
+            if (!hasIptvOrg)
+            {
+                _logger.LogInformation("Live TV Tuners found but no iptv-org listings provider configured. Adding it automatically.");
+                var newProvider = new ListingsProviderInfo
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    Type = "iptvorg",
+                    ListingsId = "iptv-org",
+                    Path = "iptv-org"
+                };
+                config.ListingProviders = [.. config.ListingProviders, newProvider];
+                _config.SaveConfiguration("livetv", config);
+            }
+        }
+
         try
         {
             await _iptvOrgSynchronizer.SynchronizeAsync(cancellationToken).ConfigureAwait(false);

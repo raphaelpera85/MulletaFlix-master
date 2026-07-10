@@ -72,7 +72,7 @@ namespace MediaBrowser.Providers.Plugins.YouTube
                     {
                         ytId = ExtractYouTubeIdFromUrl(strmUrl);
                     }
-                    else
+                    else if (!IsVideoFileUrl(strmUrl))
                     {
                         // Open Graph image scraping for other platforms
                         var ogImage = await GetOpenGraphImage(strmUrl, cancellationToken).ConfigureAwait(false);
@@ -258,6 +258,36 @@ namespace MediaBrowser.Providers.Plugins.YouTube
             }
 
             return string.Empty;
+        }
+
+        private static bool IsVideoFileUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return false;
+            }
+
+            try
+            {
+                var uri = new Uri(url);
+                var path = uri.AbsolutePath;
+                return path.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".avi", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".ts", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".flv", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".wmv", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".aac", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <inheritdoc />

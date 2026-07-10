@@ -175,6 +175,40 @@ namespace Jellyfin.Providers.Tests.Plugins.YouTube
             Assert.Equal("https://yt3.ggpht.com/banner_high.jpg", backdropImg.Url);
         }
 
+        [Fact]
+        public async Task GetMetadata_WithStrmFilePointingToMediaUrl_ReturnsNoMetadata()
+        {
+            // Arrange
+            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDir);
+            var strmFile = Path.Combine(tempDir, "episode1.strm");
+            File.WriteAllText(strmFile, "http://po17.eu:80/series/5513988112/27330511464/72052.mkv");
+
+            var provider = new YouTubeSeriesProvider(_httpClientFactoryMock.Object, _loggerMock.Object);
+            var info = new SeriesInfo
+            {
+                Name = "Short Series",
+                Path = tempDir
+            };
+
+            try
+            {
+                // Act
+                var result = await provider.GetMetadata(info, CancellationToken.None);
+
+                // Assert
+                Assert.False(result.HasMetadata);
+                Assert.Null(result.Item);
+            }
+            finally
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
+        }
+
         private static HttpClient CreateMockHttpClient(string responseContent)
         {
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);

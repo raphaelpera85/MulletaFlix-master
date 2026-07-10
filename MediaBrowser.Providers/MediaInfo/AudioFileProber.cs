@@ -102,11 +102,19 @@ namespace MediaBrowser.Providers.MediaInfo
 
             if (shouldProbe)
             {
+                var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
                 if (item.IsShortcut)
                 {
                     path = item.ShortcutPath;
                     protocol = _mediaSourceManager.GetPathProtocol(path);
+
+                    if (protocol != MediaProtocol.File && Uri.TryCreate(path, UriKind.Absolute, out var uri))
+                    {
+                        headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
+                        headers["Referer"] = $"{uri.Scheme}://{uri.Host}/";
+                        headers["Origin"] = $"{uri.Scheme}://{uri.Host}";
+                    }
                 }
 
                 var result = await _mediaEncoder.GetMediaInfo(
@@ -117,7 +125,8 @@ namespace MediaBrowser.Providers.MediaInfo
                         MediaSource = new MediaSourceInfo
                         {
                             Path = path,
-                            Protocol = protocol
+                            Protocol = protocol,
+                            RequiredHttpHeaders = headers
                         }
                     },
                     cancellationToken).ConfigureAwait(false);

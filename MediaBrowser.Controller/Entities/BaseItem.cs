@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 #pragma warning disable CS1591, SA1401
 
@@ -1204,6 +1204,22 @@ namespace MediaBrowser.Controller.Entities
                         info.IsRemote = true;
                         info.Path = video.ShortcutPath;
                         info.Protocol = shortcutProtocol;
+
+                        if (Uri.TryCreate(video.ShortcutPath, UriKind.Absolute, out var uri))
+                        {
+                            if (!info.RequiredHttpHeaders.ContainsKey("User-Agent"))
+                            {
+                                info.RequiredHttpHeaders["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
+                            }
+                            if (!info.RequiredHttpHeaders.ContainsKey("Referer"))
+                            {
+                                info.RequiredHttpHeaders["Referer"] = $"{uri.Scheme}://{uri.Host}/";
+                            }
+                            if (!info.RequiredHttpHeaders.ContainsKey("Origin"))
+                            {
+                                info.RequiredHttpHeaders["Origin"] = $"{uri.Scheme}://{uri.Host}";
+                            }
+                        }
                     }
                 }
 

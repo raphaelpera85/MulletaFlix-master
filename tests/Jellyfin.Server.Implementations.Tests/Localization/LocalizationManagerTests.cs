@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -165,6 +165,16 @@ namespace MulletaFlix.Server.Implementations.Tests.Localization
         [InlineData("Rated: R", "US", 17, 0)]
         [InlineData("Rated R", "US", 17, 0)]
         [InlineData(" PG-13 ", "US", 13, 0)]
+        [InlineData("BR-10 anos", "BR", 10, null)]
+        [InlineData("BR-12 anos", "BR", 12, null)]
+        [InlineData("BR-14 anos", "BR", 14, null)]
+        [InlineData("BR-16 anos", "BR", 16, null)]
+        [InlineData("BR-18 anos", "BR", 18, null)]
+        [InlineData("BR-e 10", "BR", 10, null)]
+        [InlineData("BR-e 12", "BR", 12, null)]
+        [InlineData("BR-e Livre", "BR", 0, null)]
+        [InlineData("BR-e16", "BR", 16, null)]
+        [InlineData("BR-A", "BR", 0, null)]
         public async Task GetRatingLevel_GivenValidString_Success(string value, string countryCode, int? expectedScore, int? expectedSubScore)
         {
             var localizationManager = Setup(new ServerConfiguration()

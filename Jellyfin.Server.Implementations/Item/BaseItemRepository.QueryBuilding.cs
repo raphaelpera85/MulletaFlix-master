@@ -68,18 +68,27 @@ public sealed partial class BaseItemRepository
         var enableGroupByPresentationUniqueKey = EnableGroupByPresentationUniqueKey(filter);
         if (enableGroupByPresentationUniqueKey && filter.GroupBySeriesPresentationUniqueKey)
         {
-            var groupedIds = dbQuery.GroupBy(e => new { e.PresentationUniqueKey, e.SeriesPresentationUniqueKey }).Select(e => e.Min(x => x.Id));
-            dbQuery = context.BaseItems.AsNoTracking().Where(e => groupedIds.Contains(e.Id));
+            var groupedIds = dbQuery
+                .Where(e => e.PresentationUniqueKey != null && e.SeriesPresentationUniqueKey != null)
+                .GroupBy(e => new { e.PresentationUniqueKey, e.SeriesPresentationUniqueKey })
+                .Select(e => e.Min(x => x.Id));
+            dbQuery = dbQuery.Where(e => e.PresentationUniqueKey == null || e.SeriesPresentationUniqueKey == null || groupedIds.Contains(e.Id));
         }
         else if (enableGroupByPresentationUniqueKey)
         {
-            var groupedIds = dbQuery.GroupBy(e => e.PresentationUniqueKey).Select(e => e.Min(x => x.Id));
-            dbQuery = context.BaseItems.AsNoTracking().Where(e => groupedIds.Contains(e.Id));
+            var groupedIds = dbQuery
+                .Where(e => e.PresentationUniqueKey != null)
+                .GroupBy(e => e.PresentationUniqueKey)
+                .Select(e => e.Min(x => x.Id));
+            dbQuery = dbQuery.Where(e => e.PresentationUniqueKey == null || groupedIds.Contains(e.Id));
         }
         else if (filter.GroupBySeriesPresentationUniqueKey)
         {
-            var groupedIds = dbQuery.GroupBy(e => e.SeriesPresentationUniqueKey).Select(e => e.Min(x => x.Id));
-            dbQuery = context.BaseItems.AsNoTracking().Where(e => groupedIds.Contains(e.Id));
+            var groupedIds = dbQuery
+                .Where(e => e.SeriesPresentationUniqueKey != null)
+                .GroupBy(e => e.SeriesPresentationUniqueKey)
+                .Select(e => e.Min(x => x.Id));
+            dbQuery = dbQuery.Where(e => e.SeriesPresentationUniqueKey == null || groupedIds.Contains(e.Id));
         }
         else
         {
@@ -419,7 +428,7 @@ public sealed partial class BaseItemRepository
         if (filter.TopParentIds.Length > 0)
         {
             var topParentIds = filter.TopParentIds;
-            baseQuery = baseQuery.Where(e => topParentIds.Contains(e.TopParentId!.Value));
+            baseQuery = baseQuery.Where(e => Enumerable.Contains(topParentIds, e.TopParentId!.Value));
         }
 
         // Apply parental rating filtering
@@ -433,7 +442,7 @@ public sealed partial class BaseItemRepository
         {
             var unratedItemTypes = filter.BlockUnratedItems.Select(f => f.ToString()).ToArray();
             baseQuery = baseQuery.Where(e =>
-                e.InheritedParentalRatingValue != null || !unratedItemTypes.Contains(e.UnratedType));
+                e.InheritedParentalRatingValue != null || !Enumerable.Contains(unratedItemTypes, e.UnratedType));
         }
 
         // Apply excluded tags filtering (blocked tags).
@@ -443,7 +452,7 @@ public sealed partial class BaseItemRepository
         {
             var excludedTags = filter.ExcludeInheritedTags.Select(e => e.GetCleanValue()).ToArray();
             var blockedTagItemIds = context.ItemValuesMap
-                .Where(f => f.ItemValue.Type == ItemValueType.Tags && excludedTags.Contains(f.ItemValue.CleanValue))
+                .Where(f => f.ItemValue.Type == ItemValueType.Tags && Enumerable.Contains(excludedTags, f.ItemValue.CleanValue))
                 .Select(f => f.ItemId);
 
             baseQuery = baseQuery.Where(e =>
@@ -458,7 +467,7 @@ public sealed partial class BaseItemRepository
         {
             var includeTags = filter.IncludeInheritedTags.Select(e => e.GetCleanValue()).ToArray();
             var allowedTagItemIds = context.ItemValuesMap
-                .Where(f => f.ItemValue.Type == ItemValueType.Tags && includeTags.Contains(f.ItemValue.CleanValue))
+                .Where(f => f.ItemValue.Type == ItemValueType.Tags && Enumerable.Contains(includeTags, f.ItemValue.CleanValue))
                 .Select(f => f.ItemId);
 
             baseQuery = baseQuery.Where(e =>

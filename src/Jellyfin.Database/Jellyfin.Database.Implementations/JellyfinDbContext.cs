@@ -293,30 +293,39 @@ public class MulletaFlixDbContext : DbContext
     public DbSet<TrackMetadata> TrackMetadata => Set<TrackMetadata>();*/
 
     /// <inheritdoc/>
-    public override async Task<int> SaveChangesAsync(
-        bool acceptAllChangesOnSuccess,
-        CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         HandleConcurrencyToken();
 
-        try
+        var maxRetries = 5;
+        var attempt = 0;
+        while (true)
         {
-            var result = -1;
-            await _entityFrameworkCoreLocking.OnSaveChangesAsync(this, async () =>
+            try
             {
-                result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
-            }).ConfigureAwait(false);
-            return result;
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            // a concurrency exception is supposed to be always handled by the invoker of the method, logging it here is only causing log bloat.
-            throw;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error trying to save changes.");
-            throw;
+                var result = -1;
+                await _entityFrameworkCoreLocking.OnSaveChangesAsync(this, async () =>
+                {
+                    result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+                return result;
+            }
+            catch (Exception e) when (attempt < maxRetries && IsDeadlockException(e))
+            {
+                attempt++;
+                _logger.LogWarning(e, "Deadlock detectado durante SaveChangesAsync. Tentando novamente {Attempt}/{MaxRetries} após delay...", attempt, maxRetries);
+                await Task.Delay(150 * attempt, cancellationToken).ConfigureAwait(false);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // a concurrency exception is supposed to be always handled by the invoker of the method, logging it here is only causing log bloat.
+                throw;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error trying to save changes.");
+                throw;
+            }
         }
     }
 
@@ -325,25 +334,70 @@ public class MulletaFlixDbContext : DbContext
     {
         HandleConcurrencyToken();
 
-        try
+        var maxRetries = 5;
+        var attempt = 0;
+        while (true)
         {
-            var result = -1;
-            _entityFrameworkCoreLocking.OnSaveChanges(this, () =>
+            try
             {
-                result = base.SaveChanges(acceptAllChangesOnSuccess);
-            });
-            return result;
+                var result = -1;
+                _entityFrameworkCoreLocking.OnSaveChanges(this, () =>
+                {
+                    result = base.SaveChanges(acceptAllChangesOnSuccess);
+                });
+                return result;
+            }
+            catch (Exception e) when (attempt < maxRetries && IsDeadlockException(e))
+            {
+                attempt++;
+                _logger.LogWarning(e, "Deadlock detectado durante SaveChanges. Tentando novamente {Attempt}/{MaxRetries} após delay...", attempt, maxRetries);
+                Thread.Sleep(150 * attempt);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // a concurrency exception is supposed to be always handled by the invoker of the method, logging it here is only causing log bloat.
+                throw;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error trying to save changes.");
+                throw;
+            }
         }
-        catch (DbUpdateConcurrencyException)
+    }
+
+    private static bool IsDeadlockException(Exception? exception)
+    {
+        if (exception == null)
         {
-            // a concurrency exception is supposed to be always handled by the invoker of the method, logging it here is only causing log bloat.
-            throw;
+            return false;
         }
-        catch (Exception e)
+
+        if (exception is DbUpdateException dbUpdateException)
         {
-            _logger.LogError(e, "Error trying to save changes.");
-            throw;
+            return IsDeadlockException(dbUpdateException.InnerException);
         }
+
+        var exceptionType = exception.GetType();
+        if (exceptionType.FullName == "MySqlConnector.MySqlException" || exceptionType.Name == "MySqlException")
+        {
+            try
+            {
+                var numberProperty = exceptionType.GetProperty("Number");
+                if (numberProperty != null)
+                {
+                    var number = (int)numberProperty.GetValue(exception)!;
+                    return number == 1213; // ER_LOCK_DEADLOCK
+                }
+            }
+            catch
+            {
+                // Fallback
+            }
+        }
+
+        return exception.Message.Contains("Deadlock", StringComparison.OrdinalIgnoreCase)
+            || (exception.InnerException != null && IsDeadlockException(exception.InnerException));
     }
 
     private void HandleConcurrencyToken()
