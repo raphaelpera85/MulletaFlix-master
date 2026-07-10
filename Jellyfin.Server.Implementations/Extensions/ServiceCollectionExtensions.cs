@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
     private static IEnumerable<Type> DatabaseProviderTypes()
     {
         yield return typeof(MySqlDatabaseProvider);
+        yield return typeof(SqliteDatabaseProvider);
     }
 
     private static IDictionary<string, MulletaFlixDbProviderFactory> GetSupportedDbProviders()
