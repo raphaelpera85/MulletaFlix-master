@@ -92,8 +92,17 @@ namespace MediaBrowser.Providers.MediaInfo
             var path = item.Path;
             var protocol = item.PathProtocol ?? MediaProtocol.File;
 
-            if (!item.IsShortcut || options.EnableRemoteContentProbe || item.GetMediaStreams().Count == 0)
+            // Gate for FFprobe execution:
+            // - For remote shortcuts (STRM), only probe if EnableRemoteContentProbe is explicitly true
+            //   (requested during playback or by the Post-Scan task).
+            // - For local files, probe if they have no media streams in the DB.
+            var shouldProbe = item.IsShortcut
+                ? options.EnableRemoteContentProbe
+                : item.GetMediaStreams().Count == 0 || options.EnableRemoteContentProbe;
+
+            if (shouldProbe)
             {
+
                 if (item.IsShortcut)
                 {
                     path = item.ShortcutPath;
