@@ -85,23 +85,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
         public string Description => "Baixa lista M3U, classifica entradas e gera arquivos .strm";
         public string Category => "Midia Storage Online";
 
-        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
-        {
-            yield return new TaskTriggerInfo
-            {
-                Type = TaskTriggerInfoType.WeeklyTrigger,
-                DayOfWeek = DayOfWeek.Wednesday,
-                TimeOfDayTicks = TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(30)).Ticks
-            };
-
-            yield return new TaskTriggerInfo
-            {
-                Type = TaskTriggerInfoType.WeeklyTrigger,
-                DayOfWeek = DayOfWeek.Sunday,
-                TimeOfDayTicks = TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(30)).Ticks
-            };
-        }
-
 
         public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
@@ -1614,8 +1597,15 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             {
                 new TaskTriggerInfo
                 {
-                    Type = TaskTriggerInfoType.DailyTrigger,
-                    TimeOfDayTicks = TimeSpan.FromHours(5.5).Ticks
+                    Type = TaskTriggerInfoType.WeeklyTrigger,
+                    DayOfWeek = DayOfWeek.Wednesday,
+                    TimeOfDayTicks = TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(30)).Ticks
+                },
+                new TaskTriggerInfo
+                {
+                    Type = TaskTriggerInfoType.WeeklyTrigger,
+                    DayOfWeek = DayOfWeek.Sunday,
+                    TimeOfDayTicks = TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(30)).Ticks
                 }
             };
         }
