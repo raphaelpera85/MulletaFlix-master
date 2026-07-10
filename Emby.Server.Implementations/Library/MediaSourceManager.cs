@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 #pragma warning disable CS1591
 
@@ -179,19 +179,30 @@ namespace Emby.Server.Implementations.Library
             var mediaSources = GetStaticMediaSources(item, enablePathSubstitution, user);
             ResolveSymlinkPaths(mediaSources, enablePathSubstitution);
 
-            // If file is strm or main media stream is missing, force a metadata refresh with remote probing
+            // For STRM files: only probe if streams are completely unknown (first play).
+            // On subsequent plays, streams are already in the DB — avoid FullRefresh overhead
+            // (which re-runs FFprobe even with cached results, costing 200-500ms of overhead).
+            // For non-STRM items missing streams, keep the original behavior.
+            var strmMissingStreams = item.Path.EndsWith(".strm", StringComparison.OrdinalIgnoreCase)
+                && mediaSources[0].MediaStreams.Count == 0;
+            var videoMissingStreams = item.MediaType == MediaType.Video
+                && mediaSources[0].MediaStreams.All(i => i.Type != MediaStreamType.Video);
+            var audioMissingStreams = item.MediaType == MediaType.Audio
+                && mediaSources[0].MediaStreams.All(i => i.Type != MediaStreamType.Audio);
+
             if (allowMediaProbe && mediaSources[0].Type != MediaSourceType.Placeholder
-                && (item.Path.EndsWith(".strm", StringComparison.OrdinalIgnoreCase)
-                    || (item.MediaType == MediaType.Video && mediaSources[0].MediaStreams.All(i => i.Type != MediaStreamType.Video))
-                    || (item.MediaType == MediaType.Audio && mediaSources[0].MediaStreams.All(i => i.Type != MediaStreamType.Audio))))
+                && (strmMissingStreams || videoMissingStreams || audioMissingStreams))
             {
                 try
                 {
+                    // Use Default refresh mode: respects existing data and cache.
+                    // FullRefresh is unnecessary when the remote probe cache will return
+                    // cached results anyway, and forces extra metadata pipeline overhead.
                     await item.RefreshMetadata(
                         new MetadataRefreshOptions(_directoryService)
                         {
                             EnableRemoteContentProbe = true,
-                            MetadataRefreshMode = MetadataRefreshMode.FullRefresh
+                            MetadataRefreshMode = MetadataRefreshMode.Default
                         },
                         cancellationToken).ConfigureAwait(false);
 
@@ -203,6 +214,7 @@ namespace Emby.Server.Implementations.Library
                     _logger.LogWarning(ex, "Failed to refresh metadata for playback source {ItemPath}. Continuing with existing media source data.", item.Path);
                 }
             }
+
 
             var dynamicMediaSources = await GetDynamicMediaSources(item, cancellationToken).ConfigureAwait(false);
 

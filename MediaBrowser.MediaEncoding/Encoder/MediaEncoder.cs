@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 #pragma warning disable CS1591
 
 using System;
@@ -71,6 +71,11 @@ namespace MediaBrowser.MediaEncoding.Encoder
 
         private readonly ConcurrentDictionary<string, CachedMediaInfo> _probeCache = new(StringComparer.OrdinalIgnoreCase);
         private static readonly TimeSpan ProbeCacheTtl = TimeSpan.FromMinutes(30);
+
+        // Separate cache for remote URLs (STRM files). Uses URL as key, no LastWriteTime check.
+        // TTL matches local file cache (30 min) — covers typical viewing sessions.
+        // Cache is invalidated automatically on playback errors (see GetMediaInfo).
+        private readonly ConcurrentDictionary<string, CachedMediaInfo> _remoteProbeCache = new(StringComparer.OrdinalIgnoreCase);
 
         private sealed class CachedMediaInfo
         {
@@ -475,9 +480,24 @@ namespace MediaBrowser.MediaEncoding.Encoder
         {
             if (request.MediaSource.Protocol != MediaProtocol.File)
             {
+                // Remote URLs (STRM files): cache probe results to avoid re-probing on every play.
+                // FFprobe on a remote HTTP stream takes 3-15s; caching makes 2nd+ plays near-instant.
+                var urlCacheKey = request.MediaSource.Path;
+                if (!string.IsNullOrEmpty(urlCacheKey)
+                    && _remoteProbeCache.TryGetValue(urlCacheKey, out var remoteCached)
+                    && DateTime.UtcNow - remoteCached.CachedAt < ProbeCacheTtl)
+                {
+                    _logger.LogDebug(
+                        "Remote probe cache hit for {Url} (cached {Ago:F0}s ago)",
+                        urlCacheKey,
+                        (DateTime.UtcNow - remoteCached.CachedAt).TotalSeconds);
+                    return remoteCached.Result;
+
+                }
+
                 var infoExtractChapters = request.ExtractChapters;
                 var infoExtraArgs = GetExtraArguments(request);
-                return await GetMediaInfoInternal(
+                var remoteResult = await GetMediaInfoInternal(
                     GetInputArgument(request.MediaSource.Path, request.MediaSource),
                     request.MediaSource.Path,
                     request.MediaSource.Protocol,
@@ -486,6 +506,17 @@ namespace MediaBrowser.MediaEncoding.Encoder
                     request.MediaType == DlnaProfileType.Audio,
                     request.MediaSource.VideoType,
                     cancellationToken).ConfigureAwait(false);
+
+                if (!string.IsNullOrEmpty(urlCacheKey))
+                {
+                    _remoteProbeCache[urlCacheKey] = new CachedMediaInfo
+                    {
+                        Result = remoteResult,
+                        CachedAt = DateTime.UtcNow
+                    };
+                }
+
+                return remoteResult;
             }
 
             var filePath = request.MediaSource.Path;
@@ -523,6 +554,28 @@ namespace MediaBrowser.MediaEncoding.Encoder
 
         internal string GetExtraArguments(MediaInfoRequest request)
         {
+            // For remote streams (STRM / HTTP), use reduced analyzeduration and probesize.
+            // HLS manifests and most HTTP streams expose codec info in the first few packets.
+            // Default FFprobe values (5s / 5MB) are excessive for remote URLs and cause
+            // the 5-15s delay users experience before playback starts.
+            if (request.MediaSource.Protocol != MediaProtocol.File
+                && !string.IsNullOrEmpty(request.MediaSource.Path))
+            {
+                var remoteArgs = "-analyzeduration 3000000 -probesize 3000000";
+
+                if (request.MediaSource.RequiredHttpHeaders.TryGetValue("User-Agent", out var remoteUserAgent))
+                {
+                    remoteArgs += $" -user_agent \"{remoteUserAgent}\"";
+                }
+
+                if (request.MediaSource.Protocol == MediaProtocol.Rtsp)
+                {
+                    remoteArgs += " -rtsp_transport tcp+udp -rtsp_flags prefer_tcp";
+                }
+
+                return remoteArgs;
+            }
+
             var ffmpegAnalyzeDuration = _config.GetFFmpegAnalyzeDuration() ?? string.Empty;
             var ffmpegProbeSize = _config.GetFFmpegProbeSize() ?? string.Empty;
             var analyzeDuration = string.Empty;
