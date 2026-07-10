@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MulletaFlix.Api.Jobs;
+using MulletaFlix.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
@@ -169,7 +170,7 @@ namespace Emby.Server.Implementations.ScheduledTasks.Tasks
                 if (string.Equals(currentJob.Status, "Failed", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(currentJob.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new Exception($"O trabalho na fila falhou ou foi cancelado: {currentJob.ErrorMessage}");
+                    throw new InvalidOperationException($"O trabalho na fila falhou ou foi cancelado: {currentJob.ErrorMessage}");
                 }
             }
 

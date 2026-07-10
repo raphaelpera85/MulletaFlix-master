@@ -29,7 +29,7 @@ namespace Emby.Server.Implementations.Library
         public Task Run(IProgress<double> progress, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Main scan complete. Queueing StrmProbeScheduledTask to identify STRM streams in background...");
-            
+
             // Queue the scheduled task so it runs in the background.
             // If it is already running, this will do nothing (which is safe).
             _taskManager.QueueIfNotRunning<StrmProbeScheduledTask>();
@@ -39,5 +39,3 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
-
-
