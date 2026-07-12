@@ -10,6 +10,8 @@ namespace MulletaFlix.LiveTv.Listings
 
         public string Country { get; set; } = string.Empty;
 
+        public string Lang { get; set; } = string.Empty;
+
         public string Site { get; set; } = string.Empty;
 
         public string LocalXmlPath { get; set; } = string.Empty;

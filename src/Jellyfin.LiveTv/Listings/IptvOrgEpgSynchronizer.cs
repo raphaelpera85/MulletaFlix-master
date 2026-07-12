@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,7 +69,7 @@ namespace MulletaFlix.LiveTv.Listings
             Directory.CreateDirectory(baseCacheDir);
             Directory.CreateDirectory(Path.Combine(baseCacheDir, "xmltv"));
 
-            // 1. Download and Cache iptv-org APIs
+            // 1. Download and cache iptv-org API files
             var channelsJsonPath = await EnsureFileCached(
                 "https://iptv-org.github.io/api/channels.json",
                 Path.Combine(baseCacheDir, "api_channels.json"),
@@ -87,17 +88,90 @@ namespace MulletaFlix.LiveTv.Listings
                 return;
             }
 
-            // 2. Load API data into memory
+            // 2. Load API data
             _logger.LogInformation("Loading iptv-org metadata...");
             var iptvChannels = await LoadJsonAsync<List<IptvChannelDto>>(channelsJsonPath, cancellationToken).ConfigureAwait(false) ?? new List<IptvChannelDto>();
             var iptvGuides = await LoadJsonAsync<List<IptvGuideDto>>(guidesJsonPath, cancellationToken).ConfigureAwait(false) ?? new List<IptvGuideDto>();
 
             _logger.LogInformation("Loaded {ChannelCount} channels and {GuideCount} guides from iptv-org API.", iptvChannels.Count, iptvGuides.Count);
 
-            var channelsByNormalizedName = GroupChannelsByNormalizedName(iptvChannels);
-            var guidesByChannelId = iptvGuides.ToDictionary(g => g.Channel, g => g.Site, StringComparer.OrdinalIgnoreCase);
+            // 3. Build lookup indexes
+            // Primary index: guides by normalized site_name (the channel display name in the guide)
+            var guidesBySiteName = new Dictionary<string, List<IptvGuideDto>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var guide in iptvGuides)
+            {
+                if (string.IsNullOrWhiteSpace(guide.SiteName))
+                {
+                    continue;
+                }
 
-            // 3. Resolve tuner channels
+                var normalized = NormalizeName(guide.SiteName);
+                if (string.IsNullOrEmpty(normalized))
+                {
+                    continue;
+                }
+
+                if (!guidesBySiteName.TryGetValue(normalized, out var list))
+                {
+                    list = new List<IptvGuideDto>();
+                    guidesBySiteName[normalized] = list;
+                }
+
+                list.Add(guide);
+            }
+
+            // Secondary index: channels.json by normalized name and alt_names (for fuzzy fallback)
+            var channelsByNormalizedName = new Dictionary<string, List<IptvChannelDto>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var ch in iptvChannels)
+            {
+                var names = new List<string>();
+                if (!string.IsNullOrWhiteSpace(ch.Name))
+                {
+                    names.Add(ch.Name);
+                }
+
+                if (ch.AltNames is not null)
+                {
+                    names.AddRange(ch.AltNames.Where(n => !string.IsNullOrWhiteSpace(n)));
+                }
+
+                foreach (var name in names)
+                {
+                    var normalized = NormalizeName(name);
+                    if (string.IsNullOrEmpty(normalized))
+                    {
+                        continue;
+                    }
+
+                    if (!channelsByNormalizedName.TryGetValue(normalized, out var list))
+                    {
+                        list = new List<IptvChannelDto>();
+                        channelsByNormalizedName[normalized] = list;
+                    }
+
+                    list.Add(ch);
+                }
+            }
+
+            // Tertiary index: guides by channel ID (for entries that do have a non-null channel field)
+            var guidesByChannelId = new Dictionary<string, List<IptvGuideDto>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var guide in iptvGuides)
+            {
+                if (string.IsNullOrWhiteSpace(guide.Channel))
+                {
+                    continue;
+                }
+
+                if (!guidesByChannelId.TryGetValue(guide.Channel, out var list))
+                {
+                    list = new List<IptvGuideDto>();
+                    guidesByChannelId[guide.Channel] = list;
+                }
+
+                list.Add(guide);
+            }
+
+            // 4. Resolve tuner channels
             var tunerChannels = new List<ChannelInfo>();
             foreach (var tuner in _tunerHostManager.TunerHosts)
             {
@@ -112,12 +186,12 @@ namespace MulletaFlix.LiveTv.Listings
                 }
             }
 
-            _logger.LogInformation("Found {Count} sintonized channels to resolve.", tunerChannels.Count);
+            _logger.LogInformation("Found {Count} tuner channels to resolve.", tunerChannels.Count);
 
-            // 4. Match tuner channels with iptv-org channels
+            // 5. Match tuner channels with iptv-org guides
             var newMappings = new List<IptvOrgChannelMapping>();
-            var xmlsToDownload = new HashSet<(string Country, string Site)>();
-
+            var xmlsToDownload = new HashSet<(string Lang, string Site)>();
+            var preferredLang = GetPreferredLanguage();
             var preferredCountry = GetPreferredCountry();
 
             foreach (var tc in tunerChannels)
@@ -127,23 +201,28 @@ namespace MulletaFlix.LiveTv.Listings
                     continue;
                 }
 
-                var match = FindBestMatch(tc, channelsByNormalizedName, preferredCountry);
-                if (match != null && guidesByChannelId.TryGetValue(match.Id, out var site))
+                var match = FindBestGuideMatch(tc, guidesBySiteName, channelsByNormalizedName, guidesByChannelId, preferredLang, preferredCountry);
+                if (match != null)
                 {
-                    var country = match.Country.ToLowerInvariant();
-                    var localXmlPath = Path.Combine(baseCacheDir, "xmltv", $"{country}_{site}.xml");
+                    var lang = match.Lang?.ToLowerInvariant() ?? preferredLang;
+                    var site = match.Site;
+                    var localXmlPath = Path.Combine(baseCacheDir, "xmltv", $"{lang}_{site}.xml");
+
+                    // Determine the iptv-org channel ID for XMLTV reading
+                    var epgChannelId = !string.IsNullOrWhiteSpace(match.Channel) ? match.Channel : match.SiteId;
 
                     newMappings.Add(new IptvOrgChannelMapping
                     {
                         TunerChannelId = tc.Id,
                         TunerChannelName = tc.Name,
-                        IptvOrgChannelId = match.Id,
-                        Country = country,
+                        IptvOrgChannelId = epgChannelId,
+                        Country = preferredCountry,
+                        Lang = lang,
                         Site = site,
                         LocalXmlPath = localXmlPath
                     });
 
-                    xmlsToDownload.Add((country, site));
+                    xmlsToDownload.Add((lang, site));
                 }
                 else
                 {
@@ -151,14 +230,13 @@ namespace MulletaFlix.LiveTv.Listings
                 }
             }
 
-            _logger.LogInformation("Resolved {Count} mappings. Downloading XMLTV files...", newMappings.Count);
+            _logger.LogInformation("Resolved {Count} mappings. Downloading {XmlCount} XMLTV files...", newMappings.Count, xmlsToDownload.Count);
 
-            // 5. Download required XMLTV files
-            var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
+            // 6. Download required XMLTV files (using lang, not country)
             var downloadTasks = xmlsToDownload.Select(async target =>
             {
-                var url = $"https://iptv-org.github.io/epg/guides/{target.Country}/{target.Site}.epg.xml";
-                var localPath = Path.Combine(baseCacheDir, "xmltv", $"{target.Country}_{target.Site}.xml");
+                var url = $"https://iptv-org.github.io/epg/guides/{target.Lang}/{target.Site}.epg.xml";
+                var localPath = Path.Combine(baseCacheDir, "xmltv", $"{target.Lang}_{target.Site}.xml");
 
                 try
                 {
@@ -172,17 +250,104 @@ namespace MulletaFlix.LiveTv.Listings
 
             await Task.WhenAll(downloadTasks).ConfigureAwait(false);
 
-            // 6. Save mappings to disk
+            // 7. Save mappings to disk
             lock (_lock)
             {
                 _mappings = newMappings;
                 SaveMappingsToDisk();
             }
 
-            // 7. Ensure Listing Provider is added to config
+            // 8. Ensure Listing Provider is added to config
             EnsureListingProviderAdded();
 
             _logger.LogInformation("iptv-org EPG synchronization completed successfully.");
+        }
+
+        private IptvGuideDto? FindBestGuideMatch(
+            ChannelInfo tc,
+            Dictionary<string, List<IptvGuideDto>> guidesBySiteName,
+            Dictionary<string, List<IptvChannelDto>> channelsByName,
+            Dictionary<string, List<IptvGuideDto>> guidesByChannelId,
+            string preferredLang,
+            string preferredCountry)
+        {
+            var normalizedTunerName = NormalizeName(tc.Name);
+            if (string.IsNullOrEmpty(normalizedTunerName))
+            {
+                return null;
+            }
+
+            // Strategy 1: Direct match via guides.json site_name
+            if (guidesBySiteName.TryGetValue(normalizedTunerName, out var guideCandidates))
+            {
+                var best = SelectBestGuide(guideCandidates, preferredLang);
+                if (best != null)
+                {
+                    return best;
+                }
+            }
+
+            // Strategy 2: Match through channels.json (name/alt_names) → channel ID → guides.json
+            if (channelsByName.TryGetValue(normalizedTunerName, out var channelCandidates))
+            {
+                // Prefer the channel from the preferred country
+                var orderedChannels = channelCandidates
+                    .OrderByDescending(c => string.Equals(c.Country, preferredCountry, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                foreach (var channel in orderedChannels)
+                {
+                    if (!string.IsNullOrWhiteSpace(channel.Id) && guidesByChannelId.TryGetValue(channel.Id, out var channelGuides))
+                    {
+                        var best = SelectBestGuide(channelGuides, preferredLang);
+                        if (best != null)
+                        {
+                            return best;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static IptvGuideDto? SelectBestGuide(List<IptvGuideDto> candidates, string preferredLang)
+        {
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            if (candidates.Count == 1)
+            {
+                return candidates[0];
+            }
+
+            // Prefer guide with matching language
+            var langMatch = candidates.FirstOrDefault(g => string.Equals(g.Lang, preferredLang, StringComparison.OrdinalIgnoreCase));
+            if (langMatch != null)
+            {
+                return langMatch;
+            }
+
+            return candidates[0];
+        }
+
+        private string GetPreferredLanguage()
+        {
+            var culture = _config.Configuration.PreferredMetadataLanguage;
+            if (string.IsNullOrWhiteSpace(culture))
+            {
+                return "pt";
+            }
+
+            // "pt-BR" → "pt", "en-US" → "en"
+            if (culture.Contains('-', StringComparison.OrdinalIgnoreCase))
+            {
+                return culture.Split('-').First().ToLowerInvariant();
+            }
+
+            return culture.ToLowerInvariant();
         }
 
         private string GetPreferredCountry()
@@ -193,88 +358,13 @@ namespace MulletaFlix.LiveTv.Listings
                 return "br";
             }
 
-            if (culture.Contains("-", StringComparison.OrdinalIgnoreCase))
+            // "pt-BR" → "br", "en-US" → "us"
+            if (culture.Contains('-', StringComparison.OrdinalIgnoreCase))
             {
                 return culture.Split('-').Last().ToLowerInvariant();
             }
 
             return culture.ToLowerInvariant();
-        }
-
-        private static Dictionary<string, List<IptvChannelDto>> GroupChannelsByNormalizedName(List<IptvChannelDto> channels)
-        {
-            var groups = new Dictionary<string, List<IptvChannelDto>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var ch in channels)
-            {
-                if (string.IsNullOrWhiteSpace(ch.Name))
-                {
-                    continue;
-                }
-
-                var normalized = NormalizeName(ch.Name);
-                if (string.IsNullOrEmpty(normalized))
-                {
-                    continue;
-                }
-
-                if (!groups.TryGetValue(normalized, out var list))
-                {
-                    list = new List<IptvChannelDto>();
-                    groups[normalized] = list;
-                }
-
-                list.Add(ch);
-            }
-
-            return groups;
-        }
-
-        private static IptvChannelDto? FindBestMatch(ChannelInfo tc, Dictionary<string, List<IptvChannelDto>> channelsByName, string preferredCountry)
-        {
-            var normalizedTunerName = NormalizeName(tc.Name);
-            if (string.IsNullOrEmpty(normalizedTunerName))
-            {
-                return null;
-            }
-
-            if (!channelsByName.TryGetValue(normalizedTunerName, out var candidates))
-            {
-                return null;
-            }
-
-            if (candidates.Count == 1)
-            {
-                return candidates[0];
-            }
-
-            var tcCountry = ExtractCountryFromChannel(tc);
-            if (!string.IsNullOrEmpty(tcCountry))
-            {
-                var countryMatch = candidates.FirstOrDefault(c => string.Equals(c.Country, tcCountry, StringComparison.OrdinalIgnoreCase));
-                if (countryMatch != null)
-                {
-                    return countryMatch;
-                }
-            }
-
-            var preferredMatch = candidates.FirstOrDefault(c => string.Equals(c.Country, preferredCountry, StringComparison.OrdinalIgnoreCase));
-            if (preferredMatch != null)
-            {
-                return preferredMatch;
-            }
-
-            return candidates[0];
-        }
-
-        private static string ExtractCountryFromChannel(ChannelInfo tc)
-        {
-            var match = Regex.Match(tc.Name, @"\b([A-Z]{2})\b");
-            if (match.Success)
-            {
-                return match.Groups[1].Value;
-            }
-
-            return string.Empty;
         }
 
         private static string RemoveDiacritics(string text)
@@ -429,21 +519,42 @@ namespace MulletaFlix.LiveTv.Listings
             }
         }
 
-        // API DTOs
+        // API DTOs matching the real iptv-org API structure
+
         private class IptvChannelDto
         {
+            [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty;
 
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
+            [JsonPropertyName("alt_names")]
+            public List<string>? AltNames { get; set; }
+
+            [JsonPropertyName("country")]
             public string Country { get; set; } = string.Empty;
         }
 
         private class IptvGuideDto
         {
-            public string Channel { get; set; } = string.Empty;
+            [JsonPropertyName("channel")]
+            public string? Channel { get; set; }
 
+            [JsonPropertyName("feed")]
+            public string? Feed { get; set; }
+
+            [JsonPropertyName("site")]
             public string Site { get; set; } = string.Empty;
+
+            [JsonPropertyName("site_id")]
+            public string SiteId { get; set; } = string.Empty;
+
+            [JsonPropertyName("site_name")]
+            public string SiteName { get; set; } = string.Empty;
+
+            [JsonPropertyName("lang")]
+            public string Lang { get; set; } = string.Empty;
         }
     }
 }

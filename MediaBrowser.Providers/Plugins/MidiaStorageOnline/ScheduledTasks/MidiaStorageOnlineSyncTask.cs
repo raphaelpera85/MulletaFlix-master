@@ -263,7 +263,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 }
 
                 var epgConfigured = !string.IsNullOrWhiteSpace(config.EpgUrl);
-                if (config.EnableAutoEpg || epgConfigured)
+                var m3uEpgUrls = ExtractEpgUrlsFromM3u(m3uRaw);
+                if (config.EnableAutoEpg || epgConfigured || m3uEpgUrls.Count > 0)
                 {
                     try
                     {
@@ -274,7 +275,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                         }
                         else
                         {
-                            guidePath = await EnsureEpgGuideAsync(config, ct).ConfigureAwait(false);
+                            guidePath = await EnsureEpgGuideAsync(config, m3uEpgUrls, ct).ConfigureAwait(false);
                         }
                         if (!string.IsNullOrEmpty(guidePath))
                         {
@@ -379,11 +380,29 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                                 var fileExists = System.IO.File.Exists(filePath);
                                 if (fileExists)
                                 {
+                                    try
+                                    {
+                                        var existingUrl = (await System.IO.File.ReadAllTextAsync(filePath, token).ConfigureAwait(false)).Trim();
+                                        if (existingUrl.Equals(newUrl, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            Interlocked.Increment(ref skippedCount);
+                                            return;
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // Se falhar ao ler o arquivo, prossegue com a sobrescrita
+                                    }
+
                                     Log($"Sobrescrevendo .strm: {filePath}");
                                 }
 
                                 var dir = Path.GetDirectoryName(filePath)!;
                                 if (createdDirs.TryAdd(dir, 0))
+                                {
+                                    Directory.CreateDirectory(dir);
+                                }
+                                else if (!Directory.Exists(dir))
                                 {
                                     Directory.CreateDirectory(dir);
                                 }
@@ -403,11 +422,29 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                                 var fileExists = System.IO.File.Exists(filePath);
                                 if (fileExists)
                                 {
+                                    try
+                                    {
+                                        var existingUrl = (await System.IO.File.ReadAllTextAsync(filePath, token).ConfigureAwait(false)).Trim();
+                                        if (existingUrl.Equals(newUrl, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            Interlocked.Increment(ref skippedCount);
+                                            return;
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // Se falhar ao ler o arquivo, prossegue com a sobrescrita
+                                    }
+
                                     Log($"Sobrescrevendo .strm: {filePath}");
                                 }
 
                                 var dir = Path.GetDirectoryName(filePath)!;
                                 if (createdDirs.TryAdd(dir, 0))
+                                {
+                                    Directory.CreateDirectory(dir);
+                                }
+                                else if (!Directory.Exists(dir))
                                 {
                                     Directory.CreateDirectory(dir);
                                 }
@@ -506,91 +543,199 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             return Path.Combine(dir, "guide.xml");
         }
 
-        private async Task<string?> EnsureEpgGuideAsync(PluginConfiguration config, CancellationToken ct)
+        private async Task<string?> EnsureEpgGuideAsync(PluginConfiguration config, List<string> m3uEpgUrls, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(config.EpgUrl))
+            var epgUrls = new List<string>(m3uEpgUrls);
+
+            if (!string.IsNullOrWhiteSpace(config.EpgUrl))
+            {
+                var customUrls = config.EpgUrl.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(u => u.Trim())
+                    .Where(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase));
+                epgUrls.AddRange(customUrls);
+            }
+
+            epgUrls = epgUrls.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+            if (epgUrls.Count == 0)
             {
                 return null;
             }
 
             var guidePath = GetGuideFilePath();
-            Directory.CreateDirectory(Path.GetDirectoryName(guidePath)!);
+            var guideDir = Path.GetDirectoryName(guidePath)!;
+            Directory.CreateDirectory(guideDir);
 
-            if (File.Exists(guidePath))
+            var channelNodes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var programmeNodes = new List<string>();
+            var sourcesLoaded = 0;
+
+            foreach (var url in epgUrls)
             {
+                ct.ThrowIfCancellationRequested();
                 try
                 {
-                    File.Delete(guidePath);
+                    Log($"Baixando EPG de: {url}");
+                    var xml = await DownloadEpgXmlAsync(url, ct).ConfigureAwait(false);
+                    if (string.IsNullOrWhiteSpace(xml))
+                    {
+                        continue;
+                    }
+
+                    var xmlDoc = new XmlDocument();
+                    xmlDoc.LoadXml(xml);
+
+                    var channels = xmlDoc.SelectNodes("//channel");
+                    if (channels is not null)
+                    {
+                        foreach (XmlNode chNode in channels)
+                        {
+                            var idAttr = chNode.Attributes?["id"]?.Value;
+                            if (!string.IsNullOrEmpty(idAttr))
+                            {
+                                channelNodes[idAttr] = chNode.OuterXml;
+                            }
+                        }
+                    }
+
+                    var programmes = xmlDoc.SelectNodes("//programme");
+                    if (programmes is not null)
+                    {
+                        foreach (XmlNode prog in programmes)
+                        {
+                            programmeNodes.Add(prog.OuterXml);
+                        }
+                    }
+
+                    sourcesLoaded++;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore and overwrite below.
+                    Log($"Falha ao processar EPG de {url}: {ex.Message}");
                 }
             }
 
-            var sourcePath = config.EpgUrl;
-            await using var target = new FileStream(
-                guidePath,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.Read,
-                81920,
-                FileOptions.Asynchronous);
-
-            if (Uri.TryCreate(config.EpgUrl, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            if (sourcesLoaded == 0)
             {
-                using var client = _httpClientFactory.CreateClient();
-                client.Timeout = TimeSpan.FromSeconds(120);
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                using var response = await client.GetAsync(config.EpgUrl, ct).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-                await using var source = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-                sourcePath = response.RequestMessage?.RequestUri?.ToString() ?? config.EpgUrl;
+                throw new InvalidOperationException("Nenhum dado de EPG pode ser obtido de nenhuma das fontes.");
+            }
 
-                if (sourcePath.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)
-                    || sourcePath.EndsWith(".gzip", StringComparison.OrdinalIgnoreCase))
+            var mergedXml = new StringBuilder();
+            mergedXml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            mergedXml.AppendLine("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">");
+            mergedXml.AppendLine("<tv>");
+
+            foreach (var chXml in channelNodes.Values)
+            {
+                mergedXml.AppendLine(chXml);
+            }
+
+            foreach (var progXml in programmeNodes)
+            {
+                mergedXml.AppendLine(progXml);
+            }
+
+            mergedXml.AppendLine("</tv>");
+
+            var mergedContent = mergedXml.ToString();
+
+            var guideXmlTempPath = guidePath + ".new";
+            if (File.Exists(guideXmlTempPath))
+            {
+                try { File.Delete(guideXmlTempPath); } catch { }
+            }
+
+            await File.WriteAllTextAsync(guideXmlTempPath, mergedContent, ct).ConfigureAwait(false);
+
+            try
+            {
+                if (File.Exists(guidePath))
                 {
-                    await using var gzip = new GZipStream(source, CompressionMode.Decompress);
-                    await gzip.CopyToAsync(target, ct).ConfigureAwait(false);
+                    File.Replace(guideXmlTempPath, guidePath, null, true);
                 }
                 else
                 {
-                    await source.CopyToAsync(target, ct).ConfigureAwait(false);
+                    File.Move(guideXmlTempPath, guidePath);
                 }
             }
-            else
+            catch
             {
-                var localPath = Uri.TryCreate(config.EpgUrl, UriKind.Absolute, out var fileUri) && fileUri.Scheme.Equals(Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase)
-                    ? fileUri.LocalPath
-                    : config.EpgUrl;
-
-                if (!File.Exists(localPath))
+                if (File.Exists(guideXmlTempPath))
                 {
-                    throw new FileNotFoundException("XMLTV/EPG local file nao encontrado.", config.EpgUrl);
+                    File.Copy(guideXmlTempPath, guidePath, true);
+                    try { File.Delete(guideXmlTempPath); } catch { }
                 }
-
-                await using var source = new FileStream(localPath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous);
-                if (localPath.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)
-                    || sourcePath.EndsWith(".gzip", StringComparison.OrdinalIgnoreCase))
-                {
-                    await using var gzip = new GZipStream(source, CompressionMode.Decompress);
-                    await gzip.CopyToAsync(target, ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    await source.CopyToAsync(target, ct).ConfigureAwait(false);
-                }
-            }
-
-            var info = new FileInfo(guidePath);
-            if (!info.Exists || info.Length == 0)
-            {
-                throw new InvalidOperationException("XMLTV/EPG sincronizado vazio.");
             }
 
             config.EpgLastSyncTime = DateTime.UtcNow;
             config.EpgLastError = null;
             return guidePath;
+        }
+
+        private async Task<string?> DownloadEpgXmlAsync(string url, CancellationToken ct, int maxRetries = 2)
+        {
+            for (int i = 0; i <= maxRetries; i++)
+            {
+                try
+                {
+                    using var client = _httpClientFactory.CreateClient();
+                    client.Timeout = TimeSpan.FromSeconds(120);
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                    
+                    var response = await client.GetAsync(url, ct).ConfigureAwait(false);
+                    response.EnsureSuccessStatusCode();
+
+                    var isGzip = url.EndsWith(".gz", StringComparison.OrdinalIgnoreCase) ||
+                                 (response.Content.Headers.ContentType?.MediaType?.IndexOf("gzip", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                                 (response.Content.Headers.ContentEncoding?.Any(x => x.IndexOf("gzip", StringComparison.OrdinalIgnoreCase) >= 0) ?? false);
+
+                    using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+                    if (isGzip)
+                    {
+                        using var decompressed = new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Decompress);
+                        using var reader = new StreamReader(decompressed, Encoding.UTF8);
+                        return await reader.ReadToEndAsync(ct).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        using var reader = new StreamReader(stream, Encoding.UTF8);
+                        return await reader.ReadToEndAsync(ct).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex) when (i < maxRetries)
+                {
+                    Log($"Download de EPG falhou (tentativa {i + 1}/{maxRetries + 1}): {ex.Message}. Retentando...");
+                    await Task.Delay(2000 * (i + 1), ct).ConfigureAwait(false);
+                }
+            }
+            return null;
+        }
+
+        private List<string> ExtractEpgUrlsFromM3u(string m3uContent)
+        {
+            var urls = new List<string>();
+            if (string.IsNullOrEmpty(m3uContent)) return urls;
+
+            var lines = m3uContent.Split('\n');
+            if (lines.Length > 0 && lines[0].StartsWith("#EXTM3U", StringComparison.OrdinalIgnoreCase))
+            {
+                var headerLine = lines[0];
+                var matches = Regex.Matches(headerLine, @"(?:url-tvg|x-tvg-url)\s*=\s*""([^""]+)""", RegexOptions.IgnoreCase);
+                foreach (Match match in matches)
+                {
+                    var val = match.Groups[1].Value;
+                    var parts = val.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var part in parts)
+                    {
+                        var trimmedPart = part.Trim();
+                        if (Uri.TryCreate(trimmedPart, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                        {
+                            urls.Add(trimmedPart);
+                        }
+                    }
+                }
+            }
+            return urls;
         }
 
         private async Task<string?> AutoFetchEpgAsync(PluginConfiguration config, List<M3uEntry> entries, CancellationToken ct)
@@ -676,8 +821,9 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 }
 
                 var guideUrls = catalog.Channels
-                    .Select(ch => $"https://iptv-org.github.io/epg/{ch.Site}.xml")
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Select(ch => new { Lang = ch.Lang.ToLowerInvariant(), Site = ch.Site })
+                    .Distinct()
+                    .Select(x => $"https://iptv-org.github.io/epg/guides/{x.Lang}/{x.Site}.epg.xml")
                     .ToList();
 
                 if (guideUrls.Count == 0)
@@ -687,10 +833,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 }
 
                 Log($"Auto EPG: Baixando {guideUrls.Count} fontes de guia XMLTV...");
-                var mergedXml = new StringBuilder();
-                mergedXml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-                mergedXml.AppendLine("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">");
-                mergedXml.AppendLine("<tv>");
+                var channelNodes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var programmeNodes = new List<string>();
 
                 var sourcesLoaded = 0;
                 foreach (var guideUrl in guideUrls)
@@ -706,12 +850,26 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
                         var xmlDoc = new XmlDocument();
                         xmlDoc.LoadXml(xml);
+
+                        var channels = xmlDoc.SelectNodes("//channel");
+                        if (channels is not null)
+                        {
+                            foreach (XmlNode chNode in channels)
+                            {
+                                var idAttr = chNode.Attributes?["id"]?.Value;
+                                if (!string.IsNullOrEmpty(idAttr))
+                                {
+                                    channelNodes[idAttr] = chNode.OuterXml;
+                                }
+                            }
+                        }
+
                         var programmes = xmlDoc.SelectNodes("//programme");
                         if (programmes is not null)
                         {
                             foreach (XmlNode prog in programmes)
                             {
-                                mergedXml.AppendLine(prog.OuterXml);
+                                programmeNodes.Add(prog.OuterXml);
                             }
                         }
 
@@ -721,6 +879,21 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     {
                         Log($"Auto EPG: Falha ao baixar guia {guideUrl}: {srcEx.Message}");
                     }
+                }
+
+                var mergedXml = new StringBuilder();
+                mergedXml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                mergedXml.AppendLine("<!DOCTYPE tv SYSTEM \"xmltv.dtd\">");
+                mergedXml.AppendLine("<tv>");
+
+                foreach (var chXml in channelNodes.Values)
+                {
+                    mergedXml.AppendLine(chXml);
+                }
+
+                foreach (var progXml in programmeNodes)
+                {
+                    mergedXml.AppendLine(progXml);
                 }
 
                 mergedXml.AppendLine("</tv>");
@@ -1099,6 +1272,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
         {
             var liveTvConfig = _configurationManager.GetConfiguration<LiveTvOptions>("livetv");
             var providers = liveTvConfig.ListingProviders.ToList();
+
+            // Remove any old/conflicting iptv-org or duplicate providers
+            providers.RemoveAll(p => p.Type == "iptvorg" || string.Equals(p.ListingsId, "iptv-org", StringComparison.OrdinalIgnoreCase));
+
             var provider = providers.FirstOrDefault(p =>
                 string.Equals(p.Id, config.EpgListingProviderId, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(p.ListingsId, "Midia Storage Online EPG", StringComparison.OrdinalIgnoreCase));

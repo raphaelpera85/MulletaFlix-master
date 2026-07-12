@@ -148,9 +148,13 @@ namespace MulletaFlix.Server.Helpers
                     await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
                     using var command = connection.CreateCommand();
-                    command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{DatabaseNames.Main}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
-                    await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                    logger.LogInformation("Database '{Database}' verified/created.", DatabaseNames.Main);
+                    var dbs = new[] { DatabaseNames.Main, "mulletaflix_users", "mulletaflix_movies", "mulletaflix_series", "mulletaflix_channels", "mulletaflix_books" };
+                    foreach (var db in dbs)
+                    {
+                        command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                        logger.LogInformation("Database '{Database}' verified/created.", db);
+                    }
                     return;
                 }
                 catch (Exception ex)
