@@ -120,8 +120,57 @@ namespace Jellyfin.Plugin.GetAvatar.Services
                 Plugin.Instance.SaveConfiguration();
             }
 
+            if (avatars.Count == 0)
+            {
+                var recoveredAvatars = RebuildAvailableAvatarsFromDisk();
+                if (recoveredAvatars.Count > 0)
+                {
+                    config.AvailableAvatars = recoveredAvatars;
+                    Plugin.Instance.SaveConfiguration();
+                    _logger.LogWarning(
+                        "Recovered {Count} avatars from disk because the configuration list was empty",
+                        recoveredAvatars.Count);
+                    return recoveredAvatars;
+                }
+            }
+
             _logger.LogInformation("Returning {Count} avatars from configuration", avatars.Count);
             return avatars;
+        }
+
+        private List<AvatarInfo> RebuildAvailableAvatarsFromDisk()
+        {
+            if (!Directory.Exists(_avatarDirectory))
+            {
+                return new List<AvatarInfo>();
+            }
+
+            var supportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp",
+                ".gif"
+            };
+
+            return Directory.GetFiles(_avatarDirectory)
+                .Where(path => supportedExtensions.Contains(Path.GetExtension(path)))
+                .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+                .Select(path =>
+                {
+                    var fileName = Path.GetFileName(path);
+                    var name = Path.GetFileNameWithoutExtension(path);
+                    return new AvatarInfo
+                    {
+                        Id = name,
+                        Name = name,
+                        FileName = fileName,
+                        DateAdded = File.GetLastWriteTimeUtc(path),
+                        Category = string.Empty
+                    };
+                })
+                .ToList();
         }
 
         /// <summary>

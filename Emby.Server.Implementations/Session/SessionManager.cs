@@ -309,7 +309,7 @@ namespace Emby.Server.Implementations.Session
         {
             if (!session.SessionControllers.Any(i => i.IsSessionActive))
             {
-                var key = GetSessionKey(session.Client, session.DeviceId);
+                var key = GetSessionKey(session.Client, session.DeviceId, session.UserId);
 
                 _activeConnections.TryRemove(key, out _);
                 if (!string.IsNullOrEmpty(session.PlayState?.LiveStreamId))
@@ -365,7 +365,7 @@ namespace Emby.Server.Implementations.Session
 
             if (session is not null)
             {
-                var key = GetSessionKey(session.Client, session.DeviceId);
+                var key = GetSessionKey(session.Client, session.DeviceId, session.UserId);
 
                 _activeConnections.TryRemove(key, out _);
 
@@ -471,8 +471,8 @@ namespace Emby.Server.Implementations.Session
             }
         }
 
-        private static string GetSessionKey(string appName, string deviceId)
-            => appName + deviceId;
+        private static string GetSessionKey(string appName, string deviceId, Guid userId)
+            => string.Concat(appName, deviceId, userId.ToString("N", CultureInfo.InvariantCulture));
 
         /// <summary>
         /// Gets the connection.
@@ -496,7 +496,7 @@ namespace Emby.Server.Implementations.Session
 
             ArgumentException.ThrowIfNullOrEmpty(deviceId);
 
-            var key = GetSessionKey(appName, deviceId);
+            var key = GetSessionKey(appName, deviceId, user?.Id ?? Guid.Empty);
             SessionInfo newSession = CreateSessionInfo(key, appName, appVersion, deviceId, deviceName, remoteEndPoint, user);
             SessionInfo sessionInfo = _activeConnections.GetOrAdd(key, newSession);
             if (ReferenceEquals(newSession, sessionInfo))
@@ -1717,7 +1717,8 @@ namespace Emby.Server.Implementations.Session
             await _deviceManager.DeleteDevice(device).ConfigureAwait(false);
 
             var sessions = Sessions
-                .Where(i => string.Equals(i.DeviceId, device.DeviceId, StringComparison.OrdinalIgnoreCase))
+                .Where(i => string.Equals(i.DeviceId, device.DeviceId, StringComparison.OrdinalIgnoreCase)
+                    && i.UserId.Equals(device.UserId))
                 .ToList();
 
             foreach (var session in sessions)
@@ -2146,4 +2147,3 @@ namespace Emby.Server.Implementations.Session
         }
     }
 }
-

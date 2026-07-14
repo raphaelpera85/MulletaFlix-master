@@ -127,7 +127,14 @@ public static class StreamingHelpers
 
             if (mediaSource is null)
             {
-                var mediaSources = await mediaSourceManager.GetPlaybackMediaSources(libraryManager.GetItemById<BaseItem>(streamingRequest.Id), null, false, false, cancellationToken).ConfigureAwait(false);
+                dynamic mediaSourceManagerImpl = mediaSourceManager;
+                IReadOnlyList<MediaSourceInfo> mediaSources = await mediaSourceManagerImpl.GetPlaybackMediaSources(
+                    libraryManager.GetItemById<BaseItem>(streamingRequest.Id),
+                    null,
+                    false,
+                    false,
+                    cancellationToken,
+                    httpContext.User.GetToken()).ConfigureAwait(false);
 
                 mediaSource = string.IsNullOrEmpty(streamingRequest.MediaSourceId)
                     ? mediaSources[0]
@@ -263,7 +270,13 @@ public static class StreamingHelpers
             ? GetOutputFileExtension(state, mediaSource)
             : ("." + GetContainerFileExtension(state.OutputContainer));
 
-        state.OutputFilePath = GetOutputFilePath(state, ext, serverConfigurationManager, streamingRequest.DeviceId, streamingRequest.PlaySessionId);
+        state.OutputFilePath = GetOutputFilePath(
+            state,
+            ext,
+            serverConfigurationManager,
+            userId,
+            streamingRequest.DeviceId,
+            streamingRequest.PlaySessionId);
 
         return state;
     }
@@ -379,12 +392,13 @@ public static class StreamingHelpers
     /// <param name="state">The current <see cref="StreamState"/>.</param>
     /// <param name="outputFileExtension">The file extension of the output file.</param>
     /// <param name="serverConfigurationManager">Instance of the <see cref="IServerConfigurationManager"/> interface.</param>
+    /// <param name="userId">The authenticated user id.</param>
     /// <param name="deviceId">The device id.</param>
     /// <param name="playSessionId">The play session id.</param>
     /// <returns>The complete file path, including the folder, for the transcoding file.</returns>
-    private static string GetOutputFilePath(StreamState state, string outputFileExtension, IServerConfigurationManager serverConfigurationManager, string? deviceId, string? playSessionId)
+    private static string GetOutputFilePath(StreamState state, string outputFileExtension, IServerConfigurationManager serverConfigurationManager, Guid userId, string? deviceId, string? playSessionId)
     {
-        var data = $"{state.MediaPath}-{state.UserAgent}-{deviceId!}-{playSessionId!}";
+        var data = $"{state.MediaPath}-{state.UserAgent}-{userId:N}-{deviceId!}-{playSessionId!}";
 
         var filename = data.GetMD5().ToString("N", CultureInfo.InvariantCulture);
         var ext = outputFileExtension.ToLowerInvariant();
@@ -628,4 +642,3 @@ public static class StreamingHelpers
         return container;
     }
 }
-

@@ -206,6 +206,7 @@ public class SubtitleController : BaseMulletaFlixApiController
     /// <response code="200">File returned.</response>
     /// <returns>A <see cref="FileContentResult"/> with the subtitle file.</returns>
     [HttpGet("Videos/{routeItemId}/{routeMediaSourceId}/Subtitles/{routeIndex}/Stream.{routeFormat}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesFile("text/*")]
     public async Task<ActionResult> GetSubtitle(
@@ -228,6 +229,12 @@ public class SubtitleController : BaseMulletaFlixApiController
         index ??= routeIndex;
         format ??= routeFormat;
 
+        var item = _libraryManager.GetItemById<Video>(itemId.Value, User.GetUserId());
+        if (item is null)
+        {
+            return NotFound();
+        }
+
         if (string.Equals(format, "js", StringComparison.OrdinalIgnoreCase))
         {
             format = "json";
@@ -235,8 +242,6 @@ public class SubtitleController : BaseMulletaFlixApiController
 
         if (string.IsNullOrEmpty(format))
         {
-            var item = _libraryManager.GetItemById<Video>(itemId.Value);
-
             var idString = itemId.Value.ToString("N", CultureInfo.InvariantCulture);
             var mediaSource = _mediaSourceManager.GetStaticMediaSources(item, false)
                 .First(i => string.Equals(i.Id, mediaSourceId ?? idString, StringComparison.Ordinal));
@@ -249,7 +254,7 @@ public class SubtitleController : BaseMulletaFlixApiController
 
         if (string.Equals(format, "vtt", StringComparison.OrdinalIgnoreCase) && addVttTimeMap)
         {
-            Stream stream = await EncodeSubtitles(itemId.Value, mediaSourceId, index.Value, format, startPositionTicks, endPositionTicks, copyTimestamps).ConfigureAwait(false);
+            Stream stream = await EncodeSubtitles(item, mediaSourceId, index.Value, format, startPositionTicks, endPositionTicks, copyTimestamps).ConfigureAwait(false);
             await using (stream.ConfigureAwait(false))
             {
                 using var reader = new StreamReader(stream);
@@ -264,7 +269,7 @@ public class SubtitleController : BaseMulletaFlixApiController
 
         return File(
             await EncodeSubtitles(
-                itemId.Value,
+                item,
                 mediaSourceId,
                 index.Value,
                 format,
@@ -293,6 +298,7 @@ public class SubtitleController : BaseMulletaFlixApiController
     /// <response code="200">File returned.</response>
     /// <returns>A <see cref="FileContentResult"/> with the subtitle file.</returns>
     [HttpGet("Videos/{routeItemId}/{routeMediaSourceId}/Subtitles/{routeIndex}/{routeStartPositionTicks}/Stream.{routeFormat}")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesFile("text/*")]
     public Task<ActionResult> GetSubtitleWithTicks(
@@ -459,7 +465,7 @@ public class SubtitleController : BaseMulletaFlixApiController
     /// <summary>
     /// Encodes a subtitle in the specified format.
     /// </summary>
-    /// <param name="id">The media id.</param>
+    /// <param name="item">The media item.</param>
     /// <param name="mediaSourceId">The source media id.</param>
     /// <param name="index">The subtitle index.</param>
     /// <param name="format">The format to convert to.</param>
@@ -468,7 +474,7 @@ public class SubtitleController : BaseMulletaFlixApiController
     /// <param name="copyTimestamps">Whether to copy the timestamps.</param>
     /// <returns>A <see cref="Task{Stream}"/> with the new subtitle file.</returns>
     private Task<Stream> EncodeSubtitles(
-        Guid id,
+        BaseItem item,
         string? mediaSourceId,
         int index,
         string format,
@@ -476,8 +482,6 @@ public class SubtitleController : BaseMulletaFlixApiController
         long? endPositionTicks,
         bool copyTimestamps)
     {
-        var item = _libraryManager.GetItemById<BaseItem>(id);
-
         return _subtitleEncoder.GetSubtitles(
             item,
             mediaSourceId,
@@ -578,4 +582,3 @@ public class SubtitleController : BaseMulletaFlixApiController
         return Ok();
     }
 }
-

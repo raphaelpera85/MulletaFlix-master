@@ -17,6 +17,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 
         string Name { get; }
 
+        string Url { get; }
+
         string? TvgId { get; }
 
         string? TvgName { get; }

@@ -88,10 +88,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
         public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
-            var config = Plugin.Instance!.Configuration;
-            if (string.IsNullOrEmpty(config.M3uUrl))
+            var config = GetConfig();
+            if (!HasPlaylistSource(config))
             {
-                Log("URL M3U nao configurada. Agende via plugin.");
+                Log("Nenhuma origem M3U configurada. Ative storage mundial ou informe uma URL.");
                 return Task.CompletedTask;
             }
             return SyncInternal(config, progress, cancellationToken);
@@ -101,7 +101,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
         private Dictionary<string, string> LoadManifest()
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
+            var dir = GetDataDir();
             var path = Path.Combine(dir, "sync_manifest.json");
             lock (ManifestLock)
             {
@@ -123,7 +123,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
         private void SaveManifest(Dictionary<string, string> manifest)
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
+            var dir = GetDataDir();
             Directory.CreateDirectory(dir);
             var path = Path.Combine(dir, "sync_manifest.json");
             lock (ManifestLock)
@@ -193,25 +193,39 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 progress.Report(5);
 
-                var m3uRaw = await DownloadM3U(config.M3uUrl!, ct).ConfigureAwait(false);
+                var m3uRaw = config.UseWorldStorage && string.IsNullOrWhiteSpace(config.M3uUrl)
+                    ? await MidiaStorageOnlineWorldStorageDownloader.DownloadCombinedPlaylistAsync(_httpClientFactory, _logger, ct).ConfigureAwait(false)
+                    : await DownloadM3U(config.M3uUrl!, ct).ConfigureAwait(false);
                 progress.Report(30);
 
                 var entries = ParseM3u(m3uRaw, out var headerLine);
-                entries = MidiaStorageOnlineEntryDeduplicator.DeduplicateByKey(entries, BuildEntryDedupKey).ToList();
-                Log($"Entries deduplicadas: {entries.Count} entradas ativas.");
-                Log($"Parsed: {entries.Count} entradas");
+                var totalParsed = entries.Count;
+                var channelCandidates = entries.Where(e => e.Type == "Canal").ToList();
+                var mediaCandidates = entries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
+
+                var channelEntries = (await MidiaStorageOnlineLinkValidator.FilterOnlineEntriesAsync(
+                    channelCandidates,
+                    _httpClientFactory,
+                    _logger,
+                    ct,
+                    config.MaxLinkValidationConcurrency,
+                    GetOfflineLinkCachePath()).ConfigureAwait(false)).ToList();
+                if (channelEntries.Count != channelCandidates.Count)
+                {
+                    Log($"Links offline removidos dos canais antes do sync: {channelCandidates.Count - channelEntries.Count}");
+                }
+                channelEntries = MidiaStorageOnlineEntryDeduplicator.DeduplicateByKey(channelEntries, BuildEntryDedupKey).ToList();
+                Log($"Canais validados: {channelEntries.Count} entradas ativas.");
+                Log($"Parsed: {totalParsed} entradas");
                 progress.Report(50);
 
                 // 1. Processar e cadastrar os canais imediatamente apÃ³s o parse do M3U
-                var channelEntries = entries
-                    .Where(e => e.Type == "Canal")
-                    .ToList();
-
                 try
                 {
                     await MidiaStorageOnlineLogoLibrary.EnsureChannelLogosAsync(
                         channelEntries,
                         baseUrl,
+                        _configurationManager.CommonApplicationPaths,
                         ct).ConfigureAwait(false);
                 }
                 catch (Exception logoEx)
@@ -227,9 +241,9 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 }
 
                 var canaisContent = MidiaStorageOnlineStreamProxy.NormalizeM3uContent(canaisM3u.ToString());
-                config.TotalChannelCount = entries.Count(e => e.Type == "Canal");
-                config.EpgCompatibleChannelCount = entries.Count(e => e.Type == "Canal" && !string.IsNullOrWhiteSpace(GetEffectiveTvgId(e)));
-                Plugin.Instance!.UpdateConfiguration(config);
+                config.TotalChannelCount = channelEntries.Count;
+                config.EpgCompatibleChannelCount = channelEntries.Count(e => !string.IsNullOrWhiteSpace(GetEffectiveTvgId(e)));
+                SaveConfig(config);
 
                 // BG-5: save canais to dedicated file ONLY, do NOT serialize into config.xml
                 var canaisFilePath = GetCanaisFilePath();
@@ -251,7 +265,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     };
                     var saved = await _tunerHostManager.SaveTunerHost(tuner).ConfigureAwait(false);
                     config.TunerHostId = saved.Id;
-                    Plugin.Instance!.UpdateConfiguration(config);
+                    SaveConfig(config);
                     NormalizeMidiaStorageOnlineTunerHost(tunerUrl, saved.Id);
                     Log($"Sintonizador registrado imediatamente: {tunerUrl} (ID: {saved.Id})");
                 }
@@ -259,7 +273,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 {
                     Log($"Falha ao registrar sintonizador M3U: {tunerEx}");
                     config.LastSyncError = $"Falha ao registrar sintonizador M3U: {tunerEx.Message}";
-                    Plugin.Instance!.UpdateConfiguration(config);
+                    SaveConfig(config);
                 }
 
                 var epgConfigured = !string.IsNullOrWhiteSpace(config.EpgUrl);
@@ -271,13 +285,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                         string? guidePath;
                         if (config.EnableAutoEpg)
                         {
-                            guidePath = await AutoFetchEpgAsync(config, entries, ct).ConfigureAwait(false);
+                            guidePath = await AutoFetchEpgAsync(config, channelEntries, ct).ConfigureAwait(false);
                         }
                         else
                         {
                             guidePath = await EnsureEpgGuideAsync(config, m3uEpgUrls, ct).ConfigureAwait(false);
                         }
-                        if (!string.IsNullOrEmpty(guidePath))
+                        if (!string.IsNullOrEmpty(guidePath) && File.Exists(guidePath))
                         {
                             RegisterXmlTvListingProvider(guidePath, config);
                         }
@@ -285,7 +299,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     catch (Exception epgEx)
                     {
                         config.EpgLastError = epgEx.Message;
-                        Plugin.Instance!.UpdateConfiguration(config);
+                        SaveConfig(config);
                         Log($"Falha ao sincronizar XMLTV/EPG: {epgEx.Message}");
                     }
                 }
@@ -306,9 +320,23 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
                 try
                 {
+                    var validatedMediaEntries = (await MidiaStorageOnlineLinkValidator.FilterOnlineEntriesAsync(
+                        mediaCandidates,
+                        _httpClientFactory,
+                        _logger,
+                        ct,
+                        config.MaxLinkValidationConcurrency,
+                        GetOfflineLinkCachePath()).ConfigureAwait(false)).ToList();
+                    if (validatedMediaEntries.Count != mediaCandidates.Count)
+                    {
+                        Log($"Links offline removidos das midias antes do sync: {mediaCandidates.Count - validatedMediaEntries.Count}");
+                    }
+                    validatedMediaEntries = MidiaStorageOnlineEntryDeduplicator.DeduplicateByKey(validatedMediaEntries, BuildEntryDedupKey).ToList();
+                    Log($"Midias validadas: {validatedMediaEntries.Count} entradas ativas.");
+
                     // Count upfront to create libraries before file processing
-                    int entryMovieCount = entries.Count(e => e.Type == "Filme");
-                    int entrySeriesCount = entries.Count(e => e.Type == "Serie");
+                    int entryMovieCount = validatedMediaEntries.Count(e => e.Type == "Filme");
+                    int entrySeriesCount = validatedMediaEntries.Count(e => e.Type == "Serie");
 
                     var existingLibs = _libraryManager.GetVirtualFolders().Select(v => v.Name).ToHashSet();
                     try
@@ -340,7 +368,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     {
                         Log($"Falha ao criar bibliotecas virtuais: {libEx}");
                         config.LastSyncError = $"Falha ao criar bibliotecas virtuais: {libEx.Message}";
-                        Plugin.Instance!.UpdateConfiguration(config);
+                        SaveConfig(config);
                     }
 
                     var manifest = LoadManifest();
@@ -352,7 +380,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     int movieCount = 0, seriesCount = 0, skippedCount = 0;
 
                     // Loop paralelo somente para filmes e series
-                    var movieAndSeriesEntries = entries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
+                    var movieAndSeriesEntries = validatedMediaEntries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
 
                     await MigrateLegacyStrmPathsAsync(
                         movieAndSeriesEntries,
@@ -470,7 +498,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     config.LastSyncTime = DateTime.UtcNow;
                     config.SyncedFileCount = newManifest.Count;
                     config.LastSyncError = null;
-                    Plugin.Instance!.UpdateConfiguration(config);
+                    SaveConfig(config);
 
                     progress.Report(80);
                     Log($"Sync automatico OK em {sw.Elapsed.TotalSeconds:F1}s: {totalSynced} salvos, {skippedCount} ignorados, {deletedCount} deletados, canais M3U {canaisM3u.Length / 1024}KB");
@@ -494,7 +522,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             {
                 Log($"Erro: {ex}");
                 config.LastSyncError = ex.Message;
-                Plugin.Instance!.UpdateConfiguration(config);
+                SaveConfig(config);
             }
         }
 
@@ -522,25 +550,29 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             throw new InvalidOperationException("Falha ao baixar M3U apos 3 tentativas.");
         }
 
+        private static bool HasPlaylistSource(PluginConfiguration config)
+        {
+            return config.UseWorldStorage || !string.IsNullOrWhiteSpace(config.M3uUrl);
+        }
+
         private void Log(string msg)
         {
             _logger.LogInformation("{Msg}", msg);
         }
 
-        private static string GetDefaultStrmPath() =>
-            Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online", "strm");
-
-        private static string GetStrmOutputPath(PluginConfiguration config)
+        private string GetStrmOutputPath(PluginConfiguration config)
         {
             if (!string.IsNullOrEmpty(config.StrmOutputPath))
                 return config.StrmOutputPath;
             return GetDefaultStrmPath();
         }
 
-        private static string GetGuideFilePath()
+        private string GetDefaultStrmPath() =>
+            Path.Combine(GetDataDir(), "strm");
+
+        private string GetGuideFilePath()
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
-            return Path.Combine(dir, "guide.xml");
+            return Path.Combine(GetDataDir(), "guide.xml");
         }
 
         private async Task<string?> EnsureEpgGuideAsync(PluginConfiguration config, List<string> m3uEpgUrls, CancellationToken ct)
@@ -750,7 +782,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 return null;
             }
 
-            var dataDir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
+            var dataDir = GetDataDir();
             var channelsXmlPath = Path.Combine(dataDir, "channels.xml");
             var guideXmlPath = Path.Combine(dataDir, "guide.xml");
             var guideXmlTempPath = Path.Combine(dataDir, "guide.xml.new");
@@ -821,7 +853,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 }
 
                 var guideUrls = catalog.Channels
-                    .Select(ch => new { Lang = ch.Lang.ToLowerInvariant(), Site = ch.Site })
+                    .Where(ch => !string.IsNullOrWhiteSpace(ch.Site) && !string.IsNullOrWhiteSpace(ch.Lang))
+                    .Select(ch => new { Lang = ch.Lang.ToLowerInvariant(), Site = ch.Site.ToLowerInvariant() })
                     .Distinct()
                     .Select(x => $"https://iptv-org.github.io/epg/guides/{x.Lang}/{x.Site}.epg.xml")
                     .ToList();
@@ -842,7 +875,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     ct.ThrowIfCancellationRequested();
                     try
                     {
-                        var xml = await DownloadStringWithRetryAsync(guideUrl, ct, maxRetries: 1).ConfigureAwait(false);
+                        var xml = await DownloadEpgXmlAsync(guideUrl, ct, maxRetries: 1).ConfigureAwait(false);
                         if (string.IsNullOrWhiteSpace(xml))
                         {
                             continue;
@@ -851,27 +884,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                         var xmlDoc = new XmlDocument();
                         xmlDoc.LoadXml(xml);
 
-                        var channels = xmlDoc.SelectNodes("//channel");
-                        if (channels is not null)
-                        {
-                            foreach (XmlNode chNode in channels)
-                            {
-                                var idAttr = chNode.Attributes?["id"]?.Value;
-                                if (!string.IsNullOrEmpty(idAttr))
-                                {
-                                    channelNodes[idAttr] = chNode.OuterXml;
-                                }
-                            }
-                        }
-
-                        var programmes = xmlDoc.SelectNodes("//programme");
-                        if (programmes is not null)
-                        {
-                            foreach (XmlNode prog in programmes)
-                            {
-                                programmeNodes.Add(prog.OuterXml);
-                            }
-                        }
+                        MidiaStorageOnlineEpgXmlMerger.AddDocument(xmlDoc, catalog.Channels, channelNodes, programmeNodes);
 
                         sourcesLoaded++;
                     }
@@ -1762,11 +1775,22 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             return url.Contains("/series/", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string GetCanaisFilePath()
+        private string GetCanaisFilePath()
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
-            return Path.Combine(dir, "canais.m3u8");
+            return Path.Combine(GetDataDir(), "canais.m3u8");
         }
+
+        private string GetOfflineLinkCachePath()
+        {
+            return Path.Combine(GetDataDir(), "offline-links.json");
+        }
+
+        private PluginConfiguration GetConfig() => _configurationManager.GetConfiguration<PluginConfiguration>("midiastorageonline");
+
+        private void SaveConfig(PluginConfiguration config) => _configurationManager.SaveConfiguration("midiastorageonline", config);
+
+        private string GetDataDir() =>
+            Path.Combine(_configurationManager.CommonApplicationPaths.ProgramDataPath, "midia-online");
 
         public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
         {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -619,7 +619,7 @@ namespace Emby.Server.Implementations.Plugins
                     }
                 }
 
-                _logger.LogInformation("Loaded plugin: {PluginName} {PluginVersion}", plugin.Name, plugin.Version);
+                _logger.LogInformation("Loaded plugin: {PluginName} {PluginVersion}", plugin.Name, plugin.GetPluginInfo().Version);
 
                 return instance;
             }

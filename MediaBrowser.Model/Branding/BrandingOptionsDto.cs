@@ -27,4 +27,26 @@ public class BrandingOptionsDto
     /// Gets or sets a value indicating whether to enable the splashscreen.
     /// </summary>
     public bool SplashscreenEnabled { get; set; } = false;
+
+    public bool IntroEnabled { get; set; }
+
+    public string? IntroPath { get; set; }
+
+    public bool PrebufferEnabled { get; set; }
+
+    public int PrebufferSizeMb { get; set; } = 32;
+
+    public bool AdSenseEnabled { get; set; }
+
+    public string? AdSenseClientId { get; set; }
+
+    public string? AdSenseSlotId { get; set; }
+
+    public int AdSenseHoldSeconds { get; set; } = 8;
+
+    public bool AdSenseShowOnLogin { get; set; }
+
+    public bool AdSenseShowOnHome { get; set; }
+
+    public bool AdSenseShowAfterIntro { get; set; } = true;
 }

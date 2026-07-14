@@ -75,6 +75,8 @@ namespace MulletaFlix.Providers.Tests.Plugins.MidiaStorageOnline
 
             public string Name { get; init; } = string.Empty;
 
+            public string Url { get; init; } = string.Empty;
+
             public string? TvgId { get; init; }
 
             public string? TvgName { get; init; }
@@ -85,4 +87,3 @@ namespace MulletaFlix.Providers.Tests.Plugins.MidiaStorageOnline
         }
     }
 }
-

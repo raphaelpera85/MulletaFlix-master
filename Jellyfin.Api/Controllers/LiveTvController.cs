@@ -38,6 +38,7 @@ namespace MulletaFlix.Api.Controllers;
 /// <summary>
 /// Live tv controller.
 /// </summary>
+[Authorize]
 public class LiveTvController : BaseMulletaFlixApiController
 {
     private readonly ILiveTvManager _liveTvManager;
@@ -1118,6 +1119,7 @@ public class LiveTvController : BaseMulletaFlixApiController
     /// or a <see cref="NotFoundResult"/> if recording not found.
     /// </returns>
     [HttpGet("LiveRecordings/{recordingId}/stream")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesVideoFile]
@@ -1145,6 +1147,7 @@ public class LiveTvController : BaseMulletaFlixApiController
     /// or a <see cref="NotFoundResult"/> if stream not found.
     /// </returns>
     [HttpGet("LiveStreamFiles/{streamId}/stream.{container}")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesVideoFile]
@@ -1162,4 +1165,3 @@ public class LiveTvController : BaseMulletaFlixApiController
         return new FileStreamResult(liveStream, MimeTypes.GetMimeType("file." + container));
     }
 }
-

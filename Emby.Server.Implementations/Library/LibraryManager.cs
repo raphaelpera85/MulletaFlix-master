@@ -2365,16 +2365,12 @@ namespace Emby.Server.Implementations.Library
                     }
                     else
                     {
-                        // Pull the saved db item that will include metadata
+                        // Pull the saved db item that will include metadata when the intro is already indexed.
                         var dbItem = GetItemById(video.Id) as Video;
 
                         if (dbItem is not null)
                         {
                             video = dbItem;
-                        }
-                        else
-                        {
-                            return null;
                         }
                     }
                 }
@@ -4368,4 +4364,3 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
-

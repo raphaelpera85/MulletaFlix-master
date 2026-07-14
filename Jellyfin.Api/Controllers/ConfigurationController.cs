@@ -51,6 +51,7 @@ public class ConfigurationController : BaseMulletaFlixApiController
     /// <response code="200">Application configuration returned.</response>
     /// <returns>Application configuration.</returns>
     [HttpGet("Configuration")]
+    [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<ServerConfiguration> GetConfiguration()
     {
@@ -84,6 +85,7 @@ public class ConfigurationController : BaseMulletaFlixApiController
     /// <response code="200">Configuration returned.</response>
     /// <returns>Configuration.</returns>
     [HttpGet("Configuration/{key}")]
+    [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesFile(MediaTypeNames.Application.Json)]
     public ActionResult<object> GetNamedConfiguration([FromRoute, Required] string key)
@@ -147,6 +149,17 @@ public class ConfigurationController : BaseMulletaFlixApiController
         currentBranding.CustomCss = configuration.CustomCss;
         currentBranding.DefaultTheme = configuration.DefaultTheme;
         currentBranding.SplashscreenEnabled = configuration.SplashscreenEnabled;
+        currentBranding.IntroEnabled = configuration.IntroEnabled;
+        currentBranding.IntroPath = configuration.IntroPath;
+        currentBranding.PrebufferEnabled = configuration.PrebufferEnabled;
+        currentBranding.PrebufferSizeMb = Math.Clamp(configuration.PrebufferSizeMb, 1, 256);
+        currentBranding.AdSenseEnabled = configuration.AdSenseEnabled;
+        currentBranding.AdSenseClientId = configuration.AdSenseClientId;
+        currentBranding.AdSenseSlotId = configuration.AdSenseSlotId;
+        currentBranding.AdSenseHoldSeconds = Math.Clamp(configuration.AdSenseHoldSeconds, 0, 60);
+        currentBranding.AdSenseShowOnLogin = configuration.AdSenseShowOnLogin;
+        currentBranding.AdSenseShowOnHome = configuration.AdSenseShowOnHome;
+        currentBranding.AdSenseShowAfterIntro = configuration.AdSenseShowAfterIntro;
 
         _configurationManager.SaveConfiguration("branding", currentBranding);
 

@@ -4,16 +4,23 @@
     <title>Midia Storage Online</title>
 </head>
 <body>
-    <div id="configPage" data-role="page" class="page type-interior pluginConfigurationPage configPage" data-require="emby-input,emby-button" data-controller="__plugin/Midia Storage Online-config">
+    <div id="configPage" data-role="page" class="page type-interior pluginConfigurationPage configPage" data-require="emby-input,emby-button,emby-checkbox" data-controller="__plugin/Midia Storage Online-config">
         <div data-role="content">
             <div class="content-primary">
                 <h1>Midia Storage Online</h1>
                 <p>Baixa lista M3U e gera arquivos .strm para filmes e series.</p>
 
                 <form class="configForm">
+                    <div class="inputContainer" style="margin-bottom:0">
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="useWorldStorage" />
+                            <span>Usar storage mundial</span>
+                        </label>
+                        <div class="fieldDescription">Ative para tratar a lista como fonte mundial e aplicar o mesmo fluxo de classificação/validação.</div>
+                    </div>
                     <div class="inputContainer">
                         <input is="emby-input" type="text" id="m3uUrl" label="URL da Lista M3U" />
-                        <div class="fieldDescription">URL de onde o plugin vai buscar a lista de transmissao.</div>
+                        <div class="fieldDescription">URL opcional quando o storage mundial estiver ativo; caso contrario, use aqui a fonte da lista.</div>
                     </div>
                     <div class="inputContainer">
                         <input is="emby-input" type="text" id="epgUrl" label="URL do XMLTV/EPG" />

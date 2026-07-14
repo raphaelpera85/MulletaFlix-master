@@ -52,6 +52,7 @@ public class StartupController : BaseMulletaFlixApiController
     /// <response code="204">Startup wizard completed.</response>
     /// <returns>A <see cref="NoContentResult"/> indicating success.</returns>
     [HttpPost("Complete")]
+    [Authorize(Policy = Policies.AnonymousLanAccessPolicy)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public ActionResult CompleteWizard()
     {
@@ -97,6 +98,7 @@ public class StartupController : BaseMulletaFlixApiController
     /// <response code="204">Configuration saved.</response>
     /// <returns>A <see cref="NoContentResult"/> indicating success.</returns>
     [HttpPost("Configuration")]
+    [Authorize(Policy = Policies.AnonymousLanAccessPolicy)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [Obsolete("Use configuration endpoints")]
     public ActionResult UpdateInitialConfiguration([FromBody, Required] StartupConfigurationDto startupConfiguration)
@@ -137,6 +139,7 @@ public class StartupController : BaseMulletaFlixApiController
     /// <response code="204">Configuration saved.</response>
     /// <returns>A <see cref="NoContentResult"/> indicating success.</returns>
     [HttpPost("RemoteAccess")]
+    [Authorize(Policy = Policies.AnonymousLanAccessPolicy)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [Obsolete("Use configuration endpoints")]
     public ActionResult SetRemoteAccess([FromBody, Required] StartupRemoteAccessDto startupRemoteAccessDto)
@@ -179,6 +182,7 @@ public class StartupController : BaseMulletaFlixApiController
     /// The task result contains a <see cref="NoContentResult"/> indicating success.
     /// </returns>
     [HttpPost("User")]
+    [Authorize(Policy = Policies.AnonymousLanAccessPolicy)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult> UpdateStartupUser([FromBody] StartupUserDto startupUserDto)
     {
@@ -218,4 +222,3 @@ public class StartupController : BaseMulletaFlixApiController
         }
     }
 }
-

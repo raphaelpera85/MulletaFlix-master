@@ -93,13 +93,14 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             _logger.LogInformation("{Msg}", msg);
         }
 
-        private PluginConfiguration GetConfig() => Plugin.Instance!.Configuration;
-        private void SaveConfig(PluginConfiguration config) => Plugin.Instance!.UpdateConfiguration(config);
+        private PluginConfiguration GetConfig() => _configurationManager.GetConfiguration<PluginConfiguration>("midiastorageonline");
+        private void SaveConfig(PluginConfiguration config) => _configurationManager.SaveConfiguration("midiastorageonline", config);
 
         [HttpPost("config")]
         public IActionResult SavePluginConfig([FromBody] PluginConfiguration body)
         {
             var config = GetConfig();
+            config.UseWorldStorage = body.UseWorldStorage;
             config.M3uUrl = body.M3uUrl;
             config.EpgUrl = body.EpgUrl;
             config.EnableAutoEpg = body.EnableAutoEpg;
@@ -178,7 +179,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             }
 
             var safeFileName = Path.GetFileName(fileName);
-            var logosDir = MidiaStorageOnlineLogoLibrary.GetLogoDirectory();
+            var logosDir = MidiaStorageOnlineLogoLibrary.GetLogoDirectory(_configurationManager.CommonApplicationPaths);
             var fullPath = Path.Combine(logosDir, safeFileName);
             if (!System.IO.File.Exists(fullPath))
             {
@@ -266,16 +267,24 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             return new EmptyResult();
         }
 
-        private static string GetCanaisFilePath()
+        private string GetDataDir()
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
-            return Path.Combine(dir, "canais.m3u8");
+            return Path.Combine(_configurationManager.CommonApplicationPaths.ProgramDataPath, "midia-online");
         }
 
-        private static string GetGuideFilePath()
+        private string GetCanaisFilePath()
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
-            return Path.Combine(dir, "guide.xml");
+            return Path.Combine(GetDataDir(), "canais.m3u8");
+        }
+
+        private string GetGuideFilePath()
+        {
+            return Path.Combine(GetDataDir(), "guide.xml");
+        }
+
+        private string GetOfflineLinkCachePath()
+        {
+            return Path.Combine(GetDataDir(), "offline-links.json");
         }
 
         private static string GetLogoContentType(string path)
@@ -568,7 +577,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 return null;
             }
 
-            var dataDir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
+            var dataDir = GetDataDir();
             var channelsXmlPath = Path.Combine(dataDir, "channels.xml");
             var guideXmlPath = Path.Combine(dataDir, "guide.xml");
             var guideXmlTempPath = Path.Combine(dataDir, "guide.xml.new");
@@ -639,7 +648,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 }
 
                 var guideUrls = catalog.Channels
-                    .Select(ch => new { Lang = ch.Lang.ToLowerInvariant(), Site = ch.Site })
+                    .Where(ch => !string.IsNullOrWhiteSpace(ch.Site) && !string.IsNullOrWhiteSpace(ch.Lang))
+                    .Select(ch => new { Lang = ch.Lang.ToLowerInvariant(), Site = ch.Site.ToLowerInvariant() })
                     .Distinct()
                     .Select(x => $"https://iptv-org.github.io/epg/guides/{x.Lang}/{x.Site}.epg.xml")
                     .ToList();
@@ -660,7 +670,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     ct.ThrowIfCancellationRequested();
                     try
                     {
-                        var xml = await DownloadStringWithRetryAsync(guideUrl, ct, maxRetries: 1).ConfigureAwait(false);
+                        var xml = await DownloadEpgXmlAsync(guideUrl, ct, maxRetries: 1).ConfigureAwait(false);
                         if (string.IsNullOrWhiteSpace(xml))
                         {
                             continue;
@@ -669,27 +679,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         var xmlDoc = new XmlDocument();
                         xmlDoc.LoadXml(xml);
 
-                        var channels = xmlDoc.SelectNodes("//channel");
-                        if (channels is not null)
-                        {
-                            foreach (XmlNode chNode in channels)
-                            {
-                                var idAttr = chNode.Attributes?["id"]?.Value;
-                                if (!string.IsNullOrEmpty(idAttr))
-                                {
-                                    channelNodes[idAttr] = chNode.OuterXml;
-                                }
-                            }
-                        }
-
-                        var programmes = xmlDoc.SelectNodes("//programme");
-                        if (programmes is not null)
-                        {
-                            foreach (XmlNode prog in programmes)
-                            {
-                                programmeNodes.Add(prog.OuterXml);
-                            }
-                        }
+                        MidiaStorageOnlineEpgXmlMerger.AddDocument(xmlDoc, catalog.Channels, channelNodes, programmeNodes);
 
                         sourcesLoaded++;
                     }
@@ -841,7 +831,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private Dictionary<string, string> LoadManifest()
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
+            var dir = GetDataDir();
             var path = Path.Combine(dir, "sync_manifest.json");
             lock (ManifestLock)
             {
@@ -863,7 +853,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
         private void SaveManifest(Dictionary<string, string> manifest)
         {
-            var dir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online");
+            var dir = GetDataDir();
             Directory.CreateDirectory(dir);
             var path = Path.Combine(dir, "sync_manifest.json");
             lock (ManifestLock)
@@ -925,79 +915,101 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
         public async Task<IActionResult> Sync([FromQuery] bool force = false, CancellationToken ct = default)
         {
             var config = GetConfig();
-            if (string.IsNullOrEmpty(config.M3uUrl))
+            if (!HasPlaylistSource(config))
             {
-                Log("Sync falhou: URL M3U nao configurada.");
-                return BadRequest(new { error = "URL da lista M3U nao configurada." });
+                Log("Sync falhou: nenhuma origem M3U configurada.");
+                return BadRequest(new { error = "Ative storage mundial ou informe uma URL da lista M3U." });
             }
 
             try
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                Log($"Iniciando sync: baixando M3U de {config.M3uUrl}");
+                Log(config.UseWorldStorage && string.IsNullOrWhiteSpace(config.M3uUrl)
+                    ? "Iniciando sync: baixando M3U do storage mundial"
+                    : $"Iniciando sync: baixando M3U de {config.M3uUrl}");
                 MidiaStorageOnlineStreamProxy.LocalBaseUrl = _serverApplicationHost.GetSmartApiUrl(Request);
                 string m3uRaw = null!;
-                for (var attempt = 0; attempt <= 2; attempt++)
+                if (config.UseWorldStorage && string.IsNullOrWhiteSpace(config.M3uUrl))
                 {
-                    try
+                    m3uRaw = await MidiaStorageOnlineWorldStorageDownloader.DownloadCombinedPlaylistAsync(_httpClientFactory, _logger, ct).ConfigureAwait(false);
+                    Log($"M3U mundial baixado: {m3uRaw.Length / 1024}KB");
+                }
+                else
+                {
+                    for (var attempt = 0; attempt <= 2; attempt++)
                     {
-                        using var httpClient = _httpClientFactory.CreateClient();
-                        httpClient.Timeout = TimeSpan.FromMinutes(5);
-                        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                        var resp = await httpClient.GetAsync(config.M3uUrl!).ConfigureAwait(false);
-                        if (!resp.IsSuccessStatusCode)
+                        try
                         {
-                            Log($"Falha ao baixar M3U: HTTP {resp.StatusCode}");
-                            if (attempt < 2)
+                            using var httpClient = _httpClientFactory.CreateClient();
+                            httpClient.Timeout = TimeSpan.FromMinutes(5);
+                            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                            var resp = await httpClient.GetAsync(config.M3uUrl!).ConfigureAwait(false);
+                            if (!resp.IsSuccessStatusCode)
                             {
-                                await Task.Delay(2000 * (attempt + 1)).ConfigureAwait(false);
-                                continue;
+                                Log($"Falha ao baixar M3U: HTTP {resp.StatusCode}");
+                                if (attempt < 2)
+                                {
+                                    await Task.Delay(2000 * (attempt + 1)).ConfigureAwait(false);
+                                    continue;
+                                }
+                                return BadRequest(new { error = $"Falha ao baixar M3U: HTTP {resp.StatusCode}" });
                             }
-                            return BadRequest(new { error = $"Falha ao baixar M3U: HTTP {resp.StatusCode}" });
+                            var bytes = await resp.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                            m3uRaw = Encoding.UTF8.GetString(bytes);
+                            Log($"M3U baixado: {m3uRaw.Length / 1024}KB");
+                            break;
                         }
-                        var bytes = await resp.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                        m3uRaw = Encoding.UTF8.GetString(bytes);
-                        Log($"M3U baixado: {m3uRaw.Length / 1024}KB");
-                        break;
-                    }
-                    catch (Exception ex) when (attempt < 2)
-                    {
-                        Log($"Download M3U falhou (tentativa {attempt + 1}/3): {ex.Message}. Retentando...");
-                        await Task.Delay(2000 * (attempt + 1)).ConfigureAwait(false);
+                        catch (Exception ex) when (attempt < 2)
+                        {
+                            Log($"Download M3U falhou (tentativa {attempt + 1}/3): {ex.Message}. Retentando...");
+                            await Task.Delay(2000 * (attempt + 1)).ConfigureAwait(false);
+                        }
                     }
                 }
 
                 var entries = ParseM3u(m3uRaw, out var headerLine);
-                entries = MidiaStorageOnlineEntryDeduplicator.DeduplicateByKey(entries, BuildEntryDedupKey).ToList();
-                Log($"Entries deduplicadas: {entries.Count} entradas ativas.");
-                Log($"M3U parsed: {entries.Count} entradas");
+                var totalParsed = entries.Count;
+                var channelCandidates = entries.Where(e => e.Type == "Canal").ToList();
+                var mediaCandidates = entries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
 
-                if (entries.Count > 0)
+                var channelEntries = (await MidiaStorageOnlineLinkValidator.FilterOnlineEntriesAsync(
+                    channelCandidates,
+                    _httpClientFactory,
+                    _logger,
+                    ct,
+                    config.MaxLinkValidationConcurrency,
+                    GetOfflineLinkCachePath()).ConfigureAwait(false)).ToList();
+                if (channelEntries.Count != channelCandidates.Count)
                 {
-                    var s = entries[0];
+                    Log($"Links offline removidos dos canais antes do sync: {channelCandidates.Count - channelEntries.Count}");
+                }
+                channelEntries = MidiaStorageOnlineEntryDeduplicator.DeduplicateByKey(channelEntries, BuildEntryDedupKey).ToList();
+                Log($"Canais validados: {channelEntries.Count} entradas ativas.");
+                Log($"M3U parsed: {totalParsed} entradas");
+
+                if (channelEntries.Count > 0)
+                {
+                    var s = channelEntries[0];
                     Log($"Amostra 1: [{s.Type}] {s.Name} | URL: {s.Url}");
                 }
-                if (entries.Count > 1)
+                if (channelEntries.Count > 1)
                 {
-                    var s = entries[1];
+                    var s = channelEntries[1];
                     Log($"Amostra 2: [{s.Type}] {s.Name} | URL: {s.Url}");
                 }
-                if (entries.Count > 2)
+                if (channelEntries.Count > 2)
                 {
-                    var s = entries[2];
+                    var s = channelEntries[2];
                     Log($"Amostra 3: [{s.Type}] {s.Name} | URL: {s.Url}");
                 }
 
                 // 1. Processar e cadastrar os canais imediatamente apÃ³s o parse do M3U
-                var channelEntries = entries
-                    .Where(e => e.Type == "Canal")
-                    .ToList();
-
                 try
                 {
                     await MidiaStorageOnlineLogoLibrary.EnsureChannelLogosAsync(
                         channelEntries,
                         $"{Request.Scheme}://{Request.Host}",
+                        _configurationManager.CommonApplicationPaths,
                         ct).ConfigureAwait(false);
                 }
                 catch (Exception logoEx)
@@ -1018,8 +1030,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                 Directory.CreateDirectory(Path.GetDirectoryName(canaisFilePath)!);
                 await System.IO.File.WriteAllTextAsync(canaisFilePath, canaisContent).ConfigureAwait(false);
 
-                config.TotalChannelCount = entries.Count(e => e.Type == "Canal");
-                config.EpgCompatibleChannelCount = entries.Count(e => e.Type == "Canal" && !string.IsNullOrWhiteSpace(GetEffectiveTvgId(e)));
+                config.TotalChannelCount = channelEntries.Count;
+                config.EpgCompatibleChannelCount = channelEntries.Count(e => !string.IsNullOrWhiteSpace(GetEffectiveTvgId(e)));
 
                 // Cadastrar/atualizar sintonizador imediatamente
                 var tunerUrl = $"{Request.Scheme}://{Request.Host}/MidiaStorageOnline/m3u/canais";
@@ -1045,13 +1057,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                         string? guidePath;
                         if (config.EnableAutoEpg)
                         {
-                            guidePath = await AutoFetchEpgAsync(config, entries, ct).ConfigureAwait(false);
+                            guidePath = await AutoFetchEpgAsync(config, channelEntries, ct).ConfigureAwait(false);
                         }
                         else
                         {
                             guidePath = await EnsureEpgGuideAsync(config, m3uEpgUrls, ct).ConfigureAwait(false);
                         }
-                        if (!string.IsNullOrEmpty(guidePath))
+                        if (!string.IsNullOrEmpty(guidePath) && System.IO.File.Exists(guidePath))
                         {
                             RegisterXmlTvListingProvider(guidePath, config);
                         }
@@ -1081,9 +1093,23 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
                 try
                 {
+                    var validatedMediaEntries = (await MidiaStorageOnlineLinkValidator.FilterOnlineEntriesAsync(
+                        mediaCandidates,
+                        _httpClientFactory,
+                        _logger,
+                        ct,
+                        config.MaxLinkValidationConcurrency,
+                        GetOfflineLinkCachePath()).ConfigureAwait(false)).ToList();
+                    if (validatedMediaEntries.Count != mediaCandidates.Count)
+                    {
+                        Log($"Links offline removidos das midias antes do sync: {mediaCandidates.Count - validatedMediaEntries.Count}");
+                    }
+                    validatedMediaEntries = MidiaStorageOnlineEntryDeduplicator.DeduplicateByKey(validatedMediaEntries, BuildEntryDedupKey).ToList();
+                    Log($"Midias validadas: {validatedMediaEntries.Count} entradas ativas.");
+
                     // Count upfront to create libraries before file processing
-                    int entryMovieCount = entries.Count(e => e.Type == "Filme");
-                    int entrySeriesCount = entries.Count(e => e.Type == "Serie");
+                    int entryMovieCount = validatedMediaEntries.Count(e => e.Type == "Filme");
+                    int entrySeriesCount = validatedMediaEntries.Count(e => e.Type == "Serie");
 
                 var existingLibs = _libraryManager.GetVirtualFolders().Select(v => v.Name).ToHashSet();
 
@@ -1119,7 +1145,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
                     int movieCount = 0, seriesCount = 0, skippedCount = 0;
 
                 // Loop paralelo somente para filmes e series
-                    var movieAndSeriesEntries = entries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
+                    var movieAndSeriesEntries = validatedMediaEntries.Where(e => e.Type == "Filme" || e.Type == "Serie").ToList();
 
                 // BG-1: bounded parallelism
                 await Parallel.ForEachAsync(movieAndSeriesEntries, new ParallelOptions { MaxDegreeOfParallelism = _maxParallelism }, async (entry, ct) =>
@@ -1305,7 +1331,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
 
 
         private string GetDefaultStrmPath() =>
-            Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online", "strm");
+            Path.Combine(GetDataDir(), "strm");
+
+        private static bool HasPlaylistSource(PluginConfiguration config)
+        {
+            return config.UseWorldStorage || !string.IsNullOrWhiteSpace(config.M3uUrl);
+        }
 
         private string GetStrmOutputPath(PluginConfiguration config)
         {

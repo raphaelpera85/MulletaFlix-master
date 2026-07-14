@@ -1,10 +1,8 @@
 ﻿using System.Net;
-using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using MediaBrowser.Model.Branding;
 using Xunit;
 
 namespace MulletaFlix.Server.Integration.Tests
@@ -31,7 +29,13 @@ namespace MulletaFlix.Server.Integration.Tests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal(MediaTypeNames.Application.Json, response.Content.Headers.ContentType?.MediaType);
             Assert.Equal(Encoding.UTF8.BodyName, response.Content.Headers.ContentType?.CharSet);
-            await response.Content.ReadFromJsonAsync<BrandingOptions>(TestContext.Current.CancellationToken);
+
+            using var json = await JsonDocument.ParseAsync(
+                await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(json.RootElement.TryGetProperty("IntroPath", out _));
+            Assert.False(json.RootElement.TryGetProperty("introPath", out _));
         }
 
         [Theory]
@@ -52,4 +56,3 @@ namespace MulletaFlix.Server.Integration.Tests
         }
     }
 }
-

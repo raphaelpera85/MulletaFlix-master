@@ -15,6 +15,7 @@ using MediaBrowser.Controller.Devices;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
+using MediaBrowser.Model.IO;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -34,6 +35,7 @@ public class MediaInfoController : BaseMulletaFlixApiController
     private readonly IMediaSourceManager _mediaSourceManager;
     private readonly IDeviceManager _deviceManager;
     private readonly ILibraryManager _libraryManager;
+    private readonly IFileSystem _fileSystem;
     private readonly ILogger<MediaInfoController> _logger;
     private readonly MediaInfoHelper _mediaInfoHelper;
     private readonly IUserManager _userManager;
@@ -51,6 +53,7 @@ public class MediaInfoController : BaseMulletaFlixApiController
         IMediaSourceManager mediaSourceManager,
         IDeviceManager deviceManager,
         ILibraryManager libraryManager,
+        IFileSystem fileSystem,
         ILogger<MediaInfoController> logger,
         MediaInfoHelper mediaInfoHelper,
         IUserManager userManager)
@@ -58,6 +61,7 @@ public class MediaInfoController : BaseMulletaFlixApiController
         _mediaSourceManager = mediaSourceManager;
         _deviceManager = deviceManager;
         _libraryManager = libraryManager;
+        _fileSystem = fileSystem;
         _logger = logger;
         _mediaInfoHelper = mediaInfoHelper;
         _userManager = userManager;
@@ -86,7 +90,9 @@ public class MediaInfoController : BaseMulletaFlixApiController
             return NotFound();
         }
 
-        return await _mediaInfoHelper.GetPlaybackInfo(item, user).ConfigureAwait(false);
+        var info = await _mediaInfoHelper.GetPlaybackInfo(item, user).ConfigureAwait(false);
+        _mediaInfoHelper.AppendPrebufferApiKey(info, User.GetToken());
+        return info;
     }
 
     /// <summary>
@@ -173,7 +179,15 @@ public class MediaInfoController : BaseMulletaFlixApiController
         var item = _libraryManager.GetItemById<BaseItem>(itemId, user);
         if (item is null)
         {
-            return NotFound();
+            if (!string.IsNullOrWhiteSpace(playbackInfoDto?.Path))
+            {
+                item = _libraryManager.ResolvePath(_fileSystem.GetFileSystemInfo(playbackInfoDto.Path)) as BaseItem;
+            }
+
+            if (item is null)
+            {
+                return NotFound();
+            }
         }
 
         var info = await _mediaInfoHelper.GetPlaybackInfo(
@@ -182,6 +196,7 @@ public class MediaInfoController : BaseMulletaFlixApiController
                 mediaSourceId,
                 liveStreamId)
             .ConfigureAwait(false);
+        _mediaInfoHelper.AppendPrebufferApiKey(info, User.GetToken());
 
         if (info.ErrorCode is not null)
         {
@@ -397,4 +412,3 @@ public class MediaInfoController : BaseMulletaFlixApiController
         }
     }
 }
-

@@ -7,11 +7,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Configuration
 {
     public class PluginConfiguration : BasePluginConfiguration
     {
+        public bool UseWorldStorage { get; set; }
         public string M3uUrl { get; set; } = string.Empty;
         public string? EpgUrl { get; set; }
         public string? StrmOutputPath { get; set; }
         public bool EnableAutoEpg { get; set; }
         public string AutoEpgLanguage { get; set; } = "pt";
+        public int MaxLinkValidationConcurrency { get; set; }
 
         public string? CanaisM3uContent { get; set; }
         public string? TunerHostId { get; set; }

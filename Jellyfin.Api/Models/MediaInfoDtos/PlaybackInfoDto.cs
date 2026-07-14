@@ -49,6 +49,11 @@ public class PlaybackInfoDto
     public string? LiveStreamId { get; set; }
 
     /// <summary>
+    /// Gets or sets the source path for transient items such as external intros.
+    /// </summary>
+    public string? Path { get; set; }
+
+    /// <summary>
     /// Gets or sets the device profile.
     /// </summary>
     public DeviceProfile? DeviceProfile { get; set; }
@@ -88,4 +93,3 @@ public class PlaybackInfoDto
     /// </summary>
     public bool? AlwaysBurnInSubtitleWhenTranscoding { get; set; }
 }
-

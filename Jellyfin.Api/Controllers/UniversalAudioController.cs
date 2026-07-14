@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using MulletaFlix.Api.Attributes;
+using MulletaFlix.Api.Extensions;
 using MulletaFlix.Api.Helpers;
 using MulletaFlix.Api.ModelBinders;
 using MulletaFlix.Api.Models.StreamingDtos;
@@ -135,6 +136,7 @@ public class UniversalAudioController : BaseMulletaFlixApiController
                 user,
                 mediaSourceId)
             .ConfigureAwait(false);
+        _mediaInfoHelper.AppendPrebufferApiKey(info, User.GetToken());
 
         // set device specific data
         foreach (var sourceInfo in info.MediaSources)
@@ -357,4 +359,3 @@ public class UniversalAudioController : BaseMulletaFlixApiController
         return deviceProfile;
     }
 }
-

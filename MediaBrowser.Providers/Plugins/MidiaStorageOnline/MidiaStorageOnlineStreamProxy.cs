@@ -21,7 +21,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
                 return rawUrl;
             }
 
-            return $"{LocalBaseUrl}{ProxyPath}?u={Uri.EscapeDataString(rawUrl.Trim())}";
+            var normalizedUrl = NormalizeAbsoluteHttpUrl(rawUrl);
+            return $"{LocalBaseUrl}{ProxyPath}?u={Uri.EscapeDataString(normalizedUrl ?? rawUrl.Trim())}";
         }
 
         internal static string NormalizeM3uContent(string content)
@@ -67,7 +68,8 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
             }
 
             var decoded = Uri.UnescapeDataString(encodedUrl.Trim());
-            if (!Uri.TryCreate(decoded, UriKind.Absolute, out var parsed))
+            var normalized = NormalizeAbsoluteHttpUrl(decoded);
+            if (normalized is null || !Uri.TryCreate(normalized, UriKind.Absolute, out var parsed))
             {
                 return false;
             }
@@ -80,6 +82,39 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 
             uri = parsed;
             return true;
+        }
+
+        internal static string? NormalizeAbsoluteHttpUrl(string? rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl))
+            {
+                return null;
+            }
+
+            if (!Uri.TryCreate(rawUrl.Trim(), UriKind.Absolute, out var parsed))
+            {
+                return null;
+            }
+
+            if (!parsed.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                && !parsed.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var builder = new UriBuilder(parsed);
+            var path = builder.Path;
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                while (path.Contains("//", StringComparison.Ordinal))
+                {
+                    path = path.Replace("//", "/", StringComparison.Ordinal);
+                }
+
+                builder.Path = path;
+            }
+
+            return builder.Uri.AbsoluteUri;
         }
 
         internal static string GetBrowserUserAgent()

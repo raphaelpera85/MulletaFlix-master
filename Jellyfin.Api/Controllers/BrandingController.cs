@@ -38,7 +38,18 @@ public class BrandingController : BaseMulletaFlixApiController
             LoginDisclaimer = brandingOptions.LoginDisclaimer,
             CustomCss = brandingOptions.CustomCss,
             DefaultTheme = brandingOptions.DefaultTheme,
-            SplashscreenEnabled = brandingOptions.SplashscreenEnabled
+            SplashscreenEnabled = brandingOptions.SplashscreenEnabled,
+            IntroEnabled = brandingOptions.IntroEnabled,
+            IntroPath = brandingOptions.IntroPath,
+            PrebufferEnabled = brandingOptions.PrebufferEnabled,
+            PrebufferSizeMb = brandingOptions.PrebufferSizeMb,
+            AdSenseEnabled = brandingOptions.AdSenseEnabled,
+            AdSenseClientId = brandingOptions.AdSenseClientId,
+            AdSenseSlotId = brandingOptions.AdSenseSlotId,
+            AdSenseHoldSeconds = brandingOptions.AdSenseHoldSeconds,
+            AdSenseShowOnLogin = brandingOptions.AdSenseShowOnLogin,
+            AdSenseShowOnHome = brandingOptions.AdSenseShowOnHome,
+            AdSenseShowAfterIntro = brandingOptions.AdSenseShowAfterIntro
         };
 
         return brandingOptionsDto;

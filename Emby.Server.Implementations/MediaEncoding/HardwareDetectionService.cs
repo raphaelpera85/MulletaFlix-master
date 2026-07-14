@@ -164,8 +164,7 @@ namespace Emby.Server.Implementations.MediaEncoding
             // 1. Se tem GPU NVIDIA E FFmpeg suporta nvenc -> usa nvenc
             // 2. Se tem GPU AMD E FFmpeg suporta amf -> usa amf
             // 3. Se tem GPU Intel E FFmpeg suporta qsv -> usa qsv
-            // 4. Se FFmpeg suporta algum encoder de hardware mesmo sem GPU detectada -> usa o que funcionar
-            // 5. Caso contrario -> none (software)
+            // 4. Caso contrario -> none (software)
 
             HardwareAccelerationType actualHwType;
             string hwTypeReason;
@@ -197,28 +196,10 @@ namespace Emby.Server.Implementations.MediaEncoding
                     hwTypeReason,
                     gpuList.FirstOrDefault(g => ContainsAny(g, "Intel", "Arc")) ?? "Intel");
             }
-            else if (ffmpegSupportsNvenc)
-            {
-                actualHwType = HardwareAccelerationType.nvenc;
-                hwTypeReason = "FFmpeg possui suporte NVENC (possivel GPU NVIDIA nao listada via WMI)";
-                _logger.LogInformation("DECISAO: Usando NVIDIA NVENC (fallback FFmpeg) - {Reason}", hwTypeReason);
-            }
-            else if (ffmpegSupportsAmfH264)
-            {
-                actualHwType = HardwareAccelerationType.amf;
-                hwTypeReason = "FFmpeg possui suporte AMF (possivel GPU AMD nao listada via WMI)";
-                _logger.LogInformation("DECISAO: Usando AMD AMF (fallback FFmpeg) - {Reason}", hwTypeReason);
-            }
-            else if (ffmpegSupportsQsvH264)
-            {
-                actualHwType = HardwareAccelerationType.qsv;
-                hwTypeReason = "FFmpeg possui suporte QSV (possivel GPU Intel nao listada via WMI)";
-                _logger.LogInformation("DECISAO: Usando Intel QSV (fallback FFmpeg) - {Reason}", hwTypeReason);
-            }
             else
             {
                 actualHwType = HardwareAccelerationType.none;
-                hwTypeReason = "Nenhum encoder de hardware suportado pelo FFmpeg encontrado";
+                hwTypeReason = "Nenhuma GPU compatível foi detectada";
                 _logger.LogInformation(
                     "DECISAO: Usando transcodificacao por SOFTWARE (CPU) - {Reason}",
                     hwTypeReason);

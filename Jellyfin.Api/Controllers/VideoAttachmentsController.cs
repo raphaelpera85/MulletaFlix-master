@@ -10,6 +10,7 @@ using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.MediaEncoding;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,7 @@ namespace MulletaFlix.Api.Controllers;
 /// Attachments controller.
 /// </summary>
 [Route("Videos")]
+[Authorize]
 [Tags("Video")]
 public class VideoAttachmentsController : BaseMulletaFlixApiController
 {
@@ -83,4 +85,3 @@ public class VideoAttachmentsController : BaseMulletaFlixApiController
         }
     }
 }
-

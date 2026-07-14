@@ -21,6 +21,8 @@ namespace Jellyfin.Database.Implementations.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4")
                 .OldAnnotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.Sql("DROP INDEX IF EXISTS IX_BaseItems_FullTextSearch ON BaseItems;");
+
             migrationBuilder.CreateIndex(
                 name: "IX_BaseItems_FullTextSearch",
                 table: "BaseItems",

@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using Castle.Components.DictionaryAdapter;
@@ -8,6 +11,7 @@ using Emby.Server.Implementations.Library;
 using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
@@ -21,6 +25,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Library
     public class MediaSourceManagerTests
     {
         private readonly MediaSourceManager _mediaSourceManager;
+        private readonly Mock<IMediaEncoder> _mockMediaEncoder;
         private readonly Mock<IUserDataManager> _mockUserDataManager;
         private readonly Mock<ILocalizationManager> _mockLocalizationManager;
         private Video _item;
@@ -34,6 +39,7 @@ namespace MulletaFlix.Server.Implementations.Tests.Library
             fixture.Behaviors.Add(new OmitOnRecursionBehavior());
             fixture.Inject<IFileSystem>(fixture.Create<ManagedFileSystem>());
 
+            _mockMediaEncoder = fixture.Freeze<Mock<IMediaEncoder>>();
             _mockUserDataManager = fixture.Freeze<Mock<IUserDataManager>>();
             _mockUserDataManager.Setup(m => m.GetUserData(It.IsAny<User>(), It.IsAny<BaseItem>())).Returns(new UserItemData() { Key = "key" });
 
@@ -151,6 +157,47 @@ namespace MulletaFlix.Server.Implementations.Tests.Library
             _mediaSourceManager.SetDefaultAudioAndSubtitleStreamIndices(_item, mediaInfo, _user);
             Assert.Equal(expectedIndex, mediaInfo.DefaultAudioStreamIndex);
         }
+
+        [Fact]
+        public async Task GetLiveStreamMediaInfo_ProbeFailure_FallsBack()
+        {
+            _mockMediaEncoder
+                .Setup(m => m.GetMediaInfo(It.IsAny<MediaInfoRequest>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("probe failed"));
+
+            var mediaSource = new MediaSourceInfo
+            {
+                MediaStreams =
+                [
+                    new MediaStream
+                    {
+                        Type = MediaStreamType.Video,
+                        Index = -1
+                    },
+                    new MediaStream
+                    {
+                        Type = MediaStreamType.Audio,
+                        Index = -1
+                    }
+                ]
+            };
+
+            var liveStream = new Mock<ILiveStream>();
+            liveStream.As<IDirectStreamProvider>();
+            liveStream.SetupGet(x => x.UniqueId).Returns("live-1");
+            liveStream.SetupGet(x => x.MediaSource).Returns(mediaSource);
+
+            var openStreamsField = typeof(MediaSourceManager).GetField("_openStreams", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(openStreamsField);
+
+            var openStreams = (System.Collections.Concurrent.ConcurrentDictionary<string, ILiveStream>)openStreamsField!.GetValue(_mediaSourceManager)!;
+            openStreams.TryAdd("live-1", liveStream.Object);
+
+            var result = await _mediaSourceManager.GetLiveStreamMediaInfo("live-1", CancellationToken.None);
+
+            Assert.Same(mediaSource, result);
+            Assert.Null(result.Container);
+            Assert.Null(result.DefaultAudioStreamIndex);
+        }
     }
 }
-

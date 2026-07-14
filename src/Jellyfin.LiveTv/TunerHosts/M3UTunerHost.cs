@@ -189,6 +189,7 @@ namespace MulletaFlix.LiveTv.TunerHosts
                 RequiresOpening = true,
                 RequiresClosing = true,
                 RequiresLooping = info.EnableStreamLooping,
+                SupportsProbing = false,
 
                 ReadAtNativeFramerate = info.ReadAtNativeFramerate,
 
@@ -216,4 +217,3 @@ namespace MulletaFlix.LiveTv.TunerHosts
         }
     }
 }
-

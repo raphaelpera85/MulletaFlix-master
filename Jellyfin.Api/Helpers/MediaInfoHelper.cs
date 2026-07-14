@@ -467,6 +467,26 @@ public class MediaInfoHelper
         mediaSource.Container = StreamBuilder.NormalizeMediaSourceFormatIntoSingleContainer(mediaSource.Container, profile, type);
     }
 
+    public void AppendPrebufferApiKey(PlaybackInfoResponse info, string? apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return;
+        }
+
+        foreach (var mediaSource in info.MediaSources)
+        {
+            if (mediaSource.Path is not null
+                && mediaSource.Path.Contains("/Videos/", StringComparison.OrdinalIgnoreCase)
+                && mediaSource.Path.Contains("/Prebuffer", StringComparison.OrdinalIgnoreCase)
+                && !mediaSource.Path.Contains("ApiKey=", StringComparison.OrdinalIgnoreCase))
+            {
+                mediaSource.Path += mediaSource.Path.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+                mediaSource.Path += $"ApiKey={Uri.EscapeDataString(apiKey)}";
+            }
+        }
+    }
+
     private void SetDeviceSpecificSubtitleInfo(StreamInfo info, MediaSourceInfo mediaSource, string accessToken)
     {
         var profiles = info.GetSubtitleProfiles(_mediaEncoder, false, "-", accessToken);
@@ -516,4 +536,3 @@ public class MediaInfoHelper
         return maxBitrate;
     }
 }
-

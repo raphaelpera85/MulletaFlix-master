@@ -3,6 +3,7 @@ export default function(view, params) {
     var baseUrl = window.location.href.split('/web/')[0];
 
     function render(config) {
+        view.querySelector('#useWorldStorage').checked = !!config.UseWorldStorage;
         view.querySelector('#m3uUrl').value = config.M3uUrl || '';
         view.querySelector('#epgUrl').value = config.EpgUrl || '';
         view.querySelector('#enableAutoEpg').checked = !!config.EnableAutoEpg;
@@ -39,6 +40,7 @@ export default function(view, params) {
         e.preventDefault();
         Dashboard.showLoadingMsg();
         var config = {
+            UseWorldStorage: view.querySelector('#useWorldStorage').checked,
             M3uUrl: view.querySelector('#m3uUrl').value,
             EpgUrl: view.querySelector('#epgUrl').value,
             EnableAutoEpg: view.querySelector('#enableAutoEpg').checked,

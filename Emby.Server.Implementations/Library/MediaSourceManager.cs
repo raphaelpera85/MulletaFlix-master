@@ -58,6 +58,7 @@ namespace Emby.Server.Implementations.Library
         private readonly IDirectoryService _directoryService;
         private readonly IMediaStreamRepository _mediaStreamRepository;
         private readonly IMediaAttachmentRepository _mediaAttachmentRepository;
+        private readonly IStrmPrebufferManager _prebufferManager;
         private readonly ConcurrentDictionary<string, ILiveStream> _openStreams = new ConcurrentDictionary<string, ILiveStream>(StringComparer.OrdinalIgnoreCase);
         private readonly AsyncNonKeyedLocker _liveStreamLocker = new(1);
         private readonly JsonSerializerOptions _jsonOptions = JsonDefaults.Options;
@@ -77,7 +78,8 @@ namespace Emby.Server.Implementations.Library
             IMediaEncoder mediaEncoder,
             IDirectoryService directoryService,
             IMediaStreamRepository mediaStreamRepository,
-            IMediaAttachmentRepository mediaAttachmentRepository)
+            IMediaAttachmentRepository mediaAttachmentRepository,
+            IStrmPrebufferManager prebufferManager)
         {
             _appHost = appHost;
             _itemRepo = itemRepo;
@@ -92,6 +94,7 @@ namespace Emby.Server.Implementations.Library
             _directoryService = directoryService;
             _mediaStreamRepository = mediaStreamRepository;
             _mediaAttachmentRepository = mediaAttachmentRepository;
+            _prebufferManager = prebufferManager;
         }
 
         public void AddParts(IEnumerable<IMediaSourceProvider> providers)
@@ -174,16 +177,27 @@ namespace Emby.Server.Implementations.Library
             });
         }
 
-        public async Task<IReadOnlyList<MediaSourceInfo>> GetPlaybackMediaSources(BaseItem item, User user, bool allowMediaProbe, bool enablePathSubstitution, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<MediaSourceInfo>> GetPlaybackMediaSources(BaseItem item, User user, bool allowMediaProbe, bool enablePathSubstitution, CancellationToken cancellationToken)
+        {
+            return GetPlaybackMediaSources(item, user, allowMediaProbe, enablePathSubstitution, cancellationToken, null);
+        }
+
+        public async Task<IReadOnlyList<MediaSourceInfo>> GetPlaybackMediaSources(BaseItem item, User user, bool allowMediaProbe, bool enablePathSubstitution, CancellationToken cancellationToken, string? accessToken)
         {
             var mediaSources = GetStaticMediaSources(item, enablePathSubstitution, user);
+            if (mediaSources.Count == 0)
+            {
+                return mediaSources;
+            }
+
             ResolveSymlinkPaths(mediaSources, enablePathSubstitution);
 
             // For STRM files: only probe if streams are completely unknown (first play).
             // On subsequent plays, streams are already in the DB — avoid FullRefresh overhead
             // (which re-runs FFprobe even with cached results, costing 200-500ms of overhead).
             // For non-STRM items missing streams, keep the original behavior.
-            var strmMissingStreams = item.Path.EndsWith(".strm", StringComparison.OrdinalIgnoreCase)
+            var strmMissingStreams = item.Path is not null
+                && item.Path.EndsWith(".strm", StringComparison.OrdinalIgnoreCase)
                 && mediaSources[0].MediaStreams.Count == 0;
             var videoMissingStreams = item.MediaType == MediaType.Video
                 && mediaSources[0].MediaStreams.All(i => i.Type != MediaStreamType.Video);
@@ -215,6 +229,24 @@ namespace Emby.Server.Implementations.Library
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(accessToken)
+                && _prebufferManager is Emby.Server.Implementations.MediaEncoding.StrmPrebufferManager strmPrebufferManager
+                && strmPrebufferManager.TryGetProxyUrl(item.Id, accessToken, out var prebufferUrlWithToken))
+            {
+                foreach (var source in mediaSources)
+                {
+                    source.Path = prebufferUrlWithToken;
+                    source.Protocol = MediaProtocol.Http;
+                }
+            }
+            else if (_prebufferManager.TryGetProxyUrl(item.Id, out var prebufferUrl))
+            {
+                foreach (var source in mediaSources)
+                {
+                    source.Path = prebufferUrl;
+                    source.Protocol = MediaProtocol.Http;
+                }
+            }
 
             var dynamicMediaSources = await GetDynamicMediaSources(item, cancellationToken).ConfigureAwait(false);
 
@@ -646,6 +678,8 @@ namespace Emby.Server.Implementations.Library
 
         private static void AddMediaInfo(MediaSourceInfo mediaSource)
         {
+            mediaSource.MediaStreams ??= [];
+
             mediaSource.DefaultSubtitleStreamIndex = null;
 
             // Null this out so that it will be treated like a live stream
@@ -710,18 +744,26 @@ namespace Emby.Server.Implementations.Library
 
             if (liveStreamInfo is IDirectStreamProvider)
             {
-                var info = await _mediaEncoder.GetMediaInfo(
-                    new MediaInfoRequest
-                    {
-                        MediaSource = mediaSource,
-                        ExtractChapters = false,
-                        MediaType = DlnaProfileType.Video
-                    },
-                    cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    var info = await _mediaEncoder.GetMediaInfo(
+                        new MediaInfoRequest
+                        {
+                            MediaSource = mediaSource,
+                            ExtractChapters = false,
+                            MediaType = DlnaProfileType.Video
+                        },
+                        cancellationToken).ConfigureAwait(false);
 
-                mediaSource.MediaStreams = info.MediaStreams;
-                mediaSource.Container = info.Container;
-                mediaSource.Bitrate = info.Bitrate;
+                    mediaSource.MediaStreams = info.MediaStreams;
+                    mediaSource.Container = info.Container;
+                    mediaSource.Bitrate = info.Bitrate;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Falling back to live stream media info for {LiveStreamId}", id);
+                    AddMediaInfo(mediaSource);
+                }
             }
 
             return mediaSource;
@@ -1005,4 +1047,3 @@ namespace Emby.Server.Implementations.Library
         }
     }
 }
-

@@ -441,6 +441,7 @@ namespace Emby.Server.Implementations
         public void Init(IServiceCollection serviceCollection)
         {
             DiscoverTypes();
+            serviceCollection.AddSingleton<IStrmPrebufferManager, StrmPrebufferManager>();
 
             ConfigurationManager.AddParts(GetExports<IConfigurationFactory>());
 

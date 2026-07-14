@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Common.Configuration;
 
 namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 {
@@ -28,12 +29,12 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
         private const string ChannelsJsonUrl = "https://iptv-org.github.io/api/channels.json";
         private const string LogosJsonUrl = "https://iptv-org.github.io/api/logos.json";
 
-        public static string GetLogoDirectory()
+        public static string GetLogoDirectory(IApplicationPaths applicationPaths)
         {
-            return Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online", "logos");
+            return Path.Combine(applicationPaths.ProgramDataPath, "midia-online", "logos");
         }
 
-        public static async Task EnsureChannelLogosAsync(IEnumerable<IMidiaStorageOnlineM3uEntry> entries, string baseUrl, CancellationToken ct)
+        public static async Task EnsureChannelLogosAsync(IEnumerable<IMidiaStorageOnlineM3uEntry> entries, string baseUrl, IApplicationPaths applicationPaths, CancellationToken ct)
         {
             if (entries is null)
             {
@@ -50,11 +51,11 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
                 return;
             }
 
-            var logoDir = GetLogoDirectory();
+            var logoDir = GetLogoDirectory(applicationPaths);
             Directory.CreateDirectory(logoDir);
             baseUrl = baseUrl.TrimEnd('/');
 
-            var catalog = await GetCatalogAsync(ct).ConfigureAwait(false);
+            var catalog = await GetCatalogAsync(applicationPaths, ct).ConfigureAwait(false);
 
             var uniqueEntries = channelEntries
                 .Select(entry => new LogoRequest(entry, entry.TvgLogo!.Trim()))
@@ -96,16 +97,15 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
             }
         }
 
-        public static string? TryResolveLocalLogoPath(string fileName)
+        public static string? TryResolveLocalLogoPath(string logoDir, string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
             {
                 return null;
             }
 
-            var root = GetLogoDirectory();
-            var fullPath = Path.GetFullPath(Path.Combine(root, Path.GetFileName(fileName)));
-            var rootFull = Path.GetFullPath(root + Path.DirectorySeparatorChar);
+            var fullPath = Path.GetFullPath(Path.Combine(logoDir, Path.GetFileName(fileName)));
+            var rootFull = Path.GetFullPath(logoDir + Path.DirectorySeparatorChar);
             return fullPath.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath)
                 ? fullPath
                 : null;
@@ -121,7 +121,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
 
             if (TryGetLocalFileName(logoUrl, out var localFileName))
             {
-                var existingPath = TryResolveLocalLogoPath(localFileName);
+                var existingPath = TryResolveLocalLogoPath(logoDir, localFileName);
                 if (!string.IsNullOrWhiteSpace(existingPath))
                 {
                     return BuildLocalLogoUrl(baseUrl, localFileName);
@@ -410,7 +410,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
             return sb.ToString().Normalize(NormalizationForm.FormC);
         }
 
-        private static async Task<IptvOrgLogoCatalog> GetCatalogAsync(CancellationToken ct)
+        private static async Task<IptvOrgLogoCatalog> GetCatalogAsync(IApplicationPaths applicationPaths, CancellationToken ct)
         {
             if (_catalog is not null)
             {
@@ -425,7 +425,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline
                     return _catalog;
                 }
 
-                var cacheDir = Path.Combine(Plugin.AppPaths.ProgramDataPath, "midia-online", "logo-catalog");
+                var cacheDir = Path.Combine(applicationPaths.ProgramDataPath, "midia-online", "logo-catalog");
                 Directory.CreateDirectory(cacheDir);
 
                 var channelsPath = Path.Combine(cacheDir, "channels.json");
