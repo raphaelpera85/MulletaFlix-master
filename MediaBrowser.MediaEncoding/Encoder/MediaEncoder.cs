@@ -383,9 +383,9 @@ namespace MediaBrowser.MediaEncoding.Encoder
                 return files.FirstOrDefault(i => Path.GetFileNameWithoutExtension(i.AsSpan()).Equals(filename, StringComparison.OrdinalIgnoreCase)
                                                     && !Path.GetExtension(i.AsSpan()).Equals(".c", StringComparison.OrdinalIgnoreCase));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Trap all exceptions, like DirNotExists, and return null
+                _logger.LogDebug(ex, "Failed to find encoder in directory {Path}", path);
                 return null;
             }
         }
@@ -596,6 +596,7 @@ namespace MediaBrowser.MediaEncoding.Encoder
             var ffmpegAnalyzeDuration = _config.GetFFmpegAnalyzeDuration() ?? string.Empty;
             var ffmpegProbeSize = _config.GetFFmpegProbeSize() ?? string.Empty;
             var analyzeDuration = string.Empty;
+            // StringBuilder not warranted: max 4 small appends, called once per encode session (not a hot path).
             var extraArgs = string.Empty;
 
             if (request.MediaSource.AnalyzeDurationMs > 0)

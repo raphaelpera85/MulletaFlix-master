@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS1591
+#pragma warning disable CS1591
 #pragma warning disable CA5394
 
 using System;
@@ -508,7 +508,10 @@ namespace Emby.Server.Implementations.Library
                     // Re-route playlist/collection references from deleted primary to new primary
                     RerouteLinkedChildReferencesAsync(video.Id, newPrimary.Id).GetAwaiter().GetResult();
 
-                    // Update remaining alternates to point to new primary
+                    // Update remaining alternates to point to new primary.
+                    // TODO(perf): This is an N+1 pattern — each UpdateToRepositoryAsync is a separate DB write.
+                    // Consider batching via UpdateItemsAsync or a future batch UpdateToRepository API.
+                    // Low priority: this runs only on primary-version deletion, not a hot path.
                     foreach (var alternate in alternateVersions.Skip(1))
                     {
                         alternate.SetPrimaryVersionId(newPrimary.Id);

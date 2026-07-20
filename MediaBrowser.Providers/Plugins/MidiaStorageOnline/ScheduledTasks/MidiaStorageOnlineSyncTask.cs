@@ -25,7 +25,10 @@ using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.Tasks;
+using MulletaFlix.Database.Implementations;
+using MulletaFlix.Database.Implementations.Entities;
 using MediaBrowser.Providers.Plugins.MidiaStorageOnline.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 {
@@ -60,6 +63,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
         private readonly ILibraryManager _libraryManager;
         private readonly ILibraryMonitor _libraryMonitor;
         private readonly ITunerHostManager _tunerHostManager;
+        private readonly IDbContextFactory<MulletaFlixDbContext> _dbContextFactory;
         private readonly ILogger<MidiaStorageOnlineSyncTask> _logger;
 
         public MidiaStorageOnlineSyncTask(
@@ -69,6 +73,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             ILibraryMonitor libraryMonitor,
             ITunerHostManager tunerHostManager,
             ILibraryManager libraryManager,
+            IDbContextFactory<MulletaFlixDbContext> dbContextFactory,
             ILogger<MidiaStorageOnlineSyncTask> logger)
         {
             _httpClientFactory = httpClientFactory;
@@ -77,12 +82,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             _libraryMonitor = libraryMonitor;
             _tunerHostManager = tunerHostManager;
             _libraryManager = libraryManager;
+            _dbContextFactory = dbContextFactory;
             _logger = logger;
         }
 
         public string Name => "Sincronizar Midia Online";
         public string Key => "MidiaStorageOnlineSync";
-        public string Description => "Baixa lista M3U, classifica entradas e gera arquivos .strm";
+        public string Description => "Baixa lista M3U, classifica entradas e gera arquivos .strm ou downloads locais";
         public string Category => "Midia Storage Online";
 
 
@@ -189,6 +195,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
                 var baseUrl = _serverApplicationHost.GetSmartApiUrl("localhost");
                 MidiaStorageOnlineStreamProxy.LocalBaseUrl = baseUrl;
+                var outputMode = NormalizeOutputMode(config.OutputMode);
 
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 progress.Report(5);
@@ -372,9 +379,11 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     }
 
                     var manifest = LoadManifest();
+                    var knownSourceUrls = await LoadKnownSourceUrlsAsync(manifest, ct).ConfigureAwait(false);
                     // Initialize with existing manifest to preserve files that are not in the new M3U
                     var newManifest = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(manifest, StringComparer.OrdinalIgnoreCase);
                     var createdDirs = new System.Collections.Concurrent.ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+                    var recognitionMetadata = new System.Collections.Concurrent.ConcurrentBag<MidiaStorageOnlineMediaMetadata>();
 
                     var totalSynced = 0;
                     int movieCount = 0, seriesCount = 0, skippedCount = 0;
@@ -388,6 +397,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                         moviesPath,
                         seriesPath,
                         newManifest,
+                        outputMode,
                         ct).ConfigureAwait(false);
 
                     // BG-1: bounded parallelism
@@ -399,14 +409,20 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
                             if (entry.Type == "Filme")
                             {
-                                var relPath = BuildMovieRelativePath(entry, MaxMovieFolderNameLength, MaxMovieFileStemLength);
+                                var relPath = BuildMovieRelativePath(entry, MaxMovieFolderNameLength, MaxMovieFileStemLength, outputMode);
                                 var filePath = Path.Combine(strmPath, relPath);
                                 var newUrl = entry.Url.Trim();
+
+                                if (!knownSourceUrls.TryAdd(newUrl, 0))
+                                {
+                                    Interlocked.Increment(ref skippedCount);
+                                    return;
+                                }
 
                                 newManifest[relPath] = newUrl;
 
                                 var fileExists = System.IO.File.Exists(filePath);
-                                if (fileExists)
+                                if (fileExists && string.Equals(outputMode, "strm", StringComparison.OrdinalIgnoreCase))
                                 {
                                     try
                                     {
@@ -424,6 +440,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
                                     Log($"Sobrescrevendo .strm: {filePath}");
                                 }
+                                else if (fileExists && string.Equals(outputMode, "download", StringComparison.OrdinalIgnoreCase)
+                                         && manifest.TryGetValue(relPath, out var savedUrl)
+                                         && string.Equals(savedUrl?.Trim(), newUrl, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    Interlocked.Increment(ref skippedCount);
+                                    return;
+                                }
 
                                 var dir = Path.GetDirectoryName(filePath)!;
                                 if (createdDirs.TryAdd(dir, 0))
@@ -435,20 +458,34 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                                     Directory.CreateDirectory(dir);
                                 }
 
-                                await System.IO.File.WriteAllTextAsync(filePath, newUrl, token).ConfigureAwait(false);
+                                if (string.Equals(outputMode, "download", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    await DownloadMediaFileAsync(entry.Url, filePath, token).ConfigureAwait(false);
+                                }
+                                else
+                                {
+                                    await System.IO.File.WriteAllTextAsync(filePath, newUrl, token).ConfigureAwait(false);
+                                }
+                                recognitionMetadata.Add(BuildRecognitionMetadata(entry, relPath, outputMode));
                                 Interlocked.Increment(ref totalSynced);
                                 Interlocked.Increment(ref movieCount);
                             }
                             else if (entry.Type == "Serie")
                             {
-                                var relPath = BuildSeriesRelativePath(entry, MaxSeriesShowNameLength, MaxSeasonFolderNameLength, MaxEpisodeFileStemLength);
+                                var relPath = BuildSeriesRelativePath(entry, MaxSeriesShowNameLength, MaxSeasonFolderNameLength, MaxEpisodeFileStemLength, outputMode);
                                 var filePath = Path.Combine(strmPath, relPath);
                                 var newUrl = entry.Url.Trim();
+
+                                if (!knownSourceUrls.TryAdd(newUrl, 0))
+                                {
+                                    Interlocked.Increment(ref skippedCount);
+                                    return;
+                                }
 
                                 newManifest[relPath] = newUrl;
 
                                 var fileExists = System.IO.File.Exists(filePath);
-                                if (fileExists)
+                                if (fileExists && string.Equals(outputMode, "strm", StringComparison.OrdinalIgnoreCase))
                                 {
                                     try
                                     {
@@ -466,6 +503,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
                                     Log($"Sobrescrevendo .strm: {filePath}");
                                 }
+                                else if (fileExists && string.Equals(outputMode, "download", StringComparison.OrdinalIgnoreCase)
+                                         && manifest.TryGetValue(relPath, out var savedUrl)
+                                         && string.Equals(savedUrl?.Trim(), newUrl, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    Interlocked.Increment(ref skippedCount);
+                                    return;
+                                }
 
                                 var dir = Path.GetDirectoryName(filePath)!;
                                 if (createdDirs.TryAdd(dir, 0))
@@ -477,7 +521,15 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                                     Directory.CreateDirectory(dir);
                                 }
 
-                                await System.IO.File.WriteAllTextAsync(filePath, newUrl, token).ConfigureAwait(false);
+                                if (string.Equals(outputMode, "download", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    await DownloadMediaFileAsync(entry.Url, filePath, token).ConfigureAwait(false);
+                                }
+                                else
+                                {
+                                    await System.IO.File.WriteAllTextAsync(filePath, newUrl, token).ConfigureAwait(false);
+                                }
+                                recognitionMetadata.Add(BuildRecognitionMetadata(entry, relPath, outputMode));
                                 Interlocked.Increment(ref totalSynced);
                                 Interlocked.Increment(ref seriesCount);
                             }
@@ -494,6 +546,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     // Save manifest
                     var manifestToSave = new Dictionary<string, string>(newManifest, StringComparer.OrdinalIgnoreCase);
                     SaveManifest(manifestToSave);
+                    await SaveRecognitionMetadataAsync(recognitionMetadata, ct).ConfigureAwait(false);
 
                     config.LastSyncTime = DateTime.UtcNow;
                     config.SyncedFileCount = newManifest.Count;
@@ -1328,6 +1381,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 IncludeItemTypes = new[] { BaseItemKind.LiveTvChannel }
             });
 
+            // Batch updates: collect all changed items and persist once to avoid N+1 DB writes.
+            var changedItems = new List<BaseItem>();
+            Folder? sharedParent = null;
+
             foreach (var baseItem in channelItems)
             {
                 ct.ThrowIfCancellationRequested();
@@ -1365,8 +1422,14 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
                 if (changed)
                 {
-                    await _libraryManager.UpdateItemAsync(channelItem, channelItem.GetParent(), ItemUpdateType.MetadataImport, ct).ConfigureAwait(false);
+                    sharedParent ??= channelItem.GetParent() as Folder;
+                    changedItems.Add(channelItem);
                 }
+            }
+
+            if (changedItems.Count > 0 && sharedParent is not null)
+            {
+                await _libraryManager.UpdateItemsAsync(changedItems, sharedParent, ItemUpdateType.MetadataImport, ct).ConfigureAwait(false);
             }
         }
 
@@ -1436,6 +1499,9 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
 
             string showName = name;
             string season = "Season 1";
+            int? seasonNumber = null;
+            int? episodeNumber = null;
+            var originalFileName = GetOriginalFileName(url);
 
             if (type == "Serie")
             {
@@ -1443,7 +1509,9 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 if (epMatch.Success)
                 {
                     showName = epMatch.Groups[1].Value.Trim();
-                    season = "Season " + epMatch.Groups[2].Value;
+                    seasonNumber = int.TryParse(epMatch.Groups[2].Value, out var parsedSeason) ? parsedSeason : null;
+                    episodeNumber = int.TryParse(epMatch.Groups[3].Value, out var parsedEpisode) ? parsedEpisode : null;
+                    season = seasonNumber.HasValue ? $"Season {seasonNumber.Value:00}" : "Season 01";
                     var episodeTitle = epMatch.Groups[4].Value.Trim();
                     if (!string.IsNullOrEmpty(episodeTitle))
                         name = episodeTitle;
@@ -1458,6 +1526,9 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                 RawLines = rawLines,
                 ShowName = showName,
                 Season = season,
+                SeasonNumber = seasonNumber,
+                EpisodeNumber = episodeNumber,
+                OriginalFileName = originalFileName,
                 TvgId = tvgId,
                 TvgName = tvgName,
                 GroupTitle = groupTitle,
@@ -1486,12 +1557,15 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             return Regex.Replace(sb.ToString().TrimEnd('.', ' '), @"\s+", " ").Trim();
         }
 
-        private static string BuildMovieRelativePath(M3uEntry entry, int folderMaxLength, int fileMaxLength)
+        private static string BuildMovieRelativePath(M3uEntry entry, int folderMaxLength, int fileMaxLength, string outputMode)
         {
             var name = TruncatePathSegment(SanitizeName(entry.Name), folderMaxLength);
-            // ponytail: hash only the .strm name to keep folder names readable and still avoid collisions.
-            var fileName = TrimPathSegment(SanitizeName(entry.Name), fileMaxLength);
-            return Path.Combine("Filmes", name, fileName + ".strm");
+            // ponytail: keep folder names readable and only vary the extension by output mode.
+            var originalFileName = string.IsNullOrWhiteSpace(entry.OriginalFileName) ? GetOriginalFileName(entry.Url) : entry.OriginalFileName;
+            var fileName = string.Equals(outputMode, "download", StringComparison.OrdinalIgnoreCase)
+                ? TrimPathSegment(SanitizeName(Path.GetFileNameWithoutExtension(string.IsNullOrWhiteSpace(originalFileName) ? entry.Name : originalFileName)), fileMaxLength)
+                : TrimPathSegment(SanitizeName(entry.Name), fileMaxLength);
+            return Path.Combine("Filmes", name, fileName + GetOutputFileExtension(outputMode, entry.Url));
         }
 
         private static string BuildLegacyMovieRelativePath(M3uEntry entry, int folderMaxLength, int fileMaxLength)
@@ -1501,13 +1575,13 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             return Path.Combine("Filmes", name, fileName + ".strm");
         }
 
-        private static string BuildSeriesRelativePath(M3uEntry entry, int showMaxLength, int seasonMaxLength, int fileMaxLength)
+        private static string BuildSeriesRelativePath(M3uEntry entry, int showMaxLength, int seasonMaxLength, int fileMaxLength, string outputMode)
         {
             var showName = TruncatePathSegment(SanitizeName(entry.ShowName), showMaxLength);
             var seasonFolder = TruncatePathSegment(SanitizeName(entry.Season), seasonMaxLength);
-            // ponytail: hash only the .strm name to keep folder names readable and still avoid collisions.
-            var fileName = TrimPathSegment(SanitizeName(entry.Name), fileMaxLength);
-            return Path.Combine("Series", showName, seasonFolder, fileName + ".strm");
+            // ponytail: keep series folders stable and use episode codes when available.
+            var fileName = BuildSeriesFileStem(entry, fileMaxLength);
+            return Path.Combine("Series", showName, seasonFolder, fileName + GetOutputFileExtension(outputMode, entry.Url));
         }
 
         private static string BuildLegacySeriesRelativePath(M3uEntry entry, int showMaxLength, int seasonMaxLength, int fileMaxLength)
@@ -1516,6 +1590,185 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             var seasonFolder = TrimPathSegment(SanitizeName(entry.Season), seasonMaxLength);
             var fileName = TrimPathSegment(SanitizeName(entry.Name), fileMaxLength);
             return Path.Combine("Series", showName, seasonFolder, fileName + ".strm");
+        }
+
+        private static string BuildSeriesFileStem(M3uEntry entry, int fileMaxLength)
+        {
+            if (entry.SeasonNumber.HasValue && entry.EpisodeNumber.HasValue)
+            {
+                var episodeCode = $"S{entry.SeasonNumber.Value:00}E{entry.EpisodeNumber.Value:00}";
+                var baseName = string.IsNullOrWhiteSpace(entry.ShowName) ? entry.Name : entry.ShowName;
+                return TrimPathSegment(SanitizeName($"{baseName} - {episodeCode}"), fileMaxLength);
+            }
+
+            return TrimPathSegment(SanitizeName(entry.Name), fileMaxLength);
+        }
+
+        private static string NormalizeOutputMode(string? outputMode)
+        {
+            return string.Equals(outputMode, "download", StringComparison.OrdinalIgnoreCase) ? "download" : "strm";
+        }
+
+        private static string GetOutputFileExtension(string outputMode, string sourceUrl)
+        {
+            if (!string.Equals(outputMode, "download", StringComparison.OrdinalIgnoreCase))
+            {
+                return ".strm";
+            }
+
+            if (Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri))
+            {
+                var extension = Path.GetExtension(uri.AbsolutePath);
+                if (!string.IsNullOrWhiteSpace(extension) && !string.Equals(extension, ".m3u8", StringComparison.OrdinalIgnoreCase))
+                {
+                    return extension;
+                }
+            }
+
+            return ".mkv";
+        }
+
+        private static MidiaStorageOnlineMediaMetadata BuildRecognitionMetadata(M3uEntry entry, string relativePath, string outputMode)
+        {
+            var sourceTitle = string.Equals(entry.Type, "Serie", StringComparison.OrdinalIgnoreCase)
+                ? entry.ShowName
+                : entry.Name;
+
+            var (title, year) = SplitTitleAndYear(sourceTitle);
+            var originalFileName = string.IsNullOrWhiteSpace(entry.OriginalFileName) ? GetOriginalFileName(entry.Url) : entry.OriginalFileName;
+
+            return new MidiaStorageOnlineMediaMetadata
+            {
+                RelativePath = relativePath,
+                ContentType = string.Equals(entry.Type, "Serie", StringComparison.OrdinalIgnoreCase) ? "series" : "movie",
+                Title = string.IsNullOrWhiteSpace(title) ? sourceTitle : title,
+                Year = year,
+                SeasonNumber = entry.SeasonNumber,
+                EpisodeNumber = entry.EpisodeNumber,
+                Mode = NormalizeOutputMode(outputMode),
+                SourceUrl = entry.Url.Trim(),
+                SourceId = BuildEntryDedupKey(entry),
+                OriginalFileName = originalFileName,
+                RecognizedAtUtc = DateTime.UtcNow
+            };
+        }
+
+        private static (string Title, int? Year) SplitTitleAndYear(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return (string.Empty, null);
+            }
+
+            var match = Regex.Match(value.Trim(), @"^(.*?)(?:\s*\((\d{4})\))?$");
+            if (!match.Success)
+            {
+                return (value.Trim(), null);
+            }
+
+            var title = match.Groups[1].Value.Trim();
+            int? year = int.TryParse(match.Groups[2].Value, out var parsedYear) ? parsedYear : (int?)null;
+            return (title, year);
+        }
+
+        private static string GetOriginalFileName(string sourceUrl)
+        {
+            if (Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri))
+            {
+                var fileName = Path.GetFileName(uri.AbsolutePath);
+                if (!string.IsNullOrWhiteSpace(fileName))
+                {
+                    return fileName;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private async Task SaveRecognitionMetadataAsync(
+            System.Collections.Concurrent.ConcurrentBag<MidiaStorageOnlineMediaMetadata> recognitionMetadata,
+            CancellationToken ct)
+        {
+            var items = recognitionMetadata.ToArray();
+            if (items.Length == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var dbContext = await _dbContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+                await using (dbContext.ConfigureAwait(false))
+                {
+                    foreach (var item in items)
+                    {
+                        var existing = await dbContext.MidiaStorageOnlineMediaMetadata.FindAsync(new object[] { item.RelativePath }, ct).ConfigureAwait(false);
+                        if (existing is null)
+                        {
+                            dbContext.MidiaStorageOnlineMediaMetadata.Add(item);
+                            continue;
+                        }
+
+                        existing.ContentType = item.ContentType;
+                        existing.Title = item.Title;
+                        existing.Year = item.Year;
+                        existing.SeasonNumber = item.SeasonNumber;
+                        existing.EpisodeNumber = item.EpisodeNumber;
+                        existing.Mode = item.Mode;
+                        existing.SourceUrl = item.SourceUrl;
+                        existing.SourceId = item.SourceId;
+                        existing.OriginalFileName = item.OriginalFileName;
+                        existing.RecognizedAtUtc = item.RecognizedAtUtc;
+                    }
+
+                    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Falha ao persistir metadata de reconhecimento: {ex.Message}");
+                _logger.LogWarning(ex, "Falha ao persistir metadata de reconhecimento.");
+            }
+        }
+
+        private async Task<System.Collections.Concurrent.ConcurrentDictionary<string, byte>> LoadKnownSourceUrlsAsync(
+            IReadOnlyDictionary<string, string> manifest,
+            CancellationToken ct)
+        {
+            var knownSourceUrls = new System.Collections.Concurrent.ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var sourceUrl in manifest.Values)
+            {
+                var normalized = sourceUrl?.Trim();
+                if (!string.IsNullOrWhiteSpace(normalized))
+                {
+                    knownSourceUrls.TryAdd(normalized, 0);
+                }
+            }
+
+            try
+            {
+                await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+                var storedUrls = await dbContext.MidiaStorageOnlineMediaMetadata
+                    .AsNoTracking()
+                    .Select(x => x.SourceUrl)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
+
+                foreach (var sourceUrl in storedUrls)
+                {
+                    var normalized = sourceUrl.Trim();
+                    knownSourceUrls.TryAdd(normalized, 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Falha ao carregar cache de links reconhecidos: {ex.Message}");
+                _logger.LogWarning(ex, "Falha ao carregar cache de links reconhecidos.");
+            }
+
+            return knownSourceUrls;
         }
 
         private static string TruncatePathSegment(string value, int maxLength)
@@ -1543,6 +1796,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             string moviesRoot,
             string seriesRoot,
             System.Collections.Concurrent.ConcurrentDictionary<string, string> manifest,
+            string outputMode,
             CancellationToken ct)
         {
             foreach (var entry in entries)
@@ -1552,7 +1806,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     await MigrateLegacyFileAsync(
                         entry,
                         BuildLegacyMovieRelativePath(entry, LegacyMaxMovieFolderNameLength, LegacyMaxMovieFileStemLength),
-                        BuildMovieRelativePath(entry, MaxMovieFolderNameLength, MaxMovieFileStemLength),
+                        BuildMovieRelativePath(entry, MaxMovieFolderNameLength, MaxMovieFileStemLength, outputMode),
                         moviesRoot,
                         strmPath,
                         manifest,
@@ -1563,7 +1817,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
                     await MigrateLegacyFileAsync(
                         entry,
                         BuildLegacySeriesRelativePath(entry, LegacyMaxSeriesShowNameLength, LegacyMaxSeasonFolderNameLength, LegacyMaxEpisodeFileStemLength),
-                        BuildSeriesRelativePath(entry, MaxSeriesShowNameLength, MaxSeasonFolderNameLength, MaxEpisodeFileStemLength),
+                        BuildSeriesRelativePath(entry, MaxSeriesShowNameLength, MaxSeasonFolderNameLength, MaxEpisodeFileStemLength, outputMode),
                         seriesRoot,
                         strmPath,
                         manifest,
@@ -1628,6 +1882,48 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             }
 
             Log($"Conflito de migracao mantido: {legacyRelativePath} existe, mas {currentRelativePath} já tem conteudo diferente.");
+        }
+
+        private async Task DownloadMediaFileAsync(string url, string filePath, CancellationToken ct)
+        {
+            using var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromMinutes(30);
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var tempPath = filePath + ".download";
+            try
+            {
+                await using (var responseStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
+                await using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true))
+                {
+                    await responseStream.CopyToAsync(fileStream, ct).ConfigureAwait(false);
+                }
+
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+
+                System.IO.File.Move(tempPath, filePath);
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempPath))
+                {
+                    System.IO.File.Delete(tempPath);
+                }
+            }
         }
 
         private static void CleanupEmptyParentDirectories(string? directoryPath, string stopDirectory)
@@ -1817,7 +2113,10 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.ScheduledTasks
             public string Url { get; set; } = "";
             public string Type { get; set; } = "Canal";
             public string ShowName { get; set; } = "";
-            public string Season { get; set; } = "Season 1";
+            public string Season { get; set; } = "Season 01";
+            public int? SeasonNumber { get; set; }
+            public int? EpisodeNumber { get; set; }
+            public string OriginalFileName { get; set; } = "";
             public List<string> RawLines { get; set; } = new();
             public string? TvgId { get; set; }
             public string? TvgName { get; set; }
