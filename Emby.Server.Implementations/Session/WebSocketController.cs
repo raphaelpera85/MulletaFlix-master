@@ -77,21 +77,28 @@ namespace Emby.Server.Implementations.Session
 
         private async void OnConnectionClosed(object? sender, EventArgs e)
         {
-            var connection = sender as IWebSocketConnection ?? throw new ArgumentException($"{nameof(sender)} is not of type {nameof(IWebSocketConnection)}", nameof(sender));
-            _logger.LogDebug("Removing websocket from session {Session}", _session.Id);
-            ObjectDisposedException.ThrowIf(_disposed, this);
             try
             {
-                _socketsLock.EnterWriteLock();
-                _sockets.Remove(connection);
-                connection.Closed -= OnConnectionClosed;
-            }
-            finally
-            {
-                _socketsLock.ExitWriteLock();
-            }
+                var connection = sender as IWebSocketConnection ?? throw new ArgumentException($"{nameof(sender)} is not of type {nameof(IWebSocketConnection)}", nameof(sender));
+                _logger.LogDebug("Removing websocket from session {Session}", _session.Id);
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                try
+                {
+                    _socketsLock.EnterWriteLock();
+                    _sockets.Remove(connection);
+                    connection.Closed -= OnConnectionClosed;
+                }
+                finally
+                {
+                    _socketsLock.ExitWriteLock();
+                }
 
-            await _sessionManager.CloseIfNeededAsync(_session).ConfigureAwait(false);
+                await _sessionManager.CloseIfNeededAsync(_session).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in {Method}", nameof(OnConnectionClosed));
+            }
         }
 
         /// <inheritdoc />

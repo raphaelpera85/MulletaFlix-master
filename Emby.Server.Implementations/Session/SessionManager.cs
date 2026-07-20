@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 using System;
 using System.Collections.Concurrent;
@@ -631,77 +631,91 @@ namespace Emby.Server.Implementations.Session
 
         private async void CheckForIdlePlayback(object state)
         {
-            var playingSessions = Sessions.Where(i => i.NowPlayingItem is not null)
-                .ToList();
-
-            if (playingSessions.Count > 0)
+            try
             {
-                var idle = playingSessions
-                    .Where(i => (DateTime.UtcNow - i.LastPlaybackCheckIn).TotalMinutes > 5)
+                var playingSessions = Sessions.Where(i => i.NowPlayingItem is not null)
                     .ToList();
 
-                foreach (var session in idle)
+                if (playingSessions.Count > 0)
                 {
-                    _logger.LogDebug("Session {0} has gone idle while playing", session.Id);
+                    var idle = playingSessions
+                        .Where(i => (DateTime.UtcNow - i.LastPlaybackCheckIn).TotalMinutes > 5)
+                        .ToList();
 
-                    try
+                    foreach (var session in idle)
                     {
-                        await OnPlaybackStopped(new PlaybackStopInfo
+                        _logger.LogDebug("Session {0} has gone idle while playing", session.Id);
+
+                        try
                         {
-                            Item = session.NowPlayingItem,
-                            ItemId = session.NowPlayingItem is null ? Guid.Empty : session.NowPlayingItem.Id,
-                            SessionId = session.Id,
-                            MediaSourceId = session.PlayState?.MediaSourceId,
-                            PositionTicks = session.PlayState?.PositionTicks
-                        }).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogDebug(ex, "Error calling OnPlaybackStopped");
+                            await OnPlaybackStopped(new PlaybackStopInfo
+                            {
+                                Item = session.NowPlayingItem,
+                                ItemId = session.NowPlayingItem is null ? Guid.Empty : session.NowPlayingItem.Id,
+                                SessionId = session.Id,
+                                MediaSourceId = session.PlayState?.MediaSourceId,
+                                PositionTicks = session.PlayState?.PositionTicks
+                            }).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug(ex, "Error calling OnPlaybackStopped");
+                        }
                     }
                 }
+                else
+                {
+                    StopIdleCheckTimer();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                StopIdleCheckTimer();
+                _logger.LogError(ex, "Error in {Method}", nameof(CheckForIdlePlayback));
             }
         }
 
         private async void CheckForInactiveSteams(object state)
         {
-            var inactiveSessions = Sessions.Where(i =>
-                    i.NowPlayingItem is not null
-                    && i.PlayState.IsPaused
-                    && (DateTime.UtcNow - i.LastPausedDate).Value.TotalMinutes > _config.Configuration.InactiveSessionThreshold);
-
-            foreach (var session in inactiveSessions)
+            try
             {
-                _logger.LogDebug("Session {Session} has been inactive for {InactiveTime} minutes. Stopping it.", session.Id, _config.Configuration.InactiveSessionThreshold);
+                var inactiveSessions = Sessions.Where(i =>
+                        i.NowPlayingItem is not null
+                        && i.PlayState.IsPaused
+                        && (DateTime.UtcNow - i.LastPausedDate).Value.TotalMinutes > _config.Configuration.InactiveSessionThreshold);
 
-                try
+                foreach (var session in inactiveSessions)
                 {
-                    await SendPlaystateCommand(
-                        session.Id,
-                        session.Id,
-                        new PlaystateRequest()
-                        {
-                            Command = PlaystateCommand.Stop,
-                            ControllingUserId = session.UserId.ToString(),
-                            SeekPositionTicks = session.PlayState?.PositionTicks
-                        },
-                        CancellationToken.None).ConfigureAwait(true);
+                    _logger.LogDebug("Session {Session} has been inactive for {InactiveTime} minutes. Stopping it.", session.Id, _config.Configuration.InactiveSessionThreshold);
+
+                    try
+                    {
+                        await SendPlaystateCommand(
+                            session.Id,
+                            session.Id,
+                            new PlaystateRequest()
+                            {
+                                Command = PlaystateCommand.Stop,
+                                ControllingUserId = session.UserId.ToString(),
+                                SeekPositionTicks = session.PlayState?.PositionTicks
+                            },
+                            CancellationToken.None).ConfigureAwait(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Error calling SendPlaystateCommand for stopping inactive session {Session}.", session.Id);
+                    }
                 }
-                catch (Exception ex)
+
+                bool playingSessions = Sessions.Any(i => i.NowPlayingItem is not null);
+
+                if (!playingSessions)
                 {
-                    _logger.LogDebug(ex, "Error calling SendPlaystateCommand for stopping inactive session {Session}.", session.Id);
+                    StopInactiveCheckTimer();
                 }
             }
-
-            bool playingSessions = Sessions.Any(i => i.NowPlayingItem is not null);
-
-            if (!playingSessions)
+            catch (Exception ex)
             {
-                StopInactiveCheckTimer();
+                _logger.LogError(ex, "Error in {Method}", nameof(CheckForInactiveSteams));
             }
         }
 

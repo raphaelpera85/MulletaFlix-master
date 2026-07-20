@@ -87,30 +87,37 @@ public class TranscodingSegmentCleaner : IDisposable
 
     private async void TimerCallback(object? state)
     {
-        if (_job.HasExited)
+        try
         {
-            DisposeTimer();
-            return;
-        }
-
-        var options = GetOptions();
-        var enableSegmentDeletion = options.EnableSegmentDeletion;
-        var segmentKeepSeconds = Math.Max(options.SegmentKeepSeconds, 20);
-
-        if (enableSegmentDeletion)
-        {
-            var downloadPositionTicks = _job.DownloadPositionTicks ?? 0;
-            var downloadPositionSeconds = Convert.ToInt64(TimeSpan.FromTicks(downloadPositionTicks).TotalSeconds);
-
-            if (downloadPositionSeconds > 0 && segmentKeepSeconds > 0 && downloadPositionSeconds > segmentKeepSeconds)
+            if (_job.HasExited)
             {
-                var idxMaxToDelete = (downloadPositionSeconds - segmentKeepSeconds) / _segmentLength;
+                DisposeTimer();
+                return;
+            }
 
-                if (idxMaxToDelete > 0)
+            var options = GetOptions();
+            var enableSegmentDeletion = options.EnableSegmentDeletion;
+            var segmentKeepSeconds = Math.Max(options.SegmentKeepSeconds, 20);
+
+            if (enableSegmentDeletion)
+            {
+                var downloadPositionTicks = _job.DownloadPositionTicks ?? 0;
+                var downloadPositionSeconds = Convert.ToInt64(TimeSpan.FromTicks(downloadPositionTicks).TotalSeconds);
+
+                if (downloadPositionSeconds > 0 && segmentKeepSeconds > 0 && downloadPositionSeconds > segmentKeepSeconds)
                 {
-                    await DeleteSegmentFiles(_job, 0, idxMaxToDelete, 1500).ConfigureAwait(false);
+                    var idxMaxToDelete = (downloadPositionSeconds - segmentKeepSeconds) / _segmentLength;
+
+                    if (idxMaxToDelete > 0)
+                    {
+                        await DeleteSegmentFiles(_job, 0, idxMaxToDelete, 1500).ConfigureAwait(false);
+                    }
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Method}", nameof(TimerCallback));
         }
     }
 

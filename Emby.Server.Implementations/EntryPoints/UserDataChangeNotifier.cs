@@ -9,6 +9,7 @@ using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Session;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Emby.Server.Implementations.EntryPoints
 {
@@ -22,6 +23,7 @@ namespace Emby.Server.Implementations.EntryPoints
         private readonly ISessionManager _sessionManager;
         private readonly IUserDataManager _userDataManager;
         private readonly IUserManager _userManager;
+        private readonly ILogger<UserDataChangeNotifier> _logger;
 
         private readonly Dictionary<Guid, List<BaseItem>> _changedItems = new();
         private readonly Lock _syncLock = new();
@@ -37,11 +39,13 @@ namespace Emby.Server.Implementations.EntryPoints
         public UserDataChangeNotifier(
             IUserDataManager userDataManager,
             ISessionManager sessionManager,
-            IUserManager userManager)
+            IUserManager userManager,
+            ILogger<UserDataChangeNotifier> logger)
         {
             _userDataManager = userDataManager;
             _sessionManager = sessionManager;
             _userManager = userManager;
+            _logger = logger;
         }
 
         /// <inheritdoc />
@@ -107,27 +111,34 @@ namespace Emby.Server.Implementations.EntryPoints
 
         private async void UpdateTimerCallback(object? state)
         {
-            List<KeyValuePair<Guid, List<BaseItem>>> changes;
-            lock (_syncLock)
+            try
             {
-                // Remove dupes in case some were saved multiple times
-                changes = _changedItems.ToList();
-                _changedItems.Clear();
-
-                if (_updateTimer is not null)
+                List<KeyValuePair<Guid, List<BaseItem>>> changes;
+                lock (_syncLock)
                 {
-                    _updateTimer.Dispose();
-                    _updateTimer = null;
+                    // Remove dupes in case some were saved multiple times
+                    changes = _changedItems.ToList();
+                    _changedItems.Clear();
+
+                    if (_updateTimer is not null)
+                    {
+                        _updateTimer.Dispose();
+                        _updateTimer = null;
+                    }
+                }
+
+                foreach (var (userId, changedItems) in changes)
+                {
+                    await _sessionManager.SendMessageToUserSessions(
+                        [userId],
+                        SessionMessageType.UserDataChanged,
+                        () => GetUserDataChangeInfo(userId, changedItems),
+                        default).ConfigureAwait(false);
                 }
             }
-
-            foreach (var (userId, changedItems) in changes)
+            catch (Exception ex)
             {
-                await _sessionManager.SendMessageToUserSessions(
-                    [userId],
-                    SessionMessageType.UserDataChanged,
-                    () => GetUserDataChangeInfo(userId, changedItems),
-                    default).ConfigureAwait(false);
+                _logger.LogError(ex, "Error in {Method}", nameof(UpdateTimerCallback));
             }
         }
 

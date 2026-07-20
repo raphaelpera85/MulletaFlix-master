@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 using System;
 using System.Collections.Generic;
@@ -387,47 +387,54 @@ namespace MediaBrowser.Controller.Session
 
         private async void OnProgressTimerCallback(object state)
         {
-            if (_disposed)
-            {
-                return;
-            }
-
-            var progressInfo = _lastProgressInfo;
-            if (progressInfo is null)
-            {
-                return;
-            }
-
-            if (progressInfo.IsPaused)
-            {
-                return;
-            }
-
-            var positionTicks = progressInfo.PositionTicks ?? 0;
-            if (positionTicks < 0)
-            {
-                positionTicks = 0;
-            }
-
-            var newPositionTicks = positionTicks + ProgressIncrement;
-            var item = progressInfo.Item;
-            long? runtimeTicks = item?.RunTimeTicks;
-
-            // Don't report beyond the runtime
-            if (runtimeTicks.HasValue && newPositionTicks >= runtimeTicks.Value)
-            {
-                return;
-            }
-
-            progressInfo.PositionTicks = newPositionTicks;
-
             try
             {
-                await _sessionManager.OnPlaybackProgress(progressInfo, true).ConfigureAwait(false);
+                if (_disposed)
+                {
+                    return;
+                }
+
+                var progressInfo = _lastProgressInfo;
+                if (progressInfo is null)
+                {
+                    return;
+                }
+
+                if (progressInfo.IsPaused)
+                {
+                    return;
+                }
+
+                var positionTicks = progressInfo.PositionTicks ?? 0;
+                if (positionTicks < 0)
+                {
+                    positionTicks = 0;
+                }
+
+                var newPositionTicks = positionTicks + ProgressIncrement;
+                var item = progressInfo.Item;
+                long? runtimeTicks = item?.RunTimeTicks;
+
+                // Don't report beyond the runtime
+                if (runtimeTicks.HasValue && newPositionTicks >= runtimeTicks.Value)
+                {
+                    return;
+                }
+
+                progressInfo.PositionTicks = newPositionTicks;
+
+                try
+                {
+                    await _sessionManager.OnPlaybackProgress(progressInfo, true).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error reporting playback progress");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error reporting playback progress");
+                _logger.LogError(ex, "Error in {Method}", nameof(OnProgressTimerCallback));
             }
         }
 

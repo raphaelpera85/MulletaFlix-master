@@ -107,21 +107,28 @@ public class TranscodingThrottler : IDisposable
 
     private async void TimerCallback(object? state)
     {
-        if (_job.HasExited)
+        try
         {
-            DisposeTimer();
-            return;
-        }
+            if (_job.HasExited)
+            {
+                DisposeTimer();
+                return;
+            }
 
-        var options = GetOptions();
+            var options = GetOptions();
 
-        if (options.EnableThrottling && IsThrottleAllowed(_job, Math.Max(options.ThrottleDelaySeconds, 60)))
-        {
-            await PauseTranscoding().ConfigureAwait(false);
+            if (options.EnableThrottling && IsThrottleAllowed(_job, Math.Max(options.ThrottleDelaySeconds, 60)))
+            {
+                await PauseTranscoding().ConfigureAwait(false);
+            }
+            else
+            {
+                await UnpauseTranscoding().ConfigureAwait(false);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await UnpauseTranscoding().ConfigureAwait(false);
+            _logger.LogError(ex, "Error in {Method}", nameof(TimerCallback));
         }
     }
 

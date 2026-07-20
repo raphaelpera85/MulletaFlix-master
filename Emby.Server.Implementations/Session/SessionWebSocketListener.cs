@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
@@ -206,50 +206,57 @@ namespace Emby.Server.Implementations.Session
         /// </summary>
         private async void KeepAliveSockets(object? o, EventArgs? e)
         {
-            List<IWebSocketConnection> inactive;
-            List<IWebSocketConnection> lost;
-
-            lock (_webSocketsLock)
+            try
             {
-                _logger.LogDebug("Watching {0} WebSockets.", _webSockets.Count);
+                List<IWebSocketConnection> inactive;
+                List<IWebSocketConnection> lost;
 
-                inactive = _webSockets.Where(i =>
+                lock (_webSocketsLock)
                 {
-                    var elapsed = (DateTime.UtcNow - i.LastKeepAliveDate).TotalSeconds;
-                    return (elapsed > WebSocketLostTimeout * ForceKeepAliveFactor) && (elapsed < WebSocketLostTimeout);
-                }).ToList();
-                lost = _webSockets.Where(i => (DateTime.UtcNow - i.LastKeepAliveDate).TotalSeconds >= WebSocketLostTimeout).ToList();
-            }
+                    _logger.LogDebug("Watching {0} WebSockets.", _webSockets.Count);
 
-            if (inactive.Count > 0)
-            {
-                _logger.LogInformation("Sending ForceKeepAlive message to {0} inactive WebSockets.", inactive.Count);
-            }
-
-            foreach (var webSocket in inactive)
-            {
-                try
-                {
-                    await SendForceKeepAlive(webSocket).ConfigureAwait(false);
-                }
-                catch (WebSocketException exception)
-                {
-                    _logger.LogInformation(exception, "Error sending ForceKeepAlive message to WebSocket.");
-                    lost.Add(webSocket);
-                }
-            }
-
-            lock (_webSocketsLock)
-            {
-                if (lost.Count > 0)
-                {
-                    _logger.LogInformation("Lost {0} WebSockets.", lost.Count);
-                    foreach (var webSocket in lost)
+                    inactive = _webSockets.Where(i =>
                     {
-                        // TODO: handle session relative to the lost webSocket
-                        RemoveWebSocket(webSocket);
+                        var elapsed = (DateTime.UtcNow - i.LastKeepAliveDate).TotalSeconds;
+                        return (elapsed > WebSocketLostTimeout * ForceKeepAliveFactor) && (elapsed < WebSocketLostTimeout);
+                    }).ToList();
+                    lost = _webSockets.Where(i => (DateTime.UtcNow - i.LastKeepAliveDate).TotalSeconds >= WebSocketLostTimeout).ToList();
+                }
+
+                if (inactive.Count > 0)
+                {
+                    _logger.LogInformation("Sending ForceKeepAlive message to {0} inactive WebSockets.", inactive.Count);
+                }
+
+                foreach (var webSocket in inactive)
+                {
+                    try
+                    {
+                        await SendForceKeepAlive(webSocket).ConfigureAwait(false);
+                    }
+                    catch (WebSocketException exception)
+                    {
+                        _logger.LogInformation(exception, "Error sending ForceKeepAlive message to WebSocket.");
+                        lost.Add(webSocket);
                     }
                 }
+
+                lock (_webSocketsLock)
+                {
+                    if (lost.Count > 0)
+                    {
+                        _logger.LogInformation("Lost {0} WebSockets.", lost.Count);
+                        foreach (var webSocket in lost)
+                        {
+                            // TODO: handle session relative to the lost webSocket
+                            RemoveWebSocket(webSocket);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in {Method}", nameof(KeepAliveSockets));
             }
         }
 

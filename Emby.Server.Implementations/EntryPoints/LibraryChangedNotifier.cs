@@ -204,44 +204,51 @@ public sealed class LibraryChangedNotifier : IHostedService, IDisposable
 
     private async void LibraryUpdateTimerCallback(object? state)
     {
-        List<Folder> foldersAddedTo;
-        List<Folder> foldersRemovedFrom;
-        List<BaseItem> itemsUpdated;
-        List<BaseItem> itemsAdded;
-        List<BaseItem> itemsRemoved;
-        lock (_libraryChangedSyncLock)
+        try
         {
-            // Remove dupes in case some were saved multiple times
-            foldersAddedTo = _foldersAddedTo
-                .DistinctBy(x => x.Id)
-                .ToList();
-
-            foldersRemovedFrom = _foldersRemovedFrom
-                .DistinctBy(x => x.Id)
-                .ToList();
-
-            itemsUpdated = _itemsUpdated
-                .Where(i => !_itemsAdded.Contains(i))
-                .DistinctBy(x => x.Id)
-                .ToList();
-
-            itemsAdded = _itemsAdded.ToList();
-            itemsRemoved = _itemsRemoved.ToList();
-
-            if (_libraryUpdateTimer is not null)
+            List<Folder> foldersAddedTo;
+            List<Folder> foldersRemovedFrom;
+            List<BaseItem> itemsUpdated;
+            List<BaseItem> itemsAdded;
+            List<BaseItem> itemsRemoved;
+            lock (_libraryChangedSyncLock)
             {
-                _libraryUpdateTimer.Dispose();
-                _libraryUpdateTimer = null;
+                // Remove dupes in case some were saved multiple times
+                foldersAddedTo = _foldersAddedTo
+                    .DistinctBy(x => x.Id)
+                    .ToList();
+
+                foldersRemovedFrom = _foldersRemovedFrom
+                    .DistinctBy(x => x.Id)
+                    .ToList();
+
+                itemsUpdated = _itemsUpdated
+                    .Where(i => !_itemsAdded.Contains(i))
+                    .DistinctBy(x => x.Id)
+                    .ToList();
+
+                itemsAdded = _itemsAdded.ToList();
+                itemsRemoved = _itemsRemoved.ToList();
+
+                if (_libraryUpdateTimer is not null)
+                {
+                    _libraryUpdateTimer.Dispose();
+                    _libraryUpdateTimer = null;
+                }
+
+                _itemsAdded.Clear();
+                _itemsRemoved.Clear();
+                _itemsUpdated.Clear();
+                _foldersAddedTo.Clear();
+                _foldersRemovedFrom.Clear();
             }
 
-            _itemsAdded.Clear();
-            _itemsRemoved.Clear();
-            _itemsUpdated.Clear();
-            _foldersAddedTo.Clear();
-            _foldersRemovedFrom.Clear();
+            await SendChangeNotifications(itemsAdded, itemsUpdated, itemsRemoved, foldersAddedTo, foldersRemovedFrom, CancellationToken.None).ConfigureAwait(false);
         }
-
-        await SendChangeNotifications(itemsAdded, itemsUpdated, itemsRemoved, foldersAddedTo, foldersRemovedFrom, CancellationToken.None).ConfigureAwait(false);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Method}", nameof(LibraryUpdateTimerCallback));
+        }
     }
 
     private async Task SendChangeNotifications(
