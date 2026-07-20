@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 using System;
 using System.Collections.Generic;
@@ -294,7 +294,6 @@ public class ScheduledTaskWorker : IScheduledTaskWorker
         finally
         {
             _currentTask = null;
-            GC.Collect();
         }
     }
 
