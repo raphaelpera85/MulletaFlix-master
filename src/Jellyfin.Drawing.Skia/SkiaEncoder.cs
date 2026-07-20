@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -116,6 +116,8 @@ public class SkiaEncoder : IImageEncoder
         }
         catch (Exception)
         {
+            // Graceful degradation: native SkiaSharp library may not be installed (e.g. missing libSkiaSharp).
+            // Returning false allows callers to handle the missing dependency gracefully.
             return false;
         }
     }

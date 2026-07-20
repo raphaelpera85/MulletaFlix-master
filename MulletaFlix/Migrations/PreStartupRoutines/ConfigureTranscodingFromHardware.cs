@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -128,6 +128,8 @@ public sealed class ConfigureTranscodingFromHardware : IMigrationRoutine
         }
         catch (Exception)
         {
+            // Graceful degradation: PowerShell may not be available on non-Windows or restricted environments.
+            // Returning empty array allows migration to proceed without video controller info.
             return Array.Empty<string>();
         }
     }
@@ -165,6 +167,8 @@ public sealed class ConfigureTranscodingFromHardware : IMigrationRoutine
         }
         catch (Exception)
         {
+            // Graceful degradation: PowerShell may not be available on non-Windows or restricted environments.
+            // Returning null allows migration to proceed without processor name info.
             return null;
         }
     }

@@ -1531,8 +1531,10 @@ namespace MediaBrowser.MediaEncoding.Encoder
                 {
                     ExitCode = process.ExitCode;
                 }
-                catch
+                catch (InvalidOperationException)
                 {
+                    // Process may have already been disposed or has no associated process.
+                    // ExitCode is not critical — the process has exited and cleanup proceeds regardless.
                 }
 
                 DisposeProcess(process);
