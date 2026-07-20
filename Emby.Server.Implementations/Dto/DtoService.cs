@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS1591
+#pragma warning disable CS1591
 
 using System;
 using System.Collections.Frozen;
@@ -161,6 +161,7 @@ namespace Emby.Server.Implementations.Dto
             BaseItem? owner = null,
             bool skipVisibilityCheck = false)
         {
+            // TODO: Convert to async to avoid deadlock risk. Sync-over-async in high-traffic API path.
             return GetBaseItemDtosAsync(items, options, user, owner, skipVisibilityCheck).GetAwaiter().GetResult();
         }
 
@@ -305,6 +306,7 @@ namespace Emby.Server.Implementations.Dto
 
         public BaseItemDto GetBaseItemDto(BaseItem item, DtoOptions options, User? user = null, BaseItem? owner = null)
         {
+            // TODO: Convert to async to avoid deadlock risk. Sync-over-async in high-traffic API path.
             return GetBaseItemDtoAsync(item, options, user, owner).GetAwaiter().GetResult();
         }
 

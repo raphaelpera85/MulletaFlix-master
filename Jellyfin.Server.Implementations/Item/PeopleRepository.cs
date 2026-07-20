@@ -122,6 +122,7 @@ public class PeopleRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider
             .Where(e => !existingPersons.Any(f => string.Equals(f.Name, e.Name, StringComparison.OrdinalIgnoreCase) && f.PersonType == e.Type.ToString()))
             .Select(Map);
         context.Peoples.AddRange(toAdd);
+        // TODO: Convert UpdatePeople to async to avoid deadlock risk. Sync-over-async from interface constraint.
         context.SaveChangesAsync(default).GetAwaiter().GetResult();
 
         var personsEntities = toAdd.Concat(existingPersons).ToArray();
@@ -161,6 +162,7 @@ public class PeopleRepository(IDbContextFactory<MulletaFlixDbContext> dbProvider
 
         context.PeopleBaseItemMap.RemoveRange(existingMaps);
 
+        // TODO: Convert UpdatePeople to async to avoid deadlock risk. Sync-over-async from interface constraint.
         context.SaveChangesAsync(default).GetAwaiter().GetResult();
         transaction.Commit();
     }

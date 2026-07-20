@@ -603,6 +603,7 @@ namespace Emby.Server.Implementations.Localization
                 {
                     var dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                     var namespaceName = localizationManager.GetType().Namespace + ".Core";
+                    // TODO: Convert CopyInto to sync or refactor GetLocalizationDictionary to async to avoid deadlock risk.
                     localizationManager.CopyInto(dictionary, namespaceName + "." + GetResourceFilename(key)).GetAwaiter().GetResult();
 
                     return dictionary;

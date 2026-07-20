@@ -38,6 +38,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
         {
             prefs = new DisplayPreferences(userId, itemId, client);
             dbContext.DisplayPreferences.Add(prefs);
+            // TODO: Convert to async to avoid deadlock risk. Sync-over-async from interface constraint.
             dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
         }
 
@@ -55,6 +56,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
         {
             prefs = new ItemDisplayPreferences(userId, Guid.Empty, client);
             dbContext.ItemDisplayPreferences.Add(prefs);
+            // TODO: Convert to async to avoid deadlock risk. Sync-over-async from interface constraint.
             dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
         }
 
@@ -98,6 +100,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
                 .Add(new CustomItemDisplayPreferences(userId, itemId, client, key, value));
         }
 
+        // TODO: Convert to async to avoid deadlock risk. Sync-over-async from interface constraint.
         dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
     }
 
@@ -106,6 +109,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
         dbContext.DisplayPreferences.Attach(displayPreferences).State = EntityState.Modified;
+        // TODO: Convert to async to avoid deadlock risk. Sync-over-async from interface constraint.
         dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
     }
 
@@ -114,6 +118,7 @@ public sealed class DisplayPreferencesManager : IDisplayPreferencesManager
     {
         using var dbContext = _dbContextFactory.CreateDbContext();
         dbContext.ItemDisplayPreferences.Attach(itemDisplayPreferences).State = EntityState.Modified;
+        // TODO: Convert to async to avoid deadlock risk. Sync-over-async from interface constraint.
         dbContext.SaveChangesAsync(default).GetAwaiter().GetResult();
     }
 }
