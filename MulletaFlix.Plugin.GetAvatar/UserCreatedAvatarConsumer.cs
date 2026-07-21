@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
-using Jellyfin.Plugin.GetAvatar.Services;
+using MulletaFlix.Plugin.GetAvatar.Services;
 using MediaBrowser.Controller.Events;
 using Microsoft.Extensions.Logging;
 using MulletaFlix.Data.Events.Users;
 
-namespace Jellyfin.Plugin.GetAvatar
+namespace MulletaFlix.Plugin.GetAvatar
 {
     /// <summary>
     /// Applies a random avatar when a new user is created.

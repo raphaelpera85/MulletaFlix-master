@@ -4,11 +4,11 @@
     <title>Midia Storage Online</title>
 </head>
 <body>
-    <div id="configPage" data-role="page" class="page type-interior pluginConfigurationPage configPage" data-require="emby-input,emby-button,emby-checkbox" data-controller="__plugin/Midia Storage Online-config">
+    <div id="configPage" data-role="page" class="page type-interior pluginConfigurationPage configPage" data-require="emby-input,emby-button,emby-checkbox,emby-select" data-controller="__plugin/Midia Storage Online-config">
         <div data-role="content">
             <div class="content-primary">
                 <h1>Midia Storage Online</h1>
-                <p>Baixa lista M3U e gera arquivos .strm para filmes e series.</p>
+                <p>Baixa lista M3U e gera arquivos .strm ou baixa as midias para filmes e series.</p>
 
                 <form class="configForm">
                     <div class="inputContainer" style="margin-bottom:0">
@@ -38,8 +38,19 @@
                         <div class="fieldDescription">Filtra as fontes de EPG pelo idioma informado. Padrão: pt.</div>
                     </div>
                     <div class="inputContainer">
+                        <input is="emby-input" type="number" min="1" step="1" id="maxLinkValidationConcurrency" label="Concorrencia maxima de validacao" />
+                        <div class="fieldDescription">Deixe em branco ou 0 para usar o limite automatico do sistema. Quanto maior, mais links sao validados ao mesmo tempo.</div>
+                    </div>
+                    <div class="inputContainer">
                         <input is="emby-input" type="text" id="strmPath" label="Pasta de saida dos .strm" />
                         <div class="fieldDescription">Deixe em branco para usar o padrao: [ProgramData]/midia-online/strm/</div>
+                    </div>
+                    <div class="inputContainer">
+                        <select is="emby-select" id="outputMode" label="Modo de saida">
+                            <option value="strm">strm</option>
+                            <option value="download">download</option>
+                        </select>
+                        <div class="fieldDescription">strm cria atalhos para a URL original. download baixa o arquivo de midia e grava localmente.</div>
                     </div>
                     <div class="inputContainer">
                         <button is="emby-button" type="button" id="btnBrowseStrmPath" class="raised button-default block">

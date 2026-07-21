@@ -35,6 +35,8 @@ public class LyricsController : BaseMulletaFlixApiController
     private readonly IFileSystem _fileSystem;
     private readonly IUserManager _userManager;
 
+    private const int MaxLyricFileSize = 1_048_576; // 1 MB
+
     /// <summary>
     /// Initializes a new instance of the <see cref="LyricsController"/> class.
     /// </summary>
@@ -100,6 +102,7 @@ public class LyricsController : BaseMulletaFlixApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status413RequestEntityTooLarge)]
     public async Task<ActionResult<LyricDto>> UploadLyrics(
         [FromRoute, Required] Guid itemId,
         [FromQuery, Required] string fileName)
@@ -113,6 +116,11 @@ public class LyricsController : BaseMulletaFlixApiController
         if (Request.ContentLength.GetValueOrDefault(0) == 0)
         {
             return BadRequest("No lyrics uploaded");
+        }
+
+        if (Request.ContentLength.GetValueOrDefault(0) > MaxLyricFileSize)
+        {
+            return StatusCode(StatusCodes.Status413RequestEntityTooLarge, "Lyric file exceeds maximum allowed size (1 MB)");
         }
 
         // Utilize Path.GetExtension as it provides extra path validation.

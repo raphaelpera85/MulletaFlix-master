@@ -24,14 +24,14 @@ public class SecurityHeadersMiddleware
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
         headers["X-Application-Name"] = "Jellyfin";
         headers["Content-Security-Policy"] =
-            "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
-            + "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; "
-            + "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; "
-            + "style-src 'self' 'unsafe-inline' https:; "
+            "default-src 'self'; "
+            + "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            + "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval'; "
+            + "style-src 'self' 'unsafe-inline'; "
             + "img-src 'self' data: blob: https:; "
             + "media-src 'self' data: blob: https:; "
             + "font-src 'self' data:; "
-            + "connect-src 'self' http: https: ws: wss:;";
+            + "connect-src 'self' ws: wss:;";
 
         await _next(context);
     }

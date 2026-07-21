@@ -21,6 +21,19 @@ public class RateLimitMiddleware
     private static readonly TimeSpan AnonymousWindow = TimeSpan.FromSeconds(10);
     private const int MaxAnonymousRequests = 30;
 
+    /// <summary>
+    /// Maximum number of distinct IP entries retained per dictionary to prevent
+    /// unbounded memory growth from IP rotation attacks.
+    /// </summary>
+    private const int MaxDistinctIps = 10000;
+
+    /// <summary>
+    /// Minimum interval between stale-entry cleanup sweeps.
+    /// </summary>
+    private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(5);
+
+    private static DateTime _lastCleanup = DateTime.MinValue;
+
     private readonly RequestDelegate _next;
     private readonly ILogger<RateLimitMiddleware> _logger;
 
@@ -95,6 +108,41 @@ public class RateLimitMiddleware
         {
             entry.Prune(now, LoginWindow);
             entry.Timestamps.Add(now);
+        }
+
+        EvictStaleEntries(store, now);
+    }
+
+    private static void EvictStaleEntries(ConcurrentDictionary<string, RateLimitEntry> store, DateTime now)
+    {
+        if (store.Count <= MaxDistinctIps)
+        {
+            return;
+        }
+
+        if ((now - _lastCleanup) < CleanupInterval)
+        {
+            return;
+        }
+
+        _lastCleanup = now;
+
+        var staleKeys = new List<string>();
+        foreach (var kvp in store)
+        {
+            var entry = kvp.Value;
+            lock (entry)
+            {
+                if (entry.Count == 0)
+                {
+                    staleKeys.Add(kvp.Key);
+                }
+            }
+        }
+
+        foreach (var k in staleKeys)
+        {
+            store.TryRemove(k, out _);
         }
     }
 

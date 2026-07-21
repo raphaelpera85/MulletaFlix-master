@@ -2,13 +2,19 @@ export default function(view, params) {
     var pluginId = 'f956680c-9a06-4cac-93d2-b57cd6061756';
     var baseUrl = window.location.href.split('/web/')[0];
 
+    function normalizeOutputMode(value) {
+        return String(value || 'strm').toLowerCase() === 'download' ? 'download' : 'strm';
+    }
+
     function render(config) {
         view.querySelector('#useWorldStorage').checked = !!config.UseWorldStorage;
         view.querySelector('#m3uUrl').value = config.M3uUrl || '';
         view.querySelector('#epgUrl').value = config.EpgUrl || '';
         view.querySelector('#enableAutoEpg').checked = !!config.EnableAutoEpg;
         view.querySelector('#autoEpgLanguage').value = config.AutoEpgLanguage || 'pt';
+        view.querySelector('#maxLinkValidationConcurrency').value = config.MaxLinkValidationConcurrency || '';
         view.querySelector('#strmPath').value = config.StrmOutputPath || '';
+        view.querySelector('#outputMode').value = normalizeOutputMode(config.OutputMode);
         view.querySelector('#syncResult').style.display = config.LastSyncTime ? 'block' : 'none';
         view.querySelector('#canaisUrl').value = baseUrl + '/MidiaStorageOnline/m3u/canais';
         view.querySelector('#epgResult').style.display = (config.EpgUrl || config.EnableAutoEpg || config.EpgLastSyncTime) ? 'block' : 'none';
@@ -45,7 +51,9 @@ export default function(view, params) {
             EpgUrl: view.querySelector('#epgUrl').value,
             EnableAutoEpg: view.querySelector('#enableAutoEpg').checked,
             AutoEpgLanguage: view.querySelector('#autoEpgLanguage').value,
-            StrmOutputPath: view.querySelector('#strmPath').value
+            MaxLinkValidationConcurrency: parseInt(view.querySelector('#maxLinkValidationConcurrency').value || '0', 10) || 0,
+            StrmOutputPath: view.querySelector('#strmPath').value,
+            OutputMode: view.querySelector('#outputMode').value
         };
         ApiClient.ajax({
             type: 'POST',

@@ -18,6 +18,7 @@ using MulletaFlix.Server.Implementations.DatabaseConfiguration;
 using MulletaFlix.Server.Implementations.Extensions;
 using MulletaFlix.Server.Implementations.StorageHelpers;
 using MulletaFlix.Server.Implementations.SystemBackupService;
+using MulletaFlix.Server.Configuration.NebulaFTP;
 using MulletaFlix.Server.Migrations;
 using MulletaFlix.Server.Migrations.Stages;
 using MulletaFlix.Server.ServerSetupApp;
@@ -367,7 +368,7 @@ namespace MulletaFlix.Server
         {
             _migrationLogger = StartupLogger.Logger.BeginGroup<MulletaFlixMigrationService>($"Migration Service");
             var startupConfigurationManager = new ServerConfigurationManager(appPaths, _loggerFactory, new MyXmlSerializer());
-            startupConfigurationManager.AddParts([new DatabaseConfigurationFactory()]);
+            startupConfigurationManager.AddParts([new DatabaseConfigurationFactory(), new NebulaFtpConfigurationFactory()]);
             var migrationStartupServiceProvider = new ServiceCollection()
                 .AddLogging(d => d.AddSerilog())
                 .AddMulletaFlixDbContext(startupConfigurationManager, startupConfig)

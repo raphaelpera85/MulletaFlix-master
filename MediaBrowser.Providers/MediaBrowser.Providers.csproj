@@ -107,4 +107,3 @@
     <EmbeddedResource Include="Plugins\MidiaStorageOnline\Data\approved_channels.json" />
   </ItemGroup>
 </Project>
-

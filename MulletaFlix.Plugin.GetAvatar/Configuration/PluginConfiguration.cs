@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using MediaBrowser.Model.Plugins;
 
-namespace Jellyfin.Plugin.GetAvatar.Configuration
+namespace MulletaFlix.Plugin.GetAvatar.Configuration
 {
     /// <summary>
     /// Represents the configuration settings for the GetAvatar plugin.

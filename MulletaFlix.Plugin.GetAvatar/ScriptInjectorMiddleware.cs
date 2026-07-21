@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.GetAvatar;
+namespace MulletaFlix.Plugin.GetAvatar;
 
 /// <summary>
 /// Middleware that intercepts index.html responses and injects the GetAvatar client script.

@@ -1,11 +1,11 @@
-using Jellyfin.Plugin.GetAvatar.Configuration;
+using MulletaFlix.Plugin.GetAvatar.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.GetAvatar
+namespace MulletaFlix.Plugin.GetAvatar
 {
     /// <summary>
     /// Main plugin class for GetAvatar that handles configuration and web pages.

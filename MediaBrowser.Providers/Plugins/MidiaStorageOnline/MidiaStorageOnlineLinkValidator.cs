@@ -16,7 +16,6 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline;
 
 internal static class MidiaStorageOnlineLinkValidator
 {
-    private const int BatchSize = 500;
     private static readonly TimeSpan _requestTimeout = TimeSpan.FromSeconds(15);
     private static readonly int _maxParallelism = Math.Max(4, Environment.ProcessorCount * 2);
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -40,7 +39,7 @@ internal static class MidiaStorageOnlineLinkValidator
 
         var keep = new bool[entries.Count];
         var offlineCache = LoadOfflineCache(offlineCachePath);
-        var offlineCacheChanged = false;
+        var offlineCacheChanged = 0;
         using var client = httpClientFactory.CreateClient();
         client.Timeout = _requestTimeout;
         var degreeOfParallelism = GetDegreeOfParallelism(maxDegreeOfParallelism);
@@ -49,25 +48,19 @@ internal static class MidiaStorageOnlineLinkValidator
             maxDegreeOfParallelism > 0 ? maxDegreeOfParallelism : _maxParallelism,
             degreeOfParallelism);
 
-        for (var offset = 0; offset < entries.Count; offset += BatchSize)
-        {
-            var batchLength = Math.Min(BatchSize, entries.Count - offset);
-            logger.LogInformation(
-                "Midia Storage Online validando lote {BatchStart}-{BatchEnd} de {Total} links (lote ate {BatchSize}, paralelismo {Concurrency}).",
-                offset + 1,
-                offset + batchLength,
-                entries.Count,
-                BatchSize,
-                degreeOfParallelism);
+        logger.LogInformation(
+            "Midia Storage Online validando {Total} links em uma passagem unica com paralelismo {Concurrency}.",
+            entries.Count,
+            degreeOfParallelism);
 
-            await Parallel.ForEachAsync(
-                Enumerable.Range(offset, batchLength),
-                new ParallelOptions
-                {
-                    CancellationToken = cancellationToken,
-                    MaxDegreeOfParallelism = degreeOfParallelism
-                },
-                async (index, ct) =>
+        await Parallel.ForEachAsync(
+            Enumerable.Range(0, entries.Count),
+            new ParallelOptions
+            {
+                CancellationToken = cancellationToken,
+                MaxDegreeOfParallelism = degreeOfParallelism
+            },
+            async (index, ct) =>
             {
                 var entry = entries[index];
                 var normalizedUrl = NormalizeUrl(entry.Url);
@@ -86,23 +79,25 @@ internal static class MidiaStorageOnlineLinkValidator
                     return;
                 }
 
-                if (await IsOnlineAsync(entry, client, ct).ConfigureAwait(false))
+                if (await IsOnlineAsync(normalizedUrl, client, ct).ConfigureAwait(false))
                 {
                     keep[index] = true;
                     return;
                 }
 
-                offlineCacheChanged |= offlineCache.TryAdd(normalizedUrl, 0);
+                if (offlineCache.TryAdd(normalizedUrl, 0))
+                {
+                    Interlocked.Exchange(ref offlineCacheChanged, 1);
+                }
 
                 logger.LogInformation(
                     "Midia Storage Online removeu link offline: [{Type}] {Name} | {Url}",
                     entry.Type,
                     entry.Name,
                     entry.Url);
-                }).ConfigureAwait(false);
-        }
+            }).ConfigureAwait(false);
 
-        if (offlineCacheChanged && !string.IsNullOrWhiteSpace(offlineCachePath))
+        if (offlineCacheChanged != 0 && !string.IsNullOrWhiteSpace(offlineCachePath))
         {
             SaveOfflineCache(offlineCachePath, offlineCache);
         }
@@ -123,10 +118,10 @@ internal static class MidiaStorageOnlineLinkValidator
     {
         if (requestedDegreeOfParallelism > 0)
         {
-            return Math.Min(BatchSize, requestedDegreeOfParallelism);
+            return Math.Min(requestedDegreeOfParallelism, _maxParallelism);
         }
 
-        return Math.Min(BatchSize, _maxParallelism);
+        return _maxParallelism;
     }
 
     private static ConcurrentDictionary<string, byte> LoadOfflineCache(string? offlineCachePath)
@@ -172,16 +167,11 @@ internal static class MidiaStorageOnlineLinkValidator
     }
 
     private static async Task<bool> IsOnlineAsync(
-        IMidiaStorageOnlineM3uEntry entry,
+        string normalizedUrl,
         HttpClient client,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(entry.Url))
-        {
-            return false;
-        }
-
-        if (!Uri.TryCreate(entry.Url.Trim(), UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(normalizedUrl.Trim(), UriKind.Absolute, out var uri))
         {
             return false;
         }

@@ -24,6 +24,11 @@ namespace MulletaFlix.Api.Controllers;
 [Tags("Plugin")]
 public class DashboardController : BaseMulletaFlixApiController
 {
+    private const string NebulaFtpConfigurationName = "NebulaFTP";
+    private const string NebulaFtpConfigurationKey = "nebulaftp";
+    private const string NebulaFtpResourceName = "MulletaFlix.Api.Web.NebulaFTP.configPage.html";
+    private static readonly Guid NebulaFtpPluginId = Guid.Parse("7f4f5c78-9f05-4d1b-8f5b-5d6fd5c6b0d1");
+
     private readonly ILogger<DashboardController> _logger;
     private readonly IPluginManager _pluginManager;
 
@@ -55,6 +60,7 @@ public class DashboardController : BaseMulletaFlixApiController
         [FromQuery] bool? enableInMainMenu)
     {
         var configPages = _pluginManager.Plugins.SelectMany(GetConfigPages).ToList();
+        configPages.Add(GetNebulaFtpConfigurationPageInfo());
 
         if (enableInMainMenu.HasValue)
         {
@@ -77,6 +83,11 @@ public class DashboardController : BaseMulletaFlixApiController
     [ProducesFile(MediaTypeNames.Text.Html, "application/x-javascript")]
     public ActionResult GetDashboardConfigurationPage([FromQuery] string? name)
     {
+        if (string.Equals(name, NebulaFtpConfigurationName, StringComparison.OrdinalIgnoreCase))
+        {
+            return GetNebulaFtpConfigurationPage();
+        }
+
         var altPage = GetPluginPages().FirstOrDefault(p => string.Equals(p.Item1.Name, name, StringComparison.OrdinalIgnoreCase));
         if (altPage is null)
         {
@@ -93,6 +104,35 @@ public class DashboardController : BaseMulletaFlixApiController
         }
 
         return File(stream, MimeTypes.GetMimeType(resourcePath));
+    }
+
+    [NonAction]
+    private ActionResult GetNebulaFtpConfigurationPage()
+    {
+        var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(NebulaFtpResourceName);
+        if (stream is null)
+        {
+            _logger.LogError("Failed to get native resource {Resource}", NebulaFtpResourceName);
+            return NotFound();
+        }
+
+        return File(stream, MediaTypeNames.Text.Html);
+    }
+
+    [NonAction]
+    private static ConfigurationPageInfo GetNebulaFtpConfigurationPageInfo()
+    {
+        return new ConfigurationPageInfo(null, new PluginPageInfo
+        {
+            Name = NebulaFtpConfigurationName,
+            DisplayName = NebulaFtpConfigurationName,
+            EnableInMainMenu = true,
+            MenuSection = "library",
+            MenuIcon = "cloud"
+        })
+        {
+            PluginId = NebulaFtpPluginId
+        };
     }
 
     private static Stream? GetPluginResourceStream(IPlugin plugin, string resourcePath)

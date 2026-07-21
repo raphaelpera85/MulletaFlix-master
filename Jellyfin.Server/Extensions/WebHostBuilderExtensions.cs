@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using MulletaFlix.Server.Helpers;
 using MediaBrowser.Common.Configuration;
@@ -92,7 +93,10 @@ public static class WebHostBuilderExtensions
                         options.Listen(
                             address,
                             httpsPort.Value,
-                            listenOptions => listenOptions.UseHttps());
+                            listenOptions => listenOptions.UseHttps(httpsOptions =>
+                            {
+                                httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+                            }));
                     }
                     catch (InvalidOperationException)
                     {
@@ -113,7 +117,10 @@ public static class WebHostBuilderExtensions
                     options.Listen(
                         address,
                         httpsPort.Value,
-                        listenOptions => listenOptions.UseHttps(certificate));
+                        listenOptions => listenOptions.UseHttps(certificate, httpsOptions =>
+                        {
+                            httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+                        }));
                 }
             }
         }

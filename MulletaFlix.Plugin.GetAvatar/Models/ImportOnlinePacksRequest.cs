@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 
-namespace Jellyfin.Plugin.GetAvatar.Controllers
+namespace MulletaFlix.Plugin.GetAvatar.Controllers
 {
     /// <summary>
     /// Request model for importing online avatar packs.

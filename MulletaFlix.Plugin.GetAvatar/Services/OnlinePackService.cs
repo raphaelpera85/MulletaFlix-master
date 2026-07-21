@@ -7,10 +7,10 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.GetAvatar.Controllers;
+using MulletaFlix.Plugin.GetAvatar.Controllers;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.GetAvatar.Services
+namespace MulletaFlix.Plugin.GetAvatar.Services
 {
     /// <summary>
     /// Service for discovering and importing online avatar packs from GitHub releases.

@@ -1,4 +1,4 @@
-using Jellyfin.Plugin.GetAvatar.Services;
+using MulletaFlix.Plugin.GetAvatar.Services;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Plugins;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MulletaFlix.Data.Events.Users;
 
-namespace Jellyfin.Plugin.GetAvatar
+namespace MulletaFlix.Plugin.GetAvatar
 {
     /// <summary>
     /// Service registrator for the GetAvatar plugin.

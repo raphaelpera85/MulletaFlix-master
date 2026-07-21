@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Jellyfin.Plugin.GetAvatar</RootNamespace>
+    <RootNamespace>MulletaFlix.Plugin.GetAvatar</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
 <AssemblyVersion>1.6.3.0</AssemblyVersion>
     <FileVersion>1.6.3.0</FileVersion>

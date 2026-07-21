@@ -105,7 +105,9 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Api
             config.EpgUrl = body.EpgUrl;
             config.EnableAutoEpg = body.EnableAutoEpg;
             config.AutoEpgLanguage = body.AutoEpgLanguage;
+            config.MaxLinkValidationConcurrency = body.MaxLinkValidationConcurrency;
             config.StrmOutputPath = body.StrmOutputPath;
+            config.OutputMode = body.OutputMode;
             SaveConfig(config);
             Log("Configuracao salva via MidiaStorageOnline/config.");
             return NoContent();

@@ -46,5 +46,8 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-</Project>
+  <ItemGroup>
+    <EmbeddedResource Include="Web\NebulaFTP\configPage.html" LogicalName="MulletaFlix.Api.Web.NebulaFTP.configPage.html" />
+  </ItemGroup>
 
+</Project>

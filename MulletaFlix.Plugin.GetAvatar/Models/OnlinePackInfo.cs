@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.GetAvatar.Controllers
+namespace MulletaFlix.Plugin.GetAvatar.Controllers
 {
     /// <summary>
     /// Information about an online avatar pack available for download.

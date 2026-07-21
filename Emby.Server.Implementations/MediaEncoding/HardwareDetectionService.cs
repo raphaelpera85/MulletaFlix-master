@@ -679,7 +679,7 @@ namespace Emby.Server.Implementations.MediaEncoding
             };
         }
 
-        private static string[] GetVideoControllerNames()
+        private string[] GetVideoControllerNames()
         {
             try
             {
@@ -766,8 +766,9 @@ namespace Emby.Server.Implementations.MediaEncoding
 
                 return lines;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogDebug(ex, "Failed to get video controller names via PowerShell.");
                 return Array.Empty<string>();
             }
         }

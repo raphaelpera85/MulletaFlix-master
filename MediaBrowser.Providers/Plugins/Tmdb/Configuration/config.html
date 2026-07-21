@@ -99,28 +99,33 @@
                             };
                         }
 
-                        var sizeOptionsGenerator = function (size) {
-                            return '<option value="' + size + '">' + size + '</option>';
+                        var appendSizeOptions = function (select, sizes) {
+                            sizes.forEach(function (size) {
+                                var opt = document.createElement('option');
+                                opt.value = size;
+                                opt.textContent = size;
+                                select.appendChild(opt);
+                            });
                         }
 
                         var selPosterSize = document.querySelector('#selectPosterSize');
-                        selPosterSize.innerHTML = clientConfig.PosterSizes.map(sizeOptionsGenerator);
+                        appendSizeOptions(selPosterSize, clientConfig.PosterSizes);
                         selPosterSize.value = pluginConfig.PosterSize;
 
                         var selBackdropSize = document.querySelector('#selectBackdropSize');
-                        selBackdropSize.innerHTML = clientConfig.BackdropSizes.map(sizeOptionsGenerator);
+                        appendSizeOptions(selBackdropSize, clientConfig.BackdropSizes);
                         selBackdropSize.value = pluginConfig.BackdropSize;
 
                         var selLogoSize = document.querySelector('#selectLogoSize');
-                        selLogoSize.innerHTML = clientConfig.LogoSizes.map(sizeOptionsGenerator);
+                        appendSizeOptions(selLogoSize, clientConfig.LogoSizes);
                         selLogoSize.value = pluginConfig.LogoSize;
 
                         var selProfileSize = document.querySelector('#selectProfileSize');
-                        selProfileSize.innerHTML = clientConfig.ProfileSizes.map(sizeOptionsGenerator);
+                        appendSizeOptions(selProfileSize, clientConfig.ProfileSizes);
                         selProfileSize.value = pluginConfig.ProfileSize;
 
                         var selStillSize = document.querySelector('#selectStillSize');
-                        selStillSize.innerHTML = clientConfig.StillSizes.map(sizeOptionsGenerator);
+                        appendSizeOptions(selStillSize, clientConfig.StillSizes);
                         selStillSize.value = pluginConfig.StillSize;
 
                         Dashboard.hideLoadingMsg();

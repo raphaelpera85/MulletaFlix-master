@@ -248,6 +248,11 @@ namespace MediaBrowser.Providers.MediaInfo
             if (item.IsShortcut)
             {
                 FetchShortcutInfo(item);
+
+                if (string.IsNullOrWhiteSpace(item.ShortcutPath))
+                {
+                    return _cachedTask;
+                }
             }
 
             return _videoProber.ProbeVideo(item, options, cancellationToken);
@@ -311,6 +316,11 @@ namespace MediaBrowser.Providers.MediaInfo
             if (item.IsShortcut)
             {
                 FetchShortcutInfo(item);
+
+                if (string.IsNullOrWhiteSpace(item.ShortcutPath))
+                {
+                    return _cachedTask;
+                }
             }
 
             return _audioProber.Probe(item, options, cancellationToken);

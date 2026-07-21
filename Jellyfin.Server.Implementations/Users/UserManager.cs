@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
 using MediaBrowser.Common;
+using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Authentication;
@@ -294,6 +295,11 @@ namespace MulletaFlix.Server.Implementations.Users
                 }
             }
 
+            if (user.HasPermission(PermissionKind.IsAdministrator))
+            {
+                SyncNebulaFtpCredentials(newName, null);
+            }
+
             var eventArgs = new UserUpdatedEventArgs(user);
             await _eventManager.PublishAsync(eventArgs).ConfigureAwait(false);
             OnUserUpdated?.Invoke(this, eventArgs);
@@ -443,7 +449,31 @@ namespace MulletaFlix.Server.Implementations.Users
                 }
             }
 
+            if (dbUser.HasPermission(PermissionKind.IsAdministrator))
+            {
+                SyncNebulaFtpCredentials(dbUser.Username, newPassword);
+            }
+
             await _eventManager.PublishAsync(new UserPasswordChangedEventArgs(dbUser)).ConfigureAwait(false);
+        }
+
+        private void SyncNebulaFtpCredentials(string username, string? password)
+        {
+            try
+            {
+                var config = _serverConfigurationManager.GetConfiguration<NebulaFtpConfiguration>("nebulaftp");
+                config.Username = username;
+                if (password is not null)
+                {
+                    config.Password = password;
+                }
+
+                _serverConfigurationManager.SaveConfiguration("nebulaftp", config);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to sync NebulaFTP admin credentials.");
+            }
         }
 
         /// <inheritdoc/>
@@ -592,6 +622,7 @@ namespace MulletaFlix.Server.Implementations.Users
 
                 dbContext.Users.Add(newUser);
                 await dbContext.SaveChangesAsync().ConfigureAwait(false);
+                SyncNebulaFtpCredentials(newUser.Username, null);
             }
         }
 
@@ -1083,4 +1114,3 @@ namespace MulletaFlix.Server.Implementations.Users
         }
     }
 }
-

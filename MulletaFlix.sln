@@ -98,7 +98,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MulletaFlix.Database.Implem
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MulletaFlix.CodeAnalysis", "src\Jellyfin.CodeAnalysis\Jellyfin.CodeAnalysis.csproj", "{11643D0F-6761-4EF7-AB71-6F9F8DE00714}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jellyfin.Plugin.GetAvatar", "Jellyfin.Plugin.GetAvatar\Jellyfin.Plugin.GetAvatar.csproj", "{A5D8E4B3-9D54-4A31-A4FD-6E4B7A8D2C11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MulletaFlix.Plugin.GetAvatar", "MulletaFlix.Plugin.GetAvatar\MulletaFlix.Plugin.GetAvatar.csproj", "{A5D8E4B3-9D54-4A31-A4FD-6E4B7A8D2C11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -6,7 +6,7 @@ using System.Net.Mime;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.GetAvatar.Services;
+using MulletaFlix.Plugin.GetAvatar.Services;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Library;
 using MulletaFlix.Database.Implementations.Entities;
@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.GetAvatar.Controllers
+namespace MulletaFlix.Plugin.GetAvatar.Controllers
 {
     /// <summary>
     /// API controller for managing avatars.
@@ -58,7 +58,7 @@ namespace Jellyfin.Plugin.GetAvatar.Controllers
         public IActionResult GetClientScript()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "Jellyfin.Plugin.GetAvatar.Configuration.Web.clientScript.js";
+            var resourceName = "MulletaFlix.Plugin.GetAvatar.Configuration.Web.clientScript.js";
 
             var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
@@ -91,6 +91,7 @@ namespace Jellyfin.Plugin.GetAvatar.Controllers
                         a.FileName,
                         a.DateAdded,
                         Category = a.Category ?? string.Empty,
+                        Origin = a.Origin ?? a.Category ?? string.Empty,
                         Url = $"/GetAvatar/Image/{a.Id}"
                     }));
             }
@@ -182,6 +183,7 @@ namespace Jellyfin.Plugin.GetAvatar.Controllers
                     avatarInfo.FileName,
                     avatarInfo.DateAdded,
                     Category = avatarInfo.Category ?? string.Empty,
+                    Origin = avatarInfo.Origin ?? avatarInfo.Category ?? string.Empty,
                     Url = $"/GetAvatar/Image/{avatarInfo.Id}"
                 });
             }

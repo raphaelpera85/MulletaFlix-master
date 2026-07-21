@@ -11,6 +11,7 @@ namespace MediaBrowser.Providers.Plugins.MidiaStorageOnline.Configuration
         public string M3uUrl { get; set; } = string.Empty;
         public string? EpgUrl { get; set; }
         public string? StrmOutputPath { get; set; }
+        public string OutputMode { get; set; } = "strm";
         public bool EnableAutoEpg { get; set; }
         public string AutoEpgLanguage { get; set; } = "pt";
         public int MaxLinkValidationConcurrency { get; set; }

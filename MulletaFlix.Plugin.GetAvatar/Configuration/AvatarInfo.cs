@@ -1,6 +1,6 @@
 using System;
 
-namespace Jellyfin.Plugin.GetAvatar.Configuration
+namespace MulletaFlix.Plugin.GetAvatar.Configuration
 {
     /// <summary>
     /// Represents information about an avatar.
@@ -31,5 +31,10 @@ namespace Jellyfin.Plugin.GetAvatar.Configuration
         /// Gets or sets the category of the avatar.
         /// </summary>
         public string Category { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the origin of the avatar pack or upload source.
+        /// </summary>
+        public string Origin { get; set; } = string.Empty;
     }
 }

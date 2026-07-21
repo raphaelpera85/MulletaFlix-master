@@ -129,6 +129,11 @@ public class MulletaFlixDbContext : DbContext
     public DbSet<MediaSegment> MediaSegments => Set<MediaSegment>();
 
     /// <summary>
+    /// Gets the Midia Storage Online recognition metadata.
+    /// </summary>
+    public DbSet<MidiaStorageOnlineMediaMetadata> MidiaStorageOnlineMediaMetadata => Set<MidiaStorageOnlineMediaMetadata>();
+
+    /// <summary>
     /// Gets the <see cref="DbSet{TEntity}"/> containing the user data.
     /// </summary>
     public DbSet<UserData> UserData => Set<UserData>();
@@ -430,4 +435,3 @@ public class MulletaFlixDbContext : DbContext
         base.ConfigureConventions(configurationBuilder);
     }
 }
-

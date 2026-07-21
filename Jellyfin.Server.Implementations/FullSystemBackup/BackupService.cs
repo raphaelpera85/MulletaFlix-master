@@ -186,15 +186,18 @@ public class BackupService : IBackupService
                     var historyRepository = dbContext.GetService<IHistoryRepository>();
                     await historyRepository.CreateIfNotExistsAsync().ConfigureAwait(false);
 
+                    // Validate and sanitize migration IDs before executing SQL to prevent injection.
                     foreach (var item in await historyRepository.GetAppliedMigrationsAsync(CancellationToken.None).ConfigureAwait(false))
                     {
-                        var insertScript = historyRepository.GetDeleteScript(item.MigrationId);
+                        var sanitizedId = SanitizeMigrationId(item.MigrationId);
+                        var insertScript = historyRepository.GetDeleteScript(sanitizedId);
                         await dbContext.Database.ExecuteSqlRawAsync(insertScript).ConfigureAwait(false);
                     }
 
                     foreach (var item in historyEntries)
                     {
-                        var insertScript = historyRepository.GetInsertScript(item);
+                        var sanitizedItem = new HistoryRow(SanitizeMigrationId(item.MigrationId), item.ProductVersion);
+                        var insertScript = historyRepository.GetInsertScript(sanitizedItem);
                         await dbContext.Database.ExecuteSqlRawAsync(insertScript).ConfigureAwait(false);
                     }
 
@@ -582,5 +585,22 @@ public class BackupService : IBackupService
     /// <returns>The normalized path. </returns>
     private static string NormalizePathSeparator(string path)
         => path.Replace('\\', '/');
+
+    /// <summary>
+    /// Sanitizes a migration ID to prevent SQL injection through backup archives.
+    /// Only allows alphanumeric characters, hyphens, and underscores.
+    /// </summary>
+    /// <param name="migrationId">The migration ID to sanitize.</param>
+    /// <returns>The sanitized migration ID.</returns>
+    private static string SanitizeMigrationId(string migrationId)
+    {
+        if (string.IsNullOrWhiteSpace(migrationId))
+        {
+            return string.Empty;
+        }
+
+        // Only allow safe characters: alphanumeric, hyphens, underscores
+        return new string(migrationId.Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_').ToArray());
+    }
 }
 

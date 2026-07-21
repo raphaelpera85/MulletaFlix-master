@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using MediaBrowser.Controller;
@@ -200,7 +201,14 @@ namespace MulletaFlix.Server.Implementations.Security
                 }
                 else
                 {
-                    var key = await dbContext.ApiKeys.FirstOrDefaultAsync(apiKey => apiKey.AccessToken == token).ConfigureAwait(false);
+                    // Use constant-time comparison to prevent timing attacks on API key validation.
+                    // First fetch all API keys and compare in memory with constant-time comparison.
+                    var apiKeys = await dbContext.ApiKeys.ToListAsync().ConfigureAwait(false);
+                    var key = apiKeys.FirstOrDefault(apiKey =>
+                        System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+                            System.Text.Encoding.UTF8.GetBytes(apiKey.AccessToken),
+                            System.Text.Encoding.UTF8.GetBytes(token)));
+
                     if (key is not null)
                     {
                         authInfo.IsAuthenticated = true;

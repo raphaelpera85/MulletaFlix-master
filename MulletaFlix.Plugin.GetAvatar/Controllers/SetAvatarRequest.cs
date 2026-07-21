@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.GetAvatar.Controllers
+namespace MulletaFlix.Plugin.GetAvatar.Controllers
 {
     /// <summary>
     /// Request model for setting user avatar.

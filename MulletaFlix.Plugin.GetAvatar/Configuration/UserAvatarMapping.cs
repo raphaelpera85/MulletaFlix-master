@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.GetAvatar.Configuration
+namespace MulletaFlix.Plugin.GetAvatar.Configuration
 {
     /// <summary>
     /// Represents a user's avatar selection.

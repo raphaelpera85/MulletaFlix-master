@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 
-namespace Jellyfin.Plugin.GetAvatar;
+namespace MulletaFlix.Plugin.GetAvatar;
 
 /// <summary>
 /// Startup filter that registers the script injector middleware in the ASP.NET pipeline.

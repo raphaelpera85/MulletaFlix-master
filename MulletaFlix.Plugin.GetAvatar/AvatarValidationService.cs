@@ -1,11 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.GetAvatar.Services;
+using MulletaFlix.Plugin.GetAvatar.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.GetAvatar
+namespace MulletaFlix.Plugin.GetAvatar
 {
     /// <summary>
     /// Hosted service that validates user avatars at startup.

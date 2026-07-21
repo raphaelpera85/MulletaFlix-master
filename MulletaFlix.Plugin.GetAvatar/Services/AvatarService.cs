@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.GetAvatar.Configuration;
+using MulletaFlix.Plugin.GetAvatar.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Library;
@@ -11,7 +11,7 @@ using MediaBrowser.Controller.Providers;
 using MulletaFlix.Database.Implementations.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.GetAvatar.Services
+namespace MulletaFlix.Plugin.GetAvatar.Services
 {
     /// <summary>
     /// Service for managing user avatars.
@@ -167,7 +167,8 @@ namespace Jellyfin.Plugin.GetAvatar.Services
                         Name = name,
                         FileName = fileName,
                         DateAdded = File.GetLastWriteTimeUtc(path),
-                        Category = string.Empty
+                        Category = string.Empty,
+                        Origin = string.Empty
                     };
                 })
                 .ToList();
@@ -197,7 +198,8 @@ namespace Jellyfin.Plugin.GetAvatar.Services
                     Name = Path.GetFileNameWithoutExtension(fileName),
                     FileName = savedFileName,
                     DateAdded = DateTime.UtcNow,
-                    Category = category
+                    Category = category,
+                    Origin = category
                 };
 
                 // Add to configuration
